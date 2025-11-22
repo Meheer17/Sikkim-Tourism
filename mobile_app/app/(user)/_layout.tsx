@@ -1,59 +1,60 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import PagerView from 'react-native-pager-view';
-import { useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, usePathname } from 'expo-router';
 
-import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { ThemedText } from '@/components/themed-text';
 
-// Import your page components
-import HomeScreen from './index';
-import ExploreScreen from './explore';
-import ProfileScreen from './profile';
-
 export default function UserLayout() {
-    const [selectedPage, setSelectedPage] = useState(0);
-    const pagerRef = useRef<PagerView>(null);
+    const router = useRouter();
+    const pathname = usePathname();
 
     const tabs = [
-        { name: 'Home', icon: 'house.fill', component: HomeScreen },
-        { name: 'Explore', icon: 'paperplane.fill', component: ExploreScreen },
-        { name: 'Profile', icon: 'person.crop.circle', component: ProfileScreen },
+        { name: 'Home', icon: 'house.fill', route: '/(user)/home' },
+        { name: 'Services', icon: 'square.grid.2x2.fill', route: '/(user)/services' },
+        { name: 'Explore', icon: 'map.fill', route: '/(user)/explore' },
+        { name: 'Bookings', icon: 'ticket.fill', route: '/(user)/my-bookings' },
+        { name: 'Profile', icon: 'person.crop.circle', route: '/(user)/profile' },
     ];
 
-    const handleTabPress = (index: number) => {
-        pagerRef.current?.setPage(index);
-        setSelectedPage(index);
+    const handleTabPress = (route: string) => {
+        router.push(route as any);
+    };
+
+    const isActiveRoute = (route: string) => {
+        return pathname === route;
     };
 
     return (
         <View style={styles.container}>
-            <PagerView
-                style={styles.pager}
-                initialPage={0}
-                ref={pagerRef}
-                onPageSelected={(e) => setSelectedPage(e.nativeEvent.position)}
-            >
-                {tabs.map((tab, index) => (
-                    <View key={index} style={styles.page}>
-                        <tab.component />
-                    </View>
-                ))}
-            </PagerView>
+            <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="home" />
+                <Stack.Screen name="services" />
+                <Stack.Screen name="explore" />
+                <Stack.Screen name="my-bookings" />
+                <Stack.Screen name="profile" />
+                <Stack.Screen
+                    name="(stack)"
+                    options={{
+                        presentation: 'modal',
+                        headerShown: false,
+                    }}
+                />
+            </Stack>
 
             <View style={[styles.tabBar, { backgroundColor: '#fff' }]}>
                 {tabs.map((tab, index) => {
-                    const isActive = selectedPage === index;
+                    const isActive = isActiveRoute(tab.route);
                     return (
                         <TouchableOpacity
                             key={index}
                             style={styles.tab}
-                            onPress={() => handleTabPress(index)}
+                            onPress={() => handleTabPress(tab.route)}
                         >
                             <IconSymbol
-                                size={28}
+                                size={24}
                                 name={tab.icon as any}
                                 color={isActive ? Colors.tint : '#8E8E93'}
                             />
@@ -77,26 +78,31 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    pager: {
-        flex: 1,
-    },
-    page: {
-        flex: 1,
-    },
     tabBar: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         flexDirection: 'row',
         borderTopWidth: 1,
         borderTopColor: '#e5e5e5',
         paddingBottom: 20,
         paddingTop: 8,
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
     tab: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
+        paddingVertical: 4,
     },
     tabLabel: {
-        fontSize: 12,
-        marginTop: 4,
+        fontSize: 11,
+        marginTop: 2,
+        fontWeight: '500',
     },
 });

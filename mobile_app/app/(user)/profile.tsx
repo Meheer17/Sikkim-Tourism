@@ -1,184 +1,359 @@
-import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import MenuSection, { MenuItem } from '@/components/profile/MenuSection';
 import { useAuth } from '@/hooks/useAuth';
 
+// Configuration for menu items - easy to add/remove
+const ACCOUNT_MENU_ITEMS: MenuItem[] = [
+    {
+        id: 'favorites',
+        label: 'My Favorites',
+        icon: 'heart.fill',
+        route: '/(user)/(stack)/favorites',
+    },
+    {
+        id: 'bookings-history',
+        label: 'Booking History',
+        icon: 'clock.fill',
+        route: '/(user)/(stack)/booking-history',
+    },
+    {
+        id: 'saved-places',
+        label: 'Saved Places',
+        icon: 'bookmark.fill',
+        route: '/(user)/(stack)/saved-places',
+    },
+];
+
+const SUPPORT_MENU_ITEMS: MenuItem[] = [
+    {
+        id: 'help',
+        label: 'Help & Support',
+        icon: 'questionmark.circle.fill',
+        route: '/(user)/(stack)/help-support',
+    },
+    {
+        id: 'safety',
+        label: 'Safety Center',
+        icon: 'shield.fill',
+        route: '/(user)/(stack)/safety',
+    },
+    {
+        id: 'terms',
+        label: 'Terms & Conditions',
+        icon: 'doc.text.fill',
+        route: '/(user)/(stack)/terms',
+    },
+    {
+        id: 'privacy',
+        label: 'Privacy Policy',
+        icon: 'lock.fill',
+        route: '/(user)/(stack)/privacy',
+    },
+];
+
+const SETTINGS_MENU_ITEMS: MenuItem[] = [
+    {
+        id: 'notifications',
+        label: 'Notifications',
+        icon: 'bell.fill',
+        route: '/(user)/(stack)/notifications',
+    },
+    {
+        id: 'language',
+        label: 'Language',
+        icon: 'globe',
+        route: '/(user)/(stack)/language',
+    },
+    {
+        id: 'about',
+        label: 'About',
+        icon: 'info.circle.fill',
+        route: '/(user)/(stack)/about',
+    },
+];
+
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
-  const router = useRouter();
+    const router = useRouter();
+    const { user, logout } = useAuth();
 
-  const handleLogout = async () => {
-    await logout();
-    router.replace('/(auth)/login' as any);
-  };
+    const handleMenuItemPress = (item: MenuItem) => {
+        if (item.route) {
+            router.push(item.route as any);
+        }
+    };
 
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor="#D0D0D0"
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="person.crop.circle"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Profile</ThemedText>
-      </ThemedView>
+    const handleLogout = async () => {
+        await logout();
+        router.replace('/(auth)/login' as any);
+    };
 
-      <ThemedView style={styles.profileCard}>
-        <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
-            <ThemedText style={styles.avatarText}>
-              {user?.firstName?.[0]}{user?.lastName?.[0]}
-            </ThemedText>
-          </View>
+    return (
+        <View style={styles.container}>
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Profile Header */}
+                <View style={styles.profileHeader}>
+                    <View style={styles.avatarContainer}>
+                        <View style={styles.avatar}>
+                            <Text style={styles.avatarText}>
+                                {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                            </Text>
+                        </View>
+                        <TouchableOpacity style={styles.editAvatarButton}>
+                            <IconSymbol name="camera.fill" size={16} color="#fff" />
+                        </TouchableOpacity>
+                    </View>
+                    <Text style={styles.userName}>
+                        {user?.firstName} {user?.lastName}
+                    </Text>
+                    <Text style={styles.userEmail}>{user?.email}</Text>
+                    <TouchableOpacity style={styles.editProfileButton}>
+                        <Text style={styles.editProfileText}>Edit Profile</Text>
+                        <IconSymbol name="pencil" size={14} color="#0a7ea4" />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Favorites Card Section */}
+                <View style={styles.favoritesCard}>
+                    <View style={styles.favoritesHeader}>
+                        <Text style={styles.favoritesTitle}>Quick Access</Text>
+                    </View>
+                    <View style={styles.quickAccessGrid}>
+                        <TouchableOpacity
+                            style={styles.quickAccessItem}
+                            onPress={() => router.push('/(user)/(stack)/favorites' as any)}
+                        >
+                            <View style={[styles.quickAccessIcon, { backgroundColor: '#fee2e2' }]}>
+                                <IconSymbol name="heart.fill" size={24} color="#ef4444" />
+                            </View>
+                            <Text style={styles.quickAccessLabel}>Favorites</Text>
+                            <Text style={styles.quickAccessCount}>12</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.quickAccessItem}
+                            onPress={() => router.push('/(user)/(stack)/saved-places' as any)}
+                        >
+                            <View style={[styles.quickAccessIcon, { backgroundColor: '#dbeafe' }]}>
+                                <IconSymbol name="mappin.circle.fill" size={24} color="#3b82f6" />
+                            </View>
+                            <Text style={styles.quickAccessLabel}>Saved</Text>
+                            <Text style={styles.quickAccessCount}>8</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.quickAccessItem}
+                            onPress={() => router.push('/(user)/(stack)/reviews' as any)}
+                        >
+                            <View style={[styles.quickAccessIcon, { backgroundColor: '#fef3c7' }]}>
+                                <IconSymbol name="star.fill" size={24} color="#f59e0b" />
+                            </View>
+                            <Text style={styles.quickAccessLabel}>Reviews</Text>
+                            <Text style={styles.quickAccessCount}>5</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.quickAccessItem}
+                            onPress={() => router.push('/(user)/(stack)/vouchers' as any)}
+                        >
+                            <View style={[styles.quickAccessIcon, { backgroundColor: '#dcfce7' }]}>
+                                <IconSymbol name="ticket.fill" size={24} color="#10b981" />
+                            </View>
+                            <Text style={styles.quickAccessLabel}>Vouchers</Text>
+                            <Text style={styles.quickAccessCount}>3</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+                <View style={styles.padding}>
+                    {/* Account Menu Section */}
+                    <MenuSection
+                        title="Account"
+                        items={ACCOUNT_MENU_ITEMS}
+                        onItemPress={handleMenuItemPress}
+                    />
+
+                    {/* Support Menu Section */}
+                    <MenuSection
+                        title="Help & Support"
+                        items={SUPPORT_MENU_ITEMS}
+                        onItemPress={handleMenuItemPress}
+                    />
+
+                    {/* Settings Menu Section */}
+                    <MenuSection
+                        title="Settings"
+                        items={SETTINGS_MENU_ITEMS}
+                        onItemPress={handleMenuItemPress}
+                    />
+
+                    {/* Logout Button */}
+                    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                        <IconSymbol name="rectangle.portrait.and.arrow.right" size={20} color="#ef4444" />
+                        <Text style={styles.logoutText}>Logout</Text>
+                    </TouchableOpacity>
+                </View>
+                {/* App Version */}
+                <Text style={styles.versionText}>Version 1.0.0</Text>
+            </ScrollView>
         </View>
-
-        <ThemedView style={styles.infoSection}>
-          <ThemedText type="subtitle" style={styles.name}>
-            {user?.firstName} {user?.lastName}
-          </ThemedText>
-          <ThemedText style={styles.email}>{user?.email}</ThemedText>
-        </ThemedView>
-
-        <ThemedView style={styles.detailsSection}>
-          <View style={styles.detailRow}>
-            <ThemedText style={styles.detailLabel}>Role</ThemedText>
-            <View style={styles.roleBadge}>
-              <Text style={styles.roleText}>{user?.role?.toUpperCase()}</Text>
-            </View>
-          </View>
-
-          <View style={styles.detailRow}>
-            <ThemedText style={styles.detailLabel}>Phone</ThemedText>
-            <ThemedText>{user?.phone || 'Not provided'}</ThemedText>
-          </View>
-
-          <View style={styles.detailRow}>
-            <ThemedText style={styles.detailLabel}>Email Verified</ThemedText>
-            <ThemedText>{user?.isEmailVerified ? '✅' : '❌'}</ThemedText>
-          </View>
-
-          <View style={styles.detailRow}>
-            <ThemedText style={styles.detailLabel}>Phone Verified</ThemedText>
-            <ThemedText>{user?.isPhoneVerified ? '✅' : '❌'}</ThemedText>
-          </View>
-        </ThemedView>
-
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
-      </ThemedView>
-
-      <ThemedView style={styles.section}>
-        <ThemedText type="subtitle">About This App</ThemedText>
-        <ThemedText style={styles.description}>
-          This is a demo app showcasing authentication with JWT tokens, refresh token flow,
-          and protected routes. The Mock Login button allows you to test different user roles
-          without a backend server.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+    );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-  },
-  profileCard: {
-    padding: 20,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 16,
-    marginBottom: 16,
-  },
-  avatarContainer: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  infoSection: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  email: {
-    fontSize: 14,
-    color: '#666',
-  },
-  detailsSection: {
-    gap: 12,
-    marginBottom: 20,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  detailLabel: {
-    fontWeight: '600',
-  },
-  roleBadge: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  roleText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  logoutButton: {
-    backgroundColor: '#FF3B30',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  section: {
-    gap: 8,
-    marginBottom: 16,
-  },
-  description: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#666',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#f8f9fa',
+    },
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        paddingBottom: 100,
+    },
+    profileHeader: {
+        backgroundColor: '#fff',
+        paddingTop: 60,
+        paddingBottom: 24,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+    },
+    avatarContainer: {
+        position: 'relative',
+        marginBottom: 16,
+    },
+    avatar: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#0a7ea4',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    avatarText: {
+        fontSize: 36,
+        fontWeight: '700',
+        color: '#fff',
+    },
+    editAvatarButton: {
+        position: 'absolute',
+        right: 0,
+        bottom: 0,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#0a7ea4',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 3,
+        borderColor: '#fff',
+    },
+    padding: {
+        paddingHorizontal: 20,
+    },
+    userName: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#11181C',
+        marginBottom: 4,
+    },
+    userEmail: {
+        fontSize: 14,
+        color: '#687076',
+        marginBottom: 16,
+    },
+    editProfileButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 20,
+        backgroundColor: '#e8f4f8',
+    },
+    editProfileText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#0a7ea4',
+    },
+    favoritesCard: {
+        backgroundColor: '#fff',
+        marginHorizontal: 20,
+        marginTop: 16,
+        marginBottom: 24,
+        borderRadius: 16,
+        padding: 16,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+    },
+    favoritesHeader: {
+        marginBottom: 16,
+    },
+    favoritesTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#11181C',
+    },
+    quickAccessGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+    },
+    quickAccessItem: {
+        flex: 1,
+        minWidth: '45%',
+        alignItems: 'center',
+        paddingVertical: 16,
+    },
+    quickAccessIcon: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    quickAccessLabel: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#687076',
+        marginBottom: 4,
+    },
+    quickAccessCount: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#11181C',
+    },
+    logoutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginHorizontal: 20,
+        marginTop: 16,
+        paddingVertical: 14,
+        borderRadius: 12,
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#fee2e2',
+    },
+    logoutText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#ef4444',
+    },
+    versionText: {
+        fontSize: 12,
+        color: '#9ca3af',
+        textAlign: 'center',
+        marginTop: 24,
+    },
 });
