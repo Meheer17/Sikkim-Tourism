@@ -83,6 +83,13 @@ export default function StackLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="place-details"
+        options={{ 
+          title: 'Place Details',
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

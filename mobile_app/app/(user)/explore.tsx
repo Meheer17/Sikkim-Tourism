@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useRouter } from 'expo-router';
 import PlaceCard, { Place } from '@/components/explore/PlaceCard';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -17,38 +18,79 @@ const MOCK_NEARBY_PLACES: Place[] = [
     distance: '2.5 km',
     rating: 4.8,
     category: 'Religious Site',
+    modelPath: 'rumtek',
   },
   {
     id: '2',
-    name: 'MG Marg',
-    description: 'Popular shopping street and pedestrian zone',
-    distance: '1.2 km',
-    rating: 4.5,
-    category: 'Shopping',
+    name: 'Dubdi Monastery',
+    description: 'Ancient monastery with rich historical significance',
+    distance: '5.4 km',
+    rating: 4.7,
+    category: 'Religious Site',
+    modelPath: 'dubdi',
   },
   {
     id: '3',
-    name: 'Tsomgo Lake',
-    description: 'Glacial lake at high altitude with scenic beauty',
-    distance: '38 km',
+    name: 'Pemayangtse Monastery',
+    description: 'One of the oldest and most important monasteries in Sikkim',
+    distance: '12 km',
     rating: 4.9,
-    category: 'Natural Beauty',
+    category: 'Religious Site',
+    modelPath: 'pemayantse',
   },
   {
     id: '4',
-    name: 'Hanuman Tok',
-    description: 'Temple dedicated to Lord Hanuman with panoramic views',
-    distance: '11 km',
-    rating: 4.6,
-    category: 'Religious Site',
-  },
-  {
-    id: '5',
     name: 'Enchey Monastery',
     description: 'Historic monastery with peaceful surroundings',
     distance: '3.8 km',
     rating: 4.7,
     category: 'Religious Site',
+    modelPath: 'enchey',
+  },
+  {
+    id: '5',
+    name: 'Phensong Monastery',
+    description: 'Serene monastery nestled in the mountains',
+    distance: '8.2 km',
+    rating: 4.6,
+    category: 'Religious Site',
+    modelPath: 'phensong',
+  },
+  {
+    id: '6',
+    name: 'Samdruptse Hill',
+    description: 'Giant statue of Guru Padmasambhava overlooking the valley',
+    distance: '15 km',
+    rating: 4.8,
+    category: 'Monument',
+    modelPath: 'samdruptsehill',
+  },
+  {
+    id: '7',
+    name: 'Kirateshwar Mahadev Temple',
+    description: 'Sacred Hindu temple dedicated to Lord Shiva',
+    distance: '9.5 km',
+    rating: 4.7,
+    category: 'Religious Site',
+    modelPath: 'kirateshwar',
+  },
+  {
+    id: '8',
+    name: 'Rabdentse Ruins',
+    description: 'Ancient royal palace ruins with historical importance',
+    distance: '13 km',
+    rating: 4.6,
+    category: 'Historical Site',
+    modelPath: 'rabdentseruins',
+  },
+  {
+    id: '9',
+    name: 'Tashiding Monastery',
+    description: 'Sacred Buddhist monastery with stunning valley views',
+    distance: '18 km',
+    rating: 4.9,
+    category: 'Religious Site',
+    modelPath: 'tashiding',
   },
 ];
 
@@ -56,82 +98,101 @@ export default function ExploreScreen() {
   const [nearbyPlaces, setNearbyPlaces] = useState<Place[]>(MOCK_NEARBY_PLACES);
   const modalHeight = useRef(new Animated.Value(MODAL_MIN_HEIGHT)).current;
   const [isExpanded, setIsExpanded] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+  const router = useRouter();
 
   const handlePlacePress = (place: Place) => {
-    console.log('Place pressed:', place);
-    // TODO: Navigate to place details or show on map
+    router.push({
+      pathname: '/(user)/(stack)/place-details',
+      params: {
+        id: place.id,
+        name: place.name,
+        description: place.description,
+        distance: place.distance,
+        rating: place.rating?.toString() || '',
+        category: place.category,
+        imageUrl: place.imageUrl || '',
+        modelPath: place.modelPath || '',
+      },
+    });
+  };
+
+  const animateToHeight = (targetHeight: number, expand: boolean) => {
+    setIsExpanded(expand);
+    Animated.spring(modalHeight, {
+      toValue: targetHeight,
+      useNativeDriver: false,
+      tension: 40,
+      friction: 10,
+      velocity: 0,
+    }).start();
   };
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Only activate if dragging vertically more than horizontally
-        return Math.abs(gestureState.dy) > 5;
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        // Only handle vertical drags with minimal movement threshold
+        const isDraggingVertically = Math.abs(gestureState.dy) > Math.abs(gestureState.dx) && Math.abs(gestureState.dy) > 3;
+        return isDraggingVertically;
+      },
+      onPanResponderGrant: () => {
+        setScrollEnabled(false);
+        // Stop any ongoing animation
+        modalHeight.stopAnimation();
       },
       onPanResponderMove: (_, gestureState) => {
-        // Calculate new height based on drag with resistance at edges
         const baseHeight = isExpanded ? MODAL_MAX_HEIGHT : MODAL_MIN_HEIGHT;
-        const newHeight = baseHeight - gestureState.dy;
+        let newHeight = baseHeight - gestureState.dy;
 
-        // Add resistance when dragging beyond boundaries with stricter clamping
-        let clampedHeight;
+        // Apply bounds with resistance
         if (newHeight > MODAL_MAX_HEIGHT) {
           const overflow = newHeight - MODAL_MAX_HEIGHT;
-          clampedHeight = MODAL_MAX_HEIGHT + (overflow * 0.2); // 20% resistance
+          newHeight = MODAL_MAX_HEIGHT + overflow * 0.15;
         } else if (newHeight < MODAL_MIN_HEIGHT) {
           const underflow = MODAL_MIN_HEIGHT - newHeight;
-          clampedHeight = MODAL_MIN_HEIGHT - (underflow * 0.2); // 20% resistance
-        } else {
-          clampedHeight = newHeight;
+          newHeight = MODAL_MIN_HEIGHT - underflow * 0.15;
         }
 
-        // Ensure we never go below a minimum threshold
-        clampedHeight = Math.max(MODAL_MIN_HEIGHT * 0.8, clampedHeight);
-        modalHeight.setValue(clampedHeight);
+        modalHeight.setValue(newHeight);
       },
       onPanResponderRelease: (_, gestureState) => {
-        // Determine if should expand or collapse based on velocity and position
-        const baseHeight = isExpanded ? MODAL_MAX_HEIGHT : MODAL_MIN_HEIGHT;
-        const currentHeight = baseHeight - gestureState.dy;
-        const threshold = (MODAL_MAX_HEIGHT + MODAL_MIN_HEIGHT) / 2;
-
-        let targetHeight = MODAL_MIN_HEIGHT;
-        let shouldExpand = false;
-
-        // Prioritize velocity for quick gestures with adjusted thresholds
-        if (gestureState.vy < -0.5) {
-          // Swiped up quickly
-          targetHeight = MODAL_MAX_HEIGHT;
-          shouldExpand = true;
-        } else if (gestureState.vy > 0.5) {
-          // Swiped down quickly
-          targetHeight = MODAL_MIN_HEIGHT;
-          shouldExpand = false;
-        } else if (Math.abs(gestureState.dy) > 50) {
-          // Use drag distance if significant
-          if (gestureState.dy < 0) {
-            targetHeight = MODAL_MAX_HEIGHT;
-            shouldExpand = true;
-          } else {
-            targetHeight = MODAL_MIN_HEIGHT;
-            shouldExpand = false;
-          }
-        } else {
-          // Use current position threshold
-          if (currentHeight > threshold) {
-            targetHeight = MODAL_MAX_HEIGHT;
-            shouldExpand = true;
-          } else {
-            targetHeight = MODAL_MIN_HEIGHT;
-            shouldExpand = false;
-          }
+        setScrollEnabled(true);
+        
+        const dragDistance = -gestureState.dy;
+        const dragVelocity = -gestureState.vy;
+        
+        // Determine target based on velocity or distance
+        let shouldExpand = isExpanded;
+        
+        // Require more intentional gestures
+        if (Math.abs(dragVelocity) > 1.0) {
+          // Fast swipe - use velocity
+          shouldExpand = dragVelocity > 0;
+        } else if (Math.abs(dragDistance) > 80) {
+          // Slow drag - use distance
+          shouldExpand = dragDistance > 0;
         }
-
-        setIsExpanded(shouldExpand);
+        // If gesture is too small, maintain current state
+        
+        const targetHeight = shouldExpand ? MODAL_MAX_HEIGHT : MODAL_MIN_HEIGHT;
+        
+        // Use smooth timing animation for final snap
         Animated.timing(modalHeight, {
           toValue: targetHeight,
-          duration: 350,
+          duration: 300,
+          useNativeDriver: false,
+        }).start(() => {
+          setIsExpanded(shouldExpand);
+        });
+      },
+      onPanResponderTerminate: () => {
+        setScrollEnabled(true);
+        const targetHeight = isExpanded ? MODAL_MAX_HEIGHT : MODAL_MIN_HEIGHT;
+        Animated.timing(modalHeight, {
+          toValue: targetHeight,
+          duration: 300,
           useNativeDriver: false,
         }).start();
       },
@@ -140,12 +201,7 @@ export default function ExploreScreen() {
 
   const toggleModal = () => {
     const targetHeight = isExpanded ? MODAL_MIN_HEIGHT : MODAL_MAX_HEIGHT;
-    setIsExpanded(!isExpanded);
-    Animated.timing(modalHeight, {
-      toValue: targetHeight,
-      duration: 350,
-      useNativeDriver: false,
-    }).start();
+    animateToHeight(targetHeight, !isExpanded);
   };
 
   return (
@@ -179,38 +235,41 @@ export default function ExploreScreen() {
           { height: modalHeight }
         ]}
       >
-        {/* Handle */}
-        <View
-          style={styles.modalHandle}
-          {...panResponder.panHandlers}
-        >
-          <TouchableOpacity
-            onPress={toggleModal}
-            activeOpacity={0.7}
-            style={styles.handleTouchable}
-          >
-            <View style={styles.handle} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Modal Header */}
-        <View style={styles.modalHeader}>
-          <View>
-            <Text style={styles.modalTitle}>Nearby Places</Text>
-            <Text style={styles.modalSubtitle}>
-              {nearbyPlaces.length} places found
-            </Text>
+        {/* Handle and Header - Combined Draggable Area */}
+        <View {...panResponder.panHandlers}>
+          <View style={styles.modalHandle}>
+            <TouchableOpacity
+              onPress={toggleModal}
+              activeOpacity={0.7}
+              style={styles.handleTouchable}
+            >
+              <View style={styles.handle} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.filterButton}>
-            <IconSymbol name="slider.horizontal.3" size={20} color="#0a7ea4" />
-          </TouchableOpacity>
+
+          {/* Modal Header */}
+          <View style={styles.modalHeader}>
+            <View>
+              <Text style={styles.modalTitle}>Nearby Places</Text>
+              <Text style={styles.modalSubtitle}>
+                {nearbyPlaces.length} places found
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.filterButton}>
+              <IconSymbol name="slider.horizontal.3" size={20} color="#0a7ea4" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Places List */}
         <ScrollView
+          ref={scrollViewRef}
           style={styles.modalScroll}
           contentContainerStyle={styles.modalContent}
           showsVerticalScrollIndicator={false}
+          scrollEnabled={scrollEnabled}
+          bounces={isExpanded}
+          scrollEventThrottle={16}
         >
           {nearbyPlaces.map((place) => (
             <PlaceCard

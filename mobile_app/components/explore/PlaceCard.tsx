@@ -10,6 +10,7 @@ export interface Place {
     rating?: number;
     imageUrl?: string;
     category: string;
+    modelPath?: string;
 }
 
 interface PlaceCardProps {

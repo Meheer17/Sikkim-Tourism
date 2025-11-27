@@ -221,6 +221,12 @@ export const useAuth = (): AuthState & AuthActions => {
 
     const refreshProfile = useCallback(async (): Promise<void> => {
         try {
+            // Skip API call if backend is not available (development mode)
+            if (__DEV__) {
+                console.log('Skipping profile refresh - using cached data in development mode');
+                return;
+            }
+            
             const response = await authService.getProfile();
 
             if (response.success && response.data) {
