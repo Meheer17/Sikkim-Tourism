@@ -88,8 +88,11 @@ export default function HomeScreen() {
                         <Text style={styles.greeting}>Welcome Back!</Text>
                         <Text style={styles.subtitle}>Explore amazing services</Text>
                     </View>
-                    <TouchableOpacity style={styles.notificationButton}>
-                        <IconSymbol name="bell.fill" size={24} color="#0a7ea4" />
+                    <TouchableOpacity 
+                        style={styles.profileButton}
+                        onPress={() => router.push('/(user)/profile' as any)}
+                    >
+                        <IconSymbol name="person.crop.circle.fill" size={32} color="#0a7ea4" />
                     </TouchableOpacity>
                 </View>
 
@@ -111,6 +114,26 @@ export default function HomeScreen() {
                         <Text style={styles.statLabel}>Visited</Text>
                     </View>
                 </View>
+
+                {/* AI Planner Banner */}
+                <TouchableOpacity 
+                    style={styles.aiPlannerBanner}
+                    onPress={() => router.push('/(user)/(stack)/ai-planner' as any)}
+                    activeOpacity={0.8}
+                >
+                    <View style={styles.aiPlannerLeft}>
+                        <View style={styles.aiIconContainer}>
+                            <IconSymbol name="sparkles" size={32} color="#fff" />
+                        </View>
+                        <View style={styles.aiPlannerText}>
+                            <Text style={styles.aiPlannerTitle}>Plan with AI</Text>
+                            <Text style={styles.aiPlannerSubtitle}>
+                                Get personalized travel recommendations
+                            </Text>
+                        </View>
+                    </View>
+                    <IconSymbol name="chevron.right" size={24} color="#fff" />
+                </TouchableOpacity>
 
                 {/* Services Section */}
                 <View style={styles.section}>
@@ -173,10 +196,10 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: '#687076',
     },
-    notificationButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+    profileButton: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
@@ -213,6 +236,48 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#687076',
         marginTop: 4,
+    },
+    aiPlannerBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#667eea',
+        borderRadius: 20,
+        padding: 20,
+        marginBottom: 24,
+        elevation: 4,
+        shadowColor: '#667eea',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+    },
+    aiPlannerLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+        flex: 1,
+    },
+    aiIconContainer: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    aiPlannerText: {
+        flex: 1,
+    },
+    aiPlannerTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#fff',
+        marginBottom: 4,
+    },
+    aiPlannerSubtitle: {
+        fontSize: 14,
+        color: '#fff',
+        opacity: 0.9,
     },
     section: {
         marginBottom: 24,

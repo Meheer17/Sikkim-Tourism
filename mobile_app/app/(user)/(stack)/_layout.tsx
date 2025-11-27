@@ -62,6 +62,27 @@ export default function StackLayout() {
         name="vouchers"
         options={{ title: 'Vouchers' }}
       />
+      <Stack.Screen
+        name="friends"
+        options={{ 
+          title: 'Friends & Location',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="ai-planner"
+        options={{ 
+          title: 'AI Travel Planner',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="ai-planner-results"
+        options={{ 
+          title: 'Travel Plans',
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

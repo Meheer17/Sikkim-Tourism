@@ -15,7 +15,7 @@ export default function UserLayout() {
         { name: 'Services', icon: 'square.grid.2x2.fill', route: '/(user)/services' },
         { name: 'Explore', icon: 'map.fill', route: '/(user)/explore' },
         { name: 'Bookings', icon: 'ticket.fill', route: '/(user)/my-bookings' },
-        { name: 'Profile', icon: 'person.crop.circle', route: '/(user)/profile' },
+        { name: 'Chat', icon: 'bubble.left.and.bubble.right.fill', route: '/(user)/community-chat' },
     ];
 
     const handleTabPress = (route: string) => {
@@ -26,6 +26,9 @@ export default function UserLayout() {
         return pathname === route;
     };
 
+    // Hide tab bar on community chat screen
+    const shouldShowTabBar = !pathname.includes('/community-chat');
+
     return (
         <View style={styles.container}>
             <Stack screenOptions={{ headerShown: false }}>
@@ -35,6 +38,7 @@ export default function UserLayout() {
                 <Stack.Screen name="explore" />
                 <Stack.Screen name="my-bookings" />
                 <Stack.Screen name="profile" />
+                <Stack.Screen name="community-chat" />
                 <Stack.Screen
                     name="(stack)"
                     options={{
@@ -44,32 +48,34 @@ export default function UserLayout() {
                 />
             </Stack>
 
-            <View style={[styles.tabBar, { backgroundColor: '#fff' }]}>
-                {tabs.map((tab, index) => {
-                    const isActive = isActiveRoute(tab.route);
-                    return (
-                        <TouchableOpacity
-                            key={index}
-                            style={styles.tab}
-                            onPress={() => handleTabPress(tab.route)}
-                        >
-                            <IconSymbol
-                                size={24}
-                                name={tab.icon as any}
-                                color={isActive ? Colors.tint : '#8E8E93'}
-                            />
-                            <ThemedText
-                                style={[
-                                    styles.tabLabel,
-                                    { color: isActive ? Colors.tint : '#8E8E93' },
-                                ]}
+            {shouldShowTabBar && (
+                <View style={[styles.tabBar, { backgroundColor: '#fff' }]}>
+                    {tabs.map((tab, index) => {
+                        const isActive = isActiveRoute(tab.route);
+                        return (
+                            <TouchableOpacity
+                                key={index}
+                                style={styles.tab}
+                                onPress={() => handleTabPress(tab.route)}
                             >
-                                {tab.name}
-                            </ThemedText>
-                        </TouchableOpacity>
-                    );
-                })}
-            </View>
+                                <IconSymbol
+                                    size={24}
+                                    name={tab.icon as any}
+                                    color={isActive ? Colors.tint : '#8E8E93'}
+                                />
+                                <ThemedText
+                                    style={[
+                                        styles.tabLabel,
+                                        { color: isActive ? Colors.tint : '#8E8E93' },
+                                    ]}
+                                >
+                                    {tab.name}
+                                </ThemedText>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+            )}
         </View>
     );
 }

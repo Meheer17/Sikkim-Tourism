@@ -56,6 +56,12 @@ const SUPPORT_MENU_ITEMS: MenuItem[] = [
 
 const SETTINGS_MENU_ITEMS: MenuItem[] = [
     {
+        id: 'friends',
+        label: 'Friends & Location',
+        icon: 'person.2.fill',
+        route: '/(user)/(stack)/friends',
+    },
+    {
         id: 'notifications',
         label: 'Notifications',
         icon: 'bell.fill',
