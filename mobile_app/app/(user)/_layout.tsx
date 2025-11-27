@@ -19,11 +19,28 @@ export default function UserLayout() {
     ];
 
     const handleTabPress = (route: string) => {
-        router.push(route as any);
+        // Extract page names for comparison
+        const routePage = route.split('/').pop();
+        const currentPage = pathname.split('/').pop();
+        const isSamePage = routePage === currentPage;
+        
+        console.log('Tab pressed:', route, 'Current:', pathname, 'Same?', isSamePage);
+        
+        if (!isSamePage) {
+            // Use push for chat to enable back gesture, replace for others
+            if (route.includes('community-chat')) {
+                router.push(route as any);
+            } else {
+                router.replace(route as any);
+            }
+        }
     };
 
     const isActiveRoute = (route: string) => {
-        return pathname === route;
+        // Extract the page name from the route (e.g., '/home' from '/(user)/home')
+        const routePage = route.split('/').pop();
+        const currentPage = pathname.split('/').pop();
+        return routePage === currentPage || pathname === route;
     };
 
     // Hide tab bar on community chat screen
@@ -31,19 +48,20 @@ export default function UserLayout() {
 
     return (
         <View style={styles.container}>
-            <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="home" />
-                <Stack.Screen name="services" />
-                <Stack.Screen name="explore" />
-                <Stack.Screen name="my-bookings" />
-                <Stack.Screen name="profile" />
-                <Stack.Screen name="community-chat" />
+            <Stack screenOptions={{ headerShown: false, gestureEnabled: false }}>
+                <Stack.Screen name="index" options={{ gestureEnabled: false }} />
+                <Stack.Screen name="home" options={{ gestureEnabled: false }} />
+                <Stack.Screen name="services" options={{ gestureEnabled: false }} />
+                <Stack.Screen name="explore" options={{ gestureEnabled: false }} />
+                <Stack.Screen name="my-bookings" options={{ gestureEnabled: false }} />
+                <Stack.Screen name="profile" options={{ gestureEnabled: false }} />
+                <Stack.Screen name="community-chat" options={{ gestureEnabled: true }} />
                 <Stack.Screen
                     name="(stack)"
                     options={{
                         presentation: 'modal',
                         headerShown: false,
+                        gestureEnabled: true,
                     }}
                 />
             </Stack>
@@ -55,9 +73,12 @@ export default function UserLayout() {
                         return (
                             <TouchableOpacity
                                 key={index}
-                                style={styles.tab}
+                                style={[styles.tab, isActive && styles.activeTab]}
                                 onPress={() => handleTabPress(tab.route)}
+                                activeOpacity={0.7}
+                                disabled={isActive}
                             >
+                                {isActive && <View style={styles.activeIndicator} />}
                                 <IconSymbol
                                     size={24}
                                     name={tab.icon as any}
@@ -66,7 +87,10 @@ export default function UserLayout() {
                                 <ThemedText
                                     style={[
                                         styles.tabLabel,
-                                        { color: isActive ? Colors.tint : '#8E8E93' },
+                                        { 
+                                            color: isActive ? Colors.tint : '#8E8E93',
+                                            fontWeight: isActive ? '600' : '500',
+                                        },
                                     ]}
                                 >
                                     {tab.name}
@@ -104,7 +128,19 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 4,
+        paddingVertical: 8,
+        position: 'relative',
+    },
+    activeTab: {
+        backgroundColor: '#f0f9ff',
+    },
+    activeIndicator: {
+        position: 'absolute',
+        top: 0,
+        width: 40,
+        height: 3,
+        backgroundColor: Colors.tint,
+        borderRadius: 1.5,
     },
     tabLabel: {
         fontSize: 11,

@@ -9,7 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show nearby places and provide personalized recommendations.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location to show nearby places and provide personalized recommendations.",
+        "NSMotionUsageDescription": "This app needs access to motion and fitness data to track your activities and provide personalized travel insights."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,6 +22,16 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACTIVITY_RECOGNITION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
@@ -27,6 +42,13 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "This app needs access to your location to show nearby places and provide personalized recommendations.",
+          "locationWhenInUsePermission": "This app needs access to your location to show nearby places and provide personalized recommendations."
+        }
+      ],
       [
         "expo-splash-screen",
         {

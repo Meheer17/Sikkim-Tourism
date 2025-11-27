@@ -90,6 +90,7 @@ const MAPPING = {
   'arrow.left': 'arrow-back',
   'arrow.up': 'arrow-upward',
   'arrow.down': 'arrow-downward',
+  'arrow.triangle.turn.up.right.diamond.fill': 'directions',
   
   // Social & Sharing
   'square.and.arrow.up': 'share',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
 export interface Place {
@@ -11,6 +11,8 @@ export interface Place {
     imageUrl?: string;
     category: string;
     modelPath?: string;
+    latitude?: number;
+    longitude?: number;
 }
 
 interface PlaceCardProps {
@@ -19,6 +21,40 @@ interface PlaceCardProps {
 }
 
 export default function PlaceCard({ place, onPress }: PlaceCardProps) {
+    const handleDirections = (e: any) => {
+        // Stop propagation to prevent card press
+        e.stopPropagation();
+        
+        if (!place.latitude || !place.longitude) {
+            Alert.alert('Error', 'Location coordinates not available for this place');
+            return;
+        }
+
+        const scheme = Platform.select({
+            ios: 'maps:',
+            android: 'geo:',
+        });
+        const latLng = `${place.latitude},${place.longitude}`;
+        const label = encodeURIComponent(place.name);
+        
+        const url = Platform.select({
+            ios: `${scheme}?q=${label}&ll=${latLng}`,
+            android: `${scheme}${latLng}?q=${label}`,
+        });
+
+        if (url) {
+            Linking.canOpenURL(url).then((supported) => {
+                if (supported) {
+                    Linking.openURL(url);
+                } else {
+                    // Fallback to Google Maps web
+                    const webUrl = `https://www.google.com/maps/search/?api=1&query=${latLng}`;
+                    Linking.openURL(webUrl);
+                }
+            });
+        }
+    };
+
     return (
         <TouchableOpacity
             style={styles.card}
@@ -56,6 +92,16 @@ export default function PlaceCard({ place, onPress }: PlaceCardProps) {
                         <IconSymbol name="location.fill" size={14} color="#687076" />
                         <Text style={styles.distance}>{place.distance}</Text>
                     </View>
+                    {place.latitude && place.longitude && (
+                        <TouchableOpacity 
+                            style={styles.directionsButton}
+                            onPress={handleDirections}
+                            activeOpacity={0.7}
+                        >
+                            <IconSymbol name="arrow.triangle.turn.up.right.diamond.fill" size={14} color="#0a7ea4" />
+                            <Text style={styles.directionsText}>Directions</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
         </TouchableOpacity>
@@ -133,15 +179,33 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        gap: 12,
     },
     distanceContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
+        flex: 1,
+        flexShrink: 1,
     },
     distance: {
         fontSize: 13,
         color: '#687076',
         fontWeight: '500',
+    },
+    directionsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 5,
+        backgroundColor: '#e8f4f8',
+        borderRadius: 8,
+        flexShrink: 0,
+    },
+    directionsText: {
+        fontSize: 12,
+        color: '#0a7ea4',
+        fontWeight: '600',
     },
 });
