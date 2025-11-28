@@ -5,22 +5,26 @@ from fastapi import HTTPException, status
 
 from app.core.database import get_database
 from app.models.bussiness import BussinessCreate, BussinessUpdate, BussinessInDB, Bussiness
+from app.models.location import LocationCreate, LocationType
+from app.services.location_service import location_service
 
 
 class BussinessService:
     """Service for bussiness operations"""
     
     def __init__(self):
-        self.db = get_database()
-        self.collection = self.db.bussiness
-        self.user_bussiness_collection = self.db.user_bussiness
+        pass
     
     async def get_by_id(self, bussiness_id: str) -> Optional[BussinessInDB]:
         """Get bussiness by ID"""
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
+        collection = db.bussiness
         if not ObjectId.is_valid(bussiness_id):
             return None
         
-        bussiness = await self.collection.find_one({"_id": ObjectId(bussiness_id)})
+        bussiness = await collection.find_one({"_id": ObjectId(bussiness_id)})
         if bussiness:
             return BussinessInDB(**bussiness)
         return None
@@ -35,13 +39,17 @@ class BussinessService:
         type_id: Optional[str] = None
     ) -> List[Bussiness]:
         """Get all businesses with pagination and filters"""
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
+        collection = db.bussiness
         query = {}
         
         # Filter by type_id if provided
         if type_id:
             query["type_id"] = type_id
         
-        cursor = self.collection.find(query).skip(skip).limit(limit)
+        cursor = collection.find(query).skip(skip).limit(limit)
         businesses = []
         async for bussiness in cursor:
             bus_db = BussinessInDB(**bussiness)
@@ -61,8 +69,13 @@ class BussinessService:
     
     async def get_by_owner(self, user_id: str, skip: int = 0, limit: int = 10) -> List[Bussiness]:
         """Get businesses owned by a user"""
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
+        collection = db.bussiness
+        user_bussiness_collection = db.user_bussiness
         # First get the business IDs from user_bussiness where user is owner
-        cursor = self.user_bussiness_collection.find({
+        cursor = user_bussiness_collection.find({
             "uid": user_id,
             "role": "owner"
         })
@@ -75,7 +88,7 @@ class BussinessService:
             return []
         
         # Get the businesses
-        cursor = self.collection.find({"_id": {"$in": bussiness_ids}}).skip(skip).limit(limit)
+        cursor = collection.find({"_id": {"$in": bussiness_ids}}).skip(skip).limit(limit)
         businesses = []
         async for bussiness in cursor:
             bus_db = BussinessInDB(**bussiness)
@@ -95,16 +108,36 @@ class BussinessService:
     
     async def create(self, bussiness_create: BussinessCreate, user_id: str) -> Bussiness:
         """Create a new bussiness"""
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
+        collection = db.bussiness
+        user_bussiness_collection = db.user_bussiness
+        l_id = bussiness_create.l_id
+        if not l_id:
+            # Create location
+            location_create = LocationCreate(
+                name=bussiness_create.name,
+                description=bussiness_create.description,
+                short_description=bussiness_create.short_description,
+                position=bussiness_create.position,
+                metadata={},
+                type=LocationType.bussiness
+            )
+            location = await location_service.create(location_create)
+            l_id = location.id
+        
         bussiness_dict = bussiness_create.model_dump()
+        bussiness_dict["l_id"] = l_id
         bussiness_dict["open_hours"] = bussiness_create.open_hours.model_dump()
         bussiness_dict["created_at"] = datetime.utcnow()
         bussiness_dict["updated_at"] = datetime.utcnow()
         
-        result = await self.collection.insert_one(bussiness_dict)
+        result = await collection.insert_one(bussiness_dict)
         created_bussiness = await self.get_by_id(str(result.inserted_id))
         
         # Create user_bussiness relationship with owner role
-        await self.user_bussiness_collection.insert_one({
+        await user_bussiness_collection.insert_one({
             "uid": user_id,
             "bid": str(result.inserted_id),
             "role": "owner",
@@ -127,6 +160,10 @@ class BussinessService:
     
     async def update(self, bussiness_id: str, bussiness_update: BussinessUpdate) -> Bussiness:
         """Update bussiness"""
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
+        collection = db.bussiness
         bussiness = await self.get_by_id(bussiness_id)
         if not bussiness:
             raise HTTPException(
@@ -141,7 +178,7 @@ class BussinessService:
         if "open_hours" in update_data and update_data["open_hours"]:
             update_data["open_hours"] = update_data["open_hours"].model_dump()
         
-        await self.collection.update_one(
+        await collection.update_one(
             {"_id": ObjectId(bussiness_id)},
             {"$set": update_data}
         )
@@ -163,13 +200,18 @@ class BussinessService:
     
     async def delete(self, bussiness_id: str) -> bool:
         """Delete bussiness"""
+        db = get_database()
+        if db is None:
+            return False
+        collection = db.bussiness
+        user_bussiness_collection = db.user_bussiness
         if not ObjectId.is_valid(bussiness_id):
             return False
         
-        result = await self.collection.delete_one({"_id": ObjectId(bussiness_id)})
+        result = await collection.delete_one({"_id": ObjectId(bussiness_id)})
         
         # Also delete user_bussiness relationships
-        await self.user_bussiness_collection.delete_many({"bid": bussiness_id})
+        await user_bussiness_collection.delete_many({"bid": bussiness_id})
         
         return result.deleted_count > 0
 

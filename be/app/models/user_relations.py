@@ -1,23 +1,17 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, BeforeValidator, ConfigDict
 from datetime import datetime
 from bson import ObjectId
 from enum import Enum
+from typing import Annotated
 
 
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+def validate_object_id(v):
+    if not ObjectId.is_valid(v):
+        raise ValueError("Invalid objectid")
+    return ObjectId(v)
 
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid objectid")
-        return ObjectId(v)
 
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
+PyObjectId = Annotated[ObjectId, BeforeValidator(validate_object_id)]
 
 
 class UserBussinessRole(str, Enum):
@@ -53,10 +47,7 @@ class UserBussinessInDB(UserBussinessBase):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, json_encoders={ObjectId: str})
 
 
 class UserBussiness(UserBussinessBase):
@@ -64,9 +55,7 @@ class UserBussiness(UserBussinessBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})
 
 
 # USER_COMMUNITIES model
@@ -90,15 +79,10 @@ class UserCommunitiesCreate(UserCommunitiesBase):
 class UserCommunitiesInDB(UserCommunitiesBase):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
 
-    class Config:
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, json_encoders={ObjectId: str})
 
 
 class UserCommunities(UserCommunitiesBase):
     id: str
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})
