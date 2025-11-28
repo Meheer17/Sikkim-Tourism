@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Stack, useRouter, usePathname } from 'expo-router';
 import Animated, { SlideInUp, SlideOutDown, FadeInDown, Easing } from 'react-native-reanimated';
@@ -49,8 +49,8 @@ export default function UserLayout() {
         return routePage === currentPage || pathname === route;
     };
 
-    // Hide tab bar on community chat screen
-    const shouldShowTabBar = !pathname.includes('/community-chat');
+    // Hide tab bar on community chat and immersive experience screens
+    const shouldShowTabBar = !pathname.includes('/community-chat') && !pathname.includes('/immersive-experience');
 
     return (
         <View style={styles.container}>

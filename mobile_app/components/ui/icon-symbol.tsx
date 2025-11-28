@@ -1,9 +1,9 @@
 // Fallback for using MaterialIcons on Android and web.
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { SymbolWeight, SymbolViewProps } from 'expo-symbols';
+import { SymbolView, SymbolViewProps, SymbolWeight } from 'expo-symbols';
 import { ComponentProps } from 'react';
-import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
+import { OpaqueColorValue, Platform, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
 type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
 type IconSymbolName = keyof typeof MAPPING;
@@ -24,12 +24,14 @@ const MAPPING = {
   // Common actions
   'magnifyingglass': 'search',
   'plus': 'add',
+  'plus.circle.fill': 'add-circle',
   'minus': 'remove',
   'xmark': 'close',
   'ellipsis': 'more-horiz',
   
   // Profile & User
   'person.crop.circle.fill': 'account-circle',
+  'person.circle.fill': 'account-circle',
   'person.fill': 'person',
   'person.2.fill': 'people',
   
@@ -65,9 +67,11 @@ const MAPPING = {
   'cart.fill': 'shopping-cart',
   'creditcard.fill': 'payment',
   'indianrupeesign': 'currency-rupee',
+  'indianrupeesign.circle.fill': 'currency-rupee',
   
   // Settings & Info
   'gear': 'settings',
+  'gearshape.fill': 'settings',
   'slider.horizontal.3': 'tune',
   'info.circle.fill': 'info',
   'questionmark.circle.fill': 'help',
@@ -75,6 +79,7 @@ const MAPPING = {
   
   // Security & Privacy
   'lock.fill': 'lock',
+  'lock.shield.fill': 'security',
   'shield.fill': 'security',
   'eye.fill': 'visibility',
   'eye.slash.fill': 'visibility-off',
@@ -113,18 +118,31 @@ const MAPPING = {
   'pause.fill': 'pause',
   'speaker.wave.2.fill': 'volume-up',
   
-  // Miscellaneous
-  'sparkles': 'auto-awesome',
-  'globe': 'language',
-  'building.columns.fill': 'account-balance',
-  'car.fill': 'directions-car',
-  'mountain.2.fill': 'terrain',
-  'water.waves': 'waves',
-  'cube.fill': 'view-in-ar',
+  // Charts & Analytics
+  'chart.bar.fill': 'bar-chart',
+  'chart.pie.fill': 'pie-chart',
+  
+  // Layout & Grid
+  'rectangle.3.offgrid.fill': 'view-module',
   'square.grid.2x2.fill': 'grid-view',
+  
+  // User Management
+  'person.badge.key.fill': 'admin-panel-settings',
+  'person.badge.plus': 'person-add',
+  'person.badge.plus.fill': 'person-add',
+  
+  // Additional icons used in business screens
   'pencil': 'edit',
-  'trash.fill': 'delete',
-  'rectangle.portrait.and.arrow.right': 'logout',
+  'briefcase.fill': 'work',
+  'banknote.fill': 'account-balance-wallet',
+  
+  // Additional icons for immersive experience
+  'hand.draw.fill': 'gesture',
+  'arrow.up.circle': 'arrow-circle-up',
+  'arrow.down.circle': 'arrow-circle-down',
+  
+  // Additional icons for organization screens
+  'person.3.fill': 'groups',
 } as IconMapping;
 
 /**
@@ -137,12 +155,33 @@ export function IconSymbol({
   size = 24,
   color,
   style,
+  weight = 'regular',
 }: {
   name: IconSymbolName;
   size?: number;
   color: string | OpaqueColorValue;
-  style?: StyleProp<TextStyle>;
+  style?: StyleProp<TextStyle | ViewStyle>;
   weight?: SymbolWeight;
 }) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+  // Use native SF Symbols on iOS
+  if (Platform.OS === 'ios') {
+    return (
+      <SymbolView
+        weight={weight}
+        tintColor={color}
+        resizeMode="scaleAspectFit"
+        name={name}
+        style={[
+          {
+            width: size,
+            height: size,
+          },
+          style as StyleProp<ViewStyle>,
+        ]}
+      />
+    );
+  }
+
+  // Use Material Icons on Android and web
+  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style as StyleProp<TextStyle>} />;
 }

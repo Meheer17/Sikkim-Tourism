@@ -1,17 +1,18 @@
-import { DefaultTheme, DarkTheme, ThemeProvider } from '@react-navigation/native';
+import { DefaultTheme, DarkTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import Toast from 'react-native-toast-message';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { Colors } from '@/constants/theme';
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme() ?? 'light';
+function RootNavigator() {
+  const { actualTheme } = useTheme();
+  const colorScheme = actualTheme ?? 'light';
   const backgroundColor = Colors[colorScheme].background;
   
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor } }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />
@@ -21,8 +22,16 @@ export default function RootLayout() {
         <Stack.Screen name="(organization)" />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal', headerShown: true }} />
       </Stack>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} backgroundColor={backgroundColor} translucent={false} />
       <Toast />
+    </NavigationThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootNavigator />
     </ThemeProvider>
   );
 }

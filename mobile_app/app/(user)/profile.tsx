@@ -5,6 +5,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import MenuSection, { MenuItem } from '@/components/profile/MenuSection';
 import { useAuth } from '@/hooks/useAuth';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import ThemeToggle from '@/components/common/ThemeToggle';
+
 
 // Configuration for menu items - easy to add/remove
 const ACCOUNT_MENU_ITEMS: MenuItem[] = [
@@ -206,7 +208,12 @@ export default function ProfileScreen() {
                         items={SETTINGS_MENU_ITEMS}
                         onItemPress={handleMenuItemPress}
                     />
+                </View>
 
+                {/* Theme Toggle */}
+                <ThemeToggle />
+
+                <View style={styles.padding}>
                     {/* Logout Button */}
                     <TouchableOpacity style={[styles.logoutButton, { backgroundColor: cardBg }]} onPress={handleLogout}>
                         <IconSymbol name="rectangle.portrait.and.arrow.right" size={20} color="#ef4444" />

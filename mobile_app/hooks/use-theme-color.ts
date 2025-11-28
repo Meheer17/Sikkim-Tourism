@@ -3,7 +3,7 @@
  */
 
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/contexts/ThemeContext';
 
 type ThemeKeys = keyof typeof Colors.light;
 
@@ -11,7 +11,8 @@ export function useThemeColor(
   colorNameOrProps: ThemeKeys | { light?: string; dark?: string },
   colorName?: ThemeKeys
 ) {
-  const theme = useColorScheme() ?? 'light';
+  const { actualTheme } = useTheme();
+  const theme = actualTheme ?? 'light';
   
   // If first argument is a string, treat it as colorName
   if (typeof colorNameOrProps === 'string') {

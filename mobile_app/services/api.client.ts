@@ -146,7 +146,13 @@ class ApiClient {
             path: error.config?.url || '',
         };
 
-        // Log errors
+        // Don't log network errors in development mode (backend not running)
+        if (__DEV__ && (error.code === 'ERR_NETWORK' || error.message === 'Network Error')) {
+            console.warn('⚠️ Network error detected - Backend API may not be running');
+            return;
+        }
+
+        // Log other errors
         console.error('❌ API Error:', apiError);
 
         // Don't show toast for network errors in development mode

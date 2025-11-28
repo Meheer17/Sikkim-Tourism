@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -10,7 +10,9 @@ import {
     Modal,
 } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { AdminUser, UserRole, RoleAssignment } from '@/types/admin.types';
+import { AdminUser, UserRole } from '@/types/admin.types';
+import { useApi } from '@/hooks/useApi';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 // Mock data - replace with actual API
 const MOCK_USERS: AdminUser[] = [
@@ -102,12 +104,14 @@ export default function AdminRolesScreen() {
     const [showRoleModal, setShowRoleModal] = useState(false);
     const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
     const [reason, setReason] = useState('');
+    const { put: updateUserRole } = useApi();
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
 
-    useEffect(() => {
-        filterUsers();
-    }, [searchQuery, users]);
-
-    const filterUsers = () => {
+    const filterUsers = useCallback(() => {
         if (searchQuery.trim()) {
             const filtered = users.filter(u =>
                 u.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -118,7 +122,11 @@ export default function AdminRolesScreen() {
         } else {
             setFilteredUsers(users);
         }
-    };
+    }, [users, searchQuery]);
+
+    useEffect(() => {
+        filterUsers();
+    }, [filterUsers]);
 
     const handleUserPress = (user: AdminUser) => {
         setSelectedUser(user);

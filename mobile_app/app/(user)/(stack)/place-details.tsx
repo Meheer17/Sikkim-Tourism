@@ -34,6 +34,14 @@ export default function PlaceDetailsScreen() {
     }
   };
 
+  const handleOpen360Experience = () => {
+    // Navigate to the immersive 360 experience screen
+    router.push({
+      pathname: '/(user)/(stack)/immersive-experience',
+      params: { placeId: place.id || 'rumtek-monastery' },
+    } as any);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: background }]}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -91,18 +99,34 @@ export default function PlaceDetailsScreen() {
             <Text style={[styles.description, { color: muted }]}>{place.description}</Text>
           </View>
 
-          {/* Immersive View Button */}
-          {place.modelPath && (
-            <TouchableOpacity 
-              style={[styles.immersiveButton, { backgroundColor: tint, shadowColor: tint as string }]}
-              onPress={handleOpenImmersiveView}
-              activeOpacity={0.8}
-            >
-              <IconSymbol name="cube.fill" size={24} color="#fff" />
-              <Text style={styles.immersiveButtonText}>Open Immersive 3D View</Text>
-              <IconSymbol name="arrow.right" size={20} color="#fff" />
-            </TouchableOpacity>
-          )}
+          {/* Immersive Experience Buttons */}
+          <View style={styles.immersiveButtonsContainer}>
+            {/* 360 Experience Button */}
+            {place.category === 'Religious Site' && (
+              <TouchableOpacity 
+                style={[styles.immersiveButton, { backgroundColor: tint, shadowColor: tint as string }]}
+                onPress={handleOpen360Experience}
+                activeOpacity={0.8}
+              >
+                <IconSymbol name="arrow.triangle.turn.up.right.diamond.fill" size={24} color="#fff" />
+                <Text style={styles.immersiveButtonText}>360° Virtual Tour</Text>
+                <IconSymbol name="arrow.right" size={20} color="#fff" />
+              </TouchableOpacity>
+            )}
+
+            {/* 3D Model View Button */}
+            {place.modelPath && (
+              <TouchableOpacity 
+                style={[styles.immersiveButton, { backgroundColor: '#8b5cf6', shadowColor: '#8b5cf6' }]}
+                onPress={handleOpenImmersiveView}
+                activeOpacity={0.8}
+              >
+                <IconSymbol name="cube.fill" size={24} color="#fff" />
+                <Text style={styles.immersiveButtonText}>3D Model View</Text>
+                <IconSymbol name="arrow.right" size={20} color="#fff" />
+              </TouchableOpacity>
+            )}
+          </View>
 
           {/* Additional Information */}
           <View style={styles.section}>
@@ -264,6 +288,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
   },
+  immersiveButtonsContainer: {
+    marginBottom: 24,
+    gap: 12,
+  },
   immersiveButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -271,7 +299,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
-    marginBottom: 24,
     gap: 12,
     elevation: 4,
     shadowOffset: { width: 0, height: 4 },

@@ -216,6 +216,16 @@ export const useAuth = (): AuthState & AuthActions => {
                 isAuthenticated: false,
                 error: null,
             });
+
+            // Don't show error toast for network errors in development mode
+            const isNetworkError = error.code === 'ERR_NETWORK' || error.message === 'Network Error';
+            if (!__DEV__ || !isNetworkError) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Logout Error',
+                    text2: 'There was an issue logging out. You have been logged out locally.',
+                });
+            }
         }
     }, []);
 
