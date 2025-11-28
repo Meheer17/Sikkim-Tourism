@@ -6,6 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useRouter } from 'expo-router';
 import PlaceCard, { Place } from '@/components/explore/PlaceCard';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_HEIGHT = SCREEN_HEIGHT * 0.4;
@@ -148,6 +149,16 @@ export default function ExploreScreen() {
   const mapRef = useRef<MapView>(null);
   const router = useRouter();
   const { permissions, requestLocationPermission, getCurrentLocation } = usePermissions();
+
+  // Theming
+  const screenBg = useThemeColor('background');
+  const cardBg = useThemeColor('card');
+  const border = useThemeColor('border');
+  const text = useThemeColor('text');
+  const muted = useThemeColor('mutedText');
+  const tint = useThemeColor('tint');
+  const controlBg = useThemeColor('controlBg');
+  const soft = useThemeColor('tintSoftBg');
 
   // Clamp coordinates to stay within Sikkim and adjacent areas
   const clampRegion = (region: typeof SIKKIM_REGION) => {
@@ -434,9 +445,9 @@ export default function ExploreScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: screenBg }]}>
       {/* Map Container with OpenStreetMap */}
-      <View style={styles.mapContainer}>
+      <View style={[styles.mapContainer, { backgroundColor: soft as string }]}>
         {!mapError ? (
           <>
             <MapView
@@ -451,8 +462,8 @@ export default function ExploreScreen() {
               onRegionChangeComplete={handleRegionChange}
               mapType="standard"
               loadingEnabled={true}
-              loadingIndicatorColor="#0a7ea4"
-              loadingBackgroundColor="#e8f4f8"
+              loadingIndicatorColor={tint}
+              loadingBackgroundColor={soft as string}
               minZoomLevel={8}
               maxZoomLevel={15}
               // onError={() => setMapError(true)}
@@ -468,7 +479,7 @@ export default function ExploreScreen() {
                     title={place.name}
                     description={place.description}
                     onPress={() => handleMarkerPress(place)}
-                    pinColor="#0a7ea4"
+                    pinColor={tint as string}
                   />
                 )
               ))}
@@ -476,31 +487,31 @@ export default function ExploreScreen() {
           </>
         ) : (
           <View style={styles.mapPlaceholder}>
-            <IconSymbol name="map.fill" size={64} color="#0a7ea4" />
-            <Text style={styles.mapPlaceholderText}>Map Unavailable</Text>
-            <Text style={styles.mapSubtext}>Configure Google Maps API key</Text>
-            <Text style={styles.mapSubtext}>See MAP_SETUP.md for instructions</Text>
+            <IconSymbol name="map.fill" size={64} color={tint} />
+            <Text style={[styles.mapPlaceholderText, { color: text }]}>Map Unavailable</Text>
+            <Text style={[styles.mapSubtext, { color: muted }]}>Configure Google Maps API key</Text>
+            <Text style={[styles.mapSubtext, { color: muted }]}>See MAP_SETUP.md for instructions</Text>
           </View>
         )}
 
         {/* Map Controls */}
         <View style={styles.mapControls}>
           <TouchableOpacity 
-            style={[styles.controlButton, isLoadingLocation && styles.controlButtonDisabled]}
+            style={[styles.controlButton, { backgroundColor: controlBg }, isLoadingLocation && styles.controlButtonDisabled]}
             onPress={handleGetUserLocation}
             disabled={isLoadingLocation}
           >
             {isLoadingLocation ? (
-              <ActivityIndicator size="small" color="#0a7ea4" />
+              <ActivityIndicator size="small" color={tint} />
             ) : (
-              <IconSymbol name="location.fill" size={24} color="#0a7ea4" />
+              <IconSymbol name="location.fill" size={24} color={tint} />
             )}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.controlButton} onPress={handleZoomIn}>
-            <IconSymbol name="plus" size={24} color="#11181C" />
+          <TouchableOpacity style={[styles.controlButton, { backgroundColor: controlBg }]} onPress={handleZoomIn}>
+            <IconSymbol name="plus" size={24} color={text} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.controlButton} onPress={handleZoomOut}>
-            <IconSymbol name="minus" size={24} color="#11181C" />
+          <TouchableOpacity style={[styles.controlButton, { backgroundColor: controlBg }]} onPress={handleZoomOut}>
+            <IconSymbol name="minus" size={24} color={text} />
           </TouchableOpacity>
         </View>
       </View>
@@ -509,7 +520,7 @@ export default function ExploreScreen() {
       <Animated.View
         style={[
           styles.modalContainer,
-          { height: modalHeight }
+          { height: modalHeight, backgroundColor: cardBg }
         ]}
       >
         {/* Handle and Header - Combined Draggable Area */}
@@ -520,20 +531,20 @@ export default function ExploreScreen() {
               activeOpacity={0.7}
               style={styles.handleTouchable}
             >
-              <View style={styles.handle} />
+              <View style={[styles.handle, { backgroundColor: border }]} />
             </TouchableOpacity>
           </View>
 
           {/* Modal Header */}
           <View style={styles.modalHeader}>
             <View>
-              <Text style={styles.modalTitle}>Nearby Places</Text>
-              <Text style={styles.modalSubtitle}>
+              <Text style={[styles.modalTitle, { color: text }]}>Nearby Places</Text>
+              <Text style={[styles.modalSubtitle, { color: muted }]}>
                 {nearbyPlaces.length} places found
               </Text>
             </View>
-            <TouchableOpacity style={styles.filterButton}>
-              <IconSymbol name="slider.horizontal.3" size={20} color="#0a7ea4" />
+            <TouchableOpacity style={[styles.filterButton, { backgroundColor: soft }] }>
+              <IconSymbol name="slider.horizontal.3" size={20} color={tint} />
             </TouchableOpacity>
           </View>
         </View>
@@ -565,12 +576,10 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   mapContainer: {
     flex: 1,
     width: '100%',
-    backgroundColor: '#e8f4f8',
     position: 'relative',
     overflow: 'hidden',
   },
@@ -586,12 +595,10 @@ const styles = StyleSheet.create({
   mapPlaceholderText: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#11181C',
     marginTop: 12,
   },
   mapSubtext: {
     fontSize: 14,
-    color: '#687076',
     marginTop: 4,
     textAlign: 'center',
   },
@@ -605,7 +612,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
@@ -623,7 +629,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: MODAL_MIN_HEIGHT,
-    backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     elevation: 8,
@@ -645,7 +650,6 @@ const styles = StyleSheet.create({
   handle: {
     width: 40,
     height: 4,
-    backgroundColor: '#d1d5db',
     borderRadius: 2,
   },
   modalHeader: {
@@ -658,18 +662,15 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#11181C',
     marginBottom: 4,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#687076',
   },
   filterButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#e8f4f8',
     justifyContent: 'center',
     alignItems: 'center',
   },

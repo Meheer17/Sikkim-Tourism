@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 // Mock chat messages
 interface ChatMessage {
@@ -78,6 +79,14 @@ export default function CommunityChatScreen() {
     const [inputMessage, setInputMessage] = useState('');
     const scrollViewRef = useRef<ScrollView>(null);
 
+    // Theme colors
+    const screenBg = useThemeColor('background');
+    const cardBg = useThemeColor('card');
+    const text = useThemeColor('text');
+    const mutedText = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
+    const border = useThemeColor('border');
+
     const handleSendMessage = () => {
         if (inputMessage.trim()) {
             const newMessage: ChatMessage = {
@@ -97,18 +106,18 @@ export default function CommunityChatScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: screenBg }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: cardBg, borderBottomColor: border }]}>
                 <TouchableOpacity 
                     style={styles.backButton}
                     onPress={() => router.push('/(user)/home' as any)}
                 >
-                    <IconSymbol name="chevron.left" size={24} color="#11181C" />
+                    <IconSymbol name="chevron.left" size={24} color={text as string} />
                 </TouchableOpacity>
                 <View style={styles.headerCenter}>
-                    <Text style={styles.headerTitle}>Community Chat</Text>
-                    <Text style={styles.headerSubtitle}>Connect with fellow travelers</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>Community Chat</Text>
+                    <Text style={[styles.headerSubtitle, { color: mutedText }]}>Connect with fellow travelers</Text>
                 </View>
                 <View style={styles.onlineIndicator}>
                     <View style={styles.onlineDot} />
@@ -179,12 +188,12 @@ export default function CommunityChatScreen() {
             >
                 <View style={styles.inputContainer}>
                     <TouchableOpacity style={styles.attachButton}>
-                        <IconSymbol name="paperclip" size={24} color="#687076" />
+                        <IconSymbol name="paperclip" size={24} color={mutedText as string} />
                     </TouchableOpacity>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: text }]}
                         placeholder="Type a message..."
-                        placeholderTextColor="#687076"
+                        placeholderTextColor={mutedText as string}
                         value={inputMessage}
                         onChangeText={setInputMessage}
                         multiline
@@ -203,7 +212,7 @@ export default function CommunityChatScreen() {
                         <IconSymbol
                             name="arrow.up.circle.fill"
                             size={32}
-                            color={inputMessage.trim() ? '#0a7ea4' : '#d1d5db'}
+                            color={inputMessage.trim() ? (tint as string) : (border as string)}
                         />
                     </TouchableOpacity>
                 </View>
@@ -328,7 +337,6 @@ const styles = StyleSheet.create({
     },
     timestamp: {
         fontSize: 11,
-        color: '#687076',
         marginTop: 4,
     },
     timestampUser: {
@@ -360,7 +368,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 10,
         fontSize: 15,
-        color: '#11181C',
         maxHeight: 100,
     },
     sendButton: {

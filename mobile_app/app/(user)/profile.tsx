@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import MenuSection, { MenuItem } from '@/components/profile/MenuSection';
 import { useAuth } from '@/hooks/useAuth';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 // Configuration for menu items - easy to add/remove
 const ACCOUNT_MENU_ITEMS: MenuItem[] = [
@@ -85,6 +86,14 @@ export default function ProfileScreen() {
     const router = useRouter();
     const { user, logout } = useAuth();
 
+    // Theme colors
+    const screenBg = useThemeColor('background');
+    const cardBg = useThemeColor('card');
+    const text = useThemeColor('text');
+    const mutedText = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
+    const soft = useThemeColor('tintSoftBg');
+
     const handleMenuItemPress = (item: MenuItem) => {
         if (item.route) {
             router.push(item.route as any);
@@ -97,38 +106,38 @@ export default function ProfileScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: screenBg }]}>
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Profile Header */}
-                <View style={styles.profileHeader}>
+                <View style={[styles.profileHeader, { backgroundColor: cardBg }]}>
                     <View style={styles.avatarContainer}>
-                        <View style={styles.avatar}>
+                        <View style={[styles.avatar, { backgroundColor: tint }]}>
                             <Text style={styles.avatarText}>
                                 {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                             </Text>
                         </View>
-                        <TouchableOpacity style={styles.editAvatarButton}>
+                        <TouchableOpacity style={[styles.editAvatarButton, { backgroundColor: tint, borderColor: cardBg }]}>
                             <IconSymbol name="camera.fill" size={16} color="#fff" />
                         </TouchableOpacity>
                     </View>
-                    <Text style={styles.userName}>
+                    <Text style={[styles.userName, { color: text }]}>
                         {user?.firstName} {user?.lastName}
                     </Text>
-                    <Text style={styles.userEmail}>{user?.email}</Text>
-                    <TouchableOpacity style={styles.editProfileButton}>
-                        <Text style={styles.editProfileText}>Edit Profile</Text>
-                        <IconSymbol name="pencil" size={14} color="#0a7ea4" />
+                    <Text style={[styles.userEmail, { color: mutedText }]}>{user?.email}</Text>
+                    <TouchableOpacity style={[styles.editProfileButton, { backgroundColor: soft }]}>
+                        <Text style={[styles.editProfileText, { color: tint }]}>Edit Profile</Text>
+                        <IconSymbol name="pencil" size={14} color={tint as string} />
                     </TouchableOpacity>
                 </View>
 
                 {/* Favorites Card Section */}
-                <View style={styles.favoritesCard}>
+                <View style={[styles.favoritesCard, { backgroundColor: cardBg }]}>
                     <View style={styles.favoritesHeader}>
-                        <Text style={styles.favoritesTitle}>Quick Access</Text>
+                        <Text style={[styles.favoritesTitle, { color: text }]}>Quick Access</Text>
                     </View>
                     <View style={styles.quickAccessGrid}>
                         <TouchableOpacity
@@ -138,8 +147,8 @@ export default function ProfileScreen() {
                             <View style={[styles.quickAccessIcon, { backgroundColor: '#fee2e2' }]}>
                                 <IconSymbol name="heart.fill" size={24} color="#ef4444" />
                             </View>
-                            <Text style={styles.quickAccessLabel}>Favorites</Text>
-                            <Text style={styles.quickAccessCount}>12</Text>
+                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>Favorites</Text>
+                            <Text style={[styles.quickAccessCount, { color: text }]}>12</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -149,8 +158,8 @@ export default function ProfileScreen() {
                             <View style={[styles.quickAccessIcon, { backgroundColor: '#dbeafe' }]}>
                                 <IconSymbol name="mappin.circle.fill" size={24} color="#3b82f6" />
                             </View>
-                            <Text style={styles.quickAccessLabel}>Saved</Text>
-                            <Text style={styles.quickAccessCount}>8</Text>
+                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>Saved</Text>
+                            <Text style={[styles.quickAccessCount, { color: text }]}>8</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -160,8 +169,8 @@ export default function ProfileScreen() {
                             <View style={[styles.quickAccessIcon, { backgroundColor: '#fef3c7' }]}>
                                 <IconSymbol name="star.fill" size={24} color="#f59e0b" />
                             </View>
-                            <Text style={styles.quickAccessLabel}>Reviews</Text>
-                            <Text style={styles.quickAccessCount}>5</Text>
+                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>Reviews</Text>
+                            <Text style={[styles.quickAccessCount, { color: text }]}>5</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -171,8 +180,8 @@ export default function ProfileScreen() {
                             <View style={[styles.quickAccessIcon, { backgroundColor: '#dcfce7' }]}>
                                 <IconSymbol name="ticket.fill" size={24} color="#10b981" />
                             </View>
-                            <Text style={styles.quickAccessLabel}>Vouchers</Text>
-                            <Text style={styles.quickAccessCount}>3</Text>
+                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>Vouchers</Text>
+                            <Text style={[styles.quickAccessCount, { color: text }]}>3</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -199,13 +208,13 @@ export default function ProfileScreen() {
                     />
 
                     {/* Logout Button */}
-                    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                    <TouchableOpacity style={[styles.logoutButton, { backgroundColor: cardBg }]} onPress={handleLogout}>
                         <IconSymbol name="rectangle.portrait.and.arrow.right" size={20} color="#ef4444" />
                         <Text style={styles.logoutText}>Logout</Text>
                     </TouchableOpacity>
                 </View>
                 {/* App Version */}
-                <Text style={styles.versionText}>Version 1.0.0</Text>
+                <Text style={[styles.versionText, { color: mutedText }]}>Version 1.0.0</Text>
             </ScrollView>
         </View>
     );
@@ -214,7 +223,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
     },
     scrollView: {
         flex: 1,
@@ -223,7 +231,6 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     },
     profileHeader: {
-        backgroundColor: '#fff',
         paddingTop: 60,
         paddingBottom: 24,
         paddingHorizontal: 20,
@@ -237,7 +244,6 @@ const styles = StyleSheet.create({
         width: 100,
         height: 100,
         borderRadius: 50,
-        backgroundColor: '#0a7ea4',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -253,11 +259,9 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: '#0a7ea4',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 3,
-        borderColor: '#fff',
     },
     padding: {
         paddingHorizontal: 20,
@@ -265,12 +269,10 @@ const styles = StyleSheet.create({
     userName: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
     },
     userEmail: {
         fontSize: 14,
-        color: '#687076',
         marginBottom: 16,
     },
     editProfileButton: {
@@ -280,15 +282,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 20,
-        backgroundColor: '#e8f4f8',
     },
     editProfileText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#0a7ea4',
     },
     favoritesCard: {
-        backgroundColor: '#fff',
         marginHorizontal: 20,
         marginTop: 16,
         marginBottom: 24,
@@ -306,7 +305,6 @@ const styles = StyleSheet.create({
     favoritesTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#11181C',
     },
     quickAccessGrid: {
         flexDirection: 'row',
@@ -330,13 +328,11 @@ const styles = StyleSheet.create({
     quickAccessLabel: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#687076',
         marginBottom: 4,
     },
     quickAccessCount: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#11181C',
     },
     logoutButton: {
         flexDirection: 'row',
@@ -347,7 +343,6 @@ const styles = StyleSheet.create({
         marginTop: 16,
         paddingVertical: 14,
         borderRadius: 12,
-        backgroundColor: '#fff',
         borderWidth: 1,
         borderColor: '#fee2e2',
     },
@@ -358,7 +353,6 @@ const styles = StyleSheet.create({
     },
     versionText: {
         fontSize: 12,
-        color: '#9ca3af',
         textAlign: 'center',
         marginTop: 24,
     },

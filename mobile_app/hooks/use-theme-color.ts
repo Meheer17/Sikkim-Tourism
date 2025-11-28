@@ -1,18 +1,31 @@
 /**
- * Hook to get theme colors. Now only supports light mode.
+ * Resolve a color token for the current system color scheme.
  */
 
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
+type ThemeKeys = keyof typeof Colors.light;
 
 export function useThemeColor(
-  props: { light?: string },
-  colorName: keyof typeof Colors
+  colorNameOrProps: ThemeKeys | { light?: string; dark?: string },
+  colorName?: ThemeKeys
 ) {
-  const colorFromProps = props.light;
+  const theme = useColorScheme() ?? 'light';
+  
+  // If first argument is a string, treat it as colorName
+  if (typeof colorNameOrProps === 'string') {
+    return Colors[theme][colorNameOrProps];
+  }
+  
+  // Otherwise, use the old API with props
+  const props = colorNameOrProps;
+  const actualColorName = colorName!;
+  const colorFromProps = props[theme];
 
   if (colorFromProps) {
     return colorFromProps;
-  } else {
-    return Colors[colorName];
   }
+
+  return Colors[theme][actualColorName];
 }

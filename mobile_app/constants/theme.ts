@@ -1,19 +1,46 @@
 /**
- * Below are the colors that are used in the app. The app uses light mode only.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Design tokens for light and dark themes.
+ * Use with the `useThemeColor` hook to resolve the correct token at runtime.
  */
 
 import { Platform } from 'react-native';
 
 const tintColorLight = '#0a7ea4';
+const tintColorDark = '#64D2FF';
 
 export const Colors = {
-  text: '#11181C',
-  background: '#fff',
-  tint: tintColorLight,
-  icon: '#687076',
-  tabIconDefault: '#687076',
-  tabIconSelected: tintColorLight,
+  light: {
+    // Core
+    text: '#11181C',
+    background: '#FFFFFF',
+    card: '#FFFFFF',
+    border: '#e5e5e5',
+    mutedText: '#687076',
+    icon: '#687076',
+    tint: tintColorLight,
+    // Component-specific helpers
+    tabIconDefault: '#687076',
+    tabIconSelected: tintColorLight,
+    activeTabBg: '#f0f9ff',
+    controlBg: '#FFFFFF',
+    tintSoftBg: '#e8f4f8',
+  },
+  dark: {
+    // Core
+    text: '#ECEDEE',
+    background: '#0B0B0F',
+    card: '#14161A',
+    border: '#23262B',
+    mutedText: '#9BA1A6',
+    icon: '#9BA1A6',
+    tint: tintColorDark,
+    // Component-specific helpers
+    tabIconDefault: '#9BA1A6',
+    tabIconSelected: tintColorDark,
+    activeTabBg: '#072E37',
+    controlBg: '#1B1F24',
+    tintSoftBg: 'rgba(100, 210, 255, 0.15)',
+  },
 };
 
 // iOS Glassmorphism/Liquid Glass Design System

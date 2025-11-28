@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export interface Place {
     id: string;
@@ -21,6 +22,11 @@ interface PlaceCardProps {
 }
 
 export default function PlaceCard({ place, onPress }: PlaceCardProps) {
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const card = useThemeColor('card');
+    const tint = useThemeColor('tint');
+    const soft = useThemeColor('tintSoftBg');
     const handleDirections = (e: any) => {
         // Stop propagation to prevent card press
         e.stopPropagation();
@@ -57,7 +63,7 @@ export default function PlaceCard({ place, onPress }: PlaceCardProps) {
 
     return (
         <TouchableOpacity
-            style={styles.card}
+            style={[styles.card, { backgroundColor: card }]}
             onPress={() => onPress?.(place)}
             activeOpacity={0.7}
         >
@@ -69,37 +75,37 @@ export default function PlaceCard({ place, onPress }: PlaceCardProps) {
                         resizeMode="cover"
                     />
                 ) : (
-                    <View style={styles.placeholderImage}>
-                        <IconSymbol name="map.fill" size={24} color="#0a7ea4" />
+                    <View style={[styles.placeholderImage, { backgroundColor: soft }] }>
+                        <IconSymbol name="map.fill" size={24} color={tint} />
                     </View>
                 )}
             </View>
 
             <View style={styles.content}>
                 <View style={styles.header}>
-                    <Text style={styles.name} numberOfLines={1}>{place.name}</Text>
+                    <Text style={[styles.name, { color: text }]} numberOfLines={1}>{place.name}</Text>
                     {place.rating && (
                         <View style={styles.ratingContainer}>
                             <IconSymbol name="star.fill" size={14} color="#fbbf24" />
-                            <Text style={styles.rating}>{place.rating}</Text>
+                            <Text style={[styles.rating, { color: text }]}>{place.rating}</Text>
                         </View>
                     )}
                 </View>
-                <Text style={styles.category}>{place.category}</Text>
-                <Text style={styles.description} numberOfLines={2}>{place.description}</Text>
+                <Text style={[styles.category, { color: muted }]}>{place.category}</Text>
+                <Text style={[styles.description, { color: muted }]} numberOfLines={2}>{place.description}</Text>
                 <View style={styles.footer}>
                     <View style={styles.distanceContainer}>
-                        <IconSymbol name="location.fill" size={14} color="#687076" />
-                        <Text style={styles.distance}>{place.distance}</Text>
+                        <IconSymbol name="location.fill" size={14} color={muted} />
+                        <Text style={[styles.distance, { color: muted }]}>{place.distance}</Text>
                     </View>
                     {place.latitude && place.longitude && (
                         <TouchableOpacity 
-                            style={styles.directionsButton}
+                            style={[styles.directionsButton, { backgroundColor: soft }]}
                             onPress={handleDirections}
                             activeOpacity={0.7}
                         >
-                            <IconSymbol name="arrow.triangle.turn.up.right.diamond.fill" size={14} color="#0a7ea4" />
-                            <Text style={styles.directionsText}>Directions</Text>
+                            <IconSymbol name="arrow.triangle.turn.up.right.diamond.fill" size={14} color={tint} />
+                            <Text style={[styles.directionsText, { color: tint }]}>Directions</Text>
                         </TouchableOpacity>
                     )}
                 </View>
@@ -111,7 +117,6 @@ export default function PlaceCard({ place, onPress }: PlaceCardProps) {
 const styles = StyleSheet.create({
     card: {
         flexDirection: 'row',
-        backgroundColor: '#fff',
         borderRadius: 12,
         overflow: 'hidden',
         marginBottom: 12,
@@ -124,7 +129,7 @@ const styles = StyleSheet.create({
     imageContainer: {
         width: 100,
         height: 100,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#0000',
     },
     image: {
         width: '100%',
@@ -151,7 +156,6 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 16,
         fontWeight: '700',
-        color: '#11181C',
         marginRight: 8,
     },
     ratingContainer: {
@@ -162,16 +166,13 @@ const styles = StyleSheet.create({
     rating: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#11181C',
     },
     category: {
         fontSize: 12,
-        color: '#687076',
         marginBottom: 4,
     },
     description: {
         fontSize: 13,
-        color: '#687076',
         lineHeight: 18,
         marginBottom: 8,
     },
@@ -190,7 +191,6 @@ const styles = StyleSheet.create({
     },
     distance: {
         fontSize: 13,
-        color: '#687076',
         fontWeight: '500',
     },
     directionsButton: {

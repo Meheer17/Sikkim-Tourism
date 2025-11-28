@@ -2,10 +2,18 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export default function PlaceDetailsScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
+  const background = useThemeColor('background');
+  const card = useThemeColor('card');
+  const text = useThemeColor('text');
+  const muted = useThemeColor('mutedText');
+  const tint = useThemeColor('tint');
+  const border = useThemeColor('border');
+  const soft = useThemeColor('tintSoftBg');
 
   // Parse the place data from params
   const place = {
@@ -27,7 +35,7 @@ export default function PlaceDetailsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: background }]}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Image Header */}
         <View style={styles.imageContainer}>
@@ -38,17 +46,17 @@ export default function PlaceDetailsScreen() {
               resizeMode="cover"
             />
           ) : (
-            <View style={styles.placeholderImage}>
-              <IconSymbol name="map.fill" size={64} color="#0a7ea4" />
+            <View style={[styles.placeholderImage, { backgroundColor: soft }]}>
+              <IconSymbol name="map.fill" size={64} color={tint} />
             </View>
           )}
           
           {/* Back Button */}
           <TouchableOpacity 
-            style={styles.backButton} 
+            style={[styles.backButton, { backgroundColor: card }]} 
             onPress={() => router.back()}
           >
-            <IconSymbol name="chevron.left" size={24} color="#11181C" />
+            <IconSymbol name="chevron.left" size={24} color={text} />
           </TouchableOpacity>
         </View>
 
@@ -56,11 +64,11 @@ export default function PlaceDetailsScreen() {
         <View style={styles.content}>
           {/* Title and Rating */}
           <View style={styles.header}>
-            <Text style={styles.name}>{place.name}</Text>
+            <Text style={[styles.name, { color: text }]}>{place.name}</Text>
             {place.rating && (
               <View style={styles.ratingContainer}>
                 <IconSymbol name="star.fill" size={20} color="#fbbf24" />
-                <Text style={styles.rating}>{place.rating}</Text>
+                <Text style={[styles.rating, { color: text }]}>{place.rating}</Text>
               </View>
             )}
           </View>
@@ -68,25 +76,25 @@ export default function PlaceDetailsScreen() {
           {/* Category and Distance */}
           <View style={styles.metaInfo}>
             <View style={styles.categoryContainer}>
-              <IconSymbol name="tag.fill" size={16} color="#687076" />
-              <Text style={styles.category}>{place.category}</Text>
+              <IconSymbol name="tag.fill" size={16} color={muted} />
+              <Text style={[styles.category, { color: muted }]}>{place.category}</Text>
             </View>
             <View style={styles.distanceContainer}>
-              <IconSymbol name="location.fill" size={16} color="#687076" />
-              <Text style={styles.distance}>{place.distance}</Text>
+              <IconSymbol name="location.fill" size={16} color={muted} />
+              <Text style={[styles.distance, { color: muted }]}>{place.distance}</Text>
             </View>
           </View>
 
           {/* Description */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>About</Text>
-            <Text style={styles.description}>{place.description}</Text>
+            <Text style={[styles.sectionTitle, { color: text }]}>About</Text>
+            <Text style={[styles.description, { color: muted }]}>{place.description}</Text>
           </View>
 
           {/* Immersive View Button */}
           {place.modelPath && (
             <TouchableOpacity 
-              style={styles.immersiveButton}
+              style={[styles.immersiveButton, { backgroundColor: tint, shadowColor: tint as string }]}
               onPress={handleOpenImmersiveView}
               activeOpacity={0.8}
             >
@@ -98,54 +106,54 @@ export default function PlaceDetailsScreen() {
 
           {/* Additional Information */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Details</Text>
+            <Text style={[styles.sectionTitle, { color: text }]}>Details</Text>
             
             <View style={styles.detailRow}>
-              <View style={styles.detailIcon}>
-                <IconSymbol name="clock.fill" size={20} color="#0a7ea4" />
+              <View style={[styles.detailIcon, { backgroundColor: soft }] }>
+                <IconSymbol name="clock.fill" size={20} color={tint} />
               </View>
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Visiting Hours</Text>
-                <Text style={styles.detailValue}>Open daily: 6:00 AM - 6:00 PM</Text>
+                <Text style={[styles.detailLabel, { color: text }]}>Visiting Hours</Text>
+                <Text style={[styles.detailValue, { color: muted }]}>Open daily: 6:00 AM - 6:00 PM</Text>
               </View>
             </View>
 
             <View style={styles.detailRow}>
-              <View style={styles.detailIcon}>
-                <IconSymbol name="ticket.fill" size={20} color="#0a7ea4" />
+              <View style={[styles.detailIcon, { backgroundColor: soft }] }>
+                <IconSymbol name="ticket.fill" size={20} color={tint} />
               </View>
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Entry Fee</Text>
-                <Text style={styles.detailValue}>Free / Donations welcome</Text>
+                <Text style={[styles.detailLabel, { color: text }]}>Entry Fee</Text>
+                <Text style={[styles.detailValue, { color: muted }]}>Free / Donations welcome</Text>
               </View>
             </View>
 
             <View style={styles.detailRow}>
-              <View style={styles.detailIcon}>
-                <IconSymbol name="info.circle.fill" size={20} color="#0a7ea4" />
+              <View style={[styles.detailIcon, { backgroundColor: soft }]}>
+                <IconSymbol name="info.circle.fill" size={20} color={tint} />
               </View>
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Best Time to Visit</Text>
-                <Text style={styles.detailValue}>March to June, September to December</Text>
+                <Text style={[styles.detailLabel, { color: text }]}>Best Time to Visit</Text>
+                <Text style={[styles.detailValue, { color: muted }]}>March to June, September to December</Text>
               </View>
             </View>
           </View>
 
           {/* Action Buttons */}
-          <View style={styles.actionButtons}>
+          <View style={[styles.actionButtons, { borderTopColor: border }] }>
             <TouchableOpacity style={styles.actionButton}>
-              <IconSymbol name="map.fill" size={22} color="#0a7ea4" />
-              <Text style={styles.actionButtonText}>Directions</Text>
+              <IconSymbol name="map.fill" size={22} color={tint} />
+              <Text style={[styles.actionButtonText, { color: tint }]}>Directions</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.actionButton}>
-              <IconSymbol name="heart" size={22} color="#0a7ea4" />
-              <Text style={styles.actionButtonText}>Save</Text>
+              <IconSymbol name="heart" size={22} color={tint} />
+              <Text style={[styles.actionButtonText, { color: tint }]}>Save</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.actionButton}>
-              <IconSymbol name="square.and.arrow.up" size={22} color="#0a7ea4" />
-              <Text style={styles.actionButtonText}>Share</Text>
+              <IconSymbol name="square.and.arrow.up" size={22} color={tint} />
+              <Text style={[styles.actionButtonText, { color: tint }]}>Share</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -157,7 +165,6 @@ export default function PlaceDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   scrollView: {
     flex: 1,
@@ -165,7 +172,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     height: 300,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#0000',
     position: 'relative',
   },
   image: {
@@ -186,7 +193,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
@@ -208,7 +214,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 28,
     fontWeight: '700',
-    color: '#11181C',
     marginRight: 12,
   },
   ratingContainer: {
@@ -223,7 +228,6 @@ const styles = StyleSheet.create({
   rating: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#11181C',
   },
   metaInfo: {
     flexDirection: 'row',
@@ -237,7 +241,6 @@ const styles = StyleSheet.create({
   },
   category: {
     fontSize: 14,
-    color: '#687076',
     fontWeight: '500',
   },
   distanceContainer: {
@@ -247,7 +250,6 @@ const styles = StyleSheet.create({
   },
   distance: {
     fontSize: 14,
-    color: '#687076',
     fontWeight: '500',
   },
   section: {
@@ -256,26 +258,22 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#11181C',
     marginBottom: 12,
   },
   description: {
     fontSize: 16,
-    color: '#687076',
     lineHeight: 24,
   },
   immersiveButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0a7ea4',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
     marginBottom: 24,
     gap: 12,
     elevation: 4,
-    shadowColor: '#0a7ea4',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -308,12 +306,10 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#11181C',
     marginBottom: 4,
   },
   detailValue: {
     fontSize: 14,
-    color: '#687076',
   },
   actionButtons: {
     flexDirection: 'row',
@@ -329,7 +325,6 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 13,
-    color: '#0a7ea4',
     fontWeight: '600',
   },
 });

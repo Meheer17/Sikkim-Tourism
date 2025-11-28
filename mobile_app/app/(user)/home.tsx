@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 // Mock data - replace with actual API call
 const MOCK_SERVICES: Service[] = [
@@ -46,6 +47,11 @@ export default function HomeScreen() {
     const insets = useSafeAreaInsets();
     const [services, setServices] = useState<Service[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
 
     useEffect(() => {
         loadServices();
@@ -76,7 +82,7 @@ export default function HomeScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: background }]}>
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={[
@@ -87,40 +93,40 @@ export default function HomeScreen() {
                     <RefreshControl 
                         refreshing={refreshing} 
                         onRefresh={onRefresh}
-                        progressViewOffset={insets.top}
+                        progressViewOffset={insets.top + 20}
                     />
                 }
             >
                 {/* Header */}
                 <View style={styles.header}>
                     <View>
-                        <Text style={styles.greeting}>Welcome Back!</Text>
-                        <Text style={styles.subtitle}>Explore amazing services</Text>
+                        <Text style={[styles.greeting, { color: text }]}>Welcome Back!</Text>
+                        <Text style={[styles.subtitle, { color: muted }]}>Explore amazing services</Text>
                     </View>
                     <TouchableOpacity 
-                        style={styles.profileButton}
+                        style={[styles.profileButton, { backgroundColor: card }]}
                         onPress={() => router.push('/(user)/profile' as any)}
                     >
-                        <IconSymbol name="person.crop.circle.fill" size={32} color="#0a7ea4" />
+                        <IconSymbol name="person.crop.circle.fill" size={32} color={tint} />
                     </TouchableOpacity>
                 </View>
 
                 {/* Quick Stats */}
                 <View style={styles.statsContainer}>
-                    <View style={styles.statCard}>
-                        <IconSymbol name="ticket.fill" size={24} color="#0a7ea4" />
-                        <Text style={styles.statValue}>12</Text>
-                        <Text style={styles.statLabel}>Bookings</Text>
+                    <View style={[styles.statCard, { backgroundColor: card }]}>
+                        <IconSymbol name="ticket.fill" size={24} color={tint} />
+                        <Text style={[styles.statValue, { color: text }]}>12</Text>
+                        <Text style={[styles.statLabel, { color: muted }]}>Bookings</Text>
                     </View>
-                    <View style={styles.statCard}>
+                    <View style={[styles.statCard, { backgroundColor: card }]}>
                         <IconSymbol name="heart.fill" size={24} color="#ef4444" />
-                        <Text style={styles.statValue}>8</Text>
-                        <Text style={styles.statLabel}>Favorites</Text>
+                        <Text style={[styles.statValue, { color: text }]}>8</Text>
+                        <Text style={[styles.statLabel, { color: muted }]}>Favorites</Text>
                     </View>
-                    <View style={styles.statCard}>
+                    <View style={[styles.statCard, { backgroundColor: card }]}>
                         <IconSymbol name="mappin.circle.fill" size={24} color="#10b981" />
-                        <Text style={styles.statValue}>5</Text>
-                        <Text style={styles.statLabel}>Visited</Text>
+                        <Text style={[styles.statValue, { color: text }]}>5</Text>
+                        <Text style={[styles.statLabel, { color: muted }]}>Visited</Text>
                     </View>
                 </View>
 
@@ -147,9 +153,9 @@ export default function HomeScreen() {
                 {/* Services Section */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Popular Services</Text>
+                        <Text style={[styles.sectionTitle, { color: text }]}>Popular Services</Text>
                         <TouchableOpacity onPress={handleViewAllServices}>
-                            <Text style={styles.viewAllText}>View All</Text>
+                            <Text style={[styles.viewAllText, { color: tint }]}>View All</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -163,12 +169,12 @@ export default function HomeScreen() {
                 </View>
 
                 {/* Featured Banner */}
-                <View style={styles.banner}>
+                <View style={[styles.banner, { backgroundColor: card }] }>
                     <View style={styles.bannerContent}>
                         <IconSymbol name="sparkles" size={32} color="#fbbf24" />
                         <View style={styles.bannerText}>
-                            <Text style={styles.bannerTitle}>Special Offer!</Text>
-                            <Text style={styles.bannerSubtitle}>Get 20% off on first booking</Text>
+                            <Text style={[styles.bannerTitle, { color: text }]}>Special Offer!</Text>
+                            <Text style={[styles.bannerSubtitle, { color: muted }]}>Get 20% off on first booking</Text>
                         </View>
                     </View>
                 </View>
@@ -180,7 +186,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
     },
     scrollView: {
         flex: 1,
@@ -198,18 +203,16 @@ const styles = StyleSheet.create({
     greeting: {
         fontSize: 28,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
+        marginTop: 20,
     },
     subtitle: {
         fontSize: 15,
-        color: '#687076',
     },
     profileButton: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 2,
@@ -217,6 +220,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
+        marginTop: 20,
     },
     statsContainer: {
         flexDirection: 'row',
@@ -225,7 +229,6 @@ const styles = StyleSheet.create({
     },
     statCard: {
         flex: 1,
-        backgroundColor: '#fff',
         borderRadius: 16,
         padding: 16,
         alignItems: 'center',
@@ -238,12 +241,10 @@ const styles = StyleSheet.create({
     statValue: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#11181C',
         marginTop: 8,
     },
     statLabel: {
         fontSize: 12,
-        color: '#687076',
         marginTop: 4,
     },
     aiPlannerBanner: {
@@ -300,15 +301,12 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#11181C',
     },
     viewAllText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#0a7ea4',
     },
     banner: {
-        backgroundColor: '#fff',
         borderRadius: 16,
         padding: 20,
         elevation: 2,
@@ -329,11 +327,9 @@ const styles = StyleSheet.create({
     bannerTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
     },
     bannerSubtitle: {
         fontSize: 14,
-        color: '#687076',
     },
 });
