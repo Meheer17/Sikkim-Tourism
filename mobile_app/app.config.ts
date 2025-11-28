@@ -35,6 +35,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     plugins: [
         'expo-router',
         'expo-secure-store',
+        'expo-audio',
         [
             'expo-document-picker',
             {
