@@ -131,7 +131,7 @@ export default function HomeScreen() {
                 </View>
 
                 {/* AI Planner Banner */}
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.aiPlannerBanner}
                     onPress={() => router.push('/(user)/(stack)/ai-planner' as any)}
                     activeOpacity={0.8}

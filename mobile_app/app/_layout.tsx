@@ -16,9 +16,9 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(user)" />
-        {/* <Stack.Screen name="(admin)" />
+        <Stack.Screen name="(admin)" />
         <Stack.Screen name="(business)" />
-        <Stack.Screen name="(organizer)" /> */}
+        <Stack.Screen name="(organization)" />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal', headerShown: true }} />
       </Stack>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />

@@ -72,7 +72,7 @@ export default function AIPlanner() {
 
     const handleOptionSelect = (option: string) => {
         const existingAnswerIndex = answers.findIndex(a => a.questionId === currentQuestion.id);
-        
+
         if (currentQuestion.type === 'single') {
             const newAnswers = [...answers];
             if (existingAnswerIndex >= 0) {
@@ -90,13 +90,13 @@ export default function AIPlanner() {
         } else {
             // Multiple choice
             const newAnswers = [...answers];
-            const existingAnswer = existingAnswerIndex >= 0 
+            const existingAnswer = existingAnswerIndex >= 0
                 ? newAnswers[existingAnswerIndex].answer as string[]
                 : [];
-            
+
             const optionIndex = existingAnswer.indexOf(option);
             let updatedAnswer: string[];
-            
+
             if (optionIndex >= 0) {
                 updatedAnswer = existingAnswer.filter(o => o !== option);
             } else {
@@ -196,7 +196,7 @@ export default function AIPlanner() {
             </View>
 
             {/* Question Content */}
-            <ScrollView 
+            <ScrollView
                 style={styles.content}
                 contentContainerStyle={styles.contentContainer}
                 showsVerticalScrollIndicator={false}

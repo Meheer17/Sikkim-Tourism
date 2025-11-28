@@ -223,7 +223,7 @@ export default function FriendsScreen() {
                     <Text style={styles.mapSubtext}>
                         Showing friends within {selectedRadius} km radius
                     </Text>
-                    
+
                     {/* Friend Markers Preview */}
                     <View style={styles.markersPreview}>
                         {filteredFriends.map((friend, index) => (
@@ -231,7 +231,7 @@ export default function FriendsScreen() {
                                 key={friend.id}
                                 style={[
                                     styles.markerPreview,
-                                    { 
+                                    {
                                         left: `${(index * 20) % 80}%`,
                                         top: `${(index * 15) % 60}%`,
                                     },
@@ -293,10 +293,10 @@ export default function FriendsScreen() {
                     <View style={styles.shareLocationCard}>
                         <View style={styles.shareLocationLeft}>
                             <View style={[styles.shareIcon, { backgroundColor: shareMyLocation ? '#dcfce7' : '#fee2e2' }]}>
-                                <IconSymbol 
-                                    name={shareMyLocation ? 'location.fill' : 'location.slash.fill'} 
-                                    size={24} 
-                                    color={shareMyLocation ? '#10b981' : '#ef4444'} 
+                                <IconSymbol
+                                    name={shareMyLocation ? 'location.fill' : 'location.slash.fill'}
+                                    size={24}
+                                    color={shareMyLocation ? '#10b981' : '#ef4444'}
                                 />
                             </View>
                             <View>

@@ -6,7 +6,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     slug: 'tourist-mobile',
     version: '1.0.0',
     orientation: 'portrait',
-    icon: './assets/images/icon.png',
+    icon: './assets/images/favicon.png',
     userInterfaceStyle: 'light',
     newArchEnabled: true,
     splash: {
@@ -20,8 +20,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         bundleIdentifier: 'com.yourdomain.tourist',
     },
     android: {
+        icon: './assets/images/favicon.png',
         adaptiveIcon: {
-            foregroundImage: './assets/images/adaptive-icon.png',
+            foregroundImage: './assets/images/favicon.png',
             backgroundColor: '#ffffff',
         },
         package: 'com.yourdomain.tourist',
