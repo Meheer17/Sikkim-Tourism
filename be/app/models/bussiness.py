@@ -1,25 +1,20 @@
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional
+from pydantic import BaseModel, Field, field_validator, BeforeValidator, ConfigDict
+from typing import Optional, Annotated
 from datetime import datetime
 from bson import ObjectId
 from enum import Enum
 import re
 
+from app.models.location import Position
 
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
 
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid objectid")
-        return ObjectId(v)
+def validate_object_id(v):
+    if not ObjectId.is_valid(v):
+        raise ValueError("Invalid objectid")
+    return ObjectId(v)
 
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
+
+PyObjectId = Annotated[ObjectId, BeforeValidator(validate_object_id)]
 
 
 class BussinessTypeEnum(str, Enum):
@@ -62,18 +57,13 @@ class BussinessTypeCreate(BussinessTypeBase):
 class BussinessTypeInDB(BussinessTypeBase):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
 
-    class Config:
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, json_encoders={ObjectId: str})
 
 
 class BussinessType(BussinessTypeBase):
     id: str
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})
 
 
 # BUSSINESS model
@@ -94,8 +84,22 @@ class BussinessBase(BaseModel):
         return v
 
 
-class BussinessCreate(BussinessBase):
-    pass
+class BussinessCreate(BaseModel):
+    name: str = Field(..., max_length=255)
+    description: str
+    short_description: str = Field(..., max_length=255)
+    open_hours: OpenHours
+    type_id: str  # references BUSSINESS_TYPE._id
+    l_id: Optional[str] = None  # references LOCATION._id, optional
+    position: Position  # position for location if l_id not provided
+    scheduled_at: datetime  # ISO 8601
+
+    @field_validator("type_id", "l_id")
+    @classmethod
+    def validate_object_id(cls, v):
+        if v is not None and not ObjectId.is_valid(v):
+            raise ValueError("Must be a valid ObjectId")
+        return v
 
 
 class BussinessUpdate(BaseModel):
@@ -120,10 +124,7 @@ class BussinessInDB(BussinessBase):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, json_encoders={ObjectId: str})
 
 
 class Bussiness(BussinessBase):
@@ -131,6 +132,4 @@ class Bussiness(BussinessBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})

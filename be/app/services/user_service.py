@@ -12,28 +12,39 @@ class UserService:
     """Service for user operations"""
     
     def __init__(self):
-        self.db = get_database()
-        self.collection = self.db.users
+        pass
     
     async def get_by_email(self, email: str) -> Optional[UserInDB]:
         """Get user by email"""
-        user = await self.collection.find_one({"email": email})
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
+        collection = db.users
+        user = await collection.find_one({"email": email})
         if user:
             return UserInDB(**user)
         return None
     
     async def get_by_id(self, user_id: str) -> Optional[UserInDB]:
         """Get user by ID"""
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
+        collection = db.users
         if not ObjectId.is_valid(user_id):
             return None
         
-        user = await self.collection.find_one({"_id": ObjectId(user_id)})
+        user = await collection.find_one({"_id": ObjectId(user_id)})
         if user:
             return UserInDB(**user)
         return None
     
     async def create(self, user_create: UserCreate) -> User:
         """Create a new user"""
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
+        collection = db.users
         # Check if user exists
         existing_user = await self.get_by_email(user_create.email)
         if existing_user:
@@ -48,7 +59,7 @@ class UserService:
         user_dict["created_at"] = datetime.utcnow()
         user_dict["updated_at"] = datetime.utcnow()
         
-        result = await self.collection.insert_one(user_dict)
+        result = await collection.insert_one(user_dict)
         created_user = await self.get_by_id(str(result.inserted_id))
         
         return User(
@@ -66,6 +77,10 @@ class UserService:
     
     async def update(self, user_id: str, user_update: UserUpdate) -> User:
         """Update user"""
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
+        collection = db.users
         user = await self.get_by_id(user_id)
         if not user:
             raise HTTPException(
@@ -80,7 +95,7 @@ class UserService:
         
         update_data["updated_at"] = datetime.utcnow()
         
-        await self.collection.update_one(
+        await collection.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": update_data}
         )
@@ -102,10 +117,14 @@ class UserService:
     
     async def update_secret(self, user_id: str, token: str, expiry: datetime) -> bool:
         """Update user's secret token for password reset"""
+        db = get_database()
+        if db is None:
+            return False
+        collection = db.users
         if not ObjectId.is_valid(user_id):
             return False
         
-        result = await self.collection.update_one(
+        result = await collection.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": {
                 "secret": {"token": token, "expiry": expiry},
@@ -117,7 +136,7 @@ class UserService:
     async def authenticate(self, email: str, password: str) -> Optional[UserInDB]:
         """Authenticate user"""
         user = await self.get_by_email(email)
-        if not user:
+        if not user or not user.hashed_password:
             return None
         
         if not verify_password(password, user.hashed_password):
@@ -127,10 +146,14 @@ class UserService:
     
     async def delete(self, user_id: str) -> bool:
         """Delete user"""
+        db = get_database()
+        if db is None:
+            return False
+        collection = db.users
         if not ObjectId.is_valid(user_id):
             return False
         
-        result = await self.collection.delete_one({"_id": ObjectId(user_id)})
+        result = await collection.delete_one({"_id": ObjectId(user_id)})
         return result.deleted_count > 0
 
 
