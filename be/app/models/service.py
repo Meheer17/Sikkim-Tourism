@@ -1,23 +1,16 @@
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional, List
+from pydantic import BaseModel, Field, field_validator, BeforeValidator, ConfigDict
+from typing import Optional, List, Annotated
 from datetime import datetime
 from bson import ObjectId
 
 
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+def validate_object_id(v):
+    if not ObjectId.is_valid(v):
+        raise ValueError("Invalid objectid")
+    return ObjectId(v)
 
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid objectid")
-        return ObjectId(v)
 
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
+PyObjectId = Annotated[ObjectId, BeforeValidator(validate_object_id)]
 
 
 class ServiceBase(BaseModel):
@@ -61,15 +54,10 @@ class ServiceUpdate(BaseModel):
 class ServiceInDB(ServiceBase):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
 
-    class Config:
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, json_encoders={ObjectId: str})
 
 
 class Service(ServiceBase):
     id: str
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})

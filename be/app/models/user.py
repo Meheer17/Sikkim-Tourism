@@ -1,24 +1,17 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
-from typing import Optional, Literal
+from pydantic import BaseModel, EmailStr, Field, field_validator, BeforeValidator, ConfigDict
+from typing import Optional, Literal, Annotated
 from datetime import datetime
 from bson import ObjectId
 from enum import Enum
 
 
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+def validate_object_id(v):
+    if not ObjectId.is_valid(v):
+        raise ValueError("Invalid objectid")
+    return ObjectId(v)
 
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid objectid")
-        return ObjectId(v)
 
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
+PyObjectId = Annotated[ObjectId, BeforeValidator(validate_object_id)]
 
 
 class UserRole(str, Enum):
@@ -76,10 +69,7 @@ class UserInDB(UserBase):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, json_encoders={ObjectId: str})
 
 
 class User(BaseModel):
@@ -94,6 +84,4 @@ class User(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})

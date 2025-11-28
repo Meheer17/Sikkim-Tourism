@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
-from app.services.telegram_service import telegram_storage_service
+# from app.services.telegram_service import telegram_storage_service
 from app.api.v1.router import api_router
 
 
@@ -14,7 +14,7 @@ async def lifespan(app: FastAPI):
     yield
     await close_mongo_connection()
     # close telethon client gracefully
-    await telegram_storage_service.close()
+    # await telegram_storage_service.close()
 
 
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION, description=settings.DESCRIPTION, lifespan=lifespan)
