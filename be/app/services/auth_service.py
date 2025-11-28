@@ -1,0 +1,76 @@
+from datetime import datetime, timedelta
+from fastapi import HTTPException, status
+import secrets
+
+from app.core.security import create_access_token
+from app.core.config import settings
+from app.services.user_service import user_service
+from app.models.user import UserCreate, User
+from app.schemas.auth import Token, LoginRequest, SignupRequest, ForgetPasswordRequest, MessageResponse
+
+
+class AuthService:
+    """Service for authentication operations"""
+    
+    async def signup(self, signup_data: SignupRequest) -> Token:
+        """Register a new user and return JWT token"""
+        user_create = UserCreate(
+            name=signup_data.name,
+            address=signup_data.address,
+            gender=signup_data.gender,
+            email=signup_data.email,
+            password=signup_data.password
+        )
+        
+        user = await user_service.create(user_create)
+        
+        # Create access token (7 days as per API doc)
+        access_token_expires = timedelta(days=7)
+        access_token = create_access_token(
+            data={"sub": str(user.id)},
+            expires_delta=access_token_expires
+        )
+        
+        return Token(access_token=access_token, token_type="bearer")
+    
+    async def signin(self, login_data: LoginRequest) -> Token:
+        """Login user and return access token (7 days)"""
+        user = await user_service.authenticate(login_data.email, login_data.password)
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # 7 days as per API doc
+        access_token_expires = timedelta(days=7)
+        access_token = create_access_token(
+            data={"sub": str(user.id)},
+            expires_delta=access_token_expires
+        )
+        
+        return Token(access_token=access_token, token_type="bearer")
+    
+    async def forget_password(self, forget_password_data: ForgetPasswordRequest) -> MessageResponse:
+        """Request password reset token (expires in 15 minutes)"""
+        user = await user_service.get_by_email(forget_password_data.email)
+        
+        if not user:
+            # Don't reveal if email exists or not for security
+            return MessageResponse(message="If the email exists, a reset token has been sent")
+        
+        # Generate reset token
+        reset_token = secrets.token_urlsafe(32)
+        expiry = datetime.utcnow() + timedelta(minutes=15)
+        
+        # Update user with secret token
+        await user_service.update_secret(str(user.id), reset_token, expiry)
+        
+        # In a real application, you would send this token via email
+        # For now, we just return success message
+        return MessageResponse(message="If the email exists, a reset token has been sent")
+
+
+auth_service = AuthService()
