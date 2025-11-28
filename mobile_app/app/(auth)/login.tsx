@@ -64,13 +64,13 @@ export default function LoginScreen() {
                     text: 'User',
                     onPress: () => injectMockAuth(UserRole.USER),
                 },
-                {
-                    text: 'Orizer',
-                    onPress: () => injectMockAuth(UserRole.BUSINESS),
-                },
+                // {
+                //     text: 'Orizer',
+                //     onPress: () => injectMockAuth(UserRole.BUSINESS),
+                // },
                 {
                     text: 'Busss',
-                    onPress: () => injectMockAuth(UserRole.BUSINESS),
+                    onPress: () => injectMockAuth(UserRole.ORGANIZER),
                 },
                 {
                     text: 'Cancel',

@@ -100,7 +100,7 @@ export default function CommunityChatScreen() {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.backButton}
                     onPress={() => router.push('/(user)/home' as any)}
                 >

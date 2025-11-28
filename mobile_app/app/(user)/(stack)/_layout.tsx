@@ -64,21 +64,21 @@ export default function StackLayout() {
       />
       <Stack.Screen
         name="friends"
-        options={{ 
+        options={{
           title: 'Friends & Location',
           headerShown: false,
         }}
       />
       <Stack.Screen
         name="ai-planner"
-        options={{ 
+        options={{
           title: 'AI Travel Planner',
           headerShown: false,
         }}
       />
       <Stack.Screen
         name="ai-planner-results"
-        options={{ 
+        options={{
           title: 'Travel Plans',
           headerShown: false,
         }}

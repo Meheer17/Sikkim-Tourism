@@ -88,7 +88,7 @@ export default function HomeScreen() {
                         <Text style={styles.greeting}>Welcome Back!</Text>
                         <Text style={styles.subtitle}>Explore amazing services</Text>
                     </View>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.profileButton}
                         onPress={() => router.push('/(user)/profile' as any)}
                     >
@@ -116,7 +116,7 @@ export default function HomeScreen() {
                 </View>
 
                 {/* AI Planner Banner */}
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.aiPlannerBanner}
                     onPress={() => router.push('/(user)/(stack)/ai-planner' as any)}
                     activeOpacity={0.8}
