@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Place, PlaceFilter } from '@/types/admin.types';
+import { Place } from '@/types/admin.types';
+import { useApi } from '@/hooks/useApi';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_HEIGHT = SCREEN_HEIGHT * 0.35;
@@ -167,12 +169,14 @@ export default function AdminPlacesScreen() {
     const [selectedStatus, setSelectedStatus] = useState('All');
     const [showFilters, setShowFilters] = useState(false);
     const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+    const { get: getPlaces, put: updatePlace } = useApi<Place[]>();
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
 
-    useEffect(() => {
-        filterPlaces();
-    }, [searchQuery, selectedCategory, selectedStatus, places]);
-
-    const filterPlaces = () => {
+    const filterPlaces = useCallback(() => {
         let filtered = places;
 
         // Filter by category
@@ -195,7 +199,11 @@ export default function AdminPlacesScreen() {
         }
 
         setFilteredPlaces(filtered);
-    };
+    }, [places, selectedCategory, selectedStatus, searchQuery]);
+
+    useEffect(() => {
+        filterPlaces();
+    }, [filterPlaces]);
 
     const handlePlacePress = (place: Place) => {
         setSelectedPlace(place);
@@ -261,12 +269,12 @@ export default function AdminPlacesScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: card }]}>
                 <View>
-                    <Text style={styles.headerTitle}>Places</Text>
-                    <Text style={styles.headerSubtitle}>
+                    <Text style={[styles.headerTitle, { color: text }]}>Places</Text>
+                    <Text style={[styles.headerSubtitle, { color: muted }]}>
                         {filteredPlaces.length} places found
                     </Text>
                 </View>
@@ -274,14 +282,14 @@ export default function AdminPlacesScreen() {
                     style={styles.addButton}
                     onPress={() => router.push('/(admin)/(stack)/add-place' as any)}
                 >
-                    <IconSymbol name="plus" size={24} color="#fff" />
+                    <IconSymbol name="plus" size={24} color={card} />
                 </TouchableOpacity>
             </View>
 
             {/* Map View */}
             <View style={styles.mapContainer}>
                 <View style={styles.mapPlaceholder}>
-                    <IconSymbol name="map.fill" size={48} color="#0a7ea4" />
+                    <IconSymbol name="map.fill" size={48} color={tint} />
                     <Text style={styles.mapPlaceholderText}>Interactive Map</Text>
                     <Text style={styles.mapSubtext}>
                         {selectedPlace ? `Showing: ${selectedPlace.name}` : 'Select a place to view on map'}
@@ -294,10 +302,10 @@ export default function AdminPlacesScreen() {
                         <IconSymbol name="location.fill" size={20} color="#0a7ea4" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.controlButton}>
-                        <IconSymbol name="plus" size={20} color="#11181C" />
+                        <IconSymbol name="plus" size={20} color={text} />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.controlButton}>
-                        <IconSymbol name="minus" size={20} color="#11181C" />
+                        <IconSymbol name="minus" size={20} color={text} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -305,11 +313,11 @@ export default function AdminPlacesScreen() {
             {/* Search and Filter */}
             <View style={styles.searchContainer}>
                 <View style={styles.searchBar}>
-                    <IconSymbol name="magnifyingglass" size={20} color="#687076" />
+                    <IconSymbol name="magnifyingglass" size={20} color={muted} />
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Search places..."
-                        placeholderTextColor="#687076"
+                        placeholderTextColor={muted}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                     />
@@ -323,7 +331,7 @@ export default function AdminPlacesScreen() {
                     style={styles.filterButton}
                     onPress={() => setShowFilters(!showFilters)}
                 >
-                    <IconSymbol name="slider.horizontal.3" size={20} color="#0a7ea4" />
+                    <IconSymbol name="slider.horizontal.3" size={20} color={tint} />
                 </TouchableOpacity>
             </View>
 
@@ -505,7 +513,7 @@ export default function AdminPlacesScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        // backgroundColor will be set inline
     },
     header: {
         flexDirection: 'row',
@@ -513,19 +521,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         paddingTop: 60,
-        backgroundColor: '#fff',
+        // backgroundColor will be set inline
         borderBottomWidth: 1,
         borderBottomColor: '#e5e7eb',
     },
     headerTitle: {
         fontSize: 28,
         fontWeight: '700',
-        color: '#11181C',
+        // color will be set inline
         marginBottom: 4,
     },
     headerSubtitle: {
         fontSize: 14,
-        color: '#687076',
+        // color will be set inline
     },
     addButton: {
         width: 44,

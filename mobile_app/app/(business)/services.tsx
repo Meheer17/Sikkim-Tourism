@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 const CATEGORIES = [
     { key: 'transport', label: 'Transport', icon: 'car.fill', color: '#3b82f6', bg: '#dbeafe' },
@@ -14,36 +15,51 @@ const CATEGORIES = [
 export default function BusinessServices() {
     const router = useRouter();
     const [selected, setSelected] = useState<string | null>(null);
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const textColor = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
+    const scheme = useColorScheme();
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Your Services</Text>
-                <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/(business)/(stack)/add-service' as any)}>
-                    <IconSymbol name="plus" size={20} color="#fff" />
-                </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-                <Text style={styles.sectionTitle}>Business Nature</Text>
-                <View style={styles.categoryGrid}>
-                    {CATEGORIES.map((c) => (
-                        <TouchableOpacity key={c.key} style={[styles.categoryCard, { backgroundColor: c.bg }, selected === c.key && styles.categorySelected]} onPress={() => setSelected(c.key)}>
-                            <IconSymbol name={c.icon as any} size={24} color={c.color} />
-                            <Text style={[styles.categoryText, { color: c.color }]}>{c.label}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
-                <Text style={styles.sectionTitle}>Manage Services</Text>
-                <View style={styles.actionsRow}>
-                    <TouchableOpacity style={styles.action} onPress={() => router.push('/(business)/(stack)/add-service' as any)}>
-                        <IconSymbol name="plus.circle.fill" size={28} color="#0a7ea4" />
-                        <Text style={styles.actionText}>Add Service</Text>
+        <View style={[styles.container,{backgroundColor:background}]}>            
+            <ScrollView style={styles.scroll} contentContainerStyle={[styles.content,{backgroundColor:background}]}>                
+                <View style={[styles.header,{backgroundColor:card}]}>                    
+                    <Text style={[styles.headerTitle,{color:textColor}]}>Your Services</Text>
+                    <TouchableOpacity style={[styles.addBtn,{backgroundColor:tint}]} onPress={() => router.push('/(business)/(stack)/add-service' as any)}>
+                        <IconSymbol name="plus" size={20} color="#fff" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.action} onPress={() => router.push('/(business)/(stack)/manage-services' as any)}>
-                        <IconSymbol name="square.grid.2x2.fill" size={28} color="#8b5cf6" />
-                        <Text style={styles.actionText}>Manage All</Text>
+                </View>
+                <Text style={[styles.sectionTitle,{color:textColor}]}>Business Nature</Text>
+                <View style={styles.categoryGrid}>
+                    {CATEGORIES.map((c) => {
+                        const active = selected === c.key;
+                        return (
+                            <TouchableOpacity
+                                key={c.key}
+                                style={[
+                                    styles.categoryCard,
+                                    { backgroundColor: scheme === 'dark' ? card : c.bg, borderColor: active ? tint : 'transparent' },
+                                    active && { borderWidth: 2 }
+                                ]}
+                                onPress={() => setSelected(c.key)}
+                            >
+                                <IconSymbol name={c.icon as any} size={24} color={c.color} />
+                                <Text style={[styles.categoryText,{color: c.color}]}>{c.label}</Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+                <Text style={[styles.sectionTitle,{color:textColor}]}>Manage Services</Text>
+                <View style={styles.actionsRow}>
+                    <TouchableOpacity style={[styles.action,{backgroundColor:card}]} onPress={() => router.push('/(business)/(stack)/add-service' as any)}>
+                        <IconSymbol name="plus.circle.fill" size={28} color={tint} />
+                        <Text style={[styles.actionText,{color:textColor}]}>Add Service</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.action,{backgroundColor:card}]} onPress={() => router.push('/(business)/(stack)/manage-services' as any)}>
+                        <IconSymbol name="square.grid.2x2.fill" size={28} color={tint} />
+                        <Text style={[styles.actionText,{color:textColor}]}>Manage All</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
@@ -52,18 +68,18 @@ export default function BusinessServices() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fa' },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 60, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-    headerTitle: { fontSize: 28, fontWeight: '700', color: '#11181C' },
-    addBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#0a7ea4', justifyContent: 'center', alignItems: 'center' },
+    container: { flex: 1 },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 60, borderBottomWidth: 0 },
+    headerTitle: { fontSize: 28, fontWeight: '700' },
+    addBtn: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
     scroll: { flex: 1 },
     content: { padding: 20, paddingBottom: 100 },
-    sectionTitle: { fontSize: 18, fontWeight: '700', color: '#11181C', marginBottom: 12 },
+    sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
     categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
-    categoryCard: { width: '30%', borderRadius: 12, padding: 14, alignItems: 'center', gap: 8 },
-    categorySelected: { borderWidth: 2, borderColor: '#0a7ea4' },
+    categoryCard: { width: '30%', borderRadius: 12, padding: 14, alignItems: 'center', gap: 8, borderWidth: 0 },
+    categorySelected: { },
     categoryText: { fontSize: 13, fontWeight: '600' },
     actionsRow: { flexDirection: 'row', gap: 12 },
-    action: { flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 16, alignItems: 'center', gap: 8, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
-    actionText: { fontSize: 14, fontWeight: '600', color: '#11181C' },
+    action: { flex: 1, borderRadius: 12, padding: 16, alignItems: 'center', gap: 8, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+    actionText: { fontSize: 14, fontWeight: '600' },
 });

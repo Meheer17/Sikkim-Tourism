@@ -146,8 +146,20 @@ class ApiClient {
             path: error.config?.url || '',
         };
 
-        // Log errors
+        // Don't log network errors in development mode (backend not running)
+        if (__DEV__ && (error.code === 'ERR_NETWORK' || error.message === 'Network Error')) {
+            console.warn('⚠️ Network error detected - Backend API may not be running');
+            return;
+        }
+
+        // Log other errors
         console.error('❌ API Error:', apiError);
+
+        // Don't show toast for network errors in development mode
+        if (__DEV__ && (error.code === 'ERR_NETWORK' || error.message === 'Network Error')) {
+            console.warn('⚠️ Network error detected - Backend API may not be running');
+            return;
+        }
 
         // Show user-friendly error messages
         if (error.response?.status === 404) {
@@ -167,6 +179,12 @@ class ApiClient {
                 type: 'error',
                 text1: 'Request Timeout',
                 text2: 'The request took too long. Please check your connection.',
+            });
+        } else if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+            Toast.show({
+                type: 'error',
+                text1: 'Connection Error',
+                text2: 'Unable to connect to the server. Please check your internet connection.',
             });
         }
     }

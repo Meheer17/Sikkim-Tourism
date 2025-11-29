@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 // Mock data - replace with actual API call
 const MOCK_ALL_SERVICES: Service[] = [
@@ -79,6 +80,14 @@ export default function ServicesScreen() {
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Theme colors
+    const screenBg = useThemeColor('background');
+    const cardBg = useThemeColor('card');
+    const text = useThemeColor('text');
+    const mutedText = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
+    const border = useThemeColor('border');
+
     useEffect(() => {
         loadServices();
     }, []);
@@ -120,26 +129,26 @@ export default function ServicesScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: screenBg }]}>
             {/* Header */}
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Services</Text>
-                <Text style={styles.headerSubtitle}>Discover amazing experiences</Text>
+            <View style={[styles.header, { backgroundColor: cardBg }]}>
+                <Text style={[styles.headerTitle, { color: text }]}>Services</Text>
+                <Text style={[styles.headerSubtitle, { color: mutedText }]}>Discover amazing experiences</Text>
             </View>
 
             {/* Search Bar */}
-            <View style={styles.searchContainer}>
-                <IconSymbol name="magnifyingglass" size={20} color="#687076" />
+            <View style={[styles.searchContainer, { backgroundColor: cardBg }]}>
+                <IconSymbol name="magnifyingglass" size={20} color={mutedText as string} />
                 <TextInput
-                    style={styles.searchInput}
+                    style={[styles.searchInput, { color: text }]}
                     placeholder="Search services..."
-                    placeholderTextColor="#687076"
+                    placeholderTextColor={mutedText as string}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                 />
                 {searchQuery.length > 0 && (
                     <TouchableOpacity onPress={() => setSearchQuery('')}>
-                        <IconSymbol name="xmark.circle.fill" size={20} color="#687076" />
+                        <IconSymbol name="xmark.circle.fill" size={20} color={mutedText as string} />
                     </TouchableOpacity>
                 )}
             </View>
@@ -156,13 +165,15 @@ export default function ServicesScreen() {
                         key={category}
                         style={[
                             styles.categoryChip,
-                            selectedCategory === category && styles.categoryChipActive,
+                            { backgroundColor: cardBg, borderColor: border },
+                            selectedCategory === category && { backgroundColor: tint, borderColor: tint },
                         ]}
                         onPress={() => setSelectedCategory(category)}
                     >
                         <Text
                             style={[
                                 styles.categoryText,
+                                { color: mutedText },
                                 selectedCategory === category && styles.categoryTextActive,
                             ]}
                         >
@@ -188,9 +199,9 @@ export default function ServicesScreen() {
                     ))
                 ) : (
                     <View style={styles.emptyState}>
-                        <IconSymbol name="magnifyingglass" size={64} color="#d1d5db" />
-                        <Text style={styles.emptyTitle}>No services found</Text>
-                        <Text style={styles.emptySubtitle}>
+                        <IconSymbol name="magnifyingglass" size={64} color={border as string} />
+                        <Text style={[styles.emptyTitle, { color: text }]}>No services found</Text>
+                        <Text style={[styles.emptySubtitle, { color: mutedText }]}>
                             Try adjusting your search or filters
                         </Text>
                     </View>
@@ -203,27 +214,22 @@ export default function ServicesScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
     },
     header: {
         padding: 20,
         paddingTop: 60,
-        backgroundColor: '#fff',
     },
     headerTitle: {
         fontSize: 32,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
     },
     headerSubtitle: {
         fontSize: 15,
-        color: '#687076',
     },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#fff',
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingVertical: 12,
@@ -239,7 +245,6 @@ const styles = StyleSheet.create({
     searchInput: {
         flex: 1,
         fontSize: 16,
-        color: '#11181C',
     },
     categoriesContainer: {
         marginTop: 16,
@@ -255,20 +260,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: '#fff',
         borderWidth: 1,
-        borderColor: '#e5e7eb',
         height: 36,
         justifyContent: 'center',
     },
     categoryChipActive: {
-        backgroundColor: '#0a7ea4',
-        borderColor: '#0a7ea4',
     },
     categoryText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#687076',
     },
     categoryTextActive: {
         color: '#fff',
@@ -288,13 +288,11 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#11181C',
         marginTop: 16,
         marginBottom: 8,
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#687076',
         textAlign: 'center',
     },
 });

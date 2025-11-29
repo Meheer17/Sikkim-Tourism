@@ -75,6 +75,13 @@ export const useApi = <T = any>(initialData: T | null = null) => {
                     error: errorMsg,
                 }));
 
+                // Don't show error toast for network errors in development mode
+                const isNetworkError = error.code === 'ERR_NETWORK' || error.message === 'Network Error';
+                if (__DEV__ && isNetworkError) {
+                    // Silently handle network errors in development (backend not running)
+                    return null;
+                }
+
                 if (options.showErrorToast !== false) {
                     Toast.show({
                         type: 'error',
