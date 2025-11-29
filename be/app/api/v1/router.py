@@ -1,13 +1,13 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, users, profile, location, business, event
-# from app.api.v1.endpoints import files, community, upload, message
+from app.api.v1.endpoints import auth, users, profile, location, business, event, compression
 
 api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 api_router.include_router(users.router, prefix="/users", tags=["Users"])
 api_router.include_router(profile.router, prefix="/profile", tags=["Profile"])
+api_router.include_router(compression.router, prefix="/compress", tags=["Compression"])  
 api_router.include_router(location.router, prefix="/location", tags=["Location"])
 api_router.include_router(business.router, prefix="/business", tags=["business"])
 api_router.include_router(event.router, prefix="/event", tags=["event"])
