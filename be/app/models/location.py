@@ -17,7 +17,7 @@ PyObjectId = Annotated[ObjectId, BeforeValidator(validate_object_id)]
 class LocationType(str, Enum):
     emergency = "emergency"
     localhelp = "localhelp"
-    bussiness = "bussiness"
+    business = "business"
     event = "event"
     tourism = "tourism"
     other = "other"
