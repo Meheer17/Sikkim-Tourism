@@ -5,7 +5,6 @@ import json
 
 from app.core.database import get_database
 from app.models.file import FileInDB, File
-from app.services.telegram_service import telegram_storage_service
 
 
 class UploadService:
@@ -52,14 +51,9 @@ class UploadService:
                 detail="Invalid metadata JSON format"
             )
         
-        # Upload file to Telegram storage
-        telegram_result = await telegram_storage_service.upload_file(file, user_id)
-        
-        # Add upload type and telegram info to metadata
+
         metadata_dict["upload_type"] = upload_type
-        metadata_dict["telegram_file_id"] = telegram_result.telegram_file_id
-        metadata_dict["telegram_message_id"] = telegram_result.file_id
-        
+
         # Create FILES record
         file_dict = {
             "name": name,

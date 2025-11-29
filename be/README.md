@@ -1,7 +1,6 @@
 # FastAPI Production App (recreated)
 
-This repository contains a production-style FastAPI backend skeleton with MongoDB and Telethon-based Telegram storage.
-
+This repository contains a production-style FastAPI backend skeleton with MongoDB 
 Quick start:
 
 1. Install dependencies:
