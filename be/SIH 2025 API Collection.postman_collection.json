@@ -1,0 +1,1985 @@
+{
+	"info": {
+		"_postman_id": "3f342e25-7955-415b-9953-15f21f92f3ab",
+		"name": "SIH 2025 API Collection",
+		"description": "Complete API collection for SIH 2025 Backend",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "43495295"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Sign Up",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"address\": \"123 Main St, City, Country\",\n  \"gender\": \"male\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/signup",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"signup"
+							]
+						},
+						"description": "Create user; returns JWT (7 days expiry)"
+					},
+					"response": []
+				},
+				{
+					"name": "Sign In",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/signin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"signin"
+							]
+						},
+						"description": "Sign in; returns JWT (7 days expiry)"
+					},
+					"response": [
+						{
+							"name": "Sign In",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/auth/signin",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"auth",
+										"signin"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 04:38:44 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "190"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OTI3ZDU2YTVkYjg2Yzg0MWUyODczODQiLCJleHAiOjE3NjQ4MjMxMjR9.pBg3834ej5WyglhkfEyUkdD3RP_IDRN4Hcy0SbARK-U\",\n    \"token_type\": \"bearer\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Forget Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/forgetpassword",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"forgetpassword"
+							]
+						},
+						"description": "Request password reset token (expires in 15 minutes)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Profile",
+			"item": [
+				{
+					"name": "Get My Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/profile/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"profile",
+								"me"
+							]
+						},
+						"description": "Get authenticated user's profile"
+					},
+					"response": [
+						{
+							"name": "Get My Profile",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/profile/me",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"profile",
+										"me"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 04:39:58 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "272"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"John Doe\",\n    \"address\": \"123 Main St, City, Country\",\n    \"gender\": \"male\",\n    \"email\": \"john.doe@example.com\",\n    \"id\": \"6927d56a5db86c841e287384\",\n    \"last_synced_at\": null,\n    \"role\": null,\n    \"approved\": false,\n    \"created_at\": \"2025-11-27T04:36:58.223000\",\n    \"updated_at\": \"2025-11-27T04:36:58.223000\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get User Profile by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/profile/:uid",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"profile",
+								":uid"
+							],
+							"variable": [
+								{
+									"key": "uid",
+									"value": "{{userId}}"
+								}
+							]
+						},
+						"description": "Get user's profile by id"
+					},
+					"response": [
+						{
+							"name": "Get User Profile by ID",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/profile/:uid",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"profile",
+										":uid"
+									],
+									"variable": [
+										{
+											"key": "uid",
+											"value": "{{userId}}"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 04:46:17 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "272"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"John Doe\",\n    \"address\": \"123 Main St, City, Country\",\n    \"gender\": \"male\",\n    \"email\": \"john.doe@example.com\",\n    \"id\": \"6927d56a5db86c841e287384\",\n    \"last_synced_at\": null,\n    \"role\": null,\n    \"approved\": false,\n    \"created_at\": \"2025-11-27T04:36:58.223000\",\n    \"updated_at\": \"2025-11-27T04:36:58.223000\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Files",
+			"item": [
+				{
+					"name": "Upload File - GLB",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "name",
+									"value": "model.glb",
+									"type": "text"
+								},
+								{
+									"key": "message_id",
+									"value": "{{messageId}}",
+									"type": "text"
+								},
+								{
+									"key": "size",
+									"value": "1024000",
+									"type": "text"
+								},
+								{
+									"key": "metadata",
+									"value": "{\"type\": \"3d-model\", \"format\": \"glb\"}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/upload/glb",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"upload",
+								"glb"
+							]
+						},
+						"description": "Upload GLB file; creates FILES record"
+					},
+					"response": []
+				},
+				{
+					"name": "Upload File - Image",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "name",
+									"value": "photo.jpg",
+									"type": "text"
+								},
+								{
+									"key": "message_id",
+									"value": "{{messageId}}",
+									"type": "text"
+								},
+								{
+									"key": "size",
+									"value": "512000",
+									"type": "text"
+								},
+								{
+									"key": "metadata",
+									"value": "{\"type\": \"image\", \"format\": \"jpeg\"}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/upload/image",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"upload",
+								"image"
+							]
+						},
+						"description": "Upload image file; creates FILES record"
+					},
+					"response": []
+				},
+				{
+					"name": "Upload File - Audio",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "name",
+									"value": "audio.mp3",
+									"type": "text"
+								},
+								{
+									"key": "message_id",
+									"value": "{{messageId}}",
+									"type": "text"
+								},
+								{
+									"key": "size",
+									"value": "3072000",
+									"type": "text"
+								},
+								{
+									"key": "metadata",
+									"value": "{\"type\": \"audio\", \"format\": \"mp3\"}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/upload/audio",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"upload",
+								"audio"
+							]
+						},
+						"description": "Upload audio file; creates FILES record"
+					},
+					"response": []
+				},
+				{
+					"name": "Upload File - Video",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "name",
+									"value": "video.mp4",
+									"type": "text"
+								},
+								{
+									"key": "message_id",
+									"value": "{{messageId}}",
+									"type": "text"
+								},
+								{
+									"key": "size",
+									"value": "10240000",
+									"type": "text"
+								},
+								{
+									"key": "metadata",
+									"value": "{\"type\": \"video\", \"format\": \"mp4\"}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/upload/video",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"upload",
+								"video"
+							]
+						},
+						"description": "Upload video file; creates FILES record"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Location",
+			"item": [
+				{
+					"name": "List Locations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/location?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"location"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "List locations with pagination"
+					},
+					"response": [
+						{
+							"name": "List Locations",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/location?skip=0&limit=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"location"
+									],
+									"query": [
+										{
+											"key": "skip",
+											"value": "0"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 04:47:34 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "338"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"name\": \"Central Park\",\n        \"description\": \"Large public park in Manhattan\",\n        \"short_description\": \"Famous NYC park\",\n        \"position\": {\n            \"x\": 40.785091,\n            \"y\": -73.968285\n        },\n        \"metadata\": {\n            \"area\": \"843 acres\",\n            \"established\": \"1857\"\n        },\n        \"type\": \"tourism\",\n        \"id\": \"6927d7b3b9b697758d4a3561\",\n        \"created_at\": \"2025-11-27T04:46:43.166000\",\n        \"updated_at\": \"2025-11-27T04:46:43.166000\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Create Location",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Central Park\",\n  \"description\": \"Large public park in Manhattan\",\n  \"short_description\": \"Famous NYC park\",\n  \"position\": {\n    \"x\": 40.785091,\n    \"y\": -73.968285\n  },\n  \"metadata\": {\n    \"area\": \"843 acres\",\n    \"established\": \"1857\"\n  },\n  \"type\": \"tourism\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/location",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"location"
+							]
+						},
+						"description": "Create a new location"
+					},
+					"response": [
+						{
+							"name": "Create Location",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Central Park\",\n  \"description\": \"Large public park in Manhattan\",\n  \"short_description\": \"Famous NYC park\",\n  \"position\": {\n    \"x\": 40.785091,\n    \"y\": -73.968285\n  },\n  \"metadata\": {\n    \"area\": \"843 acres\",\n    \"established\": \"1857\"\n  },\n  \"type\": \"tourism\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/location",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"location"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 04:46:42 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "336"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Central Park\",\n    \"description\": \"Large public park in Manhattan\",\n    \"short_description\": \"Famous NYC park\",\n    \"position\": {\n        \"x\": 40.785091,\n        \"y\": -73.968285\n    },\n    \"metadata\": {\n        \"area\": \"843 acres\",\n        \"established\": \"1857\"\n    },\n    \"type\": \"tourism\",\n    \"id\": \"6927d7b3b9b697758d4a3561\",\n    \"created_at\": \"2025-11-27T04:46:43.166000\",\n    \"updated_at\": \"2025-11-27T04:46:43.166000\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Location by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/location/:l_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"location",
+								":l_id"
+							],
+							"variable": [
+								{
+									"key": "l_id",
+									"value": "{{locationId}}"
+								}
+							]
+						},
+						"description": "Get location by id"
+					},
+					"response": [
+						{
+							"name": "Get Location by ID",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/location/:l_id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"location",
+										":l_id"
+									],
+									"variable": [
+										{
+											"key": "l_id",
+											"value": "{{locationId}}"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 04:47:48 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "336"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Central Park\",\n    \"description\": \"Large public park in Manhattan\",\n    \"short_description\": \"Famous NYC park\",\n    \"position\": {\n        \"x\": 40.785091,\n        \"y\": -73.968285\n    },\n    \"metadata\": {\n        \"area\": \"843 acres\",\n        \"established\": \"1857\"\n    },\n    \"type\": \"tourism\",\n    \"id\": \"6927d7b3b9b697758d4a3561\",\n    \"created_at\": \"2025-11-27T04:46:43.166000\",\n    \"updated_at\": \"2025-11-27T04:46:43.166000\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Location",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Central Park - Updated\",\n  \"description\": \"Updated description\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/location/:l_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"location",
+								":l_id"
+							],
+							"variable": [
+								{
+									"key": "l_id",
+									"value": "{{locationId}}"
+								}
+							]
+						},
+						"description": "Update location"
+					},
+					"response": [
+						{
+							"name": "Update Location",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Central Park - Updated\",\n  \"description\": \"Updated description\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/location/:l_id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"location",
+										":l_id"
+									],
+									"variable": [
+										{
+											"key": "l_id",
+											"value": "{{locationId}}"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 04:48:07 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "335"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Central Park - Updated\",\n    \"description\": \"Updated description\",\n    \"short_description\": \"Famous NYC park\",\n    \"position\": {\n        \"x\": 40.785091,\n        \"y\": -73.968285\n    },\n    \"metadata\": {\n        \"area\": \"843 acres\",\n        \"established\": \"1857\"\n    },\n    \"type\": \"tourism\",\n    \"id\": \"6927d7b3b9b697758d4a3561\",\n    \"created_at\": \"2025-11-27T04:46:43.166000\",\n    \"updated_at\": \"2025-11-27T04:48:08.433000\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Delete Location",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/location/:l_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"location",
+								":l_id"
+							],
+							"variable": [
+								{
+									"key": "l_id",
+									"value": "{{locationId}}"
+								}
+							]
+						},
+						"description": "Delete location"
+					},
+					"response": [
+						{
+							"name": "Delete Location",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/location/:l_id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"location",
+										":l_id"
+									],
+									"variable": [
+										{
+											"key": "l_id",
+											"value": "{{locationId}}"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 04:48:27 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "43"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Location deleted successfully\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Business",
+			"item": [
+				{
+					"name": "List Businesses",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bussiness?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bussiness"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "position_lat",
+									"value": "40.785091",
+									"disabled": true
+								},
+								{
+									"key": "position_lng",
+									"value": "-73.968285",
+									"disabled": true
+								},
+								{
+									"key": "radius_m",
+									"value": "5000",
+									"disabled": true
+								},
+								{
+									"key": "type_id",
+									"value": "{{typeId}}",
+									"disabled": true
+								}
+							]
+						},
+						"description": "List businesses with optional filters (position, radius, type)"
+					},
+					"response": [
+						{
+							"name": "List Businesses",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/bussiness?skip=0&limit=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"bussiness"
+									],
+									"query": [
+										{
+											"key": "skip",
+											"value": "0"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										},
+										{
+											"key": "position_lat",
+											"value": "40.785091",
+											"disabled": true
+										},
+										{
+											"key": "position_lng",
+											"value": "-73.968285",
+											"disabled": true
+										},
+										{
+											"key": "radius_m",
+											"value": "5000",
+											"disabled": true
+										},
+										{
+											"key": "type_id",
+											"value": "{{typeId}}",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 08:54:20 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "807"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"name\": \"Grand Hotel\",\n        \"description\": \"Luxury hotel with premium amenities\",\n        \"short_description\": \"5-star luxury hotel\",\n        \"open_hours\": {\n            \"start\": \"00:00\",\n            \"end\": \"23:59\"\n        },\n        \"type_id\": \"6927dd74c83ad21b4792693d\",\n        \"l_id\": \"6927d7b3b9b697758d4a3561\",\n        \"position\": null,\n        \"scheduled_at\": \"2025-12-01T10:00:00Z\",\n        \"id\": \"6927ed5e9086be75d3daef8b\",\n        \"created_at\": \"2025-11-27T06:19:10.293000\",\n        \"updated_at\": \"2025-11-27T06:19:10.293000\"\n    },\n    {\n        \"name\": \"Grand Hotel\",\n        \"description\": \"Luxury hotel with premium amenities\",\n        \"short_description\": \"5-star luxury hotel\",\n        \"open_hours\": {\n            \"start\": \"00:00\",\n            \"end\": \"23:59\"\n        },\n        \"type_id\": \"6927dd74c83ad21b4792693d\",\n        \"l_id\": \"6927f35e845e73462a8c9ed6\",\n        \"position\": null,\n        \"scheduled_at\": \"2025-12-01T10:00:00Z\",\n        \"id\": \"6927f35e845e73462a8c9ed7\",\n        \"created_at\": \"2025-11-27T06:44:46.518000\",\n        \"updated_at\": \"2025-11-27T06:44:46.518000\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Create Business",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Grand Hotel\",\n  \"description\": \"Luxury hotel with premium amenities\",\n  \"short_description\": \"5-star luxury hotel\",\n  \"open_hours\": {\n    \"start\": \"00:00\",\n    \"end\": \"23:59\"\n  },\n  \"type_id\": \"{{businessTypeId}}\",\n  \"l_id\": \"{{locationId}}\",\n  \"scheduled_at\": \"2025-12-01T10:00:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bussiness",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bussiness"
+							]
+						},
+						"description": "Create a business or event"
+					},
+					"response": [
+						{
+							"name": "Create Business",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Grand Hotel\",\n  \"description\": \"Luxury hotel with premium amenities\",\n  \"short_description\": \"5-star luxury hotel\",\n  \"open_hours\": {\n    \"start\": \"00:00\",\n    \"end\": \"23:59\"\n  },\n  \"type_id\": \"{{businessTypeId}}\",\n  \"position\": {\"x\":\"343434\",\"y\":\"3434.4343\"},\n  \"scheduled_at\": \"2025-12-01T10:00:00Z\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/bussiness",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"bussiness"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 06:44:46 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "402"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Grand Hotel\",\n    \"description\": \"Luxury hotel with premium amenities\",\n    \"short_description\": \"5-star luxury hotel\",\n    \"open_hours\": {\n        \"start\": \"00:00\",\n        \"end\": \"23:59\"\n    },\n    \"type_id\": \"6927dd74c83ad21b4792693d\",\n    \"l_id\": \"6927f35e845e73462a8c9ed6\",\n    \"position\": null,\n    \"scheduled_at\": \"2025-12-01T10:00:00Z\",\n    \"id\": \"6927f35e845e73462a8c9ed7\",\n    \"created_at\": \"2025-11-27T06:44:46.518000\",\n    \"updated_at\": \"2025-11-27T06:44:46.518000\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get My Businesses",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bussiness/me?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bussiness",
+								"me"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get businesses owned by authenticated user"
+					},
+					"response": [
+						{
+							"name": "Get My Businesses",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/bussiness/me?skip=0&limit=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"bussiness",
+										"me"
+									],
+									"query": [
+										{
+											"key": "skip",
+											"value": "0"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 08:55:00 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "807"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"name\": \"Grand Hotel\",\n        \"description\": \"Luxury hotel with premium amenities\",\n        \"short_description\": \"5-star luxury hotel\",\n        \"open_hours\": {\n            \"start\": \"00:00\",\n            \"end\": \"23:59\"\n        },\n        \"type_id\": \"6927dd74c83ad21b4792693d\",\n        \"l_id\": \"6927d7b3b9b697758d4a3561\",\n        \"position\": null,\n        \"scheduled_at\": \"2025-12-01T10:00:00Z\",\n        \"id\": \"6927ed5e9086be75d3daef8b\",\n        \"created_at\": \"2025-11-27T06:19:10.293000\",\n        \"updated_at\": \"2025-11-27T06:19:10.293000\"\n    },\n    {\n        \"name\": \"Grand Hotel\",\n        \"description\": \"Luxury hotel with premium amenities\",\n        \"short_description\": \"5-star luxury hotel\",\n        \"open_hours\": {\n            \"start\": \"00:00\",\n            \"end\": \"23:59\"\n        },\n        \"type_id\": \"6927dd74c83ad21b4792693d\",\n        \"l_id\": \"6927f35e845e73462a8c9ed6\",\n        \"position\": null,\n        \"scheduled_at\": \"2025-12-01T10:00:00Z\",\n        \"id\": \"6927f35e845e73462a8c9ed7\",\n        \"created_at\": \"2025-11-27T06:44:46.518000\",\n        \"updated_at\": \"2025-11-27T06:44:46.518000\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Get Business by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bussiness/:b_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bussiness",
+								":b_id"
+							],
+							"variable": [
+								{
+									"key": "b_id",
+									"value": "{{businessId}}"
+								}
+							]
+						},
+						"description": "Get business by id"
+					},
+					"response": [
+						{
+							"name": "Get Business by ID",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/bussiness/:b_id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"bussiness",
+										":b_id"
+									],
+									"variable": [
+										{
+											"key": "b_id",
+											"value": "{{businessId}}"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 08:55:17 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "402"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Grand Hotel\",\n    \"description\": \"Luxury hotel with premium amenities\",\n    \"short_description\": \"5-star luxury hotel\",\n    \"open_hours\": {\n        \"start\": \"00:00\",\n        \"end\": \"23:59\"\n    },\n    \"type_id\": \"6927dd74c83ad21b4792693d\",\n    \"l_id\": \"6927d7b3b9b697758d4a3561\",\n    \"position\": null,\n    \"scheduled_at\": \"2025-12-01T10:00:00Z\",\n    \"id\": \"6927ed5e9086be75d3daef8b\",\n    \"created_at\": \"2025-11-27T06:19:10.293000\",\n    \"updated_at\": \"2025-11-27T06:19:10.293000\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Business",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Grand Hotel - Updated\",\n  \"open_hours\": {\n    \"start\": \"06:00\",\n    \"end\": \"22:00\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bussiness/:b_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bussiness",
+								":b_id"
+							],
+							"variable": [
+								{
+									"key": "b_id",
+									"value": "{{businessId}}"
+								}
+							]
+						},
+						"description": "Update business"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Business",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bussiness/:b_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bussiness",
+								":b_id"
+							],
+							"variable": [
+								{
+									"key": "b_id",
+									"value": "{{businessId}}"
+								}
+							]
+						},
+						"description": "Delete business"
+					},
+					"response": []
+				},
+				{
+					"name": "List Types",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bussiness/types",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bussiness",
+								"types"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "New Request",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/bussiness/types",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"bussiness",
+										"types"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 05:15:03 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "429"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"types\": [\n        {\n            \"_id\": \"6927dd74c83ad21b4792693c\",\n            \"type\": \"tourist_entry\",\n            \"category\": \"event\"\n        },\n        {\n            \"_id\": \"6927dd74c83ad21b4792693d\",\n            \"type\": \"hotel\",\n            \"category\": \"buy\"\n        },\n        {\n            \"_id\": \"6927dd74c83ad21b4792693e\",\n            \"type\": \"restaurant\",\n            \"category\": \"buy\"\n        },\n        {\n            \"_id\": \"6927dd74c83ad21b4792693f\",\n            \"type\": \"cab\",\n            \"category\": \"buy\"\n        },\n        {\n            \"_id\": \"6927dd74c83ad21b47926940\",\n            \"type\": \"guide\",\n            \"category\": \"book\"\n        },\n        {\n            \"_id\": \"6927dd74c83ad21b47926941\",\n            \"type\": \"event\",\n            \"category\": \"event\"\n        }\n    ]\n}"
+						},
+						{
+							"name": "New Request",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/bussiness/types",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"bussiness",
+										"types"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 27 Nov 2025 08:54:02 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "429"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"types\": [\n        {\n            \"_id\": \"6927dd74c83ad21b4792693c\",\n            \"type\": \"tourist_entry\",\n            \"category\": \"event\"\n        },\n        {\n            \"_id\": \"6927dd74c83ad21b4792693d\",\n            \"type\": \"hotel\",\n            \"category\": \"buy\"\n        },\n        {\n            \"_id\": \"6927dd74c83ad21b4792693e\",\n            \"type\": \"restaurant\",\n            \"category\": \"buy\"\n        },\n        {\n            \"_id\": \"6927dd74c83ad21b4792693f\",\n            \"type\": \"cab\",\n            \"category\": \"buy\"\n        },\n        {\n            \"_id\": \"6927dd74c83ad21b47926940\",\n            \"type\": \"guide\",\n            \"category\": \"book\"\n        },\n        {\n            \"_id\": \"6927dd74c83ad21b47926941\",\n            \"type\": \"event\",\n            \"category\": \"event\"\n        }\n    ]\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Communities",
+			"item": [
+				{
+					"name": "List Communities",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/communities?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"communities"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "List communities with pagination"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Community",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Travel Enthusiasts\",\n  \"decription\": \"Community for people who love to travel and explore new places\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/communities",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"communities"
+							]
+						},
+						"description": "Create a new community"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Community by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/communities/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"communities",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{communityId}}"
+								}
+							]
+						},
+						"description": "Get community by id"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Community",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Travel Enthusiasts - Updated\",\n  \"decription\": \"Updated community description\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/communities/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"communities",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{communityId}}"
+								}
+							]
+						},
+						"description": "Update community"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Community",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/communities/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"communities",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{communityId}}"
+								}
+							]
+						},
+						"description": "Delete community"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Messages",
+			"item": [
+				{
+					"name": "Create Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"uid\": \"{{userId}}\",\n  \"cid\": \"{{communityId}}\",\n  \"text\": \"Hello everyone! This is my first message in this community.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/message",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"message"
+							]
+						},
+						"description": "Create a new message"
+					},
+					"response": []
+				},
+				{
+					"name": "List Messages",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/message?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"message"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "uid",
+									"value": "{{userId}}",
+									"disabled": true
+								},
+								{
+									"key": "cid",
+									"value": "{{communityId}}",
+									"disabled": true
+								}
+							]
+						},
+						"description": "List messages with optional filters (uid, cid)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Events",
+			"item": [
+				{
+					"name": "List Events",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/event?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"event"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "position_lat",
+									"value": "40.785091",
+									"disabled": true
+								},
+								{
+									"key": "position_lng",
+									"value": "-73.968285",
+									"disabled": true
+								},
+								{
+									"key": "radius_m",
+									"value": "5000",
+									"disabled": true
+								},
+								{
+									"key": "type_id",
+									"value": "{{typeId}}",
+									"disabled": true
+								}
+							]
+						},
+						"description": "List events (managed via BUSSINESS with scheduled_at and BUSSINESS_TYPE)"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8000"
+		},
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "userId",
+			"value": ""
+		},
+		{
+			"key": "locationId",
+			"value": ""
+		},
+		{
+			"key": "businessId",
+			"value": ""
+		},
+		{
+			"key": "businessTypeId",
+			"value": ""
+		},
+		{
+			"key": "communityId",
+			"value": ""
+		},
+		{
+			"key": "messageId",
+			"value": ""
+		},
+		{
+			"key": "typeId",
+			"value": ""
+		}
+	]
+}
