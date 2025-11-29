@@ -17,7 +17,7 @@ PyObjectId = Annotated[ObjectId, BeforeValidator(validate_object_id)]
 class UserRole(str, Enum):
     user = "user"
     organiser = "organiser"
-    bussiness = "bussiness"
+    business = "business"
     admin = "admin"
 
 

@@ -34,10 +34,10 @@ class MessageService:
         query = {}
         
         if uid:
-            query["uid"] = uid
+            query["uid"] = ObjectId(uid)
         
         if cid:
-            query["cid"] = cid
+            query["cid"] = ObjectId(cid)
         
         cursor = self.collection.find(query).skip(skip).limit(limit)
         messages = []
@@ -45,8 +45,8 @@ class MessageService:
             msg_db = MessageInDB(**message)
             messages.append(Message(
                 id=str(msg_db.id),
-                uid=msg_db.uid,
-                cid=msg_db.cid,
+                uid=str(msg_db.uid),
+                cid=str(msg_db.cid),
                 text=msg_db.text,
                 created_at=msg_db.created_at
             ))
@@ -57,13 +57,17 @@ class MessageService:
         message_dict = message_create.model_dump()
         message_dict["created_at"] = datetime.utcnow()
         
+        # Create MessageInDB instance to ensure ObjectId conversion
+        message_in_db = MessageInDB(**message_dict)
+        message_dict = message_in_db.model_dump(exclude={"id"})
+        
         result = await self.collection.insert_one(message_dict)
         created_message = await self.get_by_id(str(result.inserted_id))
         
         return Message(
             id=str(created_message.id),
-            uid=created_message.uid,
-            cid=created_message.cid,
+            uid=str(created_message.uid),
+            cid=str(created_message.cid),
             text=created_message.text,
             created_at=created_message.created_at
         )

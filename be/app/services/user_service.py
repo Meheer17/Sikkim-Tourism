@@ -56,6 +56,7 @@ class UserService:
         # Create user
         user_dict = user_create.model_dump()
         user_dict["hashed_password"] = get_password_hash(user_dict.pop("password"))
+        user_dict["approved"] = False  # Explicitly set approved to false by default
         user_dict["created_at"] = datetime.utcnow()
         user_dict["updated_at"] = datetime.utcnow()
         

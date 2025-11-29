@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id, get_current_admin_user
 from app.services.user_service import user_service
 from app.models.user import User, UserUpdate
 from app.schemas.auth import MessageResponse
@@ -46,3 +46,24 @@ async def delete_current_user(current_user_id: str = Depends(get_current_user_id
         return MessageResponse(message="User account deleted successfully")
     
     return MessageResponse(message="Failed to delete user account")
+
+
+@router.put("/{user_id}/approve", response_model=MessageResponse)
+async def approve_user(
+    user_id: str,
+    current_admin_id: str = Depends(get_current_admin_user)
+):
+    """Approve a user (Admin only)"""
+    # Check if user exists
+    user = await user_service.get_by_id(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Update user's approved status
+    update_data = UserUpdate(approved=True)
+    await user_service.update(user_id, update_data)
+    
+    return MessageResponse(message="User approved successfully")
