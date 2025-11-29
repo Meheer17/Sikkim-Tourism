@@ -2,9 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export default function OrganizationDashboard() {
     const router = useRouter();
+    const tint = useThemeColor('tint');
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const textColor = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
     const stats = [
         { title: 'Active Places', value: '12', icon: 'mappin.circle.fill', color: '#10b981', bg: '#d1fae5' },
         { title: 'Events', value: '3', icon: 'calendar', color: '#3b82f6', bg: '#dbeafe' },
@@ -14,39 +20,38 @@ export default function OrganizationDashboard() {
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Organization Dashboard</Text>
-                <TouchableOpacity style={styles.profileBtn} onPress={() => router.push('/(organization)/profile' as any)}>
-                    <IconSymbol name="person.circle.fill" size={32} color="#0a7ea4" />
-                </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.scroll} contentContainerStyle={[styles.content,{backgroundColor:background}]} showsVerticalScrollIndicator={false}>
+                <View style={[styles.header,{backgroundColor:card}]}>
+                    <Text style={[styles.headerTitle,{color:textColor}]}>Organization Dashboard</Text>
+                    <TouchableOpacity style={styles.profileBtn} onPress={() => router.push('/(organization)/profile' as any)}>
+                        <IconSymbol name="person.circle.fill" size={32} color={tint} />
+                    </TouchableOpacity>
+                </View>
                 <View style={styles.statsGrid}>
                     {stats.map((s, i) => (
-                        <View key={i} style={styles.statCard}>
+                        <View key={i} style={[styles.statCard,{backgroundColor:card}]}>
                             <View style={[styles.statIcon, { backgroundColor: s.bg }]}>
                                 <IconSymbol name={s.icon as any} size={24} color={s.color} />
                             </View>
-                            <Text style={styles.statValue}>{s.value}</Text>
-                            <Text style={styles.statTitle}>{s.title}</Text>
+                            <Text style={[styles.statValue,{color:textColor}]}>{s.value}</Text>
+                            <Text style={[styles.statTitle,{color:muted}]}>{s.title}</Text>
                         </View>
                     ))}
                 </View>
 
-                <Text style={styles.sectionTitle}>Quick Actions</Text>
+                <Text style={[styles.sectionTitle,{color:textColor}]}>Quick Actions</Text>
                 <View style={styles.quickActions}>
-                    <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(organization)/(stack)/add-place' as any)}>
-                        <IconSymbol name="plus.circle.fill" size={32} color="#10b981" />
-                        <Text style={styles.actionText}>Add Place</Text>
+                    <TouchableOpacity style={[styles.actionCard,{backgroundColor:card}]} onPress={() => router.push('/(organization)/(stack)/add-place' as any)}>
+                        <IconSymbol name="plus.circle.fill" size={32} color={tint} />
+                        <Text style={[styles.actionText,{color:textColor}]}>Add Place</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(organization)/(stack)/add-event' as any)}>
-                        <IconSymbol name="plus.circle.fill" size={32} color="#3b82f6" />
-                        <Text style={styles.actionText}>Add Event</Text>
+                    <TouchableOpacity style={[styles.actionCard,{backgroundColor:card}]} onPress={() => router.push('/(organization)/(stack)/add-event' as any)}>
+                        <IconSymbol name="plus.circle.fill" size={32} color={tint} />
+                        <Text style={[styles.actionText,{color:textColor}]}>Add Event</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(organization)/tickets' as any)}>
-                        <IconSymbol name="ticket.fill" size={32} color="#f59e0b" />
-                        <Text style={styles.actionText}>Manage Tickets</Text>
+                    <TouchableOpacity style={[styles.actionCard,{backgroundColor:card}]} onPress={() => router.push('/(organization)/tickets' as any)}>
+                        <IconSymbol name="ticket.fill" size={32} color={tint} />
+                        <Text style={[styles.actionText,{color:textColor}]}>Manage Tickets</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
@@ -55,10 +60,10 @@ export default function OrganizationDashboard() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fa' },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 60, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-    headerTitle: { fontSize: 28, fontWeight: '700', color: '#11181C' },
-    profileBtn: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
+    container: { flex: 1 },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20, borderBottomWidth: 0 },
+    headerTitle: { fontSize: 28, fontWeight: '700', color: '#11181C', flexShrink: 1, maxWidth: '85%', marginRight: 8 },
+    profileBtn: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center', flexShrink: 0, marginLeft: 8 },
     scroll: { flex: 1 },
     content: { padding: 20, paddingBottom: 100 },
     statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },

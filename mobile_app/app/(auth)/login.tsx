@@ -9,6 +9,7 @@ import {
     Platform,
     ScrollView,
     Alert,
+    Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,6 +22,7 @@ export default function LoginScreen() {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
+    const [showRoleModal, setShowRoleModal] = React.useState(false);
     const router = useRouter();
     const { login } = useAuth();
 
@@ -52,32 +54,42 @@ export default function LoginScreen() {
     };
 
     const handleMockLogin = async () => {
-        Alert.alert(
-            'Mock Login',
-            'This will bypass authentication for testing. Choose a role:',
-            [
-                {
-                    text: 'Admin',
-                    onPress: () => injectMockAuth(UserRole.ADMIN),
-                },
-                {
-                    text: 'User',
-                    onPress: () => injectMockAuth(UserRole.USER),
-                },
-                // {
-                //     text: 'Orizer',
-                //     onPress: () => injectMockAuth(UserRole.BUSINESS),
-                // },
-                {
-                    text: 'Busss',
-                    onPress: () => injectMockAuth(UserRole.ORGANIZER),
-                },
-                {
-                    text: 'Cancel',
-                    style: 'cancel',
-                },
-            ]
-        );
+        if (Platform.OS === 'android') {
+            setShowRoleModal(true);
+        } else {
+            Alert.alert(
+                'Mock Login',
+                'Choose a role:',
+                [
+                    {
+                        text: 'User',
+                        onPress: () => injectMockAuth(UserRole.USER),
+                    },
+                    {
+                        text: 'Business',
+                        onPress: () => injectMockAuth(UserRole.BUSINESS),
+                    },
+                    {
+                        text: 'Organizer',
+                        onPress: () => injectMockAuth(UserRole.ORGANIZER),
+                    },
+                    {
+                        text: 'Admin',
+                        onPress: () => injectMockAuth(UserRole.ADMIN),
+                    },
+                    {
+                        text: 'Cancel',
+                        style: 'cancel',
+                    },
+                ],
+                { cancelable: true }
+            );
+        }
+    };
+
+    const handleRoleSelect = (role: UserRole) => {
+        setShowRoleModal(false);
+        injectMockAuth(role);
     };
 
     const injectMockAuth = async (role: UserRole) => {
@@ -194,6 +206,62 @@ export default function LoginScreen() {
                     </View>
                 </View>
             </ScrollView>
+
+            {/* Role Selection Modal for Android */}
+            <Modal
+                visible={showRoleModal}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowRoleModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Choose Mock Login Role</Text>
+                        <Text style={styles.modalSubtitle}>Select a role for testing</Text>
+                        
+                        <ScrollView style={styles.roleScrollView}>
+                            <TouchableOpacity
+                                style={styles.roleButton}
+                                onPress={() => handleRoleSelect(UserRole.USER)}
+                            >
+                                <Text style={styles.roleButtonText}>👤 User</Text>
+                                <Text style={styles.roleButtonDesc}>Regular tourist user</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.roleButton}
+                                onPress={() => handleRoleSelect(UserRole.BUSINESS)}
+                            >
+                                <Text style={styles.roleButtonText}>💼 Business</Text>
+                                <Text style={styles.roleButtonDesc}>Service provider</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.roleButton}
+                                onPress={() => handleRoleSelect(UserRole.ORGANIZER)}
+                            >
+                                <Text style={styles.roleButtonText}>🎯 Organizer</Text>
+                                <Text style={styles.roleButtonDesc}>Event organizer</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.roleButton}
+                                onPress={() => handleRoleSelect(UserRole.ADMIN)}
+                            >
+                                <Text style={styles.roleButtonText}>⚙️ Admin</Text>
+                                <Text style={styles.roleButtonDesc}>System administrator</Text>
+                            </TouchableOpacity>
+                        </ScrollView>
+
+                        <TouchableOpacity
+                            style={styles.modalCancelButton}
+                            onPress={() => setShowRoleModal(false)}
+                        >
+                            <Text style={styles.modalCancelText}>Cancel</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </KeyboardAvoidingView>
     );
 }
@@ -280,5 +348,69 @@ const styles = StyleSheet.create({
     linkBold: {
         color: '#007AFF',
         fontWeight: '600',
+    },
+    // Modal styles for Android role selection
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        paddingTop: 20,
+        paddingBottom: 40,
+        maxHeight: '80%',
+    },
+    modalTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#000',
+        textAlign: 'center',
+        marginBottom: 8,
+        paddingHorizontal: 20,
+    },
+    modalSubtitle: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 20,
+        paddingHorizontal: 20,
+    },
+    roleScrollView: {
+        paddingHorizontal: 20,
+        maxHeight: 400,
+    },
+    roleButton: {
+        backgroundColor: '#F5F5F5',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    roleButtonText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#000',
+        marginBottom: 4,
+    },
+    roleButtonDesc: {
+        fontSize: 13,
+        color: '#666',
+    },
+    modalCancelButton: {
+        marginTop: 20,
+        marginHorizontal: 20,
+        backgroundColor: '#F5F5F5',
+        borderRadius: 12,
+        padding: 16,
+        alignItems: 'center',
+    },
+    modalCancelText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#666',
     },
 });

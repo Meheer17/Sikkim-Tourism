@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { DashboardStats, RecentActivity } from '@/types/admin.types';
+import { useApi } from '@/hooks/useApi';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 // Mock data - replace with actual API calls
 const MOCK_STATS: DashboardStats = {
@@ -71,18 +73,47 @@ export default function AdminDashboardScreen() {
     const [stats, setStats] = useState<DashboardStats>(MOCK_STATS);
     const [activities, setActivities] = useState<RecentActivity[]>(MOCK_ACTIVITIES);
     const [refreshing, setRefreshing] = useState(false);
+    const { get: getStats } = useApi<DashboardStats>();
+    const { get: getActivities } = useApi<RecentActivity[]>();
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
+
+    const loadDashboardData = useCallback(async () => {
+        try {
+            // Load stats
+            const statsData = await getStats('/admin/stats');
+            if (statsData) {
+                setStats(statsData);
+            } else {
+                // Fall back to mock data if API fails
+                setStats(MOCK_STATS);
+            }
+        } catch (error) {
+            // Fall back to mock data on error
+            setStats(MOCK_STATS);
+        }
+
+        try {
+            // Load activities
+            const activitiesData = await getActivities('/admin/activities');
+            if (activitiesData) {
+                setActivities(activitiesData);
+            } else {
+                // Fall back to mock data if API fails
+                setActivities(MOCK_ACTIVITIES);
+            }
+        } catch (error) {
+            // Fall back to mock data on error
+            setActivities(MOCK_ACTIVITIES);
+        }
+    }, [getStats, getActivities]);
 
     useEffect(() => {
         loadDashboardData();
-    }, []);
-
-    const loadDashboardData = async () => {
-        // TODO: Replace with actual API calls
-        // const statsData = await apiClient.get('/admin/stats');
-        // const activitiesData = await apiClient.get('/admin/activities');
-        setStats(MOCK_STATS);
-        setActivities(MOCK_ACTIVITIES);
-    };
+    }, [loadDashboardData]);
 
     const onRefresh = async () => {
         setRefreshing(true);
@@ -182,18 +213,18 @@ export default function AdminDashboardScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: card }]}>
                 <View>
-                    <Text style={styles.headerTitle}>Admin Dashboard</Text>
-                    <Text style={styles.headerSubtitle}>Welcome back, Admin</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>Admin Dashboard</Text>
+                    <Text style={[styles.headerSubtitle, { color: muted }]}>Welcome back, Admin</Text>
                 </View>
                 <TouchableOpacity
                     style={styles.profileButton}
                     onPress={() => router.push('/(admin)/profile' as any)}
                 >
-                    <IconSymbol name="person.circle.fill" size={32} color="#0a7ea4" />
+                    <IconSymbol name="person.circle.fill" size={32} color={tint} />
                 </TouchableOpacity>
             </View>
 
@@ -208,31 +239,29 @@ export default function AdminDashboardScreen() {
                 {/* Pending Approvals Alert */}
                 {stats.pendingApprovals > 0 && (
                     <TouchableOpacity
-                        style={styles.alertCard}
+                        style={[styles.alertCard, { backgroundColor: card }]}
                         onPress={() => {/* Navigate to approvals */ }}
                     >
                         <View style={styles.alertIcon}>
                             <IconSymbol name="exclamationmark.triangle.fill" size={24} color="#f59e0b" />
                         </View>
                         <View style={styles.alertContent}>
-                            <Text style={styles.alertTitle}>Pending Approvals</Text>
-                            <Text style={styles.alertText}>
-                                {stats.pendingApprovals} items need your attention
-                            </Text>
+                            <Text style={[styles.alertTitle, { color: text }]}>Pending Approvals</Text>
+                            <Text style={[styles.alertText, { color: muted }]}> {stats.pendingApprovals} items need your attention</Text>
                         </View>
-                        <IconSymbol name="chevron.right" size={20} color="#687076" />
+                        <IconSymbol name="chevron.right" size={20} color={muted} />
                     </TouchableOpacity>
                 )}
 
                 {/* Stats Grid */}
                 <View style={styles.statsGrid}>
                     {statCards.map((stat, index) => (
-                        <View key={index} style={styles.statCard}>
+                        <View key={index} style={[styles.statCard, { backgroundColor: card }]}>
                             <View style={[styles.statIcon, { backgroundColor: stat.bgColor }]}>
                                 <IconSymbol name={stat.icon as any} size={24} color={stat.color} />
                             </View>
-                            <Text style={styles.statValue}>{stat.value}</Text>
-                            <Text style={styles.statTitle}>{stat.title}</Text>
+                            <Text style={[styles.statValue, { color: text }]}>{stat.value}</Text>
+                            <Text style={[styles.statTitle, { color: muted }]}>{stat.title}</Text>
                             {stat.change && (
                                 <View style={styles.statChange}>
                                     <IconSymbol
@@ -258,38 +287,38 @@ export default function AdminDashboardScreen() {
 
                 {/* Quick Actions */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Quick Actions</Text>
+                    <Text style={[styles.sectionTitle, { color: text }]}>Quick Actions</Text>
                     <View style={styles.quickActions}>
                         <TouchableOpacity
-                            style={styles.actionCard}
+                            style={[styles.actionCard, { backgroundColor: card }]}
                             onPress={() => router.push('/(admin)/businesses' as any)}
                         >
-                            <IconSymbol name="plus.circle.fill" size={32} color="#0a7ea4" />
-                            <Text style={styles.actionText}>Add Business</Text>
+                            <IconSymbol name="plus.circle.fill" size={32} color={tint} />
+                            <Text style={[styles.actionText, { color: text }]}>Add Business</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={styles.actionCard}
+                            style={[styles.actionCard, { backgroundColor: card }]}
                             onPress={() => router.push('/(admin)/places' as any)}
                         >
                             <IconSymbol name="plus.circle.fill" size={32} color="#10b981" />
-                            <Text style={styles.actionText}>Add Place</Text>
+                            <Text style={[styles.actionText, { color: text }]}>Add Place</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={styles.actionCard}
+                            style={[styles.actionCard, { backgroundColor: card }]}
                             onPress={() => router.push('/(admin)/users' as any)}
                         >
                             <IconSymbol name="person.badge.plus.fill" size={32} color="#8b5cf6" />
-                            <Text style={styles.actionText}>Manage Users</Text>
+                            <Text style={[styles.actionText, { color: text }]}>Manage Users</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={styles.actionCard}
+                            style={[styles.actionCard, { backgroundColor: card }]}
                             onPress={() => router.push('/(admin)/roles' as any)}
                         >
                             <IconSymbol name="person.badge.key.fill" size={32} color="#f59e0b" />
-                            <Text style={styles.actionText}>Assign Roles</Text>
+                            <Text style={[styles.actionText, { color: text }]}>Assign Roles</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -297,15 +326,15 @@ export default function AdminDashboardScreen() {
                 {/* Recent Activity */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Recent Activity</Text>
+                        <Text style={[styles.sectionTitle, { color: text }]}>Recent Activity</Text>
                         <TouchableOpacity>
-                            <Text style={styles.seeAllText}>See All</Text>
+                            <Text style={[styles.seeAllText, { color: tint }]}>See All</Text>
                         </TouchableOpacity>
                     </View>
 
                     <View style={styles.activityList}>
                         {activities.map((activity) => (
-                            <View key={activity.id} style={styles.activityItem}>
+                            <View key={activity.id} style={[styles.activityItem, { backgroundColor: card }]}>
                                 <View
                                     style={[
                                         styles.activityIcon,
@@ -319,11 +348,11 @@ export default function AdminDashboardScreen() {
                                     />
                                 </View>
                                 <View style={styles.activityContent}>
-                                    <Text style={styles.activityTitle}>{activity.title}</Text>
-                                    <Text style={styles.activityDescription}>
+                                    <Text style={[styles.activityTitle, { color: text }]}>{activity.title}</Text>
+                                    <Text style={[styles.activityDescription, { color: muted }]}>
                                         {activity.description}
                                     </Text>
-                                    <Text style={styles.activityTime}>{activity.timestamp}</Text>
+                                    <Text style={[styles.activityTime, { color: muted }]}>{activity.timestamp}</Text>
                                 </View>
                             </View>
                         ))}
@@ -337,7 +366,6 @@ export default function AdminDashboardScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
     },
     header: {
         flexDirection: 'row',
@@ -345,19 +373,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         paddingTop: 60,
-        backgroundColor: '#fff',
         borderBottomWidth: 1,
         borderBottomColor: '#e5e7eb',
     },
     headerTitle: {
         fontSize: 28,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
     },
     headerSubtitle: {
-        fontSize: 14,
-        color: '#687076',
     },
     profileButton: {
         width: 44,
@@ -406,7 +430,6 @@ const styles = StyleSheet.create({
     },
     statCard: {
         width: '48%',
-        backgroundColor: '#fff',
         borderRadius: 16,
         padding: 16,
         elevation: 2,
@@ -426,12 +449,10 @@ const styles = StyleSheet.create({
     statValue: {
         fontSize: 28,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
     },
     statTitle: {
         fontSize: 13,
-        color: '#687076',
         marginBottom: 8,
     },
     statChange: {
@@ -455,12 +476,10 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#11181C',
     },
     seeAllText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#0a7ea4',
     },
     quickActions: {
         flexDirection: 'row',
@@ -469,7 +488,6 @@ const styles = StyleSheet.create({
     },
     actionCard: {
         width: '48%',
-        backgroundColor: '#fff',
         borderRadius: 12,
         padding: 20,
         alignItems: 'center',
@@ -484,11 +502,9 @@ const styles = StyleSheet.create({
     actionText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#11181C',
         textAlign: 'center',
     },
     activityList: {
-        backgroundColor: '#fff',
         borderRadius: 12,
         overflow: 'hidden',
     },
@@ -512,16 +528,13 @@ const styles = StyleSheet.create({
     activityTitle: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#11181C',
         marginBottom: 4,
     },
     activityDescription: {
         fontSize: 13,
-        color: '#687076',
         marginBottom: 4,
     },
     activityTime: {
         fontSize: 12,
-        color: '#9ca3af',
     },
 });

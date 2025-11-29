@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { AdminUser, UserRole, UserFilter } from '@/types/admin.types';
+import { AdminUser, UserRole } from '@/types/admin.types';
+import { useApi } from '@/hooks/useApi';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 // Mock data - replace with actual API
 const MOCK_USERS: AdminUser[] = [
@@ -111,12 +113,14 @@ export default function AdminUsersScreen() {
     const [selectedRole, setSelectedRole] = useState('All');
     const [selectedStatus, setSelectedStatus] = useState('All');
     const [showFilters, setShowFilters] = useState(false);
+    const { put: updateUser, delete: deleteUserApi } = useApi();
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
 
-    useEffect(() => {
-        filterUsers();
-    }, [searchQuery, selectedRole, selectedStatus, users]);
-
-    const filterUsers = () => {
+    const filterUsers = useCallback(() => {
         let filtered = users;
 
         // Filter by role
@@ -139,55 +143,39 @@ export default function AdminUsersScreen() {
         }
 
         setFilteredUsers(filtered);
-    };
+    }, [users, selectedRole, selectedStatus, searchQuery]);
+
+    useEffect(() => {
+        filterUsers();
+    }, [filterUsers]);
 
     const handleUserPress = (user: AdminUser) => {
         router.push(`/(admin)/(stack)/user-details?id=${user.id}` as any);
     };
 
-    const handleSuspendUser = (userId: string) => {
-        Alert.alert(
-            'Suspend User',
-            'Are you sure you want to suspend this user?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Suspend',
-                    style: 'destructive',
-                    onPress: () => {
-                        // TODO: API call to suspend
-                        setUsers(prev =>
-                            prev.map(u => (u.id === userId ? { ...u, status: 'suspended' } : u))
-                        );
-                    },
-                },
-            ]
-        );
+    const handleSuspendUser = async (userId: string) => {
+        const result = await updateUser(`/admin/users/${userId}`, { status: 'suspended' });
+        if (result) {
+            setUsers(prev =>
+                prev.map(u => (u.id === userId ? { ...u, status: 'suspended' } : u))
+            );
+        }
     };
 
-    const handleActivateUser = (userId: string) => {
-        // TODO: API call to activate
-        setUsers(prev =>
-            prev.map(u => (u.id === userId ? { ...u, status: 'active' } : u))
-        );
+    const handleActivateUser = async (userId: string) => {
+        const result = await updateUser(`/admin/users/${userId}`, { status: 'active' });
+        if (result) {
+            setUsers(prev =>
+                prev.map(u => (u.id === userId ? { ...u, status: 'active' } : u))
+            );
+        }
     };
 
-    const handleDeleteUser = (userId: string) => {
-        Alert.alert(
-            'Delete User',
-            'Are you sure you want to delete this user? This action cannot be undone.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: () => {
-                        // TODO: API call to delete
-                        setUsers(prev => prev.filter(u => u.id !== userId));
-                    },
-                },
-            ]
-        );
+    const handleDeleteUser = async (userId: string) => {
+        const result = await deleteUserApi(`/admin/users/${userId}`);
+        if (result) {
+            setUsers(prev => prev.filter(u => u.id !== userId));
+        }
     };
 
     const getRoleColor = (role: UserRole) => {
@@ -237,12 +225,12 @@ export default function AdminUsersScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: card }]}>
                 <View>
-                    <Text style={styles.headerTitle}>Users</Text>
-                    <Text style={styles.headerSubtitle}>
+                    <Text style={[styles.headerTitle, { color: text }]}>Users</Text>
+                    <Text style={[styles.headerSubtitle, { color: muted }]}>
                         {filteredUsers.length} users found
                     </Text>
                 </View>
@@ -250,18 +238,18 @@ export default function AdminUsersScreen() {
 
             {/* Search and Filter */}
             <View style={styles.searchContainer}>
-                <View style={styles.searchBar}>
-                    <IconSymbol name="magnifyingglass" size={20} color="#687076" />
+                <View style={[styles.searchBar, { backgroundColor: card }]}>
+                    <IconSymbol name="magnifyingglass" size={20} color={muted} />
                     <TextInput
-                        style={styles.searchInput}
+                        style={[styles.searchInput, { color: text }]}
                         placeholder="Search users..."
-                        placeholderTextColor="#687076"
+                        placeholderTextColor={muted}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                     />
                     {searchQuery.length > 0 && (
                         <TouchableOpacity onPress={() => setSearchQuery('')}>
-                            <IconSymbol name="xmark.circle.fill" size={20} color="#687076" />
+                            <IconSymbol name="xmark.circle.fill" size={20} color={muted} />
                         </TouchableOpacity>
                     )}
                 </View>
@@ -269,7 +257,7 @@ export default function AdminUsersScreen() {
                     style={styles.filterButton}
                     onPress={() => setShowFilters(!showFilters)}
                 >
-                    <IconSymbol name="slider.horizontal.3" size={20} color="#0a7ea4" />
+                    <IconSymbol name="slider.horizontal.3" size={20} color={tint} />
                 </TouchableOpacity>
             </View>
 

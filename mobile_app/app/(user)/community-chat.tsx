@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 // Mock chat messages
 interface ChatMessage {
@@ -78,6 +79,17 @@ export default function CommunityChatScreen() {
     const [inputMessage, setInputMessage] = useState('');
     const scrollViewRef = useRef<ScrollView>(null);
 
+    // Theme colors
+    const screenBg = useThemeColor('background');
+    const cardBg = useThemeColor('card');
+    const text = useThemeColor('text');
+    const mutedText = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
+    const border = useThemeColor('border');
+    
+    // Muted message bubble color for better readability
+    const messageBubbleColor = tint === '#64D2FF' ? '#0B7FA6' : tint; // Darker blue for dark mode
+
     const handleSendMessage = () => {
         if (inputMessage.trim()) {
             const newMessage: ChatMessage = {
@@ -97,18 +109,18 @@ export default function CommunityChatScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: screenBg }]}>
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity
+            <View style={[styles.header, { backgroundColor: cardBg, borderBottomColor: border }]}>
+                <TouchableOpacity 
                     style={styles.backButton}
                     onPress={() => router.push('/(user)/home' as any)}
                 >
-                    <IconSymbol name="chevron.left" size={24} color="#11181C" />
+                    <IconSymbol name="chevron.left" size={24} color={text as string} />
                 </TouchableOpacity>
                 <View style={styles.headerCenter}>
-                    <Text style={styles.headerTitle}>Community Chat</Text>
-                    <Text style={styles.headerSubtitle}>Connect with fellow travelers</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>Community Chat</Text>
+                    <Text style={[styles.headerSubtitle, { color: mutedText }]}>Connect with fellow travelers</Text>
                 </View>
                 <View style={styles.onlineIndicator}>
                     <View style={styles.onlineDot} />
@@ -132,23 +144,25 @@ export default function CommunityChatScreen() {
                         ]}
                     >
                         {!message.isCurrentUser && (
-                            <View style={styles.avatar}>
+                            <View style={[styles.avatar, { backgroundColor: tint }]}>
                                 <Text style={styles.avatarText}>{message.userAvatar}</Text>
                             </View>
                         )}
                         <View
                             style={[
                                 styles.messageBubble,
-                                message.isCurrentUser ? styles.messageBubbleUser : styles.messageBubbleOther,
+                                message.isCurrentUser 
+                                    ? { backgroundColor: messageBubbleColor, borderBottomRightRadius: 4 } 
+                                    : { backgroundColor: cardBg, borderBottomLeftRadius: 4 },
                             ]}
                         >
                             {!message.isCurrentUser && (
-                                <Text style={styles.userName}>{message.userName}</Text>
+                                <Text style={[styles.userName, { color: tint }]}>{message.userName}</Text>
                             )}
                             <Text
                                 style={[
                                     styles.messageText,
-                                    message.isCurrentUser && styles.messageTextUser,
+                                    { color: message.isCurrentUser ? '#fff' : text },
                                 ]}
                             >
                                 {message.message}
@@ -156,7 +170,7 @@ export default function CommunityChatScreen() {
                             <Text
                                 style={[
                                     styles.timestamp,
-                                    message.isCurrentUser && styles.timestampUser,
+                                    { color: message.isCurrentUser ? 'rgba(255, 255, 255, 0.7)' : mutedText },
                                 ]}
                             >
                                 {message.timestamp}
@@ -175,16 +189,16 @@ export default function CommunityChatScreen() {
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-                style={styles.keyboardAvoid}
+                style={[styles.keyboardAvoid, { backgroundColor: cardBg }]}
             >
-                <View style={styles.inputContainer}>
+                <View style={[styles.inputContainer, { backgroundColor: cardBg, borderTopColor: border }]}>
                     <TouchableOpacity style={styles.attachButton}>
-                        <IconSymbol name="paperclip" size={24} color="#687076" />
+                        <IconSymbol name="paperclip" size={24} color={mutedText as string} />
                     </TouchableOpacity>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: text, backgroundColor: screenBg }]}
                         placeholder="Type a message..."
-                        placeholderTextColor="#687076"
+                        placeholderTextColor={mutedText as string}
                         value={inputMessage}
                         onChangeText={setInputMessage}
                         multiline
@@ -203,7 +217,7 @@ export default function CommunityChatScreen() {
                         <IconSymbol
                             name="arrow.up.circle.fill"
                             size={32}
-                            color={inputMessage.trim() ? '#0a7ea4' : '#d1d5db'}
+                            color={inputMessage.trim() ? (tint as string) : (border as string)}
                         />
                     </TouchableOpacity>
                 </View>
@@ -215,7 +229,6 @@ export default function CommunityChatScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
     },
     header: {
         flexDirection: 'row',
@@ -223,9 +236,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         paddingTop: 60,
-        backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
         gap: 12,
     },
     backButton: {
@@ -240,12 +251,10 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 22,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
     },
     headerSubtitle: {
         fontSize: 12,
-        color: '#687076',
     },
     onlineIndicator: {
         flexDirection: 'row',
@@ -287,7 +296,6 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: '#0a7ea4',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -304,47 +312,27 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 12,
     },
-    messageBubbleOther: {
-        backgroundColor: '#fff',
-        borderBottomLeftRadius: 4,
-    },
-    messageBubbleUser: {
-        backgroundColor: '#0a7ea4',
-        borderBottomRightRadius: 4,
-    },
     userName: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#0a7ea4',
         marginBottom: 4,
     },
     messageText: {
         fontSize: 15,
-        color: '#11181C',
         lineHeight: 20,
-    },
-    messageTextUser: {
-        color: '#fff',
     },
     timestamp: {
         fontSize: 11,
-        color: '#687076',
         marginTop: 4,
     },
-    timestampUser: {
-        color: '#e0f2f1',
-    },
     keyboardAvoid: {
-        backgroundColor: '#fff',
     },
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'flex-end',
         padding: 12,
         paddingBottom: 32,
-        backgroundColor: '#fff',
         borderTopWidth: 1,
-        borderTopColor: '#e5e7eb',
         gap: 8,
     },
     attachButton: {
@@ -355,12 +343,10 @@ const styles = StyleSheet.create({
     },
     input: {
         flex: 1,
-        backgroundColor: '#f3f4f6',
         borderRadius: 20,
         paddingHorizontal: 16,
         paddingVertical: 10,
         fontSize: 15,
-        color: '#11181C',
         maxHeight: 100,
     },
     sendButton: {

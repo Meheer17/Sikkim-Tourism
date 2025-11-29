@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Business, BusinessFilter } from '@/types/admin.types';
+import { Business } from '@/types/admin.types';
+import { useApi } from '@/hooks/useApi';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 // Mock data - replace with actual API
 const MOCK_BUSINESSES: Business[] = [
@@ -114,12 +116,15 @@ export default function AdminBusinessesScreen() {
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [selectedStatus, setSelectedStatus] = useState('All');
     const [showFilters, setShowFilters] = useState(false);
+    const { put: updateBusiness } = useApi();
+    const { delete: deleteBusiness } = useApi();
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
 
-    useEffect(() => {
-        filterBusinesses();
-    }, [searchQuery, selectedCategory, selectedStatus, businesses]);
-
-    const filterBusinesses = () => {
+    const filterBusinesses = useCallback(() => {
         let filtered = businesses;
 
         // Filter by category
@@ -142,47 +147,30 @@ export default function AdminBusinessesScreen() {
         }
 
         setFilteredBusinesses(filtered);
-    };
+    }, [businesses, selectedCategory, selectedStatus, searchQuery]);
+
+    useEffect(() => {
+        filterBusinesses();
+    }, [filterBusinesses]);
 
     const handleBusinessPress = (business: Business) => {
         router.push(`/(admin)/(stack)/business-details?id=${business.id}` as any);
     };
 
-    const handleStatusChange = (businessId: string, newStatus: Business['status']) => {
-        Alert.alert(
-            'Change Status',
-            `Are you sure you want to change this business status to ${newStatus}?`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Confirm',
-                    onPress: () => {
-                        // TODO: API call to update status
-                        setBusinesses(prev =>
-                            prev.map(b => (b.id === businessId ? { ...b, status: newStatus } : b))
-                        );
-                    },
-                },
-            ]
-        );
+    const handleStatusChange = async (businessId: string, newStatus: Business['status']) => {
+        const result = await updateBusiness(`/admin/businesses/${businessId}`, { status: newStatus });
+        if (result) {
+            setBusinesses(prev =>
+                prev.map(b => (b.id === businessId ? { ...b, status: newStatus } : b))
+            );
+        }
     };
 
-    const handleDeleteBusiness = (businessId: string) => {
-        Alert.alert(
-            'Delete Business',
-            'Are you sure you want to delete this business? This action cannot be undone.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: () => {
-                        // TODO: API call to delete
-                        setBusinesses(prev => prev.filter(b => b.id !== businessId));
-                    },
-                },
-            ]
-        );
+    const handleDeleteBusiness = async (businessId: string) => {
+        const result = await deleteBusiness(`/admin/businesses/${businessId}`);
+        if (result) {
+            setBusinesses(prev => prev.filter(b => b.id !== businessId));
+        }
     };
 
     const getStatusColor = (status: Business['status']) => {
@@ -216,12 +204,12 @@ export default function AdminBusinessesScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: card }]}>
                 <View>
-                    <Text style={styles.headerTitle}>Businesses</Text>
-                    <Text style={styles.headerSubtitle}>
+                    <Text style={[styles.headerTitle, { color: text }]}>Businesses</Text>
+                    <Text style={[styles.headerSubtitle, { color: muted }]}>
                         {filteredBusinesses.length} businesses found
                     </Text>
                 </View>
@@ -235,18 +223,18 @@ export default function AdminBusinessesScreen() {
 
             {/* Search and Filter */}
             <View style={styles.searchContainer}>
-                <View style={styles.searchBar}>
-                    <IconSymbol name="magnifyingglass" size={20} color="#687076" />
+                <View style={[styles.searchBar, { backgroundColor: card }]}>
+                    <IconSymbol name="magnifyingglass" size={20} color={muted} />
                     <TextInput
-                        style={styles.searchInput}
+                        style={[styles.searchInput, { color: text }]}
                         placeholder="Search businesses..."
-                        placeholderTextColor="#687076"
+                        placeholderTextColor={muted}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                     />
                     {searchQuery.length > 0 && (
                         <TouchableOpacity onPress={() => setSearchQuery('')}>
-                            <IconSymbol name="xmark.circle.fill" size={20} color="#687076" />
+                            <IconSymbol name="xmark.circle.fill" size={20} color={muted} />
                         </TouchableOpacity>
                     )}
                 </View>
@@ -254,16 +242,16 @@ export default function AdminBusinessesScreen() {
                     style={styles.filterButton}
                     onPress={() => setShowFilters(!showFilters)}
                 >
-                    <IconSymbol name="slider.horizontal.3" size={20} color="#0a7ea4" />
+                    <IconSymbol name="slider.horizontal.3" size={20} color={tint} />
                 </TouchableOpacity>
             </View>
 
             {/* Filters */}
             {showFilters && (
-                <View style={styles.filtersContainer}>
+                <View style={[styles.filtersContainer, { backgroundColor: card }]}>
                     {/* Category Filter */}
                     <View style={styles.filterSection}>
-                        <Text style={styles.filterLabel}>Category</Text>
+                        <Text style={[styles.filterLabel, { color: text }]}>Category</Text>
                         <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -274,7 +262,7 @@ export default function AdminBusinessesScreen() {
                                     key={category}
                                     style={[
                                         styles.filterChip,
-                                        selectedCategory === category && styles.filterChipActive,
+                                        selectedCategory === category && [styles.filterChipActive, { backgroundColor: tint }],
                                     ]}
                                     onPress={() => setSelectedCategory(category)}
                                 >
@@ -293,7 +281,7 @@ export default function AdminBusinessesScreen() {
 
                     {/* Status Filter */}
                     <View style={styles.filterSection}>
-                        <Text style={styles.filterLabel}>Status</Text>
+                        <Text style={[styles.filterLabel, { color: text }]}>Status</Text>
                         <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -304,7 +292,7 @@ export default function AdminBusinessesScreen() {
                                     key={status}
                                     style={[
                                         styles.filterChip,
-                                        selectedStatus === status && styles.filterChipActive,
+                                        selectedStatus === status && [styles.filterChipActive, { backgroundColor: tint }],
                                     ]}
                                     onPress={() => setSelectedStatus(status)}
                                 >
@@ -333,7 +321,7 @@ export default function AdminBusinessesScreen() {
                     filteredBusinesses.map((business) => (
                         <TouchableOpacity
                             key={business.id}
-                            style={styles.businessCard}
+                            style={[styles.businessCard, { backgroundColor: card }]}
                             onPress={() => handleBusinessPress(business)}
                             activeOpacity={0.7}
                         >
@@ -342,14 +330,14 @@ export default function AdminBusinessesScreen() {
                                     <IconSymbol
                                         name={(business.icon as any) || 'star.fill'}
                                         size={24}
-                                        color="#0a7ea4"
+                                        color={tint}
                                     />
                                 </View>
                                 <View style={styles.businessInfo}>
-                                    <Text style={styles.businessName} numberOfLines={1}>
+                                    <Text style={[styles.businessName, { color: text }]} numberOfLines={1}>
                                         {business.name}
                                     </Text>
-                                    <Text style={styles.businessCategory}>{business.category}</Text>
+                                    <Text style={[styles.businessCategory, { color: muted }]}>{business.category}</Text>
                                 </View>
                                 <View
                                     style={[
@@ -363,25 +351,25 @@ export default function AdminBusinessesScreen() {
                                 </View>
                             </View>
 
-                            <Text style={styles.businessDescription} numberOfLines={2}>
+                            <Text style={[styles.businessDescription, { color: muted }]} numberOfLines={2}>
                                 {business.description}
                             </Text>
 
                             <View style={styles.businessMeta}>
                                 <View style={styles.metaItem}>
-                                    <IconSymbol name="person.fill" size={14} color="#687076" />
-                                    <Text style={styles.metaText}>{business.ownerName}</Text>
+                                    <IconSymbol name="person.fill" size={14} color={muted} />
+                                    <Text style={[styles.metaText, { color: muted }]}>{business.ownerName}</Text>
                                 </View>
                                 <View style={styles.metaItem}>
                                     <IconSymbol name="star.fill" size={14} color="#fbbf24" />
-                                    <Text style={styles.metaText}>
+                                    <Text style={[styles.metaText, { color: muted }]}>
                                         {business.rating?.toFixed(1) || 'N/A'} ({business.reviewCount || 0})
                                     </Text>
                                 </View>
                             </View>
 
                             <View style={styles.businessFooter}>
-                                <Text style={styles.businessPrice}>₹{business.price}</Text>
+                                <Text style={[styles.businessPrice, { color: text }]}>₹{business.price}</Text>
                                 <View style={styles.businessActions}>
                                     {business.status === 'pending' && (
                                         <>
@@ -427,9 +415,9 @@ export default function AdminBusinessesScreen() {
                     ))
                 ) : (
                     <View style={styles.emptyState}>
-                        <IconSymbol name="building.2.fill" size={64} color="#d1d5db" />
-                        <Text style={styles.emptyTitle}>No businesses found</Text>
-                        <Text style={styles.emptySubtitle}>
+                        <IconSymbol name="building.2.fill" size={64} color={muted} />
+                        <Text style={[styles.emptyTitle, { color: text }]}>No businesses found</Text>
+                        <Text style={[styles.emptySubtitle, { color: muted }]}>
                             Try adjusting your search or filters
                         </Text>
                     </View>
@@ -442,7 +430,6 @@ export default function AdminBusinessesScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
     },
     header: {
         flexDirection: 'row',
@@ -450,19 +437,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         paddingTop: 60,
-        backgroundColor: '#fff',
         borderBottomWidth: 1,
         borderBottomColor: '#e5e7eb',
     },
     headerTitle: {
         fontSize: 28,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
     },
     headerSubtitle: {
-        fontSize: 14,
-        color: '#687076',
     },
     addButton: {
         width: 44,
@@ -548,7 +531,6 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     },
     businessCard: {
-        backgroundColor: '#fff',
         borderRadius: 16,
         padding: 16,
         marginBottom: 12,
@@ -578,12 +560,10 @@ const styles = StyleSheet.create({
     businessName: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 2,
     },
     businessCategory: {
         fontSize: 13,
-        color: '#687076',
     },
     statusBadge: {
         paddingHorizontal: 10,
@@ -596,7 +576,6 @@ const styles = StyleSheet.create({
     },
     businessDescription: {
         fontSize: 14,
-        color: '#687076',
         lineHeight: 20,
         marginBottom: 12,
     },
@@ -612,7 +591,6 @@ const styles = StyleSheet.create({
     },
     metaText: {
         fontSize: 13,
-        color: '#687076',
     },
     businessFooter: {
         flexDirection: 'row',
@@ -658,13 +636,11 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#11181C',
         marginTop: 16,
         marginBottom: 8,
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#687076',
         textAlign: 'center',
     },
 });

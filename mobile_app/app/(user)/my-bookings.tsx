@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import BookingCard, { Booking } from '@/components/bookings/BookingCard';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 // Mock data - replace with actual API call
 const MOCK_BOOKINGS: Booking[] = [
@@ -56,6 +57,14 @@ export default function MyBookingsScreen() {
     const [selectedFilter, setSelectedFilter] = useState('all');
     const [refreshing, setRefreshing] = useState(false);
 
+    // Theme colors
+    const screenBg = useThemeColor('background');
+    const cardBg = useThemeColor('card');
+    const text = useThemeColor('text');
+    const mutedText = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
+    const border = useThemeColor('border');
+
     useEffect(() => {
         loadBookings();
     }, []);
@@ -95,39 +104,39 @@ export default function MyBookingsScreen() {
     const upcomingCount = bookings.filter(b => b.status === 'upcoming').length;
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: screenBg }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: cardBg }]}>
                 <View>
-                    <Text style={styles.headerTitle}>My Bookings</Text>
-                    <Text style={styles.headerSubtitle}>Track your reservations</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>My Bookings</Text>
+                    <Text style={[styles.headerSubtitle, { color: mutedText }]}>Track your reservations</Text>
                 </View>
             </View>
 
             {/* Stats */}
             <View style={styles.statsContainer}>
-                <View style={styles.statCard}>
+                <View style={[styles.statCard, { backgroundColor: cardBg }]}>
                     <View style={[styles.statIcon, { backgroundColor: '#dcfce7' }]}>
                         <IconSymbol name="checkmark.circle.fill" size={24} color="#10b981" />
                     </View>
-                    <Text style={styles.statValue}>{activeCount}</Text>
-                    <Text style={styles.statLabel}>Active</Text>
+                    <Text style={[styles.statValue, { color: text }]}>{activeCount}</Text>
+                    <Text style={[styles.statLabel, { color: mutedText }]}>Active</Text>
                 </View>
-                <View style={styles.statCard}>
+                <View style={[styles.statCard, { backgroundColor: cardBg }]}>
                     <View style={[styles.statIcon, { backgroundColor: '#dbeafe' }]}>
                         <IconSymbol name="clock.fill" size={24} color="#3b82f6" />
                     </View>
-                    <Text style={styles.statValue}>{upcomingCount}</Text>
-                    <Text style={styles.statLabel}>Upcoming</Text>
+                    <Text style={[styles.statValue, { color: text }]}>{upcomingCount}</Text>
+                    <Text style={[styles.statLabel, { color: mutedText }]}>Upcoming</Text>
                 </View>
-                <View style={styles.statCard}>
+                <View style={[styles.statCard, { backgroundColor: cardBg }]}>
                     <View style={[styles.statIcon, { backgroundColor: '#fef3c7' }]}>
                         <IconSymbol name="indianrupeesign.circle.fill" size={24} color="#f59e0b" />
                     </View>
-                    <Text style={styles.statValue}>
+                    <Text style={[styles.statValue, { color: text }]}>
                         {bookings.reduce((sum, b) => sum + b.price, 0)}
                     </Text>
-                    <Text style={styles.statLabel}>Total Spent</Text>
+                    <Text style={[styles.statLabel, { color: mutedText }]}>Total Spent</Text>
                 </View>
             </View>
 
@@ -143,13 +152,15 @@ export default function MyBookingsScreen() {
                         key={filter.key}
                         style={[
                             styles.filterChip,
-                            selectedFilter === filter.key && styles.filterChipActive,
+                            { backgroundColor: cardBg, borderColor: border },
+                            selectedFilter === filter.key && { backgroundColor: tint, borderColor: tint },
                         ]}
                         onPress={() => setSelectedFilter(filter.key)}
                     >
                         <Text
                             style={[
                                 styles.filterText,
+                                { color: mutedText },
                                 selectedFilter === filter.key && styles.filterTextActive,
                             ]}
                         >
@@ -178,14 +189,14 @@ export default function MyBookingsScreen() {
                     ))
                 ) : (
                     <View style={styles.emptyState}>
-                        <IconSymbol name="calendar.badge.exclamationmark" size={64} color="#d1d5db" />
-                        <Text style={styles.emptyTitle}>No bookings found</Text>
-                        <Text style={styles.emptySubtitle}>
+                        <IconSymbol name="calendar.badge.exclamationmark" size={64} color={border as string} />
+                        <Text style={[styles.emptyTitle, { color: text }]}>No bookings found</Text>
+                        <Text style={[styles.emptySubtitle, { color: mutedText }]}>
                             {selectedFilter === 'all'
                                 ? 'Start exploring and book your first service'
                                 : `You have no ${selectedFilter} bookings`}
                         </Text>
-                        <TouchableOpacity style={styles.exploreButton}>
+                        <TouchableOpacity style={[styles.exploreButton, { backgroundColor: tint }]}>
                             <Text style={styles.exploreButtonText}>Explore Services</Text>
                         </TouchableOpacity>
                     </View>
@@ -198,7 +209,6 @@ export default function MyBookingsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
     },
     header: {
         flexDirection: 'row',
@@ -206,17 +216,14 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         padding: 20,
         paddingTop: 60,
-        backgroundColor: '#fff',
     },
     headerTitle: {
         fontSize: 32,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
     },
     headerSubtitle: {
         fontSize: 15,
-        color: '#687076',
     },
     statsContainer: {
         flexDirection: 'row',
@@ -226,7 +233,6 @@ const styles = StyleSheet.create({
     },
     statCard: {
         flex: 1,
-        backgroundColor: '#fff',
         borderRadius: 16,
         padding: 16,
         alignItems: 'center',
@@ -247,12 +253,10 @@ const styles = StyleSheet.create({
     statValue: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#11181C',
         marginTop: 4,
     },
     statLabel: {
         fontSize: 12,
-        color: '#687076',
         marginTop: 2,
     },
     filtersContainer: {
@@ -268,21 +272,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: '#fff',
         borderWidth: 1,
-        borderColor: '#e5e7eb',
         height: 36,
         justifyContent: 'center',
         alignItems: 'center',
     },
     filterChipActive: {
-        backgroundColor: '#0a7ea4',
-        borderColor: '#0a7ea4',
     },
     filterText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#687076',
     },
     filterTextActive: {
         color: '#fff',
@@ -302,18 +301,15 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#11181C',
         marginTop: 16,
         marginBottom: 8,
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#687076',
         textAlign: 'center',
         marginBottom: 24,
     },
     exploreButton: {
-        backgroundColor: '#0a7ea4',
         paddingHorizontal: 24,
         paddingVertical: 12,
         borderRadius: 12,

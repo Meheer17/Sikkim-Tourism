@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export interface MenuItem {
     id: string;
@@ -17,10 +18,16 @@ interface MenuSectionProps {
 }
 
 export default function MenuSection({ title, items, onItemPress }: MenuSectionProps) {
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const card = useThemeColor('card');
+    const border = useThemeColor('border');
+    const soft = useThemeColor('tintSoftBg');
+
     return (
         <View style={styles.section}>
-            {title && <Text style={styles.sectionTitle}>{title}</Text>}
-            <View style={styles.menuCard}>
+            {title && <Text style={[styles.sectionTitle, { color: muted }]}>{title}</Text>}
+            <View style={[styles.menuCard, { backgroundColor: card }]}>
                 {items.map((item, index) => (
                     <React.Fragment key={item.id}>
                         <TouchableOpacity
@@ -32,14 +39,14 @@ export default function MenuSection({ title, items, onItemPress }: MenuSectionPr
                             activeOpacity={0.7}
                         >
                             <View style={styles.menuItemLeft}>
-                                {/* <View style={styles.iconContainer}>
-                  <IconSymbol name={item.icon} size={20} color="#0a7ea4" />
+                                {/* <View style={[styles.iconContainer, { backgroundColor: soft }] }>
+                  <IconSymbol name={item.icon} size={20} color={tint} />
                 </View> */}
-                                <Text style={styles.menuLabel}>{item.label}</Text>
+                                <Text style={[styles.menuLabel, { color: text }]}>{item.label}</Text>
                             </View>
-                            <IconSymbol name="chevron.right" size={16} color="#687076" />
+                            <IconSymbol name="chevron.right" size={16} color={muted} />
                         </TouchableOpacity>
-                        {index < items.length - 1 && <View style={styles.divider} />}
+                        {index < items.length - 1 && <View style={[styles.divider, { backgroundColor: border }]} />}
                     </React.Fragment>
                 ))}
             </View>
@@ -54,13 +61,11 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#687076',
         textTransform: 'uppercase',
         marginBottom: 12,
         paddingHorizontal: 4,
     },
     menuCard: {
-        backgroundColor: '#fff',
         borderRadius: 16,
         overflow: 'hidden',
         elevation: 2,
@@ -91,11 +96,9 @@ const styles = StyleSheet.create({
     menuLabel: {
         fontSize: 16,
         fontWeight: '500',
-        color: '#11181C',
     },
     divider: {
         height: 1,
-        backgroundColor: '#f0f0f0',
         marginLeft: 68,
     },
 });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export interface Booking {
     id: string;
@@ -26,17 +27,21 @@ const statusConfig = {
 
 export default function BookingCard({ booking, onPress }: BookingCardProps) {
     const status = statusConfig[booking.status];
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const border = useThemeColor('border');
 
     return (
         <TouchableOpacity
-            style={styles.card}
+            style={[styles.card, { backgroundColor: card }]}
             onPress={() => onPress?.(booking)}
             activeOpacity={0.7}
         >
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
-                    <Text style={styles.serviceName}>{booking.serviceName}</Text>
-                    <Text style={styles.serviceType}>{booking.serviceType}</Text>
+                    <Text style={[styles.serviceName, { color: text }]}>{booking.serviceName}</Text>
+                    <Text style={[styles.serviceType, { color: muted }]}>{booking.serviceType}</Text>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: `${status.color}15` }]}>
                     {/* <IconSymbol name={status.icon} size={14} color={status.color} /> */}
@@ -46,22 +51,22 @@ export default function BookingCard({ booking, onPress }: BookingCardProps) {
                 </View>
             </View>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: border }]} />
 
             <View style={styles.details}>
                 <View style={styles.detailRow}>
-                    <IconSymbol name="calendar" size={16} color="#687076" />
-                    <Text style={styles.detailText}>{booking.bookingDate}</Text>
+                    <IconSymbol name="calendar" size={16} color={muted} />
+                    <Text style={[styles.detailText, { color: muted }]}>{booking.bookingDate}</Text>
                 </View>
                 {booking.bookingCode && (
                     <View style={styles.detailRow}>
-                        <IconSymbol name="number" size={16} color="#687076" />
-                        <Text style={styles.detailText}>{booking.bookingCode}</Text>
+                        <IconSymbol name="number" size={16} color={muted} />
+                        <Text style={[styles.detailText, { color: muted }]}>{booking.bookingCode}</Text>
                     </View>
                 )}
                 <View style={styles.detailRow}>
-                    <IconSymbol name="indianrupeesign" size={16} color="#687076" />
-                    <Text style={styles.detailText}>₹{booking.price}</Text>
+                    <IconSymbol name="indianrupeesign" size={16} color={muted} />
+                    <Text style={[styles.detailText, { color: muted }]}>₹{booking.price}</Text>
                 </View>
             </View>
         </TouchableOpacity>
@@ -70,7 +75,6 @@ export default function BookingCard({ booking, onPress }: BookingCardProps) {
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: '#fff',
         borderRadius: 16,
         padding: 16,
         marginBottom: 12,
@@ -93,12 +97,10 @@ const styles = StyleSheet.create({
     serviceName: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
     },
     serviceType: {
         fontSize: 13,
-        color: '#687076',
         textTransform: 'capitalize',
     },
     statusBadge: {
@@ -115,7 +117,6 @@ const styles = StyleSheet.create({
     },
     divider: {
         height: 1,
-        backgroundColor: '#f0f0f0',
         marginBottom: 12,
     },
     details: {
@@ -128,6 +129,5 @@ const styles = StyleSheet.create({
     },
     detailText: {
         fontSize: 14,
-        color: '#687076',
     },
 });

@@ -83,6 +83,21 @@ export default function StackLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="place-details"
+        options={{ 
+          title: 'Place Details',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="immersive-experience"
+        options={{
+          title: '360° Experience',
+          headerShown: false,
+          presentation: 'fullScreenModal',
+        }}
+      />
     </Stack>
   );
 }

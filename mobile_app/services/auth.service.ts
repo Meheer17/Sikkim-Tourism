@@ -83,8 +83,11 @@ export class AuthService {
      */
     async logout(): Promise<ApiResponse<void>> {
         try {
-            // Call logout endpoint
-            await apiClient.post(config.routes.auth.logout);
+            // Skip API call if backend is not available (development mode)
+            if (!__DEV__) {
+                // Call logout endpoint
+                await apiClient.post(config.routes.auth.logout);
+            }
 
             // Clear local storage
             await AuthUtils.clearAuthData();
