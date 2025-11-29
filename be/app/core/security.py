@@ -55,3 +55,18 @@ async def get_current_user_id(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user_id
+
+
+async def get_current_admin_user(
+    current_user_id: str = Depends(get_current_user_id)
+) -> str:
+    """Check if current user is admin and return user_id"""
+    from app.services.user_service import user_service
+    
+    user = await user_service.get_by_id(current_user_id)
+    if not user or user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return current_user_id

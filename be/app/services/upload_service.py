@@ -5,7 +5,6 @@ import json
 
 from app.core.database import get_database
 from app.models.file import FileInDB, File
-from app.services.telegram_service import telegram_storage_service
 
 
 class UploadService:
@@ -27,59 +26,11 @@ class UploadService:
     
     async def process_upload(
         self,
-        file: UploadFile,
-        upload_type: str,
-        name: str,
-        message_id: str,
-        size: int,
-        metadata: str,
-        user_id: str
-    ) -> File:
+    ):
         """Process file upload and create FILES record"""
-        # Validate message_id
-        if not ObjectId.is_valid(message_id):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid message_id format"
-            )
         
-        # Parse metadata JSON
-        try:
-            metadata_dict = json.loads(metadata)
-        except json.JSONDecodeError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid metadata JSON format"
-            )
-        
-        # Upload file to Telegram storage
-        telegram_result = await telegram_storage_service.upload_file(file, user_id)
-        
-        # Add upload type and telegram info to metadata
-        metadata_dict["upload_type"] = upload_type
-        metadata_dict["telegram_file_id"] = telegram_result.telegram_file_id
-        metadata_dict["telegram_message_id"] = telegram_result.file_id
-        
-        # Create FILES record
-        file_dict = {
-            "name": name,
-            "message_id": message_id,
-            "size": size,
-            "metadata": metadata_dict,
-            "created_at": datetime.utcnow()
-        }
-        
-        result = await self.collection.insert_one(file_dict)
-        created_file = await self.get_by_id(str(result.inserted_id))
-        
-        return File(
-            id=str(created_file.id),
-            name=created_file.name,
-            message_id=created_file.message_id,
-            size=created_file.size,
-            metadata=created_file.metadata,
-            created_at=created_file.created_at
-        )
+
+        return {}
 
 
 upload_service = UploadService()

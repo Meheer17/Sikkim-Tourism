@@ -121,6 +121,7 @@ export default function ImmersiveExperienceScreen() {
     const [currentViewpointIndex, setCurrentViewpointIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [showInfo, setShowInfo] = useState(true);
+    const [showHelpText, setShowHelpText] = useState(true);
 
     // Get viewpoints for this place
     const viewpoints = MOCK_MONASTERY_VIEWPOINTS[placeId] || MOCK_MONASTERY_VIEWPOINTS['rumtek-monastery'];
@@ -134,8 +135,14 @@ export default function ImmersiveExperienceScreen() {
 
     useEffect(() => {
         // Auto-hide info after 5 seconds
-        const timer = setTimeout(() => setShowInfo(false), 5000);
-        return () => clearTimeout(timer);
+        const infoTimer = setTimeout(() => setShowInfo(false), 5000);
+        // Auto-hide help text after 5 seconds
+        setShowHelpText(true);
+        const helpTimer = setTimeout(() => setShowHelpText(false), 5000);
+        return () => {
+            clearTimeout(infoTimer);
+            clearTimeout(helpTimer);
+        };
     }, [currentViewpointIndex]);
 
     const handleNavigateToViewpoint = (targetViewpointId: string) => {
@@ -169,10 +176,10 @@ export default function ImmersiveExperienceScreen() {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            {/* <StatusBar barStyle="light-content" /> */}
 
-            {/* Panorama Viewer - Use placeholder color for demo */}
-            <PanoramaViewer imageSource={require('@/assets/images/favicon.png')}>
+            {/* Panorama Viewer - 360 Image */}
+            <PanoramaViewer imageSource={require('@/assets/360images/car.jpg')}>
                 {/* Navigation Hotspots */}
                 {!loading &&
                     currentViewpoint.hotspots.map((hotspot) => (
@@ -180,20 +187,19 @@ export default function ImmersiveExperienceScreen() {
                             key={hotspot.id}
                             hotspot={hotspot}
                             onPress={handleNavigateToViewpoint}
+                            // pointerEvents="box-none"
                         />
                     ))}
             </PanoramaViewer>
 
-            {/* Loading Overlay */}
             {loading && (
-                <View style={styles.loadingOverlay}>
+                <View style={styles.loadingOverlay} pointerEvents="box-none">
                     <ActivityIndicator size="large" color="#0a7ea4" />
                     <Text style={styles.loadingText}>Loading viewpoint...</Text>
                 </View>
             )}
 
-            {/* Top Controls */}
-            <View style={styles.topControls}>
+            <View style={styles.topControls} pointerEvents="box-none">
                 <TouchableOpacity style={styles.controlButton} onPress={handleBack}>
                     <IconSymbol name="xmark" size={24} color="#fff" />
                 </TouchableOpacity>
@@ -209,15 +215,13 @@ export default function ImmersiveExperienceScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Info Panel */}
             {showInfo && (
-                <View style={styles.infoPanel}>
+                <View style={styles.infoPanel} pointerEvents="box-none">
                     <Text style={styles.infoTitle}>{currentViewpoint.name}</Text>
                     <Text style={styles.infoDescription}>{currentViewpoint.description}</Text>
                 </View>
             )}
 
-            {/* Audio Narration */}
             {currentViewpoint.narrationText && !loading && (
                 <AudioNarration
                     // audioSource={currentViewpoint.audioUrl ? { uri: currentViewpoint.audioUrl } : undefined}
@@ -226,13 +230,14 @@ export default function ImmersiveExperienceScreen() {
                 />
             )}
 
-            {/* Help Text */}
-            <View style={styles.helpText}>
-                <IconSymbol name="hand.draw.fill" size={16} color="rgba(255,255,255,0.8)" />
-                <Text style={styles.helpTextContent}>
-                    Drag to look around • Tap arrows to move
-                </Text>
-            </View>
+            {showHelpText && (
+                <View style={styles.helpText} pointerEvents="box-none">
+                    <IconSymbol name="hand.draw.fill" size={16} color="rgba(255,255,255,0.8)" />
+                    <Text style={styles.helpTextContent}>
+                        Drag to look around • Tap arrows to move
+                    </Text>
+                </View>
+            )}
         </View>
     );
 }
@@ -268,11 +273,11 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     loadingOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        // ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.0)',
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 100,
+        zIndex: 900,
     },
     loadingText: {
         color: '#fff',
@@ -332,7 +337,7 @@ const styles = StyleSheet.create({
     },
     helpText: {
         position: 'absolute',
-        top: 110,
+        top: 200,
         left: 16,
         right: 16,
         flexDirection: 'row',

@@ -18,6 +18,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ios: {
         supportsTablet: true,
         bundleIdentifier: 'com.yourdomain.tourist',
+        infoPlist: {
+            NSMotionUsageDescription: 'This app uses device motion to provide an immersive 360-degree experience.',
+        },
     },
     android: {
         icon: './assets/images/favicon.png',

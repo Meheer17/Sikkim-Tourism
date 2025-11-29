@@ -39,7 +39,7 @@ async def create_business(
     business_data: businessCreate,
     current_user_id: str = Depends(get_current_user_id)
 ):
-    """Create a business or event (business model)"""
+    """Create a business"""
     business = await business_service.create(business_data, current_user_id)
     return business
 

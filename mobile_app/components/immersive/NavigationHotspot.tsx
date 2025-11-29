@@ -67,6 +67,7 @@ export default function NavigationHotspotComponent({
 
     return (
         <Animated.View
+            pointerEvents="box-none"
             style={[
                 styles.container,
                 {
