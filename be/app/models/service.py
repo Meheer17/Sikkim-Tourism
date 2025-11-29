@@ -16,7 +16,7 @@ PyObjectId = Annotated[ObjectId, BeforeValidator(validate_object_id)]
 class ServiceBase(BaseModel):
     name: str
     price: float = Field(..., ge=0)
-    bid: str  # references BUSSINESS._id
+    bid: str  # references business._id
     description: Optional[str] = None
     features: Optional[List[str]] = None
     short_description: Optional[str] = None

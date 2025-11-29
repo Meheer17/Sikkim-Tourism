@@ -32,6 +32,8 @@ class MessageCreate(MessageBase):
 
 class MessageInDB(MessageBase):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    uid: PyObjectId  # references USER._id
+    cid: PyObjectId  # references COMMUNITY._id
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, json_encoders={ObjectId: str})

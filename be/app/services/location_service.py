@@ -10,9 +10,13 @@ from app.models.location import LocationCreate, LocationUpdate, LocationInDB, Lo
 class LocationService:
     """Service for location operations"""
     
-    def __init__(self):
-        self.db = get_database()
-        self.collection = self.db.locations
+    @property
+    def db(self):
+        return get_database()
+    
+    @property
+    def collection(self):
+        return self.db.locations
     
     async def get_by_id(self, location_id: str) -> Optional[LocationInDB]:
         """Get location by ID"""

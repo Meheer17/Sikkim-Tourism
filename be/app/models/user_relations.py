@@ -14,7 +14,7 @@ def validate_object_id(v):
 PyObjectId = Annotated[ObjectId, BeforeValidator(validate_object_id)]
 
 
-class UserBussinessRole(str, Enum):
+class UserBusinessRole(str, Enum):
     owner = "owner"
     user = "user"
 
@@ -24,11 +24,11 @@ class UserCommunitiesRole(str, Enum):
     member = "member"
 
 
-# USER_BUSSINESS model
-class UserBussinessBase(BaseModel):
+# USER_BUSINESS model
+class UserBusinessBase(BaseModel):
     uid: str  # references USER._id
-    bid: str  # references BUSSINESS._id
-    role: UserBussinessRole
+    bid: str  # references business._id
+    role: UserBusinessRole
 
     @field_validator("uid", "bid")
     @classmethod
@@ -38,19 +38,21 @@ class UserBussinessBase(BaseModel):
         return v
 
 
-class UserBussinessCreate(UserBussinessBase):
+class UserBusinessCreate(UserBusinessBase):
     pass
 
 
-class UserBussinessInDB(UserBussinessBase):
+class UserBusinessInDB(UserBusinessBase):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    uid: PyObjectId  # references USER._id
+    bid: PyObjectId  # references business._id
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, json_encoders={ObjectId: str})
 
 
-class UserBussiness(UserBussinessBase):
+class UserBusiness(UserBusinessBase):
     id: str
     created_at: datetime
     updated_at: datetime
@@ -78,6 +80,8 @@ class UserCommunitiesCreate(UserCommunitiesBase):
 
 class UserCommunitiesInDB(UserCommunitiesBase):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    uid: PyObjectId  # references USER._id
+    cid: PyObjectId  # references COMMUNITY._id
 
     model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, json_encoders={ObjectId: str})
 
