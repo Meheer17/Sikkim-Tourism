@@ -34,7 +34,7 @@ export class AuthUtils {
     static async clearAuthData(): Promise<void> {
         try {
             await SecureStorage.removeItem(config.auth.userKey);
-            await TokenManager.removeTokens();
+            await TokenManager.removeToken();
         } catch (error) {
             console.error('Error clearing auth data:', error);
             throw error;
@@ -127,22 +127,6 @@ export class AuthUtils {
 
         if (password.length < 8) {
             errors.push('Password must be at least 8 characters long');
-        }
-
-        if (!/[A-Z]/.test(password)) {
-            errors.push('Password must contain at least one uppercase letter');
-        }
-
-        if (!/[a-z]/.test(password)) {
-            errors.push('Password must contain at least one lowercase letter');
-        }
-
-        if (!/\d/.test(password)) {
-            errors.push('Password must contain at least one number');
-        }
-
-        if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-            errors.push('Password must contain at least one special character');
         }
 
         return {

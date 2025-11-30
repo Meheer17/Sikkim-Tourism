@@ -15,10 +15,10 @@ import Toast from 'react-native-toast-message';
 
 export default function RegisterScreen() {
     const [formData, setFormData] = React.useState({
-        firstName: '',
-        lastName: '',
+        name: '',
+        address: '',
+        gender: '',
         email: '',
-        phone: '',
         password: '',
         confirmPassword: '',
     });
@@ -27,9 +27,9 @@ export default function RegisterScreen() {
     const { register } = useAuth();
 
     const handleRegister = async () => {
-        const { firstName, lastName, email, password, confirmPassword } = formData;
+        const { name, address, email, password, confirmPassword } = formData;
 
-        if (!firstName || !lastName || !email || !password || !confirmPassword) {
+        if (!name || !address || !email || !password || !confirmPassword) {
             Toast.show({
                 type: 'error',
                 text1: 'Missing Fields',
@@ -78,30 +78,42 @@ export default function RegisterScreen() {
                     <Text style={styles.subtitle}>Sign up to get started</Text>
 
                     <View style={styles.form}>
-                        <View style={styles.row}>
-                            <View style={[styles.inputContainer, styles.halfWidth]}>
-                                <Text style={styles.label}>First Name*</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="John"
-                                    value={formData.firstName}
-                                    onChangeText={(value) => updateField('firstName', value)}
-                                    autoCapitalize="words"
-                                    editable={!isLoading}
-                                />
-                            </View>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Full Name*</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="John Doe"
+                                value={formData.name}
+                                onChangeText={(value) => updateField('name', value)}
+                                autoCapitalize="words"
+                                editable={!isLoading}
+                            />
+                        </View>
 
-                            <View style={[styles.inputContainer, styles.halfWidth]}>
-                                <Text style={styles.label}>Last Name*</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Doe"
-                                    value={formData.lastName}
-                                    onChangeText={(value) => updateField('lastName', value)}
-                                    autoCapitalize="words"
-                                    editable={!isLoading}
-                                />
-                            </View>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Address*</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="123 Main St, City, Country"
+                                value={formData.address}
+                                onChangeText={(value) => updateField('address', value)}
+                                autoCapitalize="sentences"
+                                editable={!isLoading}
+                                multiline
+                                numberOfLines={2}
+                            />
+                        </View>
+
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Gender (Optional)</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="male, female, or other"
+                                value={formData.gender}
+                                onChangeText={(value) => updateField('gender', value)}
+                                autoCapitalize="none"
+                                editable={!isLoading}
+                            />
                         </View>
 
                         <View style={styles.inputContainer}>
@@ -119,18 +131,6 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Phone (Optional)</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="+1 234 567 8900"
-                                value={formData.phone}
-                                onChangeText={(value) => updateField('phone', value)}
-                                keyboardType="phone-pad"
-                                editable={!isLoading}
-                            />
-                        </View>
-
-                        <View style={styles.inputContainer}>
                             <Text style={styles.label}>Password*</Text>
                             <TextInput
                                 style={styles.input}
@@ -142,7 +142,7 @@ export default function RegisterScreen() {
                                 editable={!isLoading}
                             />
                             <Text style={styles.hint}>
-                                Min 8 characters, 1 uppercase, 1 number, 1 special character
+                                Minimum 8 characters required
                             </Text>
                         </View>
 

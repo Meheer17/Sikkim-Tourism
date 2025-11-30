@@ -61,9 +61,30 @@ const getEnvVar = (key: string, fallback: string): string => {
     return Constants.expoConfig?.extra?.[key] || process.env[key] || fallback;
 };
 
+// Get the correct base URL for different platforms
+const getBaseURL = (): string => {
+    return "http://192.168.0.104:8000/api/v1"
+
+    if (!isDevelopment) {
+        return 'http://192.168.1.100:8000/api/v1';
+    }
+
+    // In development, use different URLs based on platform
+    if (Platform.OS === 'android') {
+        // Android emulator uses 10.0.2.2 to access host machine's localhost
+        return getEnvVar('API_BASE_URL', 'http://10.0.2.2:8000/api/v1');
+    } else if (Platform.OS === 'ios') {
+        // iOS simulator can use localhost
+        return getEnvVar('API_BASE_URL', 'http://localhost:8000/api/v1');
+    } else {
+        // Web or other platforms
+        return getEnvVar('API_BASE_URL', 'http://localhost:8000/api/v1');
+    }
+};
+
 export const config: AppConfig = {
     api: {
-        baseURL: getEnvVar('API_BASE_URL', isDevelopment ? 'http://localhost:3000/v1' : 'https://api.yourdomain.com/v1'),
+        baseURL: getBaseURL(),
         timeout: parseInt(getEnvVar('API_TIMEOUT', '10000'), 10),
         enableLogs: getEnvVar('DEBUG_API_LOGS', isDevelopment.toString()) === 'true',
         retryAttempts: 3,
@@ -71,13 +92,13 @@ export const config: AppConfig = {
     },
     routes: {
         auth: {
-            login: '/auth/login',
-            register: '/auth/register',
+            login: '/auth/signin',
+            register: '/auth/signup',
             logout: '/auth/logout',
             refresh: '/auth/refresh',
-            profile: '/auth/profile',
+            profile: '/profile/me',
             changePassword: '/auth/change-password',
-            forgotPassword: '/auth/forgot-password',
+            forgotPassword: '/auth/forgetpassword',
             resetPassword: '/auth/reset-password',
             verifyEmail: '/auth/verify-email',
             resendVerification: '/auth/resend-verification',
@@ -117,5 +138,15 @@ export const platformConfig = {
     isWeb: Platform.OS === 'web',
     hasNotch: Platform.OS === 'ios' && (Platform as any).isPad === false,
 };
+
+// Log the API base URL in development
+if (isDevelopment) {
+    console.log('🌐 API Base URL:', config.api.baseURL);
+    console.log('📱 Platform:', Platform.OS);
+    if (Platform.OS === 'android') {
+        console.log('💡 Android Emulator: Using 10.0.2.2 to access host machine');
+        console.log('💡 Physical Device: Set API_BASE_URL env to your machine\'s IP (e.g., http://192.168.1.x:8000/api/v1)');
+    }
+}
 
 export default config;
