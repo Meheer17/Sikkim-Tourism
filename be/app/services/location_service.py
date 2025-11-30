@@ -2,9 +2,12 @@ from typing import Optional, List
 from datetime import datetime
 from bson import ObjectId
 from fastapi import HTTPException, status
+import math
 
 from app.core.database import get_database
 from app.models.location import LocationCreate, LocationUpdate, LocationInDB, Location
+
+DEFAULT_RADIUS_M = 1000  # meters
 
 
 class LocationService:
@@ -28,24 +31,115 @@ class LocationService:
             return LocationInDB(**location)
         return None
     
-    async def get_all(self, skip: int = 0, limit: int = 10) -> List[Location]:
-        """Get all locations with pagination"""
-        cursor = self.collection.find().skip(skip).limit(limit)
-        locations = []
+    async def get_all(
+        self,
+        skip: int = 0,
+        limit: int = 10,
+        position_lat: Optional[float] = None,
+        position_lng: Optional[float] = None,
+        radius_m: Optional[int] = None
+    ) -> List[Location]:
+        """Get all locations with pagination and optional nearby filtering.
+
+        Note: This implementation assumes that `position.x` is longitude and
+        `position.y` is latitude (x = lng, y = lat). If your data uses the
+        opposite convention, let me know and I can swap the coordinates.
+        """
+        query = {}
+
+        # apply default radius if position provided but radius omitted
+        if position_lat is not None and position_lng is not None and radius_m is None:
+            radius_m = DEFAULT_RADIUS_M
+
+        use_nearby = position_lat is not None and position_lng is not None and radius_m is not None
+        if use_nearby:
+
+            deg_lat = radius_m / 111320.0
+            lat_rad = math.radians(position_lat)
+            deg_lng = radius_m / (111320.0 * max(0.000001, math.cos(lat_rad)))
+
+            min_lat = position_lat - deg_lat
+            max_lat = position_lat + deg_lat
+            min_lng = position_lng - deg_lng
+            max_lng = position_lng + deg_lng
+
+            query["position.x"] = {"$gte": min_lng, "$lte": max_lng}
+            query["position.y"] = {"$gte": min_lat, "$lte": max_lat}
+
+        cursor = self.collection.find(query).skip(0)
+
+        candidates = []
         async for location in cursor:
-            loc_db = LocationInDB(**location)
-            locations.append(Location(
-                id=str(loc_db.id),
-                name=loc_db.name,
-                description=loc_db.description,
-                short_description=loc_db.short_description,
-                position=loc_db.position,
-                metadata=loc_db.metadata,
-                type=loc_db.type,
-                created_at=loc_db.created_at,
-                updated_at=loc_db.updated_at
-            ))
-        return locations
+            candidates.append(location)
+
+        results: List[tuple[float, Location]] = []
+
+        def haversine_m(lat1, lon1, lat2, lon2):
+            # returns distance in meters
+            R = 6371000.0
+            phi1 = math.radians(lat1)
+            phi2 = math.radians(lat2)
+            dphi = math.radians(lat2 - lat1)
+            dlambda = math.radians(lon2 - lon1)
+            a = math.sin(dphi / 2.0) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2.0) ** 2
+            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+            return R * c
+
+        for location in candidates:
+            try:
+                loc_db = LocationInDB(**location)
+            except Exception:
+                continue
+
+            if use_nearby:
+                # extract coordinates (assume x=lng, y=lat)
+                pos = loc_db.position
+                # position may be a dict (from raw db) or a pydantic Position model
+                if not pos:
+                    continue
+                if isinstance(pos, dict):
+                    lng = pos.get("x")
+                    lat = pos.get("y")
+                else:
+                    # pydantic model or object with attributes
+                    lng = getattr(pos, "x", None)
+                    lat = getattr(pos, "y", None)
+                if lat is None or lng is None:
+                    continue
+                dist = haversine_m(position_lat, position_lng, lat, lng)
+                if dist <= radius_m:
+                    results.append((dist, Location(
+                        id=str(loc_db.id),
+                        name=loc_db.name,
+                        description=loc_db.description,
+                        short_description=loc_db.short_description,
+                        position=loc_db.position,
+                        metadata=loc_db.metadata,
+                        type=loc_db.type,
+                        created_at=loc_db.created_at,
+                        updated_at=loc_db.updated_at
+                    )))
+            else:
+                # no nearby filter, just include
+                results.append((0.0, Location(
+                    id=str(loc_db.id),
+                    name=loc_db.name,
+                    description=loc_db.description,
+                    short_description=loc_db.short_description,
+                    position=loc_db.position,
+                    metadata=loc_db.metadata,
+                    type=loc_db.type,
+                    created_at=loc_db.created_at,
+                    updated_at=loc_db.updated_at
+                )))
+
+        # sort by distance (if nearby), otherwise by created order as in original (we have 0.0 for all)
+        results.sort(key=lambda x: x[0])
+
+        # apply skip/limit
+        sliced = results[skip: skip + limit]
+
+        return [item[1] for item in sliced]
     
     async def create(self, location_create: LocationCreate) -> Location:
         """Create a new location"""
