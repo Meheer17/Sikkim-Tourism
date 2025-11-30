@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, status, Query, HTTPException
 
 from app.core.security import get_current_user_id
@@ -13,10 +13,21 @@ router = APIRouter()
 async def list_locations(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1),
+    position_lat: Optional[float] = Query(None, description="Latitude for nearby filter"),
+    position_lng: Optional[float] = Query(None, description="Longitude for nearby filter"),
+    radius_m: int = Query(1000, description="Radius in meters for nearby filter (default 1000)") ,
     current_user_id: str = Depends(get_current_user_id)
 ):
-    """List locations (pagination)"""
-    locations = await location_service.get_all(skip, limit)
+    """List locations (pagination). Supports optional nearby filter using
+    `position_lat`, `position_lng`, and `radius_m` (meters).
+    """
+    locations = await location_service.get_all(
+        skip=skip,
+        limit=limit,
+        position_lat=position_lat,
+        position_lng=position_lng,
+        radius_m=radius_m
+    )
     return locations
 
 
