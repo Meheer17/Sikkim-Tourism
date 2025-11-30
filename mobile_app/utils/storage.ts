@@ -59,14 +59,12 @@ export class SecureStorage {
 // Token Manager for handling JWT tokens
 export class TokenManager {
     private static readonly ACCESS_TOKEN_KEY = 'access_token';
-    private static readonly REFRESH_TOKEN_KEY = 'refresh_token';
 
-    static async saveTokens(accessToken: string, refreshToken: string): Promise<void> {
+    static async saveToken(accessToken: string): Promise<void> {
         try {
             await SecureStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
-            await SecureStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
         } catch (error) {
-            console.error('TokenManager saveTokens error:', error);
+            console.error('TokenManager saveToken error:', error);
             throw error;
         }
     }
@@ -80,21 +78,11 @@ export class TokenManager {
         }
     }
 
-    static async getRefreshToken(): Promise<string | null> {
-        try {
-            return await SecureStorage.getItem(this.REFRESH_TOKEN_KEY);
-        } catch (error) {
-            console.error('TokenManager getRefreshToken error:', error);
-            return null;
-        }
-    }
-
-    static async removeTokens(): Promise<void> {
+    static async removeToken(): Promise<void> {
         try {
             await SecureStorage.removeItem(this.ACCESS_TOKEN_KEY);
-            await SecureStorage.removeItem(this.REFRESH_TOKEN_KEY);
         } catch (error) {
-            console.error('TokenManager removeTokens error:', error);
+            console.error('TokenManager removeToken error:', error);
             throw error;
         }
     }
