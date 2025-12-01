@@ -37,7 +37,8 @@ class LocationService:
         limit: int = 10,
         position_lat: Optional[float] = None,
         position_lng: Optional[float] = None,
-        radius_m: Optional[int] = None
+        radius_m: Optional[int] = None,
+        q: Optional[str] = None
     ) -> List[Location]:
         """Get all locations with pagination and optional nearby filtering.
 
@@ -46,6 +47,15 @@ class LocationService:
         opposite convention, let me know and I can swap the coordinates.
         """
         query = {}
+        # text search on name/description/short_description
+        if q:
+            q_str = q.strip()
+            if q_str:
+                query["$or"] = [
+                    {"name": {"$regex": q_str, "$options": "i"}},
+                    {"description": {"$regex": q_str, "$options": "i"}},
+                    {"short_description": {"$regex": q_str, "$options": "i"}},
+                ]
 
         # apply default radius if position provided but radius omitted
         if position_lat is not None and position_lng is not None and radius_m is None:
