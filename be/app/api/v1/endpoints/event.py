@@ -36,6 +36,7 @@ async def list_events(
     position_lat: Optional[float] = Query(None, description="Latitude for nearby filter"),
     position_lng: Optional[float] = Query(None, description="Longitude for nearby filter"),
     radius_m: Optional[int] = Query(None, description="Radius in meters"),
+    q: Optional[str] = Query(None, description="Search events by name or description"),
     approved: Optional[bool] = Query(None, description="Filter by approval status"),
     current_user_id: str = Depends(get_current_user_id)
 ):
@@ -48,5 +49,7 @@ async def list_events(
         radius_m=radius_m,
         type_id= '6927dd74c83ad21b47926941',
         approved=approved
+        ,
+        q=q
     )
     return events

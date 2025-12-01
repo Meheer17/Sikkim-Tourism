@@ -252,7 +252,7 @@
 							},
 							"status": "OK",
 							"code": 200,
-							"_postman_previewlanguage": "",
+							"_postman_previewlanguage": null,
 							"header": [
 								{
 									"key": "date",
@@ -837,16 +837,53 @@
 			"item": [
 				{
 					"name": "List Locations",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
 					"request": {
 						"method": "GET",
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}"
+								"value": "Bearer <JWT_TOKEN>"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
 							}
 						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "position_lat",
+									"value": "27.3389",
+									"type": "text"
+								},
+								{
+									"key": "position_lng",
+									"value": "88.6065",
+									"type": "text"
+								},
+								{
+									"key": "radius_m",
+									"value": "2000",
+									"type": "text"
+								},
+								{
+									"key": "skip",
+									"value": "0",
+									"type": "text"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"type": "text"
+								}
+							]
+						},
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/location?skip=0&limit=10",
+							"raw": "{{baseUrl}}/api/v1/location?position_lat=27.3389&position_lng=88.6065&radius_m=2000&skip=0&limit=20",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -857,12 +894,24 @@
 							],
 							"query": [
 								{
+									"key": "position_lat",
+									"value": "27.3389"
+								},
+								{
+									"key": "position_lng",
+									"value": "88.6065"
+								},
+								{
+									"key": "radius_m",
+									"value": "2000"
+								},
+								{
 									"key": "skip",
 									"value": "0"
 								},
 								{
 									"key": "limit",
-									"value": "10"
+									"value": "20"
 								}
 							]
 						},
@@ -1826,7 +1875,7 @@
 							},
 							"status": "Created",
 							"code": 201,
-							"_postman_previewlanguage": "",
+							"_postman_previewlanguage": null,
 							"header": [
 								{
 									"key": "date",
@@ -2108,7 +2157,7 @@
 							},
 							"status": "OK",
 							"code": 200,
-							"_postman_previewlanguage": "",
+							"_postman_previewlanguage": null,
 							"header": [
 								{
 									"key": "date",
@@ -2194,7 +2243,7 @@
 							},
 							"status": "OK",
 							"code": 200,
-							"_postman_previewlanguage": "",
+							"_postman_previewlanguage": null,
 							"header": [
 								{
 									"key": "date",
@@ -2391,7 +2440,7 @@
 							},
 							"status": "OK",
 							"code": 200,
-							"_postman_previewlanguage": "",
+							"_postman_previewlanguage": null,
 							"header": [
 								{
 									"key": "date",
@@ -2750,15 +2799,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/business/events",
+							"raw": "{{baseUrl}}/api/v1/event",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"v1",
-								"business",
-								"events"
+								"event"
 							]
 						}
 					},
@@ -2792,7 +2840,7 @@
 							},
 							"status": "Created",
 							"code": 201,
-							"_postman_previewlanguage": "",
+							"_postman_previewlanguage": null,
 							"header": [
 								{
 									"key": "date",
@@ -2817,40 +2865,6 @@
 					]
 				}
 			]
-		},
-		{
-			"name": "OSM",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "https://router.project-osrm.org/routed-bike/route/v1/driving/80.0159864,13.0265031;88.617,27.339?overview=full&geometries=geojson",
-					"protocol": "https",
-					"host": [
-						"router",
-						"project-osrm",
-						"org"
-					],
-					"path": [
-						"routed-bike",
-						"route",
-						"v1",
-						"driving",
-						"80.0159864,13.0265031;88.617,27.339"
-					],
-					"query": [
-						{
-							"key": "overview",
-							"value": "full"
-						},
-						{
-							"key": "geometries",
-							"value": "geojson"
-						}
-					]
-				}
-			},
-			"response": []
 		}
 	],
 	"auth": {

@@ -39,6 +39,8 @@ class businessService:
         radius_m: Optional[int] = None,
         type_id: Optional[str] = None,
         approved: Optional[bool] = None
+        ,
+        q: Optional[str] = None
     ) -> List[business]:
         """Get all businesses with pagination and filters"""
         db = get_database()
@@ -46,7 +48,17 @@ class businessService:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
         collection = db.business
         query = {}
-        
+
+        # text search
+        if q:
+            q_str = q.strip()
+            if q_str:
+                query["$or"] = [
+                    {"name": {"$regex": q_str, "$options": "i"}},
+                    {"description": {"$regex": q_str, "$options": "i"}},
+                    {"short_description": {"$regex": q_str, "$options": "i"}},
+                ]
+
         if type_id:
             query["type_id"] = ObjectId(type_id)
             
@@ -60,6 +72,29 @@ class businessService:
                 ]
         sort_criteria = [("created_at", -1)]
         
+        # Position filter: find locations in bbox and filter businesses by l_id
+        if position_lat is not None and position_lng is not None and radius_m is not None:
+            # compute bbox (similar to location_service)
+            deg_lat = radius_m / 111320.0
+            lat_rad = math.radians(position_lat)
+            deg_lng = radius_m / (111320.0 * max(0.000001, math.cos(lat_rad)))
+            min_lat = position_lat - deg_lat
+            max_lat = position_lat + deg_lat
+            min_lng = position_lng - deg_lng
+            max_lng = position_lng + deg_lng
+
+            # find matching locations
+            locs = get_database().locations.find({
+                "position.x": {"$gte": min_lng, "$lte": max_lng},
+                "position.y": {"$gte": min_lat, "$lte": max_lat}
+            })
+            location_ids = []
+            async for l in locs:
+                # l._id might be ObjectId; store as string for l_id matching
+                location_ids.append(str(l.get("_id")))
+            if location_ids:
+                query["l_id"] = {"$in": location_ids}
+
         cursor = collection.find(query).sort(sort_criteria).skip(skip).limit(limit)
         businesses = []
         async for doc in cursor:
