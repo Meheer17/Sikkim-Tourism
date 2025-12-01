@@ -11,15 +11,22 @@ class UploadService:
     """Service for file upload operations"""
     
     def __init__(self):
-        self.db = get_database()
-        self.collection = self.db.files
+        # Lazy DB resolution to avoid import-time DB access
+        self.db = None
+        self.collection = None
+
+    def _collection(self):
+        db = get_database()
+        if db is None:
+            raise RuntimeError("Database not connected")
+        return db.files
     
     async def get_by_id(self, file_id: str) -> FileInDB:
         """Get file by ID"""
         if not ObjectId.is_valid(file_id):
             return None
-        
-        file = await self.collection.find_one({"_id": ObjectId(file_id)})
+
+        file = await self._collection().find_one({"_id": ObjectId(file_id)})
         if file:
             return FileInDB(**file)
         return None

@@ -16,6 +16,7 @@ async def list_locations(
     position_lat: Optional[float] = Query(None, description="Latitude for nearby filter"),
     position_lng: Optional[float] = Query(None, description="Longitude for nearby filter"),
     radius_m: int = Query(1000, description="Radius in meters for nearby filter (default 1000)") ,
+    q: Optional[str] = Query(None, description="Search locations by name or description"),
     current_user_id: str = Depends(get_current_user_id)
 ):
     """List locations (pagination). Supports optional nearby filter using
@@ -27,6 +28,8 @@ async def list_locations(
         position_lat=position_lat,
         position_lng=position_lng,
         radius_m=radius_m
+        ,
+        q=q
     )
     return locations
 

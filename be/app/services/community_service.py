@@ -11,22 +11,39 @@ class CommunityService:
     """Service for community operations"""
     
     def __init__(self):
-        self.db = get_database()
-        self.collection = self.db.communities
+        # Do not fetch DB at import time; resolve lazily to avoid startup ordering issues
+        self.db = None
+        self.collection = None
+
+    def _collection(self):
+        db = get_database()
+        if db is None:
+            raise RuntimeError("Database not connected")
+        return db.communities
     
     async def get_by_id(self, community_id: str) -> Optional[CommunityInDB]:
         """Get community by ID"""
         if not ObjectId.is_valid(community_id):
             return None
         
-        community = await self.collection.find_one({"_id": ObjectId(community_id)})
+        community = await self._collection().find_one({"_id": ObjectId(community_id)})
         if community:
             return CommunityInDB(**community)
         return None
     
-    async def get_all(self, skip: int = 0, limit: int = 10) -> List[Community]:
-        """Get all communities with pagination"""
-        cursor = self.collection.find().skip(skip).limit(limit)
+    async def get_all(self, skip: int = 0, limit: int = 10, q: Optional[str] = None) -> List[Community]:
+        """Get all communities with pagination and optional search filter"""
+        # Build query
+        query = {}
+        if q:
+            q_str = q.strip()
+            if q_str:
+                query["$or"] = [
+                    {"name": {"$regex": q_str, "$options": "i"}},
+                    {"decription": {"$regex": q_str, "$options": "i"}},
+                ]
+
+        cursor = self._collection().find(query).skip(skip).limit(limit)
         communities = []
         async for community in cursor:
             com_db = CommunityInDB(**community)
@@ -45,7 +62,7 @@ class CommunityService:
         community_dict["created_at"] = datetime.utcnow()
         community_dict["updated_at"] = datetime.utcnow()
         
-        result = await self.collection.insert_one(community_dict)
+        result = await self._collection().insert_one(community_dict)
         created_community = await self.get_by_id(str(result.inserted_id))
         
         return Community(
@@ -68,7 +85,7 @@ class CommunityService:
         update_data = community_update.model_dump(exclude_unset=True)
         update_data["updated_at"] = datetime.utcnow()
         
-        await self.collection.update_one(
+        await self._collection().update_one(
             {"_id": ObjectId(community_id)},
             {"$set": update_data}
         )
@@ -88,7 +105,7 @@ class CommunityService:
         if not ObjectId.is_valid(community_id):
             return False
         
-        result = await self.collection.delete_one({"_id": ObjectId(community_id)})
+        result = await self._collection().delete_one({"_id": ObjectId(community_id)})
         return result.deleted_count > 0
 
 

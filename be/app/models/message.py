@@ -14,15 +14,23 @@ PyObjectId = Annotated[ObjectId, BeforeValidator(validate_object_id)]
 
 
 class MessageBase(BaseModel):
-    uid: str  # references USER._id
     cid: str  # references COMMUNITY._id
     text: str
 
-    @field_validator("uid", "cid")
+    @field_validator("cid")
     @classmethod
-    def validate_object_id(cls, v):
+    def validate_cid(cls, v):
         if not ObjectId.is_valid(v):
-            raise ValueError("Must be a valid ObjectId")
+            raise ValueError("Must be a valid Community ObjectId")
+        return v
+
+    @field_validator("text")
+    @classmethod
+    def validate_text(cls, v):
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("Text cannot be empty or whitespace")
+        if len(v) > 1000:
+            raise ValueError("Text too long (max 1000 characters)")
         return v
 
 
@@ -41,6 +49,7 @@ class MessageInDB(MessageBase):
 
 class Message(MessageBase):
     id: str
+    uid: str
     created_at: datetime
 
     model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})
