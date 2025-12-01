@@ -66,7 +66,7 @@ export default function AdminBusinessesScreen() {
                 const resp = await businessService.list({ skip: 0, limit: 100 });
                 if (resp.success && resp.data) {
                     const mapped: Business[] = resp.data.map((b: BusinessModel) => ({
-                        id: b._id,
+                        id: b.id,
                         name: b.name,
                         description: b.description,
                         category: 'Adventure',

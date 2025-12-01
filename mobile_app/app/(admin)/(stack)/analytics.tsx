@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
 export default function AdminAnalytics() {
     const stats = [
-        { label: 'Active Organizations', value: 12 },
+
         { label: 'Active Businesses', value: 48 },
         { label: 'Published Places', value: 126 },
         { label: 'Events This Month', value: 34 },

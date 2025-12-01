@@ -7,7 +7,7 @@ import { businessService } from '@/services/business.service';
 import { useAuth } from '@/hooks/useAuth';
 
 interface BusinessDetails {
-    _id: string;
+    id: string;
     name: string;
     description: string;
     short_description: string;

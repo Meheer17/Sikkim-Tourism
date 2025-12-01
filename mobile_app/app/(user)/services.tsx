@@ -4,12 +4,13 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { businessService } from '@/services';
-
-const CATEGORIES = ['All', 'Adventure', 'Culture', 'Transport', 'Food', 'Tour', 'Accommodation'];
+import { BusinessType } from '@/services/business.service';
 
 export default function ServicesScreen() {
     const [services, setServices] = useState<Service[]>([]);
     const [filteredServices, setFilteredServices] = useState<Service[]>([]);
+    const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
+    const [categories, setCategories] = useState<string[]>(['All']);
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
@@ -23,39 +24,92 @@ export default function ServicesScreen() {
     const border = useThemeColor('border');
 
     useEffect(() => {
-        loadServices();
+        loadData();
     }, []);
 
     useEffect(() => {
         filterServices();
     }, [selectedCategory, searchQuery, services]);
 
-    const loadServices = async () => {
+    const loadData = async () => {
         try {
             setLoading(true);
-            const response = await businessService.list();
-            const businesses = response.data || [];
-
-            // Map businesses to Service format
-            const mappedServices: Service[] = businesses.map((biz: any) => ({
-                id: biz._id,
-                name: biz.name,
-                description: biz.decription || biz.description || 'Quality service provider',
-                price: biz.price || Math.floor(Math.random() * 3000) + 500,
-                category: biz.type || 'Other',
-                icon: getCategoryIcon(biz.type),
-            }));
-
-            setServices(mappedServices);
+            // Load business types first
+            await loadBusinessTypes();
+            // Then load services
+            await loadServices();
         } catch (error) {
-            console.error('Failed to load services:', error);
+            console.error('Failed to load data:', error);
         } finally {
             setLoading(false);
         }
     };
 
+    const loadBusinessTypes = async () => {
+        try {
+            const response = await businessService.getTypes();
+            console.log('Business Types API Response:', JSON.stringify(response, null, 2));
+            const types = response.data || [];
+            setBusinessTypes(types);
+
+            // Build categories from business types, always include 'Other' at the end
+            const typeNames = types.map((type: BusinessType) => type.type);
+            console.log('Categories built:', ['All', ...typeNames, 'Other']);
+            setCategories(['All', ...typeNames, 'Other']);
+        } catch (error) {
+            console.error('Failed to load business types:', error);
+        }
+    };
+
+    const loadServices = async () => {
+        try {
+            const response = await businessService.list();
+            const businesses = response.data || [];
+            console.log('=== SERVICES LOADING DEBUG ===');
+            console.log('Total businesses from API:', businesses);
+            console.log('Business types available:', businessTypes.map(t => `${t.id}: ${t.type}`).join(', '));
+
+            // Map businesses to Service format
+            const mappedServices: Service[] = businesses
+                .filter((biz: any) => biz.approved) // Only show approved businesses
+                .map((biz: any) => {
+                    // Find the business type name by matching type_id with business type id
+                    const bizType = businessTypes.find(t => t.id === biz.type_id);
+                    const categoryName = bizType ? bizType.type : 'Other';
+
+                    console.log(`Business "${biz.name}": type_id="${biz.type_id}" -> category="${categoryName}"`);
+
+                    return {
+                        id: biz.id,
+                        name: biz.name,
+                        description: biz.short_description || biz.description || 'Quality service provider',
+                        price: biz.price || Math.floor(Math.random() * 3000) + 500,
+                        category: categoryName,
+                        icon: getCategoryIcon(categoryName),
+                    };
+                })
+                .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically by name
+
+            console.log('Final mapped services:', mappedServices.length);
+            console.log('Services by category:', mappedServices.reduce((acc: any, s) => {
+                acc[s.category] = (acc[s.category] || 0) + 1;
+                return acc;
+            }, {}));
+
+            setServices(mappedServices);
+        } catch (error) {
+            console.error('Failed to load services:', error);
+        }
+    };
+
     const getCategoryIcon = (type?: string): any => {
         const iconMap: Record<string, string> = {
+            'hotel': 'bed.double.fill',
+            'restaurant': 'fork.knife',
+            'cab': 'car.fill',
+            'guide': 'person.fill',
+            'tourist_entry': 'ticket.fill',
+            'event': 'calendar',
             'Adventure': 'mountain.2.fill',
             'Transport': 'car.fill',
             'Culture': 'building.columns.fill',
@@ -122,7 +176,7 @@ export default function ServicesScreen() {
                 style={styles.categoriesContainer}
                 contentContainerStyle={styles.categoriesContent}
             >
-                {CATEGORIES.map((category) => (
+                {categories.map((category) => (
                     <TouchableOpacity
                         key={category}
                         style={[

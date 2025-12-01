@@ -42,14 +42,6 @@ const ROLE_OPTIONS: RoleOption[] = [
         bgColor: '#ede9fe',
     },
     {
-        role: UserRole.ORGANIZATION,
-        title: 'Organization',
-        description: 'Manage multiple businesses, access to organization-level analytics',
-        icon: 'building.columns.fill',
-        color: '#3b82f6',
-        bgColor: '#dbeafe',
-    },
-    {
         role: UserRole.ADMIN,
         title: 'Admin',
         description: 'Full system access including user management and platform settings',

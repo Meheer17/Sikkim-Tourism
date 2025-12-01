@@ -98,9 +98,9 @@ export default function BusinessServices() {
                 ) : (
                     businesses.map((biz) => (
                         <TouchableOpacity
-                            key={biz._id}
+                            key={biz.id}
                             style={[styles.bizCard, { backgroundColor: card }]}
-                            onPress={() => router.push(`/(user)/(stack)/business-details?id=${biz._id}` as any)}
+                            onPress={() => router.push(`/(user)/(stack)/business-details?id=${biz.id}` as any)}
                         >
                             <View style={styles.bizHeader}>
                                 <Text style={[styles.bizName, { color: textColor }]}>{biz.name}</Text>

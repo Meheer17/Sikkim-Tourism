@@ -227,7 +227,7 @@ export default function EditBusinessScreen() {
                         >
                             <Picker.Item label="Select type" value="" />
                             {businessTypes.map((type) => (
-                                <Picker.Item key={type._id} label={type.name} value={type._id} />
+                                <Picker.Item key={type.id} label={type.type} value={type.id} />
                             ))}
                         </Picker>
                     </View>

@@ -6,7 +6,7 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { businessService } from '@/services/business.service';
 
 interface Event {
-    _id: string;
+    id: string;
     name: string;
     description: string;
     short_description: string;
@@ -52,7 +52,7 @@ export default function EventsListScreen() {
     const renderEventCard = ({ item }: { item: Event }) => (
         <TouchableOpacity
             style={[styles.card, { backgroundColor: card }]}
-            onPress={() => router.push(`/(user)/(stack)/business-details?id=${item._id}` as any)}
+            onPress={() => router.push(`/(user)/(stack)/business-details?id=${item.id}` as any)}
         >
             <View style={styles.dateContainer}>
                 <Text style={[styles.dateDay, { color: tint }]}>
@@ -104,7 +104,7 @@ export default function EventsListScreen() {
             <FlatList
                 data={events}
                 renderItem={renderEventCard}
-                keyExtractor={(item) => item._id}
+                keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>

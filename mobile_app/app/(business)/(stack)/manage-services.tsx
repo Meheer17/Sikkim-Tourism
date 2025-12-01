@@ -94,7 +94,7 @@ export default function ManageServicesScreen() {
                     <>
                         <Text style={[styles.countText, { color: muted }]}>{businesses.length} service{businesses.length !== 1 ? 's' : ''} total</Text>
                         {businesses.map((biz) => (
-                            <View key={biz._id} style={[styles.card, { backgroundColor: card }]}>
+                            <View key={biz.id} style={[styles.card, { backgroundColor: card }]}>
                                 <View style={styles.cardHeader}>
                                     <View style={{ flex: 1 }}>
                                         <Text style={[styles.name, { color: text }]}>{biz.name}</Text>
@@ -130,21 +130,21 @@ export default function ManageServicesScreen() {
                                 <View style={styles.actions}>
                                     <TouchableOpacity
                                         style={[styles.actionButton, { backgroundColor: tint }]}
-                                        onPress={() => router.push(`/(user)/(stack)/business-details?id=${biz._id}` as any)}
+                                        onPress={() => router.push(`/(user)/(stack)/business-details?id=${biz.id}` as any)}
                                     >
                                         <IconSymbol name="eye" size={16} color="#fff" />
                                         <Text style={styles.actionText}>View</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={[styles.actionButton, { backgroundColor: '#f59e0b' }]}
-                                        onPress={() => router.push(`/(business)/(stack)/edit-service?id=${biz._id}` as any)}
+                                        onPress={() => router.push(`/(business)/(stack)/edit-service?id=${biz.id}` as any)}
                                     >
                                         <IconSymbol name="pencil" size={16} color="#fff" />
                                         <Text style={styles.actionText}>Edit</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={[styles.actionButton, { backgroundColor: '#ef4444' }]}
-                                        onPress={() => handleDelete(biz._id, biz.name)}
+                                        onPress={() => handleDelete(biz.id, biz.name)}
                                     >
                                         <IconSymbol name="trash" size={16} color="#fff" />
                                         <Text style={styles.actionText}>Delete</Text>

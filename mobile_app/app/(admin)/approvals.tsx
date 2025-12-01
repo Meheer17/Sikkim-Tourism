@@ -55,7 +55,7 @@ export default function ApprovalsScreen() {
                     text: 'Approve',
                     onPress: async () => {
                         try {
-                            await businessService.approve(business._id);
+                            await businessService.approve(business.id);
                             Alert.alert('Success', 'Business approved successfully');
                             loadPendingApprovals();
                         } catch (error: any) {
@@ -79,7 +79,7 @@ export default function ApprovalsScreen() {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await businessService.remove(business._id);
+                            await businessService.remove(business.id);
                             Alert.alert('Success', 'Business rejected and deleted');
                             loadPendingApprovals();
                         } catch (error: any) {
@@ -95,7 +95,7 @@ export default function ApprovalsScreen() {
     const handleViewDetails = (business: BusinessModel) => {
         router.push({
             pathname: '/(user)/(stack)/business-details',
-            params: { id: business._id }
+            params: { id: business.id }
         } as any);
     };
 
@@ -128,7 +128,7 @@ export default function ApprovalsScreen() {
                     </View>
                 ) : (
                     pendingBusinesses.map((business) => (
-                        <View key={business._id} style={[styles.card, { backgroundColor: card, borderColor: border }]}>
+                        <View key={business.id} style={[styles.card, { backgroundColor: card, borderColor: border }]}>
                             {/* Type Badge */}
                             <View style={styles.cardHeader}>
                                 <View style={[styles.typeBadge, { backgroundColor: '#dbeafe' }]}>

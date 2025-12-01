@@ -10,7 +10,7 @@ function RootNavigator() {
   const { actualTheme } = useTheme();
   const colorScheme = actualTheme ?? 'light';
   const backgroundColor = Colors[colorScheme].background;
-  
+
   return (
     <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor } }}>
@@ -19,7 +19,7 @@ function RootNavigator() {
         <Stack.Screen name="(user)" />
         <Stack.Screen name="(admin)" />
         <Stack.Screen name="(business)" />
-        <Stack.Screen name="(organization)" />
+
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal', headerShown: true }} />
       </Stack>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} backgroundColor={backgroundColor} translucent={false} />

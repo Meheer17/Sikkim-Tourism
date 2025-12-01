@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Colors } from '@/constants/theme';
 import AdminBusinesses from './businesses';
-import AdminOrganizations from './organizations';
 import AdminUsers from './users';
 
 export default function AdminManage() {
-    const [tab, setTab] = useState<'businesses' | 'organizations' | 'users'>('businesses');
+    const [tab, setTab] = useState<'businesses' | 'users'>('businesses');
 
-    const tabs: { key: 'businesses' | 'organizations' | 'users'; label: string }[] = [
+    const tabs: { key: 'businesses' | 'users'; label: string }[] = [
         { key: 'businesses', label: 'Businesses' },
-        { key: 'organizations', label: 'Organizations' },
         { key: 'users', label: 'Users' },
     ];
 
@@ -31,7 +29,6 @@ export default function AdminManage() {
 
             <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
                 {tab === 'businesses' && <AdminBusinesses />}
-                {tab === 'organizations' && <AdminOrganizations />}
                 {tab === 'users' && <AdminUsers />}
             </ScrollView>
         </View>

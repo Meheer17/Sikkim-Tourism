@@ -9,7 +9,7 @@ import { userService } from '@/services/user.service';
 
 // Removed static mock users. Data now sourced only from backend.
 
-const ROLES = ['All', 'User', 'Business', 'Organization', 'Admin'];
+const ROLES = ['All', 'User', 'Business', 'Admin'];
 const STATUSES = ['All', 'Active', 'Suspended'];
 
 export default function AdminUsersScreen() {
@@ -68,7 +68,7 @@ export default function AdminUsersScreen() {
                         const parts = (u.name || '').split(' ');
                         const first = parts[0] || u.name || '';
                         const last = parts.slice(1).join(' ');
-                        const roleMapped = u.role === 'organiser' ? UserRole.ORGANIZATION : (u.role as UserRole);
+                        const roleMapped = u.role as UserRole;
                         const adminUser: AdminUser = {
                             id: u.id,
                             email: u.email,
@@ -135,8 +135,6 @@ export default function AdminUsersScreen() {
                 return '#ef4444';
             case UserRole.BUSINESS:
                 return '#8b5cf6';
-            case UserRole.ORGANIZATION:
-                return '#3b82f6';
             case UserRole.USER:
                 return '#10b981';
             default:
@@ -150,8 +148,6 @@ export default function AdminUsersScreen() {
                 return '#fee2e2';
             case UserRole.BUSINESS:
                 return '#ede9fe';
-            case UserRole.ORGANIZATION:
-                return '#dbeafe';
             case UserRole.USER:
                 return '#d1fae5';
             default:

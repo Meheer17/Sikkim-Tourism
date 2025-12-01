@@ -65,6 +65,12 @@ const SUPPORT_MENU_ITEMS: MenuItem[] = [
 
 const BUSINESS_MENU_ITEMS: MenuItem[] = [
     {
+        id: 'my-businesses',
+        label: 'My Businesses',
+        icon: 'building.2',
+        route: '/(user)/(stack)/my-businesses',
+    },
+    {
         id: 'create-business',
         label: 'Create Business',
         icon: 'building.2.fill',

@@ -63,19 +63,15 @@ export default function LoginScreen() {
                 [
                     {
                         text: 'User',
-                        onPress: () => injectMockAuth(UserRole.USER),
+                        onPress: () => { setEmail('user@a.c'); setPassword('meheer17'); },
                     },
                     {
                         text: 'Business',
-                        onPress: () => injectMockAuth(UserRole.BUSINESS),
-                    },
-                    {
-                        text: 'Organiser',
-                        onPress: () => injectMockAuth(UserRole.ORGANISER),
+                        onPress: () => { setEmail('mahi@a.com'); setPassword('Meheer17'); },
                     },
                     {
                         text: 'Admin',
-                        onPress: () => injectMockAuth(UserRole.ADMIN),
+                        onPress: () => { setEmail('meheer@adflyn.com'); setPassword('meheer17'); },
                     },
                     {
                         text: 'Cancel',
@@ -220,7 +216,7 @@ export default function LoginScreen() {
                         <ScrollView style={styles.roleScrollView}>
                             <TouchableOpacity
                                 style={styles.roleButton}
-                                onPress={() => handleRoleSelect(UserRole.USER)}
+                                onPress={() => { setEmail('user@a.c'); setPassword('meheer17'); setShowRoleModal(false); }}
                             >
                                 <Text style={styles.roleButtonText}>👤 User</Text>
                                 <Text style={styles.roleButtonDesc}>Regular tourist user</Text>
@@ -228,7 +224,7 @@ export default function LoginScreen() {
 
                             <TouchableOpacity
                                 style={styles.roleButton}
-                                onPress={() => handleRoleSelect(UserRole.BUSINESS)}
+                                onPress={() => { setEmail('mahi@a.com'); setPassword('Meheer17'); setShowRoleModal(false); }}
                             >
                                 <Text style={styles.roleButtonText}>💼 Business</Text>
                                 <Text style={styles.roleButtonDesc}>Service provider</Text>
@@ -236,15 +232,7 @@ export default function LoginScreen() {
 
                             <TouchableOpacity
                                 style={styles.roleButton}
-                                onPress={() => handleRoleSelect(UserRole.ORGANISER)}
-                            >
-                                <Text style={styles.roleButtonText}>🎯 Organiser</Text>
-                                <Text style={styles.roleButtonDesc}>Event organiser</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.roleButton}
-                                onPress={() => handleRoleSelect(UserRole.ADMIN)}
+                                onPress={() => { setEmail('meheer@adflyn.com'); setPassword('meheer17'); setShowRoleModal(false); }}
                             >
                                 <Text style={styles.roleButtonText}>⚙️ Admin</Text>
                                 <Text style={styles.roleButtonDesc}>System administrator</Text>

@@ -3,13 +3,19 @@ import { apiClient } from './api.client';
 
 export interface OpenHours { start: string; end: string }
 
+export interface Position {
+  x: string;
+  y: string;
+}
+
 export interface BusinessModel {
-  _id: string;
+  id: string;
   name: string;
   description: string;
   short_description: string;
   open_hours: OpenHours;
   type_id: string;
+  position?: Position;
   l_id?: string; // optional - can reference location or use position
   scheduled_at: string; // ISO 8601
   approved?: boolean;
@@ -18,9 +24,9 @@ export interface BusinessModel {
 }
 
 export interface BusinessType {
-  _id: string;
-  name: string;
-  description?: string;
+  id: string;
+  type: string;
+  category: string;
 }
 
 class BusinessService {
@@ -38,7 +44,7 @@ class BusinessService {
     return apiClient.get<BusinessModel[]>(url);
   }
 
-  async create(data: Omit<BusinessModel, '_id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<BusinessModel>> {
+  async create(data: Omit<BusinessModel, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<BusinessModel>> {
     return apiClient.post<BusinessModel>(this.baseUrl, data);
   }
 
@@ -46,7 +52,7 @@ class BusinessService {
     return apiClient.get<BusinessModel>(`${this.baseUrl}/${id}`);
   }
 
-  async update(id: string, data: Partial<Omit<BusinessModel, '_id'>>): Promise<ApiResponse<BusinessModel>> {
+  async update(id: string, data: Partial<Omit<BusinessModel, 'id'>>): Promise<ApiResponse<BusinessModel>> {
     return apiClient.put<BusinessModel>(`${this.baseUrl}/${id}`, data);
   }
 

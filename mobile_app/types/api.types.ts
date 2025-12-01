@@ -64,7 +64,6 @@ export interface User {
 export enum UserRole {
     ADMIN = 'admin',
     USER = 'user',
-    ORGANISER = 'organiser',
     BUSINESS = 'business',
 }
 

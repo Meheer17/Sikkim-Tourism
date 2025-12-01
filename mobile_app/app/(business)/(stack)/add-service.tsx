@@ -38,7 +38,7 @@ export default function AddServiceScreen() {
             const types = response.data || [];
             setBusinessTypes(types);
             if (types.length > 0) {
-                setSelectedTypeId(types[0]._id);
+                setSelectedTypeId(types[0].id);
             }
         } catch (error) {
             console.error('Failed to load business types:', error);
@@ -114,7 +114,7 @@ export default function AddServiceScreen() {
                                 style={[styles.picker, { color: text }]}
                             >
                                 {businessTypes.map((type) => (
-                                    <Picker.Item key={type._id} label={type.name} value={type._id} />
+                                    <Picker.Item key={type.id} label={type.category} value={type.id} />
                                 ))}
                             </Picker>
                         </View>

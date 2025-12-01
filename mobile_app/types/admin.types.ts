@@ -128,14 +128,13 @@ export interface AdminUser {
     joinedDate: string;
     lastLoginDate?: string;
     businessIds?: string[];
-    organizationId?: string;
+
 }
 
 export enum UserRole {
     ADMIN = 'admin',
     USER = 'user',
     BUSINESS = 'business',
-    ORGANIZATION = 'organization',
 }
 
 // Role Assignment Types

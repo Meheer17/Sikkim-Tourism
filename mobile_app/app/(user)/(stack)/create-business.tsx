@@ -28,6 +28,8 @@ export default function CreateBusinessScreen() {
     const [startTime, setStartTime] = useState('09:00');
     const [endTime, setEndTime] = useState('17:00');
     const [scheduledAt, setScheduledAt] = useState('');
+    const [latitude, setLatitude] = useState('');
+    const [longitude, setLongitude] = useState('');
     const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
     const [selectedTypeId, setSelectedTypeId] = useState('');
     const [loadingTypes, setLoadingTypes] = useState(true);
@@ -49,10 +51,13 @@ export default function CreateBusinessScreen() {
             setLoadingTypes(true);
             const response = await businessService.getTypes();
             const types = response.data || [];
+            console.log('Business types response:', JSON.stringify(types, null, 2));
             setBusinessTypes(types);
             // Auto-select first type if available
             if (types.length > 0) {
-                setSelectedTypeId(types[0]._id);
+                const firstId = types[0].id || (types[0] as any)._id;
+                console.log('Auto-selecting first type:', firstId, types[0]);
+                setSelectedTypeId(firstId);
             }
         } catch (error) {
             console.error('Failed to load business types:', error);
@@ -83,7 +88,7 @@ export default function CreateBusinessScreen() {
 
         setSubmitting(true);
         try {
-            const businessData = {
+            const businessData: any = {
                 name: name.trim(),
                 short_description: shortDescription.trim(),
                 description: description.trim(),
@@ -91,6 +96,14 @@ export default function CreateBusinessScreen() {
                 type_id: selectedTypeId,
                 scheduled_at: scheduledAt || new Date().toISOString(),
             };
+
+            // Add position if coordinates are provided
+            if (latitude.trim() && longitude.trim()) {
+                businessData.position = {
+                    x: latitude.trim(),
+                    y: longitude.trim(),
+                };
+            }
 
             const resp = await businessService.create(businessData);
             if (resp.success) {
@@ -184,10 +197,41 @@ export default function CreateBusinessScreen() {
                             style={[styles.picker, { color: text }]}
                         >
                             <Picker.Item label="Select business type" value="" />
-                            {businessTypes.map((type) => (
-                                <Picker.Item key={type._id} label={type.name} value={type._id} />
-                            ))}
+                            {businessTypes.map((type) => {
+                                const typeId = type.id || (type as any)._id;
+                                const typeName = type.type || (type as any).name;
+                                console.log('Picker item:', { typeId, typeName, original: type });
+                                return (
+                                    <Picker.Item key={typeId} label={typeName || 'Unknown'} value={typeId} />
+                                );
+                            })}
                         </Picker>
+                    </View>
+
+                    <Text style={[styles.label, { color: text }]}>Location (Optional)</Text>
+                    <View style={styles.hoursRow}>
+                        <View style={styles.hoursItem}>
+                            <Text style={[styles.hoursLabel, { color: muted }]}>Latitude (x)</Text>
+                            <TextInput
+                                style={[styles.input, { backgroundColor: background, color: text }]}
+                                value={latitude}
+                                onChangeText={setLatitude}
+                                placeholder="27.3314"
+                                placeholderTextColor={muted}
+                                keyboardType="decimal-pad"
+                            />
+                        </View>
+                        <View style={styles.hoursItem}>
+                            <Text style={[styles.hoursLabel, { color: muted }]}>Longitude (y)</Text>
+                            <TextInput
+                                style={[styles.input, { backgroundColor: background, color: text }]}
+                                value={longitude}
+                                onChangeText={setLongitude}
+                                placeholder="88.6138"
+                                placeholderTextColor={muted}
+                                keyboardType="decimal-pad"
+                            />
+                        </View>
                     </View>
 
                     <Text style={[styles.label, { color: text }]}>Opening Hours</Text>
@@ -278,6 +322,7 @@ const styles = StyleSheet.create({
     },
     card: {
         margin: 16,
+        marginBottom: 100,
         borderRadius: 16,
         padding: 20,
         elevation: 2,
