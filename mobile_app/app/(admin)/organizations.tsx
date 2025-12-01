@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useRouter } from 'expo-router';
+import { communityService, CommunityModel } from '@/services/community.service';
 
 type OrgStatus = 'pending' | 'approved' | 'suspended';
 type OrgCategory = 'monastery' | 'museum' | 'park' | 'community' | 'venue';
@@ -26,11 +27,39 @@ export default function AdminOrganizations() {
     const [search, setSearch] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<OrgCategory | 'all'>('all');
     const [statusFilter, setStatusFilter] = useState<OrgStatus | 'all'>('all');
-    const [orgs, setOrgs] = useState<Organization[]>([
-        { id: 'o1', name: 'Peace Monastery', category: 'monastery', owner: 'Tenzin Lama', email: 'peace@monastery.com', phone: '+91 90000 11111', createdAt: '2024-05-18', status: 'approved', placesCount: 3, eventsCount: 12, ticketsSold: 1540 },
-        { id: 'o2', name: 'City Museum', category: 'museum', owner: 'Arjun Patel', email: 'info@citymuseum.org', phone: '+91 90000 22222', createdAt: '2024-08-09', status: 'pending', placesCount: 1, eventsCount: 5, ticketsSold: 320 },
-        { id: 'o3', name: 'Green Park Trust', category: 'park', owner: 'Neha Sharma', email: 'hello@greenpark.in', phone: '+91 90000 33333', createdAt: '2024-03-02', status: 'suspended', placesCount: 5, eventsCount: 2, ticketsSold: 80 },
-    ]);
+    const [orgs, setOrgs] = useState<Organization[]>([]); // No static seed data
+    const [loading, setLoading] = useState<boolean>(true);
+
+    // Load communities from backend (replaces previous static mock data)
+    useEffect(() => {
+        const loadCommunities = async () => {
+            setLoading(true);
+            try {
+                const resp = await communityService.list({ skip: 0, limit: 100 });
+                if (resp.success && resp.data) {
+                    const mapped: Organization[] = resp.data.map((c: CommunityModel) => ({
+                        id: c._id,
+                        name: c.name,
+                        category: 'community',
+                        owner: '',
+                        email: '',
+                        phone: '',
+                        createdAt: c.created_at || '',
+                        status: 'approved',
+                        placesCount: 0,
+                        eventsCount: 0,
+                        ticketsSold: 0,
+                    }));
+                    setOrgs(mapped);
+                }
+            } catch (e) {
+                console.warn('Failed to load communities:', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadCommunities();
+    }, []);
 
     const filtered = useMemo(() => orgs.filter(o => {
         const matchesSearch = o.name.toLowerCase().includes(search.toLowerCase()) || o.owner.toLowerCase().includes(search.toLowerCase());
@@ -42,7 +71,14 @@ export default function AdminOrganizations() {
     const setStatus = (id: string, status: OrgStatus) => {
         setOrgs(prev => prev.map(o => o.id === id ? { ...o, status } : o));
     };
-    const removeOrg = (id: string) => setOrgs(prev => prev.filter(o => o.id !== id));
+    const removeOrg = async (id: string) => {
+        try {
+            await communityService.remove(id);
+            setOrgs(prev => prev.filter(o => o.id !== id));
+        } catch (e) {
+            Alert.alert('Error', 'Failed to delete organization');
+        }
+    };
 
     const badgeColor = (s: OrgStatus) => s === 'approved' ? '#10b981' : s === 'pending' ? '#f59e0b' : '#ef4444';
     const badgeBg = (s: OrgStatus) => s === 'approved' ? '#d1fae5' : s === 'pending' ? '#fef3c7' : '#fee2e2';
@@ -77,29 +113,32 @@ export default function AdminOrganizations() {
                     </ScrollView>
                 </View>
 
-                {filtered.map(o => (
+                {loading && (
+                    <View style={styles.loadingBox}><Text style={styles.loadingText}>Loading organizations...</Text></View>
+                )}
+                {!loading && filtered.length === 0 && (
+                    <View style={styles.loadingBox}><Text style={styles.loadingText}>No organizations match filters.</Text></View>
+                )}
+                {!loading && filtered.map(o => (
                     <View key={o.id} style={styles.card}>
                         <View style={styles.row}>
                             <View>
                                 <Text style={styles.title}>{o.name}</Text>
-                                <Text style={styles.subtitle}>{o.owner} • {o.category}</Text>
+                                <Text style={styles.subtitle}>{(o.owner || '—')} • {o.category}</Text>
                             </View>
                             <View style={[styles.badge, { backgroundColor: badgeBg(o.status) }]}>
                                 <Text style={[styles.badgeText, { color: badgeColor(o.status) }]}>{o.status}</Text>
                             </View>
                         </View>
-
                         <View style={[styles.row, { marginTop: 8 }]}>
                             <View style={styles.stat}><IconSymbol name="map.fill" size={16} color="#687076" /><Text style={styles.statText}>{o.placesCount} places</Text></View>
                             <View style={styles.stat}><IconSymbol name="calendar" size={16} color="#687076" /><Text style={styles.statText}>{o.eventsCount} events</Text></View>
                             <View style={styles.stat}><IconSymbol name="ticket.fill" size={16} color="#687076" /><Text style={styles.statText}>{o.ticketsSold} tickets</Text></View>
                         </View>
-
                         <View style={styles.row}>
-                            <Text style={styles.meta}>Added {o.createdAt}</Text>
-                            <Text style={styles.meta}>{o.email} • {o.phone}</Text>
+                            <Text style={styles.meta}>Added {o.createdAt || '—'}</Text>
+                            <Text style={styles.meta}>{o.email || 'no-email'} • {o.phone || 'no-phone'}</Text>
                         </View>
-
                         <View style={styles.actions}>
                             <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#0a7ea4' }]} onPress={() => setStatus(o.id, 'approved')}>
                                 <IconSymbol name="checkmark" size={16} color="#fff" />
@@ -118,7 +157,6 @@ export default function AdminOrganizations() {
                                 <Text style={styles.actionText}>Delete</Text>
                             </TouchableOpacity>
                         </View>
-
                         <View style={styles.row}>
                             <TouchableOpacity style={[styles.secondaryBtn]} onPress={() => router.push('/(admin)/(stack)/analytics') as any}>
                                 <Text style={styles.secondaryText}>View analytics</Text>
@@ -164,6 +202,8 @@ const styles = StyleSheet.create({
     actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
     actionText: { fontSize: 13, fontWeight: '600', color: '#fff' },
     secondaryBtn: { paddingVertical: 8, paddingHorizontal: 12 },
-    secondaryText: { fontSize: 13, fontWeight: '600', color: Colors.tint },
-    fab: { position: 'absolute', right: 20, bottom: 90, width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.tint, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12 },
+    secondaryText: { fontSize: 13, fontWeight: '600', color: Colors.light.tint },
+    fab: { position: 'absolute', right: 20, bottom: 90, width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.light.tint, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12 },
+    loadingBox: { paddingVertical: 40, alignItems: 'center', justifyContent: 'center' },
+    loadingText: { fontSize: 14, color: '#687076' },
 });

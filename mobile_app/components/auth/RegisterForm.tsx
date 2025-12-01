@@ -71,7 +71,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     const onSubmit = async (data: RegisterFormData) => {
         try {
             setIsSubmitting(true);
-            const success = await register(data);
+            const payload = {
+                name: `${data.firstName} ${data.lastName}`.trim(),
+                address: '',
+                gender: undefined,
+                email: data.email,
+                password: data.password,
+                confirmPassword: data.confirmPassword,
+            };
+            const success = await register(payload);
 
             if (success) {
                 onSuccess();

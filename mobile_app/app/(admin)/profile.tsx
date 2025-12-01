@@ -63,16 +63,14 @@ export default function AdminProfileScreen() {
                     <View style={styles.avatarContainer}>
                         <View style={styles.avatar}>
                             <Text style={styles.avatarText}>
-                                {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                                {user?.name ? user.name.split(' ').map(p => p.charAt(0)).slice(0, 2).join('') : 'A'}
                             </Text>
                         </View>
                         <View style={styles.adminBadge}>
                             <IconSymbol name="shield.fill" size={16} color="#fff" />
                         </View>
                     </View>
-                    <Text style={styles.userName}>
-                        {user?.firstName} {user?.lastName}
-                    </Text>
+                    <Text style={styles.userName}>{user?.name}</Text>
                     <Text style={styles.userRole}>Administrator</Text>
                     <Text style={styles.userEmail}>{user?.email}</Text>
                 </View>

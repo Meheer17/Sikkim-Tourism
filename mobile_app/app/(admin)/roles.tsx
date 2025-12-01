@@ -13,44 +13,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { AdminUser, UserRole } from '@/types/admin.types';
 import { useApi } from '@/hooks/useApi';
 import { useThemeColor } from '@/hooks/use-theme-color';
-
-// Mock data - replace with actual API
-const MOCK_USERS: AdminUser[] = [
-    {
-        id: 'user1',
-        email: 'john.doe@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        role: UserRole.USER,
-        status: 'active',
-        isEmailVerified: true,
-        isPhoneVerified: true,
-        joinedDate: '2024-01-15T10:30:00Z',
-    },
-    {
-        id: 'user2',
-        email: 'sarah.wilson@example.com',
-        firstName: 'Sarah',
-        lastName: 'Wilson',
-        role: UserRole.BUSINESS,
-        status: 'active',
-        isEmailVerified: true,
-        isPhoneVerified: true,
-        joinedDate: '2024-02-20T08:15:00Z',
-        businessIds: ['1', '4'],
-    },
-    {
-        id: 'user5',
-        email: 'alex.kumar@example.com',
-        firstName: 'Alex',
-        lastName: 'Kumar',
-        role: UserRole.USER,
-        status: 'active',
-        isEmailVerified: true,
-        isPhoneVerified: true,
-        joinedDate: '2024-05-12T09:00:00Z',
-    },
-];
+import { userService } from '@/services';
 
 interface RoleOption {
     role: UserRole;
@@ -97,19 +60,56 @@ const ROLE_OPTIONS: RoleOption[] = [
 ];
 
 export default function AdminRolesScreen() {
-    const [users, setUsers] = useState<AdminUser[]>(MOCK_USERS);
-    const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>(MOCK_USERS);
+    const [users, setUsers] = useState<AdminUser[]>([]);
+    const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
     const [showRoleModal, setShowRoleModal] = useState(false);
     const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
     const [reason, setReason] = useState('');
+    const [loading, setLoading] = useState(true);
     const { put: updateUserRole } = useApi();
     const background = useThemeColor('background');
     const card = useThemeColor('card');
     const text = useThemeColor('text');
     const muted = useThemeColor('mutedText');
     const tint = useThemeColor('tint');
+
+    useEffect(() => {
+        loadUsers();
+    }, []);
+
+    const loadUsers = async () => {
+        try {
+            setLoading(true);
+            const response = await userService.list();
+            const backendUsers = response.data || [];
+
+            // Map backend users to AdminUser format
+            const mappedUsers: AdminUser[] = backendUsers.map((u: any) => {
+                const [firstName = '', lastName = ''] = (u.name || '').split(' ');
+                return {
+                    id: u._id,
+                    email: u.email,
+                    firstName: firstName,
+                    lastName: lastName,
+                    role: u.role as UserRole,
+                    status: u.approved ? 'active' : 'pending',
+                    isEmailVerified: u.approved || false,
+                    isPhoneVerified: false,
+                    joinedDate: u.created_at || new Date().toISOString(),
+                };
+            });
+
+            setUsers(mappedUsers);
+            setFilteredUsers(mappedUsers);
+        } catch (error) {
+            console.error('Failed to load users:', error);
+            Alert.alert('Error', 'Failed to load users');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const filterUsers = useCallback(() => {
         if (searchQuery.trim()) {
@@ -222,7 +222,11 @@ export default function AdminRolesScreen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {filteredUsers.length > 0 ? (
+                {loading ? (
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyTitle}>Loading users...</Text>
+                    </View>
+                ) : filteredUsers.length > 0 ? (
                     filteredUsers.map((user) => (
                         <TouchableOpacity
                             key={user.id}

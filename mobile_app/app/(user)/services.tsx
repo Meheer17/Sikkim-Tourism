@@ -3,82 +3,16 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { businessService } from '@/services';
 
-// Mock data - replace with actual API call
-const MOCK_ALL_SERVICES: Service[] = [
-    {
-        id: '1',
-        name: 'Mountain Trekking Guide',
-        description: 'Professional trekking guide for Himalayan trails',
-        price: 2500,
-        category: 'Adventure',
-        icon: 'mountain.2.fill',
-    },
-    {
-        id: '2',
-        name: 'Local Cab Service',
-        description: '24/7 available cab service for local travel',
-        price: 800,
-        category: 'Transport',
-        icon: 'car.fill',
-    },
-    {
-        id: '3',
-        name: 'Museum Entry Pass',
-        description: 'All-day access to heritage museums',
-        price: 150,
-        category: 'Culture',
-        icon: 'building.columns.fill',
-    },
-    {
-        id: '4',
-        name: 'River Rafting',
-        description: 'Thrilling river rafting experience',
-        price: 1500,
-        category: 'Adventure',
-        icon: 'water.waves',
-    },
-    {
-        id: '5',
-        name: 'Monastery Tour',
-        description: 'Guided tour of ancient monasteries',
-        price: 1200,
-        category: 'Culture',
-        icon: 'building.2.fill',
-    },
-    {
-        id: '6',
-        name: 'Cable Car Ride',
-        description: 'Scenic cable car ride with mountain views',
-        price: 600,
-        category: 'Transport',
-        icon: 'cable.connector',
-    },
-    {
-        id: '7',
-        name: 'Paragliding',
-        description: 'Experience flying over beautiful valleys',
-        price: 3500,
-        category: 'Adventure',
-        icon: 'airplane',
-    },
-    {
-        id: '8',
-        name: 'Local Food Tour',
-        description: 'Taste authentic local cuisine',
-        price: 900,
-        category: 'Food',
-        icon: 'fork.knife',
-    },
-];
-
-const CATEGORIES = ['All', 'Adventure', 'Culture', 'Transport', 'Food'];
+const CATEGORIES = ['All', 'Adventure', 'Culture', 'Transport', 'Food', 'Tour', 'Accommodation'];
 
 export default function ServicesScreen() {
     const [services, setServices] = useState<Service[]>([]);
     const [filteredServices, setFilteredServices] = useState<Service[]>([]);
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
+    const [loading, setLoading] = useState(true);
 
     // Theme colors
     const screenBg = useThemeColor('background');
@@ -97,11 +31,39 @@ export default function ServicesScreen() {
     }, [selectedCategory, searchQuery, services]);
 
     const loadServices = async () => {
-        // TODO: Replace with actual API call
-        // const response = await apiClient.get('/services');
-        // setServices(response.data);
+        try {
+            setLoading(true);
+            const response = await businessService.list();
+            const businesses = response.data || [];
 
-        setServices(MOCK_ALL_SERVICES);
+            // Map businesses to Service format
+            const mappedServices: Service[] = businesses.map((biz: any) => ({
+                id: biz._id,
+                name: biz.name,
+                description: biz.decription || biz.description || 'Quality service provider',
+                price: biz.price || Math.floor(Math.random() * 3000) + 500,
+                category: biz.type || 'Other',
+                icon: getCategoryIcon(biz.type),
+            }));
+
+            setServices(mappedServices);
+        } catch (error) {
+            console.error('Failed to load services:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getCategoryIcon = (type?: string): any => {
+        const iconMap: Record<string, string> = {
+            'Adventure': 'mountain.2.fill',
+            'Transport': 'car.fill',
+            'Culture': 'building.columns.fill',
+            'Food': 'fork.knife',
+            'Tour': 'map.fill',
+            'Accommodation': 'house.fill',
+        };
+        return iconMap[type || 'Other'] || 'star.fill';
     };
 
     const filterServices = () => {
@@ -189,7 +151,11 @@ export default function ServicesScreen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {filteredServices.length > 0 ? (
+                {loading ? (
+                    <View style={styles.emptyState}>
+                        <Text style={[styles.emptyTitle, { color: text }]}>Loading services...</Text>
+                    </View>
+                ) : filteredServices.length > 0 ? (
                     filteredServices.map((service) => (
                         <ServiceCard
                             key={service.id}

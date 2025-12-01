@@ -6,57 +6,7 @@ import { DashboardStats, RecentActivity } from '@/types/admin.types';
 import { useApi } from '@/hooks/useApi';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
-// Mock data - replace with actual API calls
-const MOCK_STATS: DashboardStats = {
-    totalUsers: 1247,
-    totalBusinesses: 89,
-    totalPlaces: 156,
-    totalBookings: 3421,
-    revenue: 2456789,
-    activeUsers: 892,
-    pendingApprovals: 12,
-};
-
-const MOCK_ACTIVITIES: RecentActivity[] = [
-    {
-        id: '1',
-        type: 'user_registered',
-        title: 'New User Registration',
-        description: 'John Doe joined the platform',
-        timestamp: '2 minutes ago',
-        userName: 'John Doe',
-    },
-    {
-        id: '2',
-        type: 'business_created',
-        title: 'New Business Added',
-        description: 'Mountain Trek Adventures added by Sarah Wilson',
-        timestamp: '15 minutes ago',
-        userName: 'Sarah Wilson',
-    },
-    {
-        id: '3',
-        type: 'place_added',
-        title: 'New Place Created',
-        description: 'Khecheopalri Lake added to explore',
-        timestamp: '1 hour ago',
-    },
-    {
-        id: '4',
-        type: 'booking_made',
-        title: 'New Booking',
-        description: 'Cable Car Ride booked by Mike Chen',
-        timestamp: '2 hours ago',
-        userName: 'Mike Chen',
-    },
-    {
-        id: '5',
-        type: 'review_posted',
-        title: 'New Review',
-        description: '5-star review for Rumtek Monastery',
-        timestamp: '3 hours ago',
-    },
-];
+// Removed all static mock data. Dashboard now initializes empty and awaits API.
 
 interface StatCardData {
     title: string;
@@ -70,8 +20,18 @@ interface StatCardData {
 
 export default function AdminDashboardScreen() {
     const router = useRouter();
-    const [stats, setStats] = useState<DashboardStats>(MOCK_STATS);
-    const [activities, setActivities] = useState<RecentActivity[]>(MOCK_ACTIVITIES);
+    const [stats, setStats] = useState<DashboardStats>({
+        totalUsers: 0,
+        totalBusinesses: 0,
+        totalPlaces: 0,
+        totalBookings: 0,
+        revenue: 0,
+        activeUsers: 0,
+        pendingApprovals: 0,
+    });
+    const [activities, setActivities] = useState<RecentActivity[]>([]);
+    const [loadingStats, setLoadingStats] = useState<boolean>(true);
+    const [loadingActivities, setLoadingActivities] = useState<boolean>(true);
     const [refreshing, setRefreshing] = useState(false);
     const { get: getStats } = useApi<DashboardStats>();
     const { get: getActivities } = useApi<RecentActivity[]>();
@@ -83,31 +43,44 @@ export default function AdminDashboardScreen() {
 
     const loadDashboardData = useCallback(async () => {
         try {
-            // Load stats
-            const statsData = await getStats('/admin/stats');
-            if (statsData) {
-                setStats(statsData);
-            } else {
-                // Fall back to mock data if API fails
-                setStats(MOCK_STATS);
+            // Load stats (endpoint may not exist yet)
+            try {
+                const raw: any = await getStats('/admin/stats');
+                if (raw) {
+                    const mapped: DashboardStats = {
+                        totalUsers: raw.total_users || 0,
+                        totalBusinesses: raw.total_businesses || 0,
+                        totalPlaces: raw.total_locations || 0,
+                        totalBookings: 0,
+                        revenue: 0,
+                        activeUsers: raw.active_users || 0,
+                        pendingApprovals: raw.pending_approvals || 0,
+                    };
+                    setStats(mapped);
+                }
+            } catch (e) {
+                console.warn('Stats fetch failed');
+            } finally {
+                setLoadingStats(false);
             }
         } catch (error) {
-            // Fall back to mock data on error
-            setStats(MOCK_STATS);
+            setLoadingStats(false);
         }
 
         try {
-            // Load activities
-            const activitiesData = await getActivities('/admin/activities');
-            if (activitiesData) {
-                setActivities(activitiesData);
-            } else {
-                // Fall back to mock data if API fails
-                setActivities(MOCK_ACTIVITIES);
+            // Load activities (endpoint may not exist yet)
+            try {
+                const activitiesData = await getActivities('/admin/activities');
+                if (activitiesData) {
+                    setActivities(activitiesData);
+                }
+            } catch (e) {
+                console.warn('Activities fetch failed');
+            } finally {
+                setLoadingActivities(false);
             }
         } catch (error) {
-            // Fall back to mock data on error
-            setActivities(MOCK_ACTIVITIES);
+            setLoadingActivities(false);
         }
     }, [getStats, getActivities]);
 
@@ -237,10 +210,10 @@ export default function AdminDashboardScreen() {
                 }
             >
                 {/* Pending Approvals Alert */}
-                {stats.pendingApprovals > 0 && (
+                {!loadingStats && stats.pendingApprovals > 0 && (
                     <TouchableOpacity
                         style={[styles.alertCard, { backgroundColor: card }]}
-                        onPress={() => {/* Navigate to approvals */ }}
+                        onPress={() => router.push('/(admin)/approvals' as any)}
                     >
                         <View style={styles.alertIcon}>
                             <IconSymbol name="exclamationmark.triangle.fill" size={24} color="#f59e0b" />
@@ -291,6 +264,14 @@ export default function AdminDashboardScreen() {
                     <View style={styles.quickActions}>
                         <TouchableOpacity
                             style={[styles.actionCard, { backgroundColor: card }]}
+                            onPress={() => router.push('/(admin)/approvals' as any)}
+                        >
+                            <IconSymbol name="checkmark.seal.fill" size={32} color="#f59e0b" />
+                            <Text style={[styles.actionText, { color: text }]}>Approvals</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.actionCard, { backgroundColor: card }]}
                             onPress={() => router.push('/(admin)/businesses' as any)}
                         >
                             <IconSymbol name="plus.circle.fill" size={32} color={tint} />
@@ -333,7 +314,13 @@ export default function AdminDashboardScreen() {
                     </View>
 
                     <View style={styles.activityList}>
-                        {activities.map((activity) => (
+                        {loadingActivities && (
+                            <View style={styles.activityItem}><Text style={[styles.activityDescription, { color: muted }]}>Loading activity...</Text></View>
+                        )}
+                        {!loadingActivities && activities.length === 0 && (
+                            <View style={styles.activityItem}><Text style={[styles.activityDescription, { color: muted }]}>No recent activity.</Text></View>
+                        )}
+                        {!loadingActivities && activities.map((activity) => (
                             <View key={activity.id} style={[styles.activityItem, { backgroundColor: card }]}>
                                 <View
                                     style={[

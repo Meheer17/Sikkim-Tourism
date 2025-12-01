@@ -91,6 +91,20 @@ export default function StackLayout() {
         }}
       />
       <Stack.Screen
+        name="create-business"
+        options={{
+          title: 'Create Business',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="edit-business"
+        options={{
+          title: 'Edit Business',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="immersive-experience"
         options={{
           title: '360° Experience',

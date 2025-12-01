@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import PlaceCard, { Place } from '@/components/explore/PlaceCard';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { locationService } from '@/services';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_HEIGHT = SCREEN_HEIGHT * 0.4;
@@ -31,115 +32,13 @@ const MAP_BOUNDARIES = {
   maxLongitude: 89.2,  // East (includes Bhutan border)
 };
 
-// Mock data for nearby places - replace with actual API
-const MOCK_NEARBY_PLACES: Place[] = [
-  {
-    id: '1',
-    name: 'Rumtek Monastery',
-    description: 'Beautiful Buddhist monastery with stunning architecture',
-    distance: '2.5 km',
-    rating: 4.8,
-    category: 'Religious Site',
-    modelPath: 'rumtek',
-    latitude: 27.2919,
-    longitude: 88.6638,
-  },
-  {
-    id: '2',
-    name: 'Dubdi Monastery',
-    description: 'Ancient monastery with rich historical significance',
-    distance: '5.4 km',
-    rating: 4.7,
-    category: 'Religious Site',
-    modelPath: 'dubdi',
-    latitude: 27.2880,
-    longitude: 88.3580,
-  },
-  {
-    id: '3',
-    name: 'Pemayangtse Monastery',
-    description: 'One of the oldest and most important monasteries in Sikkim',
-    distance: '12 km',
-    rating: 4.9,
-    category: 'Religious Site',
-    modelPath: 'pemayantse',
-    latitude: 27.3210,
-    longitude: 88.2500,
-  },
-  {
-    id: '4',
-    name: 'Enchey Monastery',
-    description: 'Historic monastery with peaceful surroundings',
-    distance: '3.8 km',
-    rating: 4.7,
-    category: 'Religious Site',
-    modelPath: 'enchey',
-    latitude: 27.3390,
-    longitude: 88.6170,
-  },
-  {
-    id: '5',
-    name: 'Phensong Monastery',
-    description: 'Serene monastery nestled in the mountains',
-    distance: '8.2 km',
-    rating: 4.6,
-    category: 'Religious Site',
-    modelPath: 'phensong',
-    latitude: 27.2764,
-    longitude: 88.6177,
-  },
-  {
-    id: '6',
-    name: 'Samdruptse Hill',
-    description: 'Giant statue of Guru Padmasambhava overlooking the valley',
-    distance: '15 km',
-    rating: 4.8,
-    category: 'Monument',
-    modelPath: 'samdruptsehill',
-    latitude: 27.2825,
-    longitude: 88.5293,
-  },
-  {
-    id: '7',
-    name: 'Kirateshwar Mahadev Temple',
-    description: 'Sacred Hindu temple dedicated to Lord Shiva',
-    distance: '9.5 km',
-    rating: 4.7,
-    category: 'Religious Site',
-    modelPath: 'kirateshwar',
-    latitude: 27.0595,
-    longitude: 88.2654,
-  },
-  {
-    id: '8',
-    name: 'Rabdentse Ruins',
-    description: 'Ancient royal palace ruins with historical importance',
-    distance: '13 km',
-    rating: 4.6,
-    category: 'Historical Site',
-    modelPath: 'rabdentseruins',
-    latitude: 27.3230,
-    longitude: 88.2380,
-  },
-  {
-    id: '9',
-    name: 'Tashiding Monastery',
-    description: 'Sacred Buddhist monastery with stunning valley views',
-    distance: '18 km',
-    rating: 4.9,
-    category: 'Religious Site',
-    modelPath: 'tashiding',
-    latitude: 27.3410,
-    longitude: 88.2780,
-  },
-];
-
 export default function ExploreScreen() {
-  const [nearbyPlaces, setNearbyPlaces] = useState<Place[]>(MOCK_NEARBY_PLACES);
+  const [nearbyPlaces, setNearbyPlaces] = useState<Place[]>([]);
   const [region, setRegion] = useState(SIKKIM_REGION);
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
   const [isUserInSikkim, setIsUserInSikkim] = useState(false);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [mapError, setMapError] = useState(false);
   const modalHeight = useRef(new Animated.Value(MODAL_MIN_HEIGHT)).current;
   const [isExpanded, setIsExpanded] = useState(false);
@@ -168,10 +67,10 @@ export default function ExploreScreen() {
     let { latitude, longitude } = region;
 
     // Ensure the view doesn't go beyond boundaries
-    latitude = Math.max(MAP_BOUNDARIES.minLatitude + halfLatDelta, 
-                        Math.min(MAP_BOUNDARIES.maxLatitude - halfLatDelta, latitude));
-    longitude = Math.max(MAP_BOUNDARIES.minLongitude + halfLngDelta, 
-                         Math.min(MAP_BOUNDARIES.maxLongitude - halfLngDelta, longitude));
+    latitude = Math.max(MAP_BOUNDARIES.minLatitude + halfLatDelta,
+      Math.min(MAP_BOUNDARIES.maxLatitude - halfLatDelta, latitude));
+    longitude = Math.max(MAP_BOUNDARIES.minLongitude + halfLngDelta,
+      Math.min(MAP_BOUNDARIES.maxLongitude - halfLngDelta, longitude));
 
     return {
       ...region,
@@ -183,16 +82,50 @@ export default function ExploreScreen() {
   useEffect(() => {
     // Request location permission on mount
     requestLocationPermission();
-    // Calculate initial distances from Gangtok
-    updatePlaceDistances(undefined, undefined, false);
+    loadLocations();
   }, []);
+
+  const loadLocations = async () => {
+    try {
+      setLoading(true);
+      const response = await locationService.list();
+      const locations = response.data || [];
+
+      // Map backend locations to Place format
+      const mappedPlaces: Place[] = locations.map((loc: any) => ({
+        id: loc._id,
+        name: loc.name,
+        description: loc.description || loc.short_description || 'Explore this amazing location',
+        category: loc.type || 'Place',
+        rating: 4.5,
+        distance: '0 km',
+        modelPath: loc.name.toLowerCase().replace(/\s+/g, ''),
+        latitude: loc.position?.y || 27.3389,
+        longitude: loc.position?.x || 88.6065,
+      }));
+
+      setNearbyPlaces(mappedPlaces);
+      // Calculate initial distances from Gangtok
+      const refLat = SIKKIM_REGION.latitude;
+      const refLon = SIKKIM_REGION.longitude;
+      const updatedPlaces = mappedPlaces.map(place => ({
+        ...place,
+        distance: `${calculateDistance(refLat, refLon, place.latitude || 0, place.longitude || 0)} km`,
+      }));
+      setNearbyPlaces(updatedPlaces);
+    } catch (error) {
+      console.error('Failed to load locations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Calculate distance between two coordinates using Haversine formula
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371; // Radius of the Earth in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
+    const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
       Math.sin(dLon / 2) * Math.sin(dLon / 2);
@@ -206,11 +139,11 @@ export default function ExploreScreen() {
     const refLat = userLat || SIKKIM_REGION.latitude; // Default to Gangtok
     const refLon = userLon || SIKKIM_REGION.longitude;
 
-    const updatedPlaces = MOCK_NEARBY_PLACES.map(place => {
+    const updatedPlaces = nearbyPlaces.map((place: Place) => {
       if (place.latitude && place.longitude) {
         const dist = calculateDistance(refLat, refLon, place.latitude, place.longitude);
-        const distanceText = isInSikkim 
-          ? `${dist} km` 
+        const distanceText = isInSikkim
+          ? `${dist} km`
           : `${dist} km from Gangtok`;
         return {
           ...place,
@@ -221,7 +154,7 @@ export default function ExploreScreen() {
     });
 
     // Sort by distance
-    updatedPlaces.sort((a, b) => {
+    updatedPlaces.sort((a: Place, b: Place) => {
       const distA = parseFloat(a.distance);
       const distB = parseFloat(b.distance);
       return distA - distB;
@@ -251,7 +184,7 @@ export default function ExploreScreen() {
         setUserLocation(locationObject);
 
         // Check if user location is within Sikkim boundaries
-        const isWithinBounds = 
+        const isWithinBounds =
           location.latitude >= MAP_BOUNDARIES.minLatitude &&
           location.latitude <= MAP_BOUNDARIES.maxLatitude &&
           location.longitude >= MAP_BOUNDARIES.minLongitude &&
@@ -310,7 +243,7 @@ export default function ExploreScreen() {
         const isDraggingVertically = Math.abs(gestureState.dy) > Math.abs(gestureState.dx) && Math.abs(gestureState.dy) > 3;
         const isDraggingDown = gestureState.dy > 0;
         const isAtTop = scrollY <= 0;
-        
+
         // Only handle pan if we're at the top and dragging down, or if modal is not expanded
         return isDraggingVertically && (isDraggingDown && isAtTop || !isExpanded);
       },
@@ -341,13 +274,13 @@ export default function ExploreScreen() {
       },
       onPanResponderRelease: (_, gestureState) => {
         setScrollEnabled(true);
-        
+
         const dragDistance = -gestureState.dy;
         const dragVelocity = -gestureState.vy;
-        
+
         // Determine target based on velocity or distance
         let shouldExpand = isExpanded;
-        
+
         // Require more intentional gestures
         if (Math.abs(dragVelocity) > 1.0) {
           // Fast swipe - use velocity
@@ -357,9 +290,9 @@ export default function ExploreScreen() {
           shouldExpand = dragDistance > 0;
         }
         // If gesture is too small, maintain current state
-        
+
         const targetHeight = shouldExpand ? MODAL_MAX_HEIGHT : MODAL_MIN_HEIGHT;
-        
+
         // Use smooth timing animation for final snap
         Animated.timing(modalHeight, {
           toValue: targetHeight,
@@ -414,10 +347,10 @@ export default function ExploreScreen() {
     // Calculate the maximum delta that keeps the entire Sikkim region in view
     const maxLatDelta = MAP_BOUNDARIES.maxLatitude - MAP_BOUNDARIES.minLatitude;
     const maxLonDelta = MAP_BOUNDARIES.maxLongitude - MAP_BOUNDARIES.minLongitude;
-    
+
     const newLatDelta = region.latitudeDelta * 2;
     const newLonDelta = region.longitudeDelta * 2;
-    
+
     // If zooming out would exceed boundaries, snap to max view showing entire region
     if (newLatDelta >= maxLatDelta || newLonDelta >= maxLonDelta) {
       const maxRegion = {
@@ -466,7 +399,7 @@ export default function ExploreScreen() {
               loadingBackgroundColor={soft as string}
               minZoomLevel={8}
               maxZoomLevel={15}
-              // onError={() => setMapError(true)}
+            // onError={() => setMapError(true)}
             >
               {nearbyPlaces.map((place) => (
                 place.latitude && place.longitude && (
@@ -496,7 +429,7 @@ export default function ExploreScreen() {
 
         {/* Map Controls */}
         <View style={styles.mapControls}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.controlButton, { backgroundColor: controlBg }, isLoadingLocation && styles.controlButtonDisabled]}
             onPress={handleGetUserLocation}
             disabled={isLoadingLocation}
@@ -543,7 +476,7 @@ export default function ExploreScreen() {
                 {nearbyPlaces.length} places found
               </Text>
             </View>
-            <TouchableOpacity style={[styles.filterButton, { backgroundColor: soft }] }>
+            <TouchableOpacity style={[styles.filterButton, { backgroundColor: soft }]}>
               <IconSymbol name="slider.horizontal.3" size={20} color={tint} />
             </TouchableOpacity>
           </View>
@@ -560,13 +493,24 @@ export default function ExploreScreen() {
           scrollEventThrottle={16}
           onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         >
-          {nearbyPlaces.map((place) => (
-            <PlaceCard
-              key={place.id}
-              place={place}
-              onPress={handlePlacePress}
-            />
-          ))}
+          {loading ? (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <ActivityIndicator size="large" color={tint as string} />
+              <Text style={[{ color: muted, marginTop: 10 }]}>Loading places...</Text>
+            </View>
+          ) : nearbyPlaces.length === 0 ? (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <Text style={[{ color: muted }]}>No places found</Text>
+            </View>
+          ) : (
+            nearbyPlaces.map((place) => (
+              <PlaceCard
+                key={place.id}
+                place={place}
+                onPress={handlePlacePress}
+              />
+            ))
+          )}
         </ScrollView>
       </Animated.View>
     </View>

@@ -47,5 +47,5 @@ const styles = StyleSheet.create({
     switchBtn: { flex: 1, paddingVertical: 10, borderRadius: 999, borderWidth: 1, borderColor: '#e5e7eb', backgroundColor: '#fff', alignItems: 'center' },
     switchBtnActive: { backgroundColor: '#e0f2fe', borderColor: '#38bdf8' },
     switchText: { fontSize: 13, color: '#334155', fontWeight: '600' },
-    switchTextActive: { color: Colors.tint },
+    switchTextActive: { color: Colors.light.tint },
 });

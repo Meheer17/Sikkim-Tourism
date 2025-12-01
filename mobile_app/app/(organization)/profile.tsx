@@ -28,15 +28,15 @@ export default function OrganizationProfile() {
 
     return (
         <View style={styles.container}>
-            <ScrollView style={styles.scroll} contentContainerStyle={[styles.content,{backgroundColor:background}]}>
-                <View style={[styles.header,{backgroundColor:card}]}>
-                    <View style={[styles.avatar, { backgroundColor: tint }]}><Text style={styles.avatarText}>{user?.firstName?.[0]}{user?.lastName?.[0]}</Text></View>
-                    <Text style={[styles.name,{color:textColor}]}>{user?.firstName} {user?.lastName}</Text>
-                    <Text style={[styles.email,{color:muted}]}>{user?.email}</Text>
-                    <View style={[styles.badge,{backgroundColor:tint}]}><IconSymbol name="person.3.fill" size={16} color="#fff" /><Text style={styles.badgeText}>Organization</Text></View>
+            <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { backgroundColor: background }]}>
+                <View style={[styles.header, { backgroundColor: card }]}>
+                    <View style={[styles.avatar, { backgroundColor: tint }]}><Text style={styles.avatarText}>{user?.name ? user.name.split(' ').map(p => p[0]).slice(0, 2).join('') : 'O'}</Text></View>
+                    <Text style={[styles.name, { color: textColor }]}>{user?.name}</Text>
+                    <Text style={[styles.email, { color: muted }]}>{user?.email}</Text>
+                    <View style={[styles.badge, { backgroundColor: tint }]}><IconSymbol name="person.3.fill" size={16} color="#fff" /><Text style={styles.badgeText}>Organization</Text></View>
                 </View>
 
-                <View style={[styles.menuList,{backgroundColor:card}]}>
+                <View style={[styles.menuList, { backgroundColor: card }]}>
                     {menu.map((m, i) => (
                         <TouchableOpacity key={i} style={styles.menuItem} onPress={() => router.push(m.route as any)}>
                             <View style={styles.menuLeft}>
@@ -51,7 +51,7 @@ export default function OrganizationProfile() {
                 {/* Theme Toggle */}
                 <ThemeToggle />
 
-                <TouchableOpacity style={[styles.logoutBtn,{backgroundColor:card}]} onPress={handleLogout}>
+                <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: card }]} onPress={handleLogout}>
                     <IconSymbol name="rectangle.portrait.and.arrow.right" size={20} color={tint} />
                     <Text style={styles.logoutText}>Logout</Text>
                 </TouchableOpacity>

@@ -120,7 +120,7 @@ export interface AdminUser {
     phone?: string;
     avatar?: string;
     role: UserRole;
-    status: 'active' | 'suspended' | 'deleted';
+    status: 'active' | 'suspended' | 'deleted' | 'pending';
     isEmailVerified: boolean;
     isPhoneVerified: boolean;
     totalBookings?: number;
