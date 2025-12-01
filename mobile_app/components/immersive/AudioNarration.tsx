@@ -124,6 +124,7 @@ const styles = StyleSheet.create({
         left: 16,
         right: 16,
         zIndex: 10,
+        backgroundColor: 'transparent',
     },
     content: {
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
