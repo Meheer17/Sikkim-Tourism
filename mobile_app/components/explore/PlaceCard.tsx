@@ -1,211 +1,88 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import React from "react";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 export interface Place {
-    id: string;
-    name: string;
-    description: string;
-    distance: string;
-    rating?: number;
-    imageUrl?: string;
-    category: string;
-    modelPath?: string;
-    latitude?: number;
-    longitude?: number;
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  image: string;
+  category?: string;
+  distance?: number; // in km
+  rating?: number;
 }
 
 interface PlaceCardProps {
-    place: Place;
-    onPress?: (place: Place) => void;
+  place: Place;
+  onPress: (place: Place) => void;
 }
 
 export default function PlaceCard({ place, onPress }: PlaceCardProps) {
-    const text = useThemeColor('text');
-    const muted = useThemeColor('mutedText');
-    const card = useThemeColor('card');
-    const tint = useThemeColor('tint');
-    const soft = useThemeColor('tintSoftBg');
-    const handleDirections = (e: any) => {
-        // Stop propagation to prevent card press
-        e.stopPropagation();
-        
-        if (!place.latitude || !place.longitude) {
-            Alert.alert('Error', 'Location coordinates not available for this place');
-            return;
-        }
+  return (
+    <TouchableOpacity style={styles.card} onPress={() => onPress(place)}>
+      <Image source={{ uri: place.image }} style={styles.image} />
 
-        const scheme = Platform.select({
-            ios: 'maps:',
-            android: 'geo:',
-        });
-        const latLng = `${place.latitude},${place.longitude}`;
-        const label = encodeURIComponent(place.name);
-        
-        const url = Platform.select({
-            ios: `${scheme}?q=${label}&ll=${latLng}`,
-            android: `${scheme}${latLng}?q=${label}`,
-        });
+      <View style={{ flex: 1 }}>
+        <Text style={styles.name}>{place.name}</Text>
+        {place.category && (
+          <Text style={styles.category}>{place.category}</Text>
+        )}
 
-        if (url) {
-            Linking.canOpenURL(url).then((supported) => {
-                if (supported) {
-                    Linking.openURL(url);
-                } else {
-                    // Fallback to Google Maps web
-                    const webUrl = `https://www.google.com/maps/search/?api=1&query=${latLng}`;
-                    Linking.openURL(webUrl);
-                }
-            });
-        }
-    };
+        {place.rating && (
+          <Text style={styles.rating}>
+            ⭐ {place.rating.toFixed(1)}
+          </Text>
+        )}
 
-    return (
-        <TouchableOpacity
-            style={[styles.card, { backgroundColor: card }]}
-            onPress={() => onPress?.(place)}
-            activeOpacity={0.7}
-        >
-            <View style={styles.imageContainer}>
-                {place.imageUrl ? (
-                    <Image
-                        source={{ uri: place.imageUrl }}
-                        style={styles.image}
-                        resizeMode="cover"
-                    />
-                ) : (
-                    <View style={[styles.placeholderImage, { backgroundColor: soft }] }>
-                        <IconSymbol name="map.fill" size={24} color={tint} />
-                    </View>
-                )}
-            </View>
+        {place.distance !== undefined && (
+          <Text style={styles.distance}>{place.distance.toFixed(1)} km away</Text>
+        )}
+      </View>
 
-            <View style={styles.content}>
-                <View style={styles.header}>
-                    <Text style={[styles.name, { color: text }]} numberOfLines={1}>{place.name}</Text>
-                    {place.rating && (
-                        <View style={styles.ratingContainer}>
-                            <IconSymbol name="star.fill" size={14} color="#fbbf24" />
-                            <Text style={[styles.rating, { color: text }]}>{place.rating}</Text>
-                        </View>
-                    )}
-                </View>
-                <Text style={[styles.category, { color: muted }]}>{place.category}</Text>
-                <Text style={[styles.description, { color: muted }]} numberOfLines={2}>{place.description}</Text>
-                <View style={styles.footer}>
-                    <View style={styles.distanceContainer}>
-                        <IconSymbol name="location.fill" size={14} color={muted} />
-                        <Text style={[styles.distance, { color: muted }]}>{place.distance}</Text>
-                    </View>
-                    {place.latitude && place.longitude && (
-                        <TouchableOpacity 
-                            style={[styles.directionsButton, { backgroundColor: soft }]}
-                            onPress={handleDirections}
-                            activeOpacity={0.7}
-                        >
-                            <IconSymbol name="arrow.triangle.turn.up.right.diamond.fill" size={14} color={tint} />
-                            <Text style={[styles.directionsText, { color: tint }]}>Directions</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-            </View>
-        </TouchableOpacity>
-    );
+      <Ionicons name="navigate-circle" size={30} color="#007AFF" />
+    </TouchableOpacity>
+  );
 }
 
 const styles = StyleSheet.create({
-    card: {
-        flexDirection: 'row',
-        borderRadius: 12,
-        overflow: 'hidden',
-        marginBottom: 12,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-    },
-    imageContainer: {
-        width: 100,
-        height: 100,
-        backgroundColor: '#0000',
-    },
-    image: {
-        width: '100%',
-        height: '100%',
-    },
-    placeholderImage: {
-        width: '100%',
-        height: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#e8f4f8',
-    },
-    content: {
-        flex: 1,
-        padding: 12,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 4,
-    },
-    name: {
-        flex: 1,
-        fontSize: 16,
-        fontWeight: '700',
-        marginRight: 8,
-    },
-    ratingContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-    },
-    rating: {
-        fontSize: 13,
-        fontWeight: '600',
-    },
-    category: {
-        fontSize: 12,
-        marginBottom: 4,
-    },
-    description: {
-        fontSize: 13,
-        lineHeight: 18,
-        marginBottom: 8,
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: 12,
-    },
-    distanceContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        flex: 1,
-        flexShrink: 1,
-    },
-    distance: {
-        fontSize: 13,
-        fontWeight: '500',
-    },
-    directionsButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        paddingHorizontal: 8,
-        paddingVertical: 5,
-        backgroundColor: '#e8f4f8',
-        borderRadius: 8,
-        flexShrink: 0,
-    },
-    directionsText: {
-        fontSize: 12,
-        color: '#0a7ea4',
-        fontWeight: '600',
-    },
+  card: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 16,
+    marginVertical: 8,
+    marginHorizontal: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+    alignItems: "center",
+  },
+  image: {
+    width: 70,
+    height: 70,
+    borderRadius: 12,
+    marginRight: 12,
+    backgroundColor: "#eee",
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  category: {
+    fontSize: 12,
+    color: "#888",
+    marginTop: 2,
+  },
+  rating: {
+    fontSize: 12,
+    color: "#444",
+    marginTop: 4,
+  },
+  distance: {
+    fontSize: 12,
+    color: "#007AFF",
+    marginTop: 4,
+  },
 });

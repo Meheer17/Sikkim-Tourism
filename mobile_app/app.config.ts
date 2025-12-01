@@ -29,6 +29,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
             backgroundColor: '#ffffff',
         },
         package: 'com.yourdomain.tourist',
+        config: {
+    googleMaps: {
+      apiKey: process.env.GOOGLE_MAPS_API_KEY
+    }
+        }
     },
     web: {
         bundler: 'metro',
@@ -57,6 +62,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         typedRoutes: true,
     },
     extra: {
+        extra: {
+  GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
+
+
         // Environment variables accessible in the app
         API_BASE_URL: process.env.API_BASE_URL || 'https://api.yourdomain.com/v1',
         API_TIMEOUT: process.env.API_TIMEOUT || '10000',
@@ -70,4 +79,4 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
             projectId: 'your-project-id-here',
         },
     },
-});
+    }})
