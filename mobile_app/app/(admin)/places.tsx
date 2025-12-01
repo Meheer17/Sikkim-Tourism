@@ -1,349 +1,271 @@
-// app/(admin)/places.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Modal,
   TextInput,
-  Alert,
-  SafeAreaView,
-  Image,
-  Platform,
+  Pressable,
+  StyleSheet,
+  ScrollView,
 } from "react-native";
-
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-import { useRouter } from "expo-router";
-
-type Place = {
-  id: string;
-  name: string;
-  description?: string;
-  latitude: number;
-  longitude: number;
-  category?: string;
-  image?: string;
-};
+import ReusableMap from "@/components/maps/ReusableMap";
+import { Place, Category, DEFAULT_PLACES } from "@/assets/data/places";
 
 export default function AdminPlaces() {
-  const router = useRouter();
+  const [places, setPlaces] = useState<Place[]>(DEFAULT_PLACES);
 
-  const [places, setPlaces] = useState<Place[]>([]);
-  const [selected, setSelected] = useState<Place | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Form State
-  const [formName, setFormName] = useState("");
-  const [formDescription, setFormDescription] = useState("");
-  const [formLatitude, setFormLatitude] = useState("");
-  const [formLongitude, setFormLongitude] = useState("");
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    latitude: "",
+    longitude: "",
+    category: "tourist" as Category,
+  });
 
-  // Load Admin Places
-  const loadPlaces = async () => {
-    const data = await AsyncStorage.getItem("ADMIN_PLACES");
-    if (data) {
-      setPlaces(JSON.parse(data));
-    }
-  };
-
-  const savePlaces = async (list: Place[]) => {
-    await AsyncStorage.setItem("ADMIN_PLACES", JSON.stringify(list));
-  };
-
+  // Load saved places
   useEffect(() => {
-    loadPlaces();
+    (async () => {
+      const saved = await AsyncStorage.getItem("PLACES_DB");
+      if (saved) setPlaces(JSON.parse(saved));
+    })();
   }, []);
 
-  // Add or Edit
-  const openAddModal = () => {
-    setSelected(null);
-    setFormName("");
-    setFormDescription("");
-    setFormLatitude("");
-    setFormLongitude("");
-    setShowModal(true);
-  };
-
-  const openEditModal = (place: Place) => {
-    setSelected(place);
-    setFormName(place.name);
-    setFormDescription(place.description || "");
-    setFormLatitude(String(place.latitude));
-    setFormLongitude(String(place.longitude));
-    setShowModal(true);
-  };
-
-  const handleSave = () => {
-    if (!formName || !formLatitude || !formLongitude) {
-      Alert.alert("Missing fields", "Name, Latitude, Longitude required.");
-      return;
-    }
-
-    const newPlace: Place = {
-      id: selected ? selected.id : Date.now().toString(),
-      name: formName,
-      description: formDescription,
-      latitude: Number(formLatitude),
-      longitude: Number(formLongitude),
-      category: "Custom",
-      image: "https://cdn-icons-png.flaticon.com/512/854/854878.png",
-    };
-
-    let updated;
-    if (selected) {
-      updated = places.map((p) => (p.id === selected.id ? newPlace : p));
-    } else {
-      updated = [...places, newPlace];
-    }
-
+  async function savePlaces(updated: Place[]) {
     setPlaces(updated);
-    savePlaces(updated);
-    setShowModal(false);
-  };
+    await AsyncStorage.setItem("PLACES_DB", JSON.stringify(updated));
+  }
 
-  const handleDelete = (place: Place) => {
-    Alert.alert("Confirm", "Delete this place?", [
-      { text: "Cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => {
-          const updated = places.filter((p) => p.id !== place.id);
-          setPlaces(updated);
-          savePlaces(updated);
-        },
-      },
-    ]);
-  };
+  function resetForm() {
+    setForm({
+      name: "",
+      description: "",
+      latitude: "",
+      longitude: "",
+      category: "tourist",
+    });
+    setEditingId(null);
+  }
 
-  const renderCard = ({ item }: { item: Place }) => (
-    <TouchableOpacity style={styles.card}>
-      <Image
-        source={{ uri: item.image }}
-        style={{ width: 60, height: 60, borderRadius: 8 }}
-      />
+  function addOrUpdatePlace() {
+    if (!form.name || !form.latitude || !form.longitude) return;
 
-      <View style={{ flex: 1, marginLeft: 10 }}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.desc}>
-          {item.description?.slice(0, 40) || "No description"}
-        </Text>
+    if (editingId) {
+      // UPDATE EXISTING PLACE
+      const updated = places.map((p) =>
+        p.id === editingId
+          ? {
+              ...p,
+              name: form.name,
+              description: form.description,
+              latitude: Number(form.latitude),
+              longitude: Number(form.longitude),
+              category: form.category,
+            }
+          : p
+      );
+      savePlaces(updated);
+    } else {
+      // ADD NEW PLACE
+      const newPlace: Place = {
+        id: Date.now().toString(),
+        name: form.name,
+        description: form.description,
+        latitude: Number(form.latitude),
+        longitude: Number(form.longitude),
+        category: form.category,
+      };
+      savePlaces([...places, newPlace]);
+    }
 
-        <View style={styles.cardActions}>
-          <TouchableOpacity
-            style={styles.editBtn}
-            onPress={() => openEditModal(item)}
-          >
-            <Text style={styles.editTxt}>Edit</Text>
-          </TouchableOpacity>
+    resetForm();
+  }
 
-          <TouchableOpacity
-            style={styles.deleteBtn}
-            onPress={() => handleDelete(item)}
-          >
-            <Text style={styles.deleteTxt}>Delete</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+  function deletePlace(id: string) {
+    savePlaces(places.filter((p) => p.id !== id));
+    if (id === editingId) resetForm();
+  }
+
+  function startEditing(place: Place) {
+    setEditingId(place.id);
+    setForm({
+      name: place.name,
+      description: place.description,
+      latitude: String(place.latitude),
+      longitude: String(place.longitude),
+      category: place.category,
+    });
+  }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Manage Places</Text>
-
-        <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
-          <Text style={{ color: "#fff", fontWeight: "bold" }}>+ Add</Text>
-        </TouchableOpacity>
+    <View style={{ flex: 1 }}>
+      {/* MAP */}
+      <View style={{ height: "50%" }}>
+        <ReusableMap
+          userLocation={{ latitude: 27.33, longitude: 88.61 }}
+          places={places}
+          selectedPlace={null}
+          onSelect={() => {}}
+          showRoute={false}
+          enableTapSelect={true}
+          onTapCoordinates={(lat, lng) =>
+            setForm({ ...form, latitude: String(lat), longitude: String(lng) })
+          }
+        />
       </View>
 
-      {/* Map */}
-      <View style={styles.mapContainer}>
-        <MapView
-          provider={PROVIDER_GOOGLE}
-          style={{ flex: 1 }}
-          initialRegion={{
-            latitude: 27.533,
-            longitude: 88.512,
-            latitudeDelta: 0.5,
-            longitudeDelta: 0.5,
-          }}
-        >
-          {places.map((p) => (
-            <Marker
-              key={p.id}
-              coordinate={{ latitude: p.latitude, longitude: p.longitude }}
-              title={p.name}
-            />
+      <ScrollView style={styles.form}>
+        <Text style={styles.header}>
+          {editingId ? "Edit Place" : "Add New Place"}
+        </Text>
+
+        <TextInput
+          placeholder="Place name"
+          value={form.name}
+          onChangeText={(v) => setForm({ ...form, name: v })}
+          style={styles.input}
+        />
+
+        <TextInput
+          placeholder="Description"
+          value={form.description}
+          onChangeText={(v) => setForm({ ...form, description: v })}
+          style={styles.input}
+        />
+
+        {/* COORDINATES */}
+        <TextInput
+          placeholder="Latitude"
+          value={form.latitude}
+          style={styles.input}
+          editable={false}
+        />
+
+        <TextInput
+          placeholder="Longitude"
+          value={form.longitude}
+          style={styles.input}
+          editable={false}
+        />
+
+        {/* CATEGORY */}
+        <Text style={{ marginTop: 10, marginBottom: 5 }}>Category</Text>
+
+        <ScrollView horizontal>
+          {["tourist", "hospital", "police", "food", "other"].map((c) => (
+            <Pressable
+              key={c}
+              onPress={() => setForm({ ...form, category: c as Category })}
+              style={[
+                styles.categoryChip,
+                form.category === c && styles.chipSelected,
+              ]}
+            >
+              <Text style={{ color: "#fff" }}>{c}</Text>
+            </Pressable>
           ))}
-        </MapView>
-      </View>
+        </ScrollView>
 
-      {/* Cards */}
-      <FlatList
-        data={places}
-        renderItem={renderCard}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 20 }}
-      />
+        {/* ADD / UPDATE BUTTON */}
+        <Pressable style={styles.saveBtn} onPress={addOrUpdatePlace}>
+          <Text style={styles.btnText}>
+            {editingId ? "Update Place" : "Add Place"}
+          </Text>
+        </Pressable>
 
-      {/* Modal */}
-      <Modal transparent visible={showModal} animationType="slide">
-        <View style={styles.modalWrap}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>
-              {selected ? "Edit Place" : "Add Place"}
-            </Text>
+        {editingId && (
+          <Pressable style={styles.cancelBtn} onPress={resetForm}>
+            <Text style={{ color: "#000", fontWeight: "bold" }}>Cancel Edit</Text>
+          </Pressable>
+        )}
 
-            <TextInput
-              placeholder="Name"
-              value={formName}
-              onChangeText={setFormName}
-              style={styles.input}
-            />
+        <Text style={styles.header}>Existing Places</Text>
 
-            <TextInput
-              placeholder="Description"
-              value={formDescription}
-              onChangeText={setFormDescription}
-              style={styles.input}
-            />
+        {/* LIST OF PLACES */}
+        {places.map((p) => (
+          <View key={p.id} style={styles.placeCard}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.placeName}>{p.name}</Text>
+              <Text style={styles.placeCategory}>{p.category}</Text>
+            </View>
 
-            <TextInput
-              placeholder="Latitude"
-              value={formLatitude}
-              onChangeText={setFormLatitude}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-
-            <TextInput
-              placeholder="Longitude"
-              value={formLongitude}
-              onChangeText={setFormLongitude}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.saveBtn}
-                onPress={handleSave}
+            <View>
+              <Pressable
+                style={styles.editBtn}
+                onPress={() => startEditing(p)}
               >
-                <Text style={styles.saveTxt}>Save</Text>
-              </TouchableOpacity>
+                <Text style={styles.btnTextSmall}>Edit</Text>
+              </Pressable>
 
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => setShowModal(false)}
+              <Pressable
+                style={styles.deleteBtn}
+                onPress={() => deletePlace(p.id)}
               >
-                <Text style={styles.cancelTxt}>Cancel</Text>
-              </TouchableOpacity>
+                <Text style={styles.btnTextSmall}>Delete</Text>
+              </Pressable>
             </View>
           </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    padding: 20,
-    backgroundColor: "#fff",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  headerTitle: { fontSize: 20, fontWeight: "bold" },
-
-  addButton: {
-    backgroundColor: "#3568eb",
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-
-  mapContainer: { height: 250, borderRadius: 10, overflow: "hidden", margin: 10 },
-
-  card: {
-    flexDirection: "row",
-    backgroundColor: "#f4f4f4",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 15,
-    alignItems: "center",
-  },
-
-  name: { fontSize: 16, fontWeight: "bold", color: "#333" },
-  desc: { fontSize: 13, color: "#777", marginTop: 2 },
-
-  cardActions: { flexDirection: "row", marginTop: 8 },
-  editBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: "#ffc107",
-    borderRadius: 6,
-    marginRight: 10,
-  },
-  editTxt: { color: "#000", fontWeight: "600" },
-  deleteBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: "#dc3545",
-    borderRadius: 6,
-  },
-  deleteTxt: { color: "#fff", fontWeight: "600" },
-
-  modalWrap: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    padding: 20,
-  },
-  modalCard: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 12,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-
+  form: { padding: 12, backgroundColor: "#fff" },
+  header: { fontSize: 18, fontWeight: "bold", marginVertical: 10 },
   input: {
-    backgroundColor: "#f1f1f1",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 8,
   },
-
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 15,
-  },
-  saveBtn: {
-    backgroundColor: "#28a745",
-    padding: 12,
-    borderRadius: 8,
-    flex: 1,
+  categoryChip: {
+    padding: 10,
+    borderRadius: 20,
+    backgroundColor: "#888",
     marginRight: 10,
   },
-  saveTxt: { color: "#fff", fontWeight: "bold", textAlign: "center" },
-
-  cancelBtn: {
-    backgroundColor: "#6c757d",
+  chipSelected: { backgroundColor: "#007AFF" },
+  saveBtn: {
+    backgroundColor: "#007AFF",
     padding: 12,
-    borderRadius: 8,
-    flex: 1,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10,
   },
-  cancelTxt: { color: "#fff", fontWeight: "bold", textAlign: "center" },
+  cancelBtn: {
+    marginTop: 8,
+    padding: 10,
+    backgroundColor: "#eee",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  btnText: { color: "#fff", fontWeight: "bold" },
+  placeCard: {
+    flexDirection: "row",
+    backgroundColor: "#f2f2f2",
+    padding: 12,
+    borderRadius: 10,
+    marginVertical: 6,
+    alignItems: "center",
+  },
+  placeName: { fontSize: 16, fontWeight: "600" },
+  placeCategory: { color: "#777", marginTop: 3 },
+  editBtn: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 5,
+  },
+  deleteBtn: {
+    backgroundColor: "red",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  btnTextSmall: { color: "#fff", fontSize: 12 },
 });

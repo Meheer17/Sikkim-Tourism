@@ -30,9 +30,10 @@
       ],
       "config": {
         "googleMaps": {
-          "apiKey": ""
+          "apiKey":  "AIzaSyBGh5N6vbr8XW2jDKjTYrQh4C5BVyacnW0"
         }
       },
+      
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
@@ -62,6 +63,10 @@
         }
       ]
     ],
+    "extra": {
+  "GOOGLE_MAPS_API_KEY": "AZIaSyBGh5N6vbr8XW2jDKjTYrQh4C5BVyacnW0"
+},
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
