@@ -22,11 +22,11 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
     
-    # Telegram Storage (Telethon)
-    TELEGRAM_BOT_TOKEN: str
-    TELEGRAM_API_ID: int
-    TELEGRAM_API_HASH: str
-    TELEGRAM_CHAT_ID: str  # Can be username, chat_id, or channel ID
+    # Telegram Storage (Telethon) - Optional
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_API_ID: int = 0
+    TELEGRAM_API_HASH: str = ""
+    TELEGRAM_CHAT_ID: str = ""  # Can be username, chat_id, or channel ID
     TELEGRAM_SESSION_NAME: str = "telegram_storage_session"
     
     # Security

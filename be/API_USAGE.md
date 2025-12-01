@@ -202,6 +202,148 @@ Notes and recommendations
 - Ensure `connect_to_mongo()` is called (app startup handles this); tokens must be valid (JWT with `sub` claim) and are valid for 3 hours.
 - Membership management (join/leave): membership is stored in `user_communities`. Creating a community adds the creator as an `owner`. If you want explicit join/leave endpoints, they can be added (e.g., `POST /communities/{cid}/join` and `/leave`).
 
+4) Image Upload to CDN
+
+Upload images to an external CDN (https://models.shrishesha.space/api/media/upload).
+
+Upload image (authenticated):
+
+- Endpoint: `POST /upload/image`
+- Content-Type: `multipart/form-data`
+- Body parameters:
+  - `file` — Image file (required)
+  - `location_id` — Optional MongoDB ObjectId to associate with a location
+- Response: JSON with `cdn_url`, `cdn_response`, `filename`, and optionally `file_id` if saved to database
+
+Example:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/upload/image \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -F "file=@photo.jpg" \
+  -F "location_id=<LOCATION_ID>"
+```
+
+Upload image (public, no authentication):
+
+- Endpoint: `POST /upload/image/public`
+- Content-Type: `multipart/form-data`
+- Body: `file` — Image file
+- Response: JSON with `cdn_url`, `cdn_response`, `filename`
+
+Example:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/upload/image/public \
+  -F "file=@photo.jpg"
+```
+
+Upload from URL (authenticated):
+
+- Endpoint: `POST /upload/from-url`
+- Content-Type: `application/json`
+- Body: `{ "url": "https://example.com/video.mp4", "location_id": "<OPTIONAL_LOCATION_ID>" }`
+- Response: JSON with `cdn_url`, `cdn_response`, `source_url`, and optionally `file_id`
+
+Example:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/upload/from-url \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com/image.jpg","location_id":"<LOCATION_ID>"}'
+```
+
+Upload from URL (public, no authentication):
+
+- Endpoint: `POST /upload/from-url/public`
+- Content-Type: `application/json`
+- Body: `{ "url": "https://example.com/video.mp4" }`
+- Response: JSON with `cdn_url`, `cdn_response`, `source_url`
+
+Example:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/upload/from-url/public \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com/image.jpg"}'
+```
+
+Upload 3D model (authenticated):
+
+- Endpoint: `POST /upload/model`
+- Content-Type: `multipart/form-data`
+- Body parameters:
+  - `file` — 3D model file (.glb, .gltf) (required)
+  - `location_id` — Optional MongoDB ObjectId to associate with a location
+- Response: JSON with `cdn_url`, `cdn_response`, `filename`, and optionally `file_id` if saved to database
+
+Example:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/upload/model \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -F "file=@model.glb" \
+  -F "location_id=<LOCATION_ID>"
+```
+
+Upload 3D model (public, no authentication):
+
+- Endpoint: `POST /upload/model/public`
+- Content-Type: `multipart/form-data`
+- Body: `file` — 3D model file
+- Response: JSON with `cdn_url`, `cdn_response`, `filename`
+
+Example:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/upload/model/public \
+  -F "file=@model.glb"
+```
+
+Upload 3D model from URL (authenticated):
+
+- Endpoint: `POST /upload/model/from-url`
+- Content-Type: `application/json`
+- Body: `{ "url": "https://example.com/model.glb", "location_id": "<OPTIONAL_LOCATION_ID>" }`
+- Response: JSON with `cdn_url`, `cdn_response`, `source_url`, and optionally `file_id`
+
+Example:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/upload/model/from-url \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb"}'
+```
+
+Upload 3D model from URL (public, no authentication):
+
+- Endpoint: `POST /upload/model/from-url/public`
+- Content-Type: `application/json`
+- Body: `{ "url": "https://example.com/model.glb" }`
+- Response: JSON with `cdn_url`, `cdn_response`, `source_url`
+
+Example:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/upload/model/from-url/public \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb"}'
+```
+
+Notes:
+- Only image files are accepted for `/upload/image` endpoints (validated by content type)
+- Only 3D model files (.glb, .gltf) are accepted for `/upload/model` endpoints
+- URL uploads support any file type that the CDN accepts
+- Images are uploaded to `https://models.shrishesha.space/api/media/upload`
+- 3D models are uploaded to `https://models.shrishesha.space/api/models/upload`
+- If `location_id` is provided (authenticated endpoint), the file metadata is saved to the database
+- The CDN API key is configured server-side
+- Maximum upload size depends on FastAPI configuration and CDN limits
+- URL uploads have a 60-second timeout for media, 120 seconds for models
+- Model file uploads have a 60-second timeout vs 30 seconds for images
+
 Troubleshooting
 
 - 401 Unauthorized: token missing, expired, or invalid.

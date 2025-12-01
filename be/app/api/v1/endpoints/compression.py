@@ -1,7 +1,6 @@
 from io import BytesIO
 import asyncio
 from typing import Optional
-from pydub import AudioSegment 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import StreamingResponse
 
