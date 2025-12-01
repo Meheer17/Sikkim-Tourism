@@ -24,8 +24,8 @@ class AuthService:
         
         user = await user_service.create(user_create)
         
-        # Create access token (7 days as per API doc)
-        access_token_expires = timedelta(days=7)
+        # Create access token (3 hours)
+        access_token_expires = timedelta(hours=3)
         access_token = create_access_token(
             data={"sub": str(user.id)},
             expires_delta=access_token_expires
@@ -44,8 +44,8 @@ class AuthService:
                 headers={"WWW-Authenticate": "Bearer"},
             )
         
-        # 7 days as per API doc
-        access_token_expires = timedelta(days=7)
+        # 3 hours expiry
+        access_token_expires = timedelta(hours=3)
         access_token = create_access_token(
             data={"sub": str(user.id)},
             expires_delta=access_token_expires

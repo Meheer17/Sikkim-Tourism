@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Colors } from '@/constants/theme';
 import AdminBusinesses from './businesses';
-import AdminOrganizations from './organizations';
 import AdminUsers from './users';
 
 export default function AdminManage() {
-    const [tab, setTab] = useState<'businesses' | 'organizations' | 'users'>('businesses');
+    const [tab, setTab] = useState<'businesses' | 'users'>('businesses');
 
-    const tabs: { key: 'businesses' | 'organizations' | 'users'; label: string }[] = [
+    const tabs: { key: 'businesses' | 'users'; label: string }[] = [
         { key: 'businesses', label: 'Businesses' },
-        { key: 'organizations', label: 'Organizations' },
         { key: 'users', label: 'Users' },
     ];
 
@@ -31,7 +29,6 @@ export default function AdminManage() {
 
             <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
                 {tab === 'businesses' && <AdminBusinesses />}
-                {tab === 'organizations' && <AdminOrganizations />}
                 {tab === 'users' && <AdminUsers />}
             </ScrollView>
         </View>
@@ -47,5 +44,5 @@ const styles = StyleSheet.create({
     switchBtn: { flex: 1, paddingVertical: 10, borderRadius: 999, borderWidth: 1, borderColor: '#e5e7eb', backgroundColor: '#fff', alignItems: 'center' },
     switchBtnActive: { backgroundColor: '#e0f2fe', borderColor: '#38bdf8' },
     switchText: { fontSize: 13, color: '#334155', fontWeight: '600' },
-    switchTextActive: { color: Colors.tint },
+    switchTextActive: { color: Colors.light.tint },
 });

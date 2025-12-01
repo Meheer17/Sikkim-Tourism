@@ -17,6 +17,7 @@ async def list_business(
     position_lat: Optional[float] = Query(None, description="Latitude for nearby filter"),
     position_lng: Optional[float] = Query(None, description="Longitude for nearby filter"),
     radius_m: Optional[int] = Query(None, description="Radius in meters"),
+    q: Optional[str] = Query(None, description="Search businesses by name or description"),
     type_id: Optional[str] = Query(None, description="business_TYPE._id filter"),
     approved: Optional[bool] = Query(None, description="Filter by approval status"),
     current_user_id: str = Depends(get_current_user_id)
@@ -30,6 +31,8 @@ async def list_business(
         radius_m=radius_m,
         type_id=type_id,
         approved=approved
+        ,
+        q=q
     )
     return businesses
 

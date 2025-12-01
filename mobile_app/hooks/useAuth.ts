@@ -97,7 +97,7 @@ export const useAuth = (): AuthState & AuthActions => {
                 Toast.show({
                     type: 'success',
                     text1: 'Welcome back!',
-                    text2: `Hello ${user.firstName}, you're now logged in.`,
+                    text2: `Hello ${user.name}, you're now logged in.`,
                 });
 
                 return true;
@@ -117,18 +117,22 @@ export const useAuth = (): AuthState & AuthActions => {
                 return false;
             }
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || 'Login failed';
+            // Error toast is already shown by API client, just update state
+            const errorMessage = error.response?.data?.detail || error.message || 'Login failed';
             setState(prev => ({
                 ...prev,
                 isLoading: false,
                 error: errorMessage,
             }));
 
-            Toast.show({
-                type: 'error',
-                text1: 'Login Error',
-                text2: errorMessage,
-            });
+            // Only show toast if it's a generic error not handled by API client
+            if (!error.response) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Login Error',
+                    text2: errorMessage,
+                });
+            }
 
             return false;
         }
@@ -152,7 +156,7 @@ export const useAuth = (): AuthState & AuthActions => {
                 Toast.show({
                     type: 'success',
                     text1: 'Account Created',
-                    text2: `Welcome ${user.firstName}! Your account has been created successfully.`,
+                    text2: `Welcome ${user.name}! Your account has been created successfully.`,
                 });
 
                 return true;
@@ -172,18 +176,22 @@ export const useAuth = (): AuthState & AuthActions => {
                 return false;
             }
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
+            // Error toast is already shown by API client, just update state
+            const errorMessage = error.response?.data?.detail || error.message || 'Registration failed';
             setState(prev => ({
                 ...prev,
                 isLoading: false,
                 error: errorMessage,
             }));
 
-            Toast.show({
-                type: 'error',
-                text1: 'Registration Error',
-                text2: errorMessage,
-            });
+            // Only show toast if it's a generic error not handled by API client
+            if (!error.response) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Registration Error',
+                    text2: errorMessage,
+                });
+            }
 
             return false;
         }
@@ -236,7 +244,7 @@ export const useAuth = (): AuthState & AuthActions => {
                 console.log('Skipping profile refresh - using cached data in development mode');
                 return;
             }
-            
+
             const response = await authService.getProfile();
 
             if (response.success && response.data) {

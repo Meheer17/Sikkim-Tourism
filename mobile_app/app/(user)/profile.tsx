@@ -11,6 +11,12 @@ import ThemeToggle from '@/components/common/ThemeToggle';
 // Configuration for menu items - easy to add/remove
 const ACCOUNT_MENU_ITEMS: MenuItem[] = [
     {
+        id: 'edit-profile',
+        label: 'Edit Profile',
+        icon: 'pencil',
+        route: '/(user)/(stack)/edit-profile',
+    },
+    {
         id: 'favorites',
         label: 'My Favorites',
         icon: 'heart.fill',
@@ -54,6 +60,21 @@ const SUPPORT_MENU_ITEMS: MenuItem[] = [
         label: 'Privacy Policy',
         icon: 'lock.fill',
         route: '/(user)/(stack)/privacy',
+    },
+];
+
+const BUSINESS_MENU_ITEMS: MenuItem[] = [
+    {
+        id: 'my-businesses',
+        label: 'My Businesses',
+        icon: 'building.2',
+        route: '/(user)/(stack)/my-businesses',
+    },
+    {
+        id: 'create-business',
+        label: 'Create Business',
+        icon: 'building.2.fill',
+        route: '/(user)/(stack)/create-business',
     },
 ];
 
@@ -119,16 +140,14 @@ export default function ProfileScreen() {
                     <View style={styles.avatarContainer}>
                         <View style={[styles.avatar, { backgroundColor: tint }]}>
                             <Text style={styles.avatarText}>
-                                {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                                {user?.name ? user.name.split(' ').map(p => p.charAt(0)).slice(0, 2).join('') : 'U'}
                             </Text>
                         </View>
                         <TouchableOpacity style={[styles.editAvatarButton, { backgroundColor: tint, borderColor: cardBg }]}>
                             <IconSymbol name="camera.fill" size={16} color="#fff" />
                         </TouchableOpacity>
                     </View>
-                    <Text style={[styles.userName, { color: text }]}>
-                        {user?.firstName} {user?.lastName}
-                    </Text>
+                    <Text style={[styles.userName, { color: text }]}>{user?.name}</Text>
                     <Text style={[styles.userEmail, { color: mutedText }]}>{user?.email}</Text>
                     <TouchableOpacity style={[styles.editProfileButton, { backgroundColor: soft }]}>
                         <Text style={[styles.editProfileText, { color: tint }]}>Edit Profile</Text>
@@ -192,6 +211,13 @@ export default function ProfileScreen() {
                     <MenuSection
                         title="Account"
                         items={ACCOUNT_MENU_ITEMS}
+                        onItemPress={handleMenuItemPress}
+                    />
+
+                    {/* Business Menu Section */}
+                    <MenuSection
+                        title="Business"
+                        items={BUSINESS_MENU_ITEMS}
                         onItemPress={handleMenuItemPress}
                     />
 

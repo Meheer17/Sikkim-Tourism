@@ -63,19 +63,15 @@ export default function LoginScreen() {
                 [
                     {
                         text: 'User',
-                        onPress: () => injectMockAuth(UserRole.USER),
+                        onPress: () => { setEmail('user@a.c'); setPassword('meheer17'); },
                     },
                     {
                         text: 'Business',
-                        onPress: () => injectMockAuth(UserRole.BUSINESS),
-                    },
-                    {
-                        text: 'Organizer',
-                        onPress: () => injectMockAuth(UserRole.ORGANIZER),
+                        onPress: () => { setEmail('mahi@a.com'); setPassword('Meheer17'); },
                     },
                     {
                         text: 'Admin',
-                        onPress: () => injectMockAuth(UserRole.ADMIN),
+                        onPress: () => { setEmail('meheer@adflyn.com'); setPassword('meheer17'); },
                     },
                     {
                         text: 'Cancel',
@@ -99,25 +95,23 @@ export default function LoginScreen() {
             // Create mock user
             const mockUser = {
                 id: 'mock-user-123',
+                name: 'Test User',
+                address: '123 Mock Street, City',
+                gender: 'other',
                 email: 'test@example.com',
-                firstName: 'Test',
-                lastName: 'User',
-                phone: '+1234567890',
-                avatar: 'https://via.placeholder.com/150',
                 role,
-                isEmailVerified: true,
-                isPhoneVerified: true,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
+                approved: true,
+                last_synced_at: null,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
             };
 
-            // Create mock tokens
+            // Create mock token
             const mockAccessToken = 'mock-access-token-' + Date.now();
-            const mockRefreshToken = 'mock-refresh-token-' + Date.now();
 
             // Save mock data
             await AuthUtils.saveUser(mockUser);
-            await TokenManager.saveTokens(mockAccessToken, mockRefreshToken);
+            await TokenManager.saveToken(mockAccessToken);
 
             Toast.show({
                 type: 'success',
@@ -218,11 +212,11 @@ export default function LoginScreen() {
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>Choose Mock Login Role</Text>
                         <Text style={styles.modalSubtitle}>Select a role for testing</Text>
-                        
+
                         <ScrollView style={styles.roleScrollView}>
                             <TouchableOpacity
                                 style={styles.roleButton}
-                                onPress={() => handleRoleSelect(UserRole.USER)}
+                                onPress={() => { setEmail('user@a.c'); setPassword('meheer17'); setShowRoleModal(false); }}
                             >
                                 <Text style={styles.roleButtonText}>👤 User</Text>
                                 <Text style={styles.roleButtonDesc}>Regular tourist user</Text>
@@ -230,7 +224,7 @@ export default function LoginScreen() {
 
                             <TouchableOpacity
                                 style={styles.roleButton}
-                                onPress={() => handleRoleSelect(UserRole.BUSINESS)}
+                                onPress={() => { setEmail('mahi@a.com'); setPassword('Meheer17'); setShowRoleModal(false); }}
                             >
                                 <Text style={styles.roleButtonText}>💼 Business</Text>
                                 <Text style={styles.roleButtonDesc}>Service provider</Text>
@@ -238,15 +232,7 @@ export default function LoginScreen() {
 
                             <TouchableOpacity
                                 style={styles.roleButton}
-                                onPress={() => handleRoleSelect(UserRole.ORGANIZER)}
-                            >
-                                <Text style={styles.roleButtonText}>🎯 Organizer</Text>
-                                <Text style={styles.roleButtonDesc}>Event organizer</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.roleButton}
-                                onPress={() => handleRoleSelect(UserRole.ADMIN)}
+                                onPress={() => { setEmail('meheer@adflyn.com'); setPassword('meheer17'); setShowRoleModal(false); }}
                             >
                                 <Text style={styles.roleButtonText}>⚙️ Admin</Text>
                                 <Text style={styles.roleButtonDesc}>System administrator</Text>

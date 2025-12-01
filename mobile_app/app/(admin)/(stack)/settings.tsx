@@ -9,7 +9,7 @@ export default function AdminSettings() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Organization Settings</Text>
+                <Text style={styles.headerTitle}>Admin Settings</Text>
                 <Text style={styles.headerSub}>Controls affecting org management</Text>
             </View>
             <ScrollView contentContainerStyle={styles.content}>

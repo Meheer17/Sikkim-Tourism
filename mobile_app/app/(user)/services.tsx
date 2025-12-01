@@ -3,82 +3,17 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
 import { useThemeColor } from '@/hooks/use-theme-color';
-
-// Mock data - replace with actual API call
-const MOCK_ALL_SERVICES: Service[] = [
-    {
-        id: '1',
-        name: 'Mountain Trekking Guide',
-        description: 'Professional trekking guide for Himalayan trails',
-        price: 2500,
-        category: 'Adventure',
-        icon: 'mountain.2.fill',
-    },
-    {
-        id: '2',
-        name: 'Local Cab Service',
-        description: '24/7 available cab service for local travel',
-        price: 800,
-        category: 'Transport',
-        icon: 'car.fill',
-    },
-    {
-        id: '3',
-        name: 'Museum Entry Pass',
-        description: 'All-day access to heritage museums',
-        price: 150,
-        category: 'Culture',
-        icon: 'building.columns.fill',
-    },
-    {
-        id: '4',
-        name: 'River Rafting',
-        description: 'Thrilling river rafting experience',
-        price: 1500,
-        category: 'Adventure',
-        icon: 'water.waves',
-    },
-    {
-        id: '5',
-        name: 'Monastery Tour',
-        description: 'Guided tour of ancient monasteries',
-        price: 1200,
-        category: 'Culture',
-        icon: 'building.2.fill',
-    },
-    {
-        id: '6',
-        name: 'Cable Car Ride',
-        description: 'Scenic cable car ride with mountain views',
-        price: 600,
-        category: 'Transport',
-        icon: 'cable.connector',
-    },
-    {
-        id: '7',
-        name: 'Paragliding',
-        description: 'Experience flying over beautiful valleys',
-        price: 3500,
-        category: 'Adventure',
-        icon: 'airplane',
-    },
-    {
-        id: '8',
-        name: 'Local Food Tour',
-        description: 'Taste authentic local cuisine',
-        price: 900,
-        category: 'Food',
-        icon: 'fork.knife',
-    },
-];
-
-const CATEGORIES = ['All', 'Adventure', 'Culture', 'Transport', 'Food'];
+import { businessService } from '@/services';
+import { BusinessType } from '@/services/business.service';
 
 export default function ServicesScreen() {
     const [services, setServices] = useState<Service[]>([]);
     const [filteredServices, setFilteredServices] = useState<Service[]>([]);
+    const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
+    const [categories, setCategories] = useState<string[]>(['All']);
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
+    const [loading, setLoading] = useState(true);
 
     // Theme colors
     const screenBg = useThemeColor('background');
@@ -89,19 +24,100 @@ export default function ServicesScreen() {
     const border = useThemeColor('border');
 
     useEffect(() => {
-        loadServices();
+        loadData();
     }, []);
 
     useEffect(() => {
         filterServices();
     }, [selectedCategory, searchQuery, services]);
 
-    const loadServices = async () => {
-        // TODO: Replace with actual API call
-        // const response = await apiClient.get('/services');
-        // setServices(response.data);
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            // Load business types first
+            await loadBusinessTypes();
+            // Then load services
+            await loadServices();
+        } catch (error) {
+            console.error('Failed to load data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        setServices(MOCK_ALL_SERVICES);
+    const loadBusinessTypes = async () => {
+        try {
+            const response = await businessService.getTypes();
+            console.log('Business Types API Response:', JSON.stringify(response, null, 2));
+            const types = response.data || [];
+            setBusinessTypes(types);
+
+            // Build categories from business types, always include 'Other' at the end
+            const typeNames = types.map((type: BusinessType) => type.type);
+            console.log('Categories built:', ['All', ...typeNames, 'Other']);
+            setCategories(['All', ...typeNames, 'Other']);
+        } catch (error) {
+            console.error('Failed to load business types:', error);
+        }
+    };
+
+    const loadServices = async () => {
+        try {
+            const response = await businessService.list();
+            const businesses = response.data || [];
+            console.log('=== SERVICES LOADING DEBUG ===');
+            console.log('Total businesses from API:', businesses);
+            console.log('Business types available:', businessTypes.map(t => `${t.id}: ${t.type}`).join(', '));
+
+            // Map businesses to Service format
+            const mappedServices: Service[] = businesses
+                .filter((biz: any) => biz.approved) // Only show approved businesses
+                .map((biz: any) => {
+                    // Find the business type name by matching type_id with business type id
+                    const bizType = businessTypes.find(t => t.id === biz.type_id);
+                    const categoryName = bizType ? bizType.type : 'Other';
+
+                    console.log(`Business "${biz.name}": type_id="${biz.type_id}" -> category="${categoryName}"`);
+
+                    return {
+                        id: biz.id,
+                        name: biz.name,
+                        description: biz.short_description || biz.description || 'Quality service provider',
+                        price: biz.price || Math.floor(Math.random() * 3000) + 500,
+                        category: categoryName,
+                        icon: getCategoryIcon(categoryName),
+                    };
+                })
+                .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically by name
+
+            console.log('Final mapped services:', mappedServices.length);
+            console.log('Services by category:', mappedServices.reduce((acc: any, s) => {
+                acc[s.category] = (acc[s.category] || 0) + 1;
+                return acc;
+            }, {}));
+
+            setServices(mappedServices);
+        } catch (error) {
+            console.error('Failed to load services:', error);
+        }
+    };
+
+    const getCategoryIcon = (type?: string): any => {
+        const iconMap: Record<string, string> = {
+            'hotel': 'bed.double.fill',
+            'restaurant': 'fork.knife',
+            'cab': 'car.fill',
+            'guide': 'person.fill',
+            'tourist_entry': 'ticket.fill',
+            'event': 'calendar',
+            'Adventure': 'mountain.2.fill',
+            'Transport': 'car.fill',
+            'Culture': 'building.columns.fill',
+            'Food': 'fork.knife',
+            'Tour': 'map.fill',
+            'Accommodation': 'house.fill',
+        };
+        return iconMap[type || 'Other'] || 'star.fill';
     };
 
     const filterServices = () => {
@@ -160,7 +176,7 @@ export default function ServicesScreen() {
                 style={styles.categoriesContainer}
                 contentContainerStyle={styles.categoriesContent}
             >
-                {CATEGORIES.map((category) => (
+                {categories.map((category) => (
                     <TouchableOpacity
                         key={category}
                         style={[
@@ -189,7 +205,11 @@ export default function ServicesScreen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {filteredServices.length > 0 ? (
+                {loading ? (
+                    <View style={styles.emptyState}>
+                        <Text style={[styles.emptyTitle, { color: text }]}>Loading services...</Text>
+                    </View>
+                ) : filteredServices.length > 0 ? (
                     filteredServices.map((service) => (
                         <ServiceCard
                             key={service.id}

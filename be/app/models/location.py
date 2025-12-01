@@ -27,6 +27,12 @@ class Position(BaseModel):
     x: float
     y: float
 
+    model_config = ConfigDict()
+
+    def dict(self, *args, **kwargs):
+        # ensure same representation as previous implementation
+        return {"x": self.x, "y": self.y}
+
 
 class LocationBase(BaseModel):
     name: str = Field(..., max_length=255)

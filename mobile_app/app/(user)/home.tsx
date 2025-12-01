@@ -5,42 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
 import { useThemeColor } from '@/hooks/use-theme-color';
-
-// Mock data - replace with actual API call
-const MOCK_SERVICES: Service[] = [
-    {
-        id: '1',
-        name: 'Mountain Trekking Guide',
-        description: 'Professional trekking guide for Himalayan trails',
-        price: 2500,
-        category: 'Adventure',
-        icon: 'mountain.2.fill',
-    },
-    {
-        id: '2',
-        name: 'Local Cab Service',
-        description: '24/7 available cab service for local travel',
-        price: 800,
-        category: 'Transport',
-        icon: 'car.fill',
-    },
-    {
-        id: '3',
-        name: 'Museum Entry Pass',
-        description: 'All-day access to heritage museums',
-        price: 150,
-        category: 'Culture',
-        icon: 'building.columns.fill',
-    },
-    {
-        id: '4',
-        name: 'River Rafting',
-        description: 'Thrilling river rafting experience',
-        price: 1500,
-        category: 'Adventure',
-        icon: 'water.waves',
-    },
-];
+import { businessService } from '@/services';
 
 export default function HomeScreen() {
     const router = useRouter();
@@ -58,12 +23,35 @@ export default function HomeScreen() {
     }, []);
 
     const loadServices = async () => {
-        // TODO: Replace with actual API call
-        // const response = await apiClient.get('/services');
-        // setServices(response.data.slice(0, 4));
+        try {
+            const response = await businessService.list();
+            const businesses = response.data || [];
 
-        // For now, use mock data
-        setServices(MOCK_SERVICES);
+            // Map businesses to Service format and limit to 4 for home screen
+            const mappedServices: Service[] = businesses.slice(0, 4).map((biz: any) => ({
+                id: biz._id,
+                name: biz.name,
+                description: biz.decription || biz.description || 'Quality service provider',
+                price: biz.price || Math.floor(Math.random() * 3000) + 500,
+                category: biz.type || 'Other',
+                icon: getCategoryIcon(biz.type),
+            }));
+
+            setServices(mappedServices);
+        } catch (error) {
+            console.error('Failed to load services:', error);
+        }
+    };
+
+    const getCategoryIcon = (type?: string): any => {
+        const iconMap: Record<string, string> = {
+            'Adventure': 'mountain.2.fill',
+            'Transport': 'car.fill',
+            'Culture': 'building.columns.fill',
+            'Food': 'fork.knife',
+            'Tour': 'map.fill',
+        };
+        return iconMap[type || 'Other'] || 'star.fill';
     };
 
     const onRefresh = async () => {
@@ -90,8 +78,8 @@ export default function HomeScreen() {
                     { paddingTop: Math.max(insets.top, 20) }
                 ]}
                 refreshControl={
-                    <RefreshControl 
-                        refreshing={refreshing} 
+                    <RefreshControl
+                        refreshing={refreshing}
                         onRefresh={onRefresh}
                         progressViewOffset={insets.top + 20}
                     />
@@ -103,7 +91,7 @@ export default function HomeScreen() {
                         <Text style={[styles.greeting, { color: text }]}>Welcome Back!</Text>
                         <Text style={[styles.subtitle, { color: muted }]}>Explore amazing services</Text>
                     </View>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.profileButton, { backgroundColor: card }]}
                         onPress={() => router.push('/(user)/profile' as any)}
                     >
@@ -169,7 +157,7 @@ export default function HomeScreen() {
                 </View>
 
                 {/* Featured Banner */}
-                <View style={[styles.banner, { backgroundColor: card }] }>
+                <View style={[styles.banner, { backgroundColor: card }]}>
                     <View style={styles.bannerContent}>
                         <IconSymbol name="sparkles" size={32} color="#fbbf24" />
                         <View style={styles.bannerText}>

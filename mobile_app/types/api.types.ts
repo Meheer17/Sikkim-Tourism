@@ -29,41 +29,41 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
+    name: string;
+    address: string;
+    gender?: string;
     email: string;
     password: string;
-    confirmPassword: string;
-    firstName: string;
-    lastName: string;
-    phone?: string;
+    confirmPassword?: string;
 }
 
 export interface AuthResponse {
+    access_token: string;
+    token_type: string;
+}
+
+export interface UserAuthResponse {
     user: User;
-    tokens: {
-        accessToken: string;
-        refreshToken: string;
-        expiresIn: number;
-    };
+    token: string;
+    token_type: string;
 }
 
 export interface User {
     id: string;
+    name: string;
+    address: string;
+    gender?: string;
     email: string;
-    firstName: string;
-    lastName: string;
-    phone?: string;
-    avatar?: string;
     role: UserRole;
-    isEmailVerified: boolean;
-    isPhoneVerified: boolean;
-    createdAt: string;
-    updatedAt: string;
+    approved: boolean;
+    last_synced_at?: any;
+    created_at: string;
+    updated_at: string;
 }
 
 export enum UserRole {
     ADMIN = 'admin',
     USER = 'user',
-    ORGANIZER = 'organizer',
     BUSINESS = 'business',
 }
 

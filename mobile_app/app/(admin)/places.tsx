@@ -14,156 +14,21 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Place } from '@/types/admin.types';
 import { useApi } from '@/hooks/useApi';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { locationService, LocationModel } from '@/services/location.service';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_HEIGHT = SCREEN_HEIGHT * 0.35;
 
-// Mock data - replace with actual API
-const MOCK_PLACES: Place[] = [
-    {
-        id: '1',
-        name: 'Rumtek Monastery',
-        description: 'Beautiful Buddhist monastery with stunning architecture and peaceful surroundings',
-        category: 'Religious Site',
-        location: {
-            latitude: 27.2897,
-            longitude: 88.5595,
-            address: 'Rumtek, East Sikkim',
-            city: 'Gangtok',
-            state: 'Sikkim',
-            country: 'India',
-        },
-        address: 'Rumtek, East Sikkim, Sikkim 737135',
-        rating: 4.8,
-        reviewCount: 234,
-        visitCount: 5678,
-        entryFee: 0,
-        openingHours: '6:00 AM - 6:00 PM',
-        bestTimeToVisit: 'March to June, September to December',
-        highlights: ['Beautiful Architecture', 'Peaceful Environment', 'Cultural Experience'],
-        facilities: ['Parking', 'Guided Tours', 'Restrooms'],
-        status: 'active',
-        createdBy: 'admin1',
-        createdAt: '2024-01-10T09:00:00Z',
-        updatedAt: '2024-11-20T14:30:00Z',
-    },
-    {
-        id: '2',
-        name: 'Tsomgo Lake',
-        description: 'Glacial lake at high altitude with scenic beauty and serene environment',
-        category: 'Natural Beauty',
-        location: {
-            latitude: 27.3542,
-            longitude: 88.7539,
-            address: 'East Sikkim',
-            city: 'Near Gangtok',
-            state: 'Sikkim',
-            country: 'India',
-        },
-        address: 'East Sikkim, Sikkim',
-        rating: 4.9,
-        reviewCount: 567,
-        visitCount: 12345,
-        entryFee: 50,
-        openingHours: '8:00 AM - 4:00 PM',
-        bestTimeToVisit: 'May to October',
-        highlights: ['Scenic Views', 'Photography', 'High Altitude Lake'],
-        facilities: ['Parking', 'Food Stalls', 'Yak Rides'],
-        status: 'active',
-        createdBy: 'admin1',
-        createdAt: '2024-01-15T10:30:00Z',
-        updatedAt: '2024-11-22T11:15:00Z',
-    },
-    {
-        id: '3',
-        name: 'MG Marg',
-        description: 'Popular shopping street and pedestrian zone with shops and restaurants',
-        category: 'Shopping',
-        location: {
-            latitude: 27.3314,
-            longitude: 88.6138,
-            address: 'Gangtok, Sikkim',
-            city: 'Gangtok',
-            state: 'Sikkim',
-            country: 'India',
-        },
-        address: 'MG Marg, Gangtok, Sikkim 737101',
-        rating: 4.5,
-        reviewCount: 432,
-        visitCount: 8765,
-        entryFee: 0,
-        openingHours: '10:00 AM - 9:00 PM',
-        bestTimeToVisit: 'Year Round',
-        highlights: ['Shopping', 'Dining', 'Street Performances'],
-        facilities: ['Cafes', 'Shops', 'Seating Areas'],
-        status: 'active',
-        createdBy: 'admin2',
-        createdAt: '2024-02-01T12:00:00Z',
-        updatedAt: '2024-11-25T09:45:00Z',
-    },
-    {
-        id: '4',
-        name: 'Khecheopalri Lake',
-        description: 'Sacred lake surrounded by dense forest, known for its pristine beauty',
-        category: 'Natural Beauty',
-        location: {
-            latitude: 27.4333,
-            longitude: 88.1833,
-            address: 'West Sikkim',
-            city: 'Pelling',
-            state: 'Sikkim',
-            country: 'India',
-        },
-        address: 'West Sikkim, Sikkim',
-        rating: 4.7,
-        reviewCount: 189,
-        visitCount: 3456,
-        entryFee: 20,
-        openingHours: '7:00 AM - 5:00 PM',
-        bestTimeToVisit: 'October to May',
-        highlights: ['Sacred Lake', 'Bird Watching', 'Trekking'],
-        facilities: ['Parking', 'Prayer Wheels', 'Restrooms'],
-        status: 'draft',
-        createdBy: 'admin3',
-        createdAt: '2024-11-20T15:00:00Z',
-        updatedAt: '2024-11-20T15:00:00Z',
-    },
-    {
-        id: '5',
-        name: 'Nathula Pass',
-        description: 'Mountain pass on the Indo-China border with historical significance',
-        category: 'Historical',
-        location: {
-            latitude: 27.3917,
-            longitude: 88.8458,
-            address: 'East Sikkim',
-            city: 'Near Gangtok',
-            state: 'Sikkim',
-            country: 'India',
-        },
-        address: 'East Sikkim, Sikkim',
-        rating: 4.6,
-        reviewCount: 321,
-        visitCount: 6543,
-        entryFee: 100,
-        openingHours: '9:00 AM - 3:00 PM (Permit Required)',
-        bestTimeToVisit: 'May to October',
-        highlights: ['Border Area', 'Historical Significance', 'Mountain Views'],
-        facilities: ['Checkpoints', 'Bunkers', 'Memorial'],
-        status: 'active',
-        createdBy: 'admin1',
-        createdAt: '2024-03-05T11:30:00Z',
-        updatedAt: '2024-11-18T16:20:00Z',
-    },
-];
+// Removed static mock data; places now only from backend.
 
 const CATEGORIES = ['All', 'Religious Site', 'Natural Beauty', 'Shopping', 'Historical', 'Adventure'];
 const STATUSES = ['All', 'Active', 'Draft', 'Archived'];
 
 export default function AdminPlacesScreen() {
     const router = useRouter();
-    const [places, setPlaces] = useState<Place[]>(MOCK_PLACES);
-    const [filteredPlaces, setFilteredPlaces] = useState<Place[]>(MOCK_PLACES);
+    const [places, setPlaces] = useState<Place[]>([]);
+    const [filteredPlaces, setFilteredPlaces] = useState<Place[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [selectedStatus, setSelectedStatus] = useState('All');
@@ -205,6 +70,51 @@ export default function AdminPlacesScreen() {
         filterPlaces();
     }, [filterPlaces]);
 
+    // Load from backend /location
+    useEffect(() => {
+        const loadLocations = async () => {
+            try {
+                const resp = await locationService.list({ skip: 0, limit: 100 });
+                if (resp.success && resp.data) {
+                    const mapped: Place[] = resp.data.map((loc: LocationModel) => ({
+                        id: loc._id,
+                        name: loc.name,
+                        description: loc.description,
+                        category: loc.type === 'tourism' ? 'Natural Beauty' : loc.type,
+                        location: {
+                            latitude: loc.position?.x ?? 0,
+                            longitude: loc.position?.y ?? 0,
+                            address: '',
+                            city: '',
+                            state: '',
+                            country: '',
+                        },
+                        address: loc.short_description,
+                        rating: undefined as any,
+                        reviewCount: undefined as any,
+                        visitCount: undefined as any,
+                        entryFee: undefined as any,
+                        openingHours: '',
+                        bestTimeToVisit: '',
+                        highlights: [],
+                        facilities: [],
+                        status: 'active',
+                        createdBy: '',
+                        createdAt: loc.created_at || '',
+                        updatedAt: loc.updated_at || '',
+                    }));
+                    setPlaces(mapped);
+                    setFilteredPlaces(mapped);
+                }
+            } catch (e) {
+                console.warn('Failed to load locations:', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadLocations();
+    }, []);
+
     const handlePlacePress = (place: Place) => {
         setSelectedPlace(place);
         // router.push(`/(admin)/(stack)/place-details?id=${place.id}` as any);
@@ -223,11 +133,15 @@ export default function AdminPlacesScreen() {
                 {
                     text: 'Delete',
                     style: 'destructive',
-                    onPress: () => {
-                        // TODO: API call to delete
-                        setPlaces(prev => prev.filter(p => p.id !== placeId));
-                        if (selectedPlace?.id === placeId) {
-                            setSelectedPlace(null);
+                    onPress: async () => {
+                        try {
+                            await locationService.remove(placeId);
+                            setPlaces(prev => prev.filter(p => p.id !== placeId));
+                            if (selectedPlace?.id === placeId) {
+                                setSelectedPlace(null);
+                            }
+                        } catch (e) {
+                            Alert.alert('Error', 'Failed to delete place');
                         }
                     },
                 },
@@ -406,7 +320,10 @@ export default function AdminPlacesScreen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {filteredPlaces.length > 0 ? (
+                {loading && (
+                    <View style={styles.emptyState}>\n                        <Text style={styles.emptySubtitle}>Loading places...</Text>\n                    </View>
+                )}
+                {!loading && filteredPlaces.length > 0 ? (
                     filteredPlaces.map((place) => (
                         <TouchableOpacity
                             key={place.id}
@@ -496,7 +413,7 @@ export default function AdminPlacesScreen() {
                             </View>
                         </TouchableOpacity>
                     ))
-                ) : (
+                ) : (!loading && (
                     <View style={styles.emptyState}>
                         <IconSymbol name="map.fill" size={64} color="#d1d5db" />
                         <Text style={styles.emptyTitle}>No places found</Text>
@@ -504,7 +421,7 @@ export default function AdminPlacesScreen() {
                             Try adjusting your search or filters
                         </Text>
                     </View>
-                )}
+                ))}
             </ScrollView>
         </View>
     );
