@@ -1,14 +1,17 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Dimensions, Animated, PanResponder } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Dimensions, Animated, PanResponder, Modal, TextInput, ActivityIndicator, Platform, Keyboard, Alert, KeyboardAvoidingView, StatusBar } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import * as Location from 'expo-location';
+import { FriendsAPI, MemberLocation } from '@/services/friends.service';
+import { AppStorage } from '@/utils/storage';
+import MapView, { Marker, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const MAP_HEIGHT = SCREEN_HEIGHT * 0.45;
+const MAP_HEIGHT = SCREEN_HEIGHT;
 const MODAL_MIN_HEIGHT = SCREEN_HEIGHT * 0.35;
 const MODAL_MAX_HEIGHT = SCREEN_HEIGHT * 0.75;
 
-// Mock friend data with locations
 interface Friend {
     id: string;
     name: string;
@@ -16,7 +19,7 @@ interface Friend {
     location: {
         lat: number;
         lng: number;
-        placeName: string;
+        placeName?: string;
     };
     distance: string;
     lastSeen: string;
@@ -24,89 +27,31 @@ interface Friend {
     sharingLocation: boolean;
 }
 
-const MOCK_FRIENDS: Friend[] = [
-    {
-        id: '1',
-        name: 'Rajesh Kumar',
-        avatar: 'RK',
-        location: {
-            lat: 27.3389,
-            lng: 88.6065,
-            placeName: 'MG Marg, Gangtok',
-        },
-        distance: '0.8 km',
-        lastSeen: 'Just now',
-        isOnline: true,
-        sharingLocation: true,
-    },
-    {
-        id: '2',
-        name: 'Priya Sharma',
-        avatar: 'PS',
-        location: {
-            lat: 27.3314,
-            lng: 88.6138,
-            placeName: 'Rumtek Monastery',
-        },
-        distance: '4.2 km',
-        lastSeen: '5 min ago',
-        isOnline: true,
-        sharingLocation: true,
-    },
-    {
-        id: '3',
-        name: 'Amit Patel',
-        avatar: 'AP',
-        location: {
-            lat: 27.3525,
-            lng: 88.6094,
-            placeName: 'Enchey Monastery',
-        },
-        distance: '2.1 km',
-        lastSeen: '15 min ago',
-        isOnline: true,
-        sharingLocation: true,
-    },
-    {
-        id: '4',
-        name: 'Sneha Desai',
-        avatar: 'SD',
-        location: {
-            lat: 27.3364,
-            lng: 88.6139,
-            placeName: 'Ridge Park',
-        },
-        distance: '1.5 km',
-        lastSeen: '2 hours ago',
-        isOnline: false,
-        sharingLocation: true,
-    },
-    {
-        id: '5',
-        name: 'Vikram Singh',
-        avatar: 'VS',
-        location: {
-            lat: 27.3389,
-            lng: 88.6065,
-            placeName: 'Tsomgo Lake',
-        },
-        distance: '38 km',
-        lastSeen: '1 hour ago',
-        isOnline: false,
-        sharingLocation: false,
-    },
-];
+type GroupInfo = { group_id: string; code: string };
 
 const RADIUS_OPTIONS = [1, 5, 10, 25, 50];
 
 export default function FriendsScreen() {
     const router = useRouter();
-    const [friends] = useState<Friend[]>(MOCK_FRIENDS);
+    const [group, setGroup] = useState<GroupInfo | null>(null);
+    const [isGroupOwner, setIsGroupOwner] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [members, setMembers] = useState<MemberLocation[]>([]);
+    const [friends, setFriends] = useState<Friend[]>([]);
     const [selectedRadius, setSelectedRadius] = useState(10); // in km
     const [shareMyLocation, setShareMyLocation] = useState(true);
     const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
     const modalHeight = useRef(new Animated.Value(MODAL_MIN_HEIGHT)).current;
     const [isExpanded, setIsExpanded] = useState(false);
+    const [loadingGroupAction, setLoadingGroupAction] = useState(false);
+    const [showGroupPrompt, setShowGroupPrompt] = useState(false);
+    const [promptMode, setPromptMode] = useState<'choose' | 'create' | 'join' | 'created'>('choose');
+    const [joinCode, setJoinCode] = useState('');
+    const [createdGroupCode, setCreatedGroupCode] = useState('');
+    const locationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const fetchIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const [currentPosition, setCurrentPosition] = useState<{ lat: number; lng: number } | null>(null);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     const filteredFriends = friends.filter((friend) => {
         if (!friend.sharingLocation) return false;
@@ -118,12 +63,306 @@ export default function FriendsScreen() {
         setSelectedFriend(friend);
     };
 
+    // Helpers
+    const getDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const toRad = (v: number) => (v * Math.PI) / 180;
+        const R = 6371; // km
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    };
+
+    const timeAgo = (iso?: string) => {
+        if (!iso) return 'Unknown';
+        try {
+            const then = new Date(iso).getTime();
+            const now = Date.now();
+            const diff = Math.max(0, now - then);
+            const sec = Math.floor(diff / 1000);
+            if (sec < 30) return 'Just now';
+            if (sec < 60) return `${sec}s ago`;
+            const min = Math.floor(sec / 60);
+            if (min < 60) return `${min} min ago`;
+            const hr = Math.floor(min / 60);
+            if (hr < 24) return `${hr} hr ago`;
+            const days = Math.floor(hr / 24);
+            return `${days} day${days > 1 ? 's' : ''} ago`;
+        } catch {
+            return 'Unknown';
+        }
+    };
+
+    const toFriend = (m: MemberLocation): Friend | null => {
+        const my = currentPosition;
+        const hasLocation = m.lat != null && m.lng != null;
+        const distance = my && hasLocation ? getDistanceKm(my.lat, my.lng, m.lat!, m.lng!) : undefined;
+        return {
+            id: m.user_id,
+            name: m.name || 'Friend',
+            avatar: m.initials || 'FR',
+            location: { lat: m.lat || 0, lng: m.lng || 0, placeName: undefined },
+            distance: distance !== undefined ? `${distance.toFixed(1)} km` : '—',
+            lastSeen: timeAgo(m.last_seen_at),
+            isOnline: !!(m.last_seen_at && (Date.now() - new Date(m.last_seen_at).getTime()) < 2 * 60 * 1000),
+            sharingLocation: hasLocation,
+        };
+    };
+
+    const refreshFriendsFromMembers = () => {
+        const mapped = members.map(toFriend).filter(Boolean) as Friend[];
+        setFriends(mapped);
+    };
+
+    useEffect(() => { refreshFriendsFromMembers(); }, [members, currentPosition]);
+
+    // Load group from storage on mount
+    useEffect(() => {
+        if (isInitialized) return; // Prevent re-running on navigation back
+        
+        (async () => {
+            // Get current user ID from token
+            const { TokenManager } = await import('@/utils/storage');
+            const token = await TokenManager.getAccessToken();
+            let userId: string | null = null;
+            if (token) {
+                // Decode JWT to get user ID
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                userId = payload.sub;
+                setCurrentUserId(userId);
+            }
+
+            const saved = await AppStorage.getItem<GroupInfo>('friends_group');
+            if (saved?.group_id && saved?.code) {
+                // Validate that the group still exists before loading it
+                try {
+                    const validation = await FriendsAPI.validateGroup(saved.group_id);
+                    if (validation.data && validation.data.exists) {
+                        // Group exists, load it
+                        setGroup(saved);
+                        // Fetch group info to check if user is owner
+                        const info = await FriendsAPI.getGroupInfo(saved.group_id);
+                        if (info.data && userId) {
+                            setIsGroupOwner(info.data.owner_id === userId);
+                        }
+                        setShowGroupPrompt(false);
+                    } else {
+                        // Group was disbanded, clear storage
+                        await AppStorage.removeItem('friends_group');
+                        setGroup(null);
+                        setShowGroupPrompt(true);
+                        setPromptMode('choose');
+                    }
+                } catch (e) {
+                    // Error validating or fetching group info, clear storage
+                    await AppStorage.removeItem('friends_group');
+                    setGroup(null);
+                    setShowGroupPrompt(true);
+                    setPromptMode('choose');
+                }
+            } else {
+                setShowGroupPrompt(true);
+                setPromptMode('choose');
+            }
+            setIsInitialized(true);
+        })();
+        return () => {
+            if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
+            if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
+        };
+    }, [isInitialized]);
+
+    // Hide navigation bar on Android when screen is focused
+    useFocusEffect(
+        React.useCallback(() => {
+            if (Platform.OS === 'android') {
+                StatusBar.setHidden(true);
+            }
+            return () => {
+                if (Platform.OS === 'android') {
+                    StatusBar.setHidden(false);
+                }
+            };
+        }, [])
+    );
+
+    // Start polling when group and sharing are active
+    useEffect(() => {
+        const start = async () => {
+            if (!group) return;
+
+            // Ensure permission
+            const { status } = await Location.getForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                const req = await Location.requestForegroundPermissionsAsync();
+                if (req.status !== 'granted') return;
+            }
+
+            // Clear any existing intervals
+            if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
+            if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
+
+            // Initial fetch immediately
+            await updateMyLocationOnce();
+            await fetchMembersOnce();
+
+            // Then schedule intervals
+            locationIntervalRef.current = setInterval(() => {
+                updateMyLocationOnce();
+            }, 15000);
+
+            fetchIntervalRef.current = setInterval(() => {
+                fetchMembersOnce();
+            }, 15000);
+        };
+
+        if (group && shareMyLocation) {
+            start();
+        } else {
+            if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
+            if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [group, shareMyLocation]);
+
+    const updateMyLocationOnce = async () => {
+        try {
+            const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            setCurrentPosition({ lat, lng });
+            if (group && shareMyLocation) {
+                await FriendsAPI.updateLocation(group.group_id, lat, lng);
+            }
+        } catch (e) {
+            // ignore
+        }
+    };
+
+    const fetchMembersOnce = async () => {
+        try {
+            if (!group) return;
+            const resp = await FriendsAPI.listMembers(group.group_id);
+            if (resp.data) {
+                setMembers(resp.data.members);
+                // If members list is empty, validate that the group still exists
+                if (resp.data.members.length === 0) {
+                    const validation = await FriendsAPI.validateGroup(group.group_id);
+                    if (validation.data && !validation.data.exists) {
+                        // Group was disbanded, clear storage and show prompt
+                        await AppStorage.removeItem('friends_group');
+                        setGroup(null);
+                        setIsGroupOwner(false);
+                        setMembers([]);
+                        setFriends([]);
+                        setShowGroupPrompt(true);
+                        setPromptMode('choose');
+                        Alert.alert('Group Disbanded', 'The group owner has disbanded this group.');
+                    }
+                }
+            }
+        } catch (error) {
+            // If we get an error fetching members, the group might not exist
+            if (group) {
+                try {
+                    const validation = await FriendsAPI.validateGroup(group.group_id);
+                    if (validation.data && !validation.data.exists) {
+                        await AppStorage.removeItem('friends_group');
+                        setGroup(null);
+                        setIsGroupOwner(false);
+                        setMembers([]);
+                        setFriends([]);
+                        setShowGroupPrompt(true);
+                        setPromptMode('choose');
+                        Alert.alert('Group Disbanded', 'The group owner has disbanded this group.');
+                    }
+                } catch {}
+            }
+        }
+    };
+
+    const handleCreateGroup = async () => {
+        setLoadingGroupAction(true);
+        try {
+            const resp = await FriendsAPI.createGroup();
+            if (resp.data) {
+                const g = { group_id: resp.data.group_id, code: resp.data.code };
+                await AppStorage.setItem('friends_group', g);
+                setGroup(g);
+                setIsGroupOwner(true);
+                setCreatedGroupCode(resp.data.code);
+                setPromptMode('created');
+            }
+        } catch (error: any) {
+            Alert.alert('Error', error?.response?.data?.detail || 'Failed to create group');
+        } finally {
+            setLoadingGroupAction(false);
+        }
+    };
+
+    const handleJoinGroup = async () => {
+        if (joinCode.length !== 4) return;
+        Keyboard.dismiss(); // Dismiss keyboard before processing
+        setLoadingGroupAction(true);
+        try {
+            const resp = await FriendsAPI.joinGroup(joinCode);
+            if (resp.data) {
+                const g = { group_id: resp.data.group_id, code: resp.data.code };
+                await AppStorage.setItem('friends_group', g);
+                setGroup(g);
+                setIsGroupOwner(false);
+                setShowGroupPrompt(false);
+            }
+        } catch (error: any) {
+            Alert.alert('Error', error?.response?.data?.detail || 'Failed to join group');
+        } finally {
+            setLoadingGroupAction(false);
+        }
+    };
+
+    const handleDisbandGroup = () => {
+        Alert.alert(
+            'Disband Group',
+            'Are you sure? This will remove all members and delete the group permanently.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Disband',
+                    style: 'destructive',
+                    onPress: async () => {
+                        if (!group) return;
+                        try {
+                            await FriendsAPI.disbandGroup(group.group_id);
+                            await AppStorage.removeItem('friends_group');
+                            setGroup(null);
+                            setIsGroupOwner(false);
+                            setMembers([]);
+                            setFriends([]);
+                            setShowGroupPrompt(true);
+                            setPromptMode('choose');
+                            Alert.alert('Success', 'Group disbanded successfully');
+                        } catch (error: any) {
+                            Alert.alert('Error', error?.response?.data?.detail || 'Failed to disband group');
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
     const panResponder = useRef(
         PanResponder.create({
-            onStartShouldSetPanResponder: () => true,
-            onMoveShouldSetPanResponder: (_, gestureState) => {
-                return Math.abs(gestureState.dy) > 5;
+            onStartShouldSetPanResponder: (evt, gestureState) => true,
+            onStartShouldSetPanResponderCapture: (evt, gestureState) => false,
+            onMoveShouldSetPanResponder: (evt, gestureState) => {
+                // Only respond to vertical drags
+                return Math.abs(gestureState.dy) > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
             },
+            onMoveShouldSetPanResponderCapture: (evt, gestureState) => false,
+            onPanResponderTerminationRequest: () => true,
             onPanResponderMove: (_, gestureState) => {
                 const baseHeight = isExpanded ? MODAL_MAX_HEIGHT : MODAL_MIN_HEIGHT;
                 const newHeight = baseHeight - gestureState.dy;
@@ -207,209 +446,193 @@ export default function FriendsScreen() {
                 <View style={styles.headerTitleContainer}>
                     <Text style={styles.headerTitle}>Friends & Location</Text>
                     <Text style={styles.headerSubtitle}>
-                        {filteredFriends.length} nearby friends
+                        {filteredFriends.length} nearby friends {group ? `(code ${group.code})` : ''}
                     </Text>
                 </View>
-                <TouchableOpacity style={styles.addButton}>
-                    <IconSymbol name="person.badge.plus" size={24} color="#0a7ea4" />
-                </TouchableOpacity>
+                {isGroupOwner ? (
+                    <TouchableOpacity style={styles.disbandButton} onPress={handleDisbandGroup}>
+                        <IconSymbol name="xmark.circle.fill" size={24} color="#ef4444" />
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity style={styles.addButton} onPress={() => router.push('/(user)/(stack)/friends-list' as any)}>
+                        <IconSymbol name="person.2.fill" size={24} color="#0a7ea4" />
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Map Container */}
             <View style={styles.mapContainer}>
-                <View style={styles.mapPlaceholder}>
-                    <IconSymbol name="map.fill" size={64} color="#0a7ea4" />
-                    <Text style={styles.mapPlaceholderText}>Live Location Map</Text>
-                    <Text style={styles.mapSubtext}>
-                        Showing friends within {selectedRadius} km radius
-                    </Text>
+                {currentPosition ? (
+                    <MapView
+                        style={styles.map}
+                        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+                        initialRegion={{
+                            latitude: currentPosition.lat,
+                            longitude: currentPosition.lng,
+                            latitudeDelta: 0.0922,
+                            longitudeDelta: 0.0421,
+                        }}
+                        showsUserLocation
+                        showsMyLocationButton
+                    >
+                        {/* Radius circle around current user */}
+                        {currentPosition && (
+                            <Circle
+                                center={{
+                                    latitude: currentPosition.lat,
+                                    longitude: currentPosition.lng,
+                                }}
+                                radius={selectedRadius * 1000} // convert km to meters
+                                strokeColor="rgba(10, 126, 164, 0.3)"
+                                fillColor="rgba(10, 126, 164, 0.1)"
+                                strokeWidth={2}
+                            />
+                        )}
 
-                    {/* Friend Markers Preview */}
-                    <View style={styles.markersPreview}>
-                        {filteredFriends.map((friend, index) => (
-                            <View
+                        {/* Friend markers */}
+                        {filteredFriends.map((friend) => (
+                            <Marker
                                 key={friend.id}
-                                style={[
-                                    styles.markerPreview,
-                                    {
-                                        left: `${(index * 20) % 80}%`,
-                                        top: `${(index * 15) % 60}%`,
-                                    },
-                                ]}
+                                coordinate={{
+                                    latitude: friend.location.lat,
+                                    longitude: friend.location.lng,
+                                }}
+                                title={friend.name}
+                                description={`${friend.distance} away · ${friend.lastSeen}`}
+                                onPress={() => handleFriendPress(friend)}
                             >
                                 <View style={[
-                                    styles.markerDot,
-                                    friend.isOnline && styles.markerDotOnline,
+                                    styles.customMarker,
+                                    friend.isOnline && styles.customMarkerOnline,
+                                    selectedFriend?.id === friend.id && styles.customMarkerSelected,
                                 ]}>
-                                    <Text style={styles.markerText}>{friend.avatar}</Text>
+                                    <Text style={styles.customMarkerText}>{friend.avatar}</Text>
                                 </View>
-                            </View>
+                            </Marker>
                         ))}
+                    </MapView>
+                ) : (
+                    <View style={styles.mapPlaceholder}>
+                        <IconSymbol name="map.fill" size={64} color="#0a7ea4" />
+                        <Text style={styles.mapPlaceholderText}>Locating...</Text>
+                        <Text style={styles.mapSubtext}>
+                            {group ? `Group ${group.code}` : 'Create or join a group'}
+                        </Text>
                     </View>
-                </View>
-
-                {/* Map Controls */}
-                <View style={styles.mapControls}>
-                    <TouchableOpacity style={styles.controlButton}>
-                        <IconSymbol name="location.fill" size={24} color="#0a7ea4" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.controlButton}>
-                        <IconSymbol name="plus" size={24} color="#11181C" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.controlButton}>
-                        <IconSymbol name="minus" size={24} color="#11181C" />
-                    </TouchableOpacity>
-                </View>
+                )}
             </View>
 
-            {/* Controls Section */}
-            <Animated.View
-                style={[
-                    styles.modalContainer,
-                    { height: modalHeight }
-                ]}
-            >
-                {/* Handle */}
-                <View
-                    style={styles.modalHandle}
-                    {...panResponder.panHandlers}
-                >
+            {/* Floating Action Buttons */}
+            <View style={styles.floatingButtons}>
+                {!group && (
                     <TouchableOpacity
-                        onPress={toggleModal}
-                        activeOpacity={0.7}
-                        style={styles.handleTouchable}
+                        style={[styles.floatingButton, styles.primaryFloatingButton]}
+                        onPress={() => { setShowGroupPrompt(true); setPromptMode('choose'); }}
+                        activeOpacity={0.8}
                     >
-                        <View style={styles.handle} />
+                        <IconSymbol name="person.badge.plus" size={24} color="#fff" />
+                        <Text style={styles.floatingButtonText}>Create/Join Group</Text>
                     </TouchableOpacity>
-                </View>
+                )}
+                {group && (
+                    <TouchableOpacity
+                        style={[styles.floatingButton, styles.secondaryFloatingButton]}
+                        onPress={() => router.push('/(user)/(stack)/friends-list' as any)}
+                        activeOpacity={0.8}
+                    >
+                        <IconSymbol name="list.bullet" size={24} color="#0a7ea4" />
+                        <Text style={[styles.floatingButtonText, { color: '#0a7ea4' }]}>View Friends List</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
 
-                <ScrollView
-                    style={styles.modalScroll}
-                    contentContainerStyle={styles.modalContent}
-                    showsVerticalScrollIndicator={false}
-                    scrollEnabled={isExpanded}
+            {/* Group Prompt Modal */}
+            <Modal visible={showGroupPrompt} transparent animationType="fade" onRequestClose={() => setShowGroupPrompt(false)}>
+                <TouchableOpacity 
+                    style={styles.modalBackdrop} 
+                    activeOpacity={1} 
+                    onPress={() => setShowGroupPrompt(false)}
                 >
-                    {/* Share Location Toggle */}
-                    <View style={styles.shareLocationCard}>
-                        <View style={styles.shareLocationLeft}>
-                            <View style={[styles.shareIcon, { backgroundColor: shareMyLocation ? '#dcfce7' : '#fee2e2' }]}>
-                                <IconSymbol
-                                    name={shareMyLocation ? 'location.fill' : 'location.slash.fill'}
-                                    size={24}
-                                    color={shareMyLocation ? '#10b981' : '#ef4444'}
+                    <KeyboardAvoidingView 
+                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                        style={{ width: '90%', maxWidth: 400 }}
+                    >
+                        <TouchableOpacity style={styles.groupModal} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+                            {promptMode === 'choose' && (
+                            <>
+                                <Text style={styles.groupTitle}>Find My Friends</Text>
+                                <Text style={styles.groupSubtitle}>Create a group or join with a 4-digit code.</Text>
+                                <View style={{ height: 12 }} />
+                                <TouchableOpacity style={styles.primaryBtn} onPress={() => setPromptMode('create')}>
+                                    <Text style={styles.primaryBtnText}>Create Group</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.secondaryBtn} onPress={() => setPromptMode('join')}>
+                                    <Text style={styles.secondaryBtnText}>Join Group</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
+
+                        {promptMode === 'create' && (
+                            <>
+                                <Text style={styles.groupTitle}>Create Group</Text>
+                                <Text style={styles.groupSubtitle}>We'll generate a 4-digit code to share.</Text>
+                                <View style={{ height: 16 }} />
+                                <TouchableOpacity style={styles.primaryBtn} onPress={handleCreateGroup} disabled={loadingGroupAction}>
+                                    {loadingGroupAction ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Create</Text>}
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.ghostBtn} onPress={() => setPromptMode('choose')}>
+                                    <Text style={styles.secondaryBtnText}>Back</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
+
+                        {promptMode === 'join' && (
+                            <>
+                                <Text style={styles.groupTitle}>Join Group</Text>
+                                <Text style={styles.groupSubtitle}>Enter the 4-digit code shared with you.</Text>
+                                <View style={{ height: 12 }} />
+                                <TextInput
+                                    style={styles.codeInput}
+                                    placeholder="1234"
+                                    keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
+                                    maxLength={4}
+                                    value={joinCode}
+                                    onChangeText={(t) => setJoinCode(t.replace(/[^0-9]/g, ''))}
+                                    returnKeyType="done"
+                                    onSubmitEditing={handleJoinGroup}
+                                    blurOnSubmit={true}
                                 />
-                            </View>
-                            <View>
-                                <Text style={styles.shareLocationTitle}>Share My Location</Text>
-                                <Text style={styles.shareLocationSubtitle}>
-                                    {shareMyLocation ? 'Friends can see your location' : 'Location sharing is off'}
-                                </Text>
-                            </View>
-                        </View>
-                        <Switch
-                            value={shareMyLocation}
-                            onValueChange={setShareMyLocation}
-                            trackColor={{ false: '#d1d5db', true: '#0a7ea4' }}
-                            thumbColor="#fff"
-                        />
-                    </View>
-
-                    {/* Radius Selector */}
-                    <View style={styles.radiusSection}>
-                        <Text style={styles.radiusTitle}>Search Radius</Text>
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.radiusOptions}
-                        >
-                            {RADIUS_OPTIONS.map((radius) => (
-                                <TouchableOpacity
-                                    key={radius}
-                                    style={[
-                                        styles.radiusButton,
-                                        selectedRadius === radius && styles.radiusButtonActive,
-                                    ]}
-                                    onPress={() => setSelectedRadius(radius)}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.radiusText,
-                                            selectedRadius === radius && styles.radiusTextActive,
-                                        ]}
-                                    >
-                                        {radius} km
-                                    </Text>
+                                <TouchableOpacity style={[styles.primaryBtn, joinCode.length !== 4 && { opacity: 0.6 }]} onPress={handleJoinGroup} disabled={loadingGroupAction || joinCode.length !== 4}>
+                                    {loadingGroupAction ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Join</Text>}
                                 </TouchableOpacity>
-                            ))}
-                        </ScrollView>
-                    </View>
-
-                    {/* Friends List */}
-                    <Text style={styles.sectionTitle}>
-                        Nearby Friends ({filteredFriends.length})
-                    </Text>
-
-                    {filteredFriends.map((friend) => (
-                        <TouchableOpacity
-                            key={friend.id}
-                            style={[
-                                styles.friendCard,
-                                selectedFriend?.id === friend.id && styles.friendCardSelected,
-                            ]}
-                            onPress={() => handleFriendPress(friend)}
-                        >
-                            <View style={styles.friendLeft}>
-                                <View style={styles.friendAvatarContainer}>
-                                    <View style={styles.friendAvatar}>
-                                        <Text style={styles.friendAvatarText}>{friend.avatar}</Text>
-                                    </View>
-                                    {friend.isOnline && <View style={styles.onlineBadge} />}
-                                </View>
-                                <View style={styles.friendInfo}>
-                                    <Text style={styles.friendName}>{friend.name}</Text>
-                                    <View style={styles.locationInfo}>
-                                        <IconSymbol name="mappin.circle.fill" size={14} color="#687076" />
-                                        <Text style={styles.locationText}>{friend.location.placeName}</Text>
-                                    </View>
-                                    <Text style={styles.lastSeen}>{friend.lastSeen}</Text>
-                                </View>
-                            </View>
-                            <View style={styles.friendRight}>
-                                <View style={styles.distanceBadge}>
-                                    <Text style={styles.distanceText}>{friend.distance}</Text>
-                                </View>
-                                <TouchableOpacity style={styles.directionsButton}>
-                                    <IconSymbol name="arrow.triangle.turn.up.right.circle.fill" size={24} color="#0a7ea4" />
+                                <TouchableOpacity style={styles.ghostBtn} onPress={() => setPromptMode('choose')}>
+                                    <Text style={styles.secondaryBtnText}>Back</Text>
                                 </TouchableOpacity>
-                            </View>
+                            </>
+                        )}
+
+                        {promptMode === 'created' && (
+                            <>
+                                <View style={styles.successContainer}>
+                                    <View style={styles.successIconContainer}>
+                                        <IconSymbol name="checkmark.circle.fill" size={64} color="#10b981" />
+                                    </View>
+                                    <Text style={styles.groupTitle}>Group Created!</Text>
+                                    <Text style={styles.groupSubtitle}>Share this code with your friends:</Text>
+                                    <View style={styles.codeDisplayContainer}>
+                                        <Text style={styles.codeDisplayText}>{createdGroupCode}</Text>
+                                    </View>
+                                    <Text style={styles.codeHintText}>Tap the code to copy</Text>
+                                </View>
+                                <TouchableOpacity style={styles.primaryBtn} onPress={() => setShowGroupPrompt(false)}>
+                                    <Text style={styles.primaryBtnText}>Start Sharing Location</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
                         </TouchableOpacity>
-                    ))}
-
-                    {/* Offline/Not Sharing Friends */}
-                    {friends.filter(f => !f.sharingLocation).length > 0 && (
-                        <>
-                            <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
-                                Not Sharing Location
-                            </Text>
-                            {friends.filter(f => !f.sharingLocation).map((friend) => (
-                                <View key={friend.id} style={styles.friendCard}>
-                                    <View style={styles.friendLeft}>
-                                        <View style={styles.friendAvatarContainer}>
-                                            <View style={[styles.friendAvatar, styles.friendAvatarOffline]}>
-                                                <Text style={styles.friendAvatarText}>{friend.avatar}</Text>
-                                            </View>
-                                        </View>
-                                        <View style={styles.friendInfo}>
-                                            <Text style={styles.friendName}>{friend.name}</Text>
-                                            <Text style={styles.offlineText}>Location sharing disabled</Text>
-                                        </View>
-                                    </View>
-                                </View>
-                            ))}
-                        </>
-                    )}
-                </ScrollView>
-            </Animated.View>
+                    </KeyboardAvoidingView>
+                </TouchableOpacity>
+            </Modal>
         </View>
     );
 }
@@ -456,16 +679,28 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    disbandButton: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     mapContainer: {
         height: MAP_HEIGHT,
         backgroundColor: '#e8f4f8',
         position: 'relative',
+    },
+    map: {
+        flex: 1,
+        width: '100%',
+        height: '120%',
     },
     mapPlaceholder: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
+        backgroundColor: '#e8f4f8',
     },
     mapPlaceholderText: {
         fontSize: 20,
@@ -478,50 +713,33 @@ const styles = StyleSheet.create({
         color: '#687076',
         marginTop: 4,
     },
-    markersPreview: {
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-    },
-    markerPreview: {
-        position: 'absolute',
-    },
-    markerDot: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
+    customMarker: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         backgroundColor: '#687076',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 3,
         borderColor: '#fff',
-    },
-    markerDotOnline: {
-        backgroundColor: '#10b981',
-    },
-    markerText: {
-        fontSize: 10,
-        fontWeight: '700',
-        color: '#fff',
-    },
-    mapControls: {
-        position: 'absolute',
-        right: 16,
-        top: 16,
-        gap: 8,
-    },
-    controlButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: '#fff',
-        justifyContent: 'center',
-        alignItems: 'center',
         elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.3,
         shadowRadius: 4,
+    },
+    customMarkerOnline: {
+        backgroundColor: '#10b981',
+    },
+    customMarkerSelected: {
+        borderColor: '#0a7ea4',
+        borderWidth: 4,
+        transform: [{ scale: 1.2 }],
+    },
+    customMarkerText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#fff',
     },
     modalContainer: {
         position: 'absolute',
@@ -727,5 +945,131 @@ const styles = StyleSheet.create({
         height: 32,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    modalBackdrop: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    groupModal: {
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 16,
+        maxHeight: '100%',
+        width: '100%',
+    },
+    groupTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#11181C',
+    },
+    groupSubtitle: {
+        fontSize: 14,
+        color: '#687076',
+        marginTop: 6,
+    },
+    primaryBtn: {
+        backgroundColor: '#0a7ea4',
+        paddingVertical: 12,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    primaryBtnText: {
+        color: '#fff',
+        fontWeight: '700',
+        fontSize: 16,
+    },
+    secondaryBtn: {
+        backgroundColor: '#e8f4f8',
+        paddingVertical: 12,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    secondaryBtnText: {
+        color: '#0a7ea4',
+        fontWeight: '700',
+        fontSize: 16,
+    },
+    ghostBtn: {
+        paddingVertical: 12,
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    codeInput: {
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        fontSize: 18,
+        letterSpacing: 8,
+        textAlign: 'center',
+    },
+    successContainer: {
+        alignItems: 'center',
+        paddingVertical: 20,
+    },
+    successIconContainer: {
+        marginBottom: 16,
+    },
+    codeDisplayContainer: {
+        backgroundColor: '#0a7ea4',
+        paddingHorizontal: 40,
+        paddingVertical: 20,
+        borderRadius: 16,
+        marginVertical: 16,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+    },
+    codeDisplayText: {
+        fontSize: 48,
+        fontWeight: '700',
+        color: '#fff',
+        letterSpacing: 12,
+    },
+    codeHintText: {
+        fontSize: 12,
+        color: '#687076',
+        fontStyle: 'italic',
+    },
+    floatingButtons: {
+        position: 'absolute',
+        bottom: 120,
+        left: 20,
+        right: 20,
+        gap: 12,
+    },
+    floatingButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+        paddingVertical: 16,
+        paddingHorizontal: 24,
+        borderRadius: 16,
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+    },
+    primaryFloatingButton: {
+        backgroundColor: '#0a7ea4',
+    },
+    secondaryFloatingButton: {
+        backgroundColor: '#fff',
+        borderWidth: 2,
+        borderColor: '#0a7ea4',
+    },
+    floatingButtonText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#fff',
     },
 });

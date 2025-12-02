@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, users, profile, location, business, event, community, message, compression, upload
+from app.api.v1.endpoints import auth, users, profile, location, business, event, community, message, compression, upload, friends
 
 
 api_router = APIRouter()
@@ -15,6 +15,7 @@ api_router.include_router(event.router, prefix="/event", tags=["event"])
 api_router.include_router(community.router, prefix="/communities", tags=["Communities"])
 api_router.include_router(message.router, prefix="/message", tags=["Message"])
 api_router.include_router(upload.router, prefix="/upload", tags=["Upload"])
+api_router.include_router(friends.router, prefix="/friends", tags=["Friends"])
 
 # Optional: enable these when ready
 # api_router.include_router(files.router, prefix="/files", tags=["Files"])

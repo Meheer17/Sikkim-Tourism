@@ -28,8 +28,8 @@ export default function HomeScreen() {
             const businesses = response.data || [];
 
             // Map businesses to Service format and limit to 4 for home screen
-            const mappedServices: Service[] = businesses.slice(0, 4).map((biz: any) => ({
-                id: biz._id,
+            const mappedServices: Service[] = businesses.slice(0, 4).map((biz: any, index: number) => ({
+                id: biz._id || `service-${index}`,
                 name: biz.name,
                 description: biz.decription || biz.description || 'Quality service provider',
                 price: biz.price || Math.floor(Math.random() * 3000) + 500,
@@ -148,11 +148,12 @@ export default function HomeScreen() {
                     </View>
 
                     {services.map((service) => (
-                        <ServiceCard
-                            key={service.id}
-                            service={service}
-                            onPress={handleServicePress}
-                        />
+                        <React.Fragment key={service.id}>
+                            <ServiceCard
+                                service={service}
+                                onPress={handleServicePress}
+                            />
+                        </React.Fragment>
                     ))}
                 </View>
 

@@ -49,8 +49,8 @@ export default function UserLayout() {
         return routePage === currentPage || pathname === route;
     };
 
-    // Hide tab bar on community chat and immersive experience screens
-    const shouldShowTabBar = !pathname.includes('/community-chat') && !pathname.includes('/immersive-experience');
+    // Hide tab bar on community chat, immersive experience, and friends list screens
+    const shouldShowTabBar = !pathname.includes('/community-chat') && !pathname.includes('/immersive-experience') && !pathname.includes('/friends-list');
 
     return (
         <View style={styles.container}>

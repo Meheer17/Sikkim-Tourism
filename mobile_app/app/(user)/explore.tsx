@@ -401,21 +401,22 @@ export default function ExploreScreen() {
               maxZoomLevel={15}
             // onError={() => setMapError(true)}
             >
-              {nearbyPlaces.map((place) => (
-                place.latitude && place.longitude && (
+              {nearbyPlaces
+                // Show all mapped places (coordinates are defaulted if missing)
+                .filter(place => place.latitude !== undefined && place.longitude !== undefined)
+                .map((place) => (
                   <Marker
                     key={place.id}
                     coordinate={{
-                      latitude: place.latitude,
-                      longitude: place.longitude,
+                      latitude: place.latitude!,
+                      longitude: place.longitude!,
                     }}
                     title={place.name}
                     description={place.description}
                     onPress={() => handleMarkerPress(place)}
                     pinColor={tint as string}
                   />
-                )
-              ))}
+                ))}
             </MapView>
           </>
         ) : (
@@ -494,21 +495,22 @@ export default function ExploreScreen() {
           onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         >
           {loading ? (
-            <View style={{ padding: 20, alignItems: 'center' }}>
+            <View key="loading" style={{ padding: 20, alignItems: 'center' }}>
               <ActivityIndicator size="large" color={tint as string} />
               <Text style={[{ color: muted, marginTop: 10 }]}>Loading places...</Text>
             </View>
           ) : nearbyPlaces.length === 0 ? (
-            <View style={{ padding: 20, alignItems: 'center' }}>
+            <View key="empty" style={{ padding: 20, alignItems: 'center' }}>
               <Text style={[{ color: muted }]}>No places found</Text>
             </View>
           ) : (
             nearbyPlaces.map((place) => (
-              <PlaceCard
-                key={place.id}
-                place={place}
-                onPress={handlePlacePress}
-              />
+              <View key={place.id}>
+                <PlaceCard
+                  place={place}
+                  onPress={handlePlacePress}
+                />
+              </View>
             ))
           )}
         </ScrollView>
