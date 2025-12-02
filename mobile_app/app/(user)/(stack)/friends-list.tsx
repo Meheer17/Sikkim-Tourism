@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, ActivityIndicator, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, ActivityIndicator, StatusBar, Linking, Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -36,10 +36,12 @@ export default function FriendsListPage() {
     const [loading, setLoading] = useState(true);
     const isInitialized = useRef(false);
     const disbandAlertShown = useRef(false);
+    const [isGroupOwner, setIsGroupOwner] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
     // Hide status bar while on this screen
     useEffect(() => {
-        StatusBar.setHidden(true, 'fade');
+        StatusBar.setHidden(false, 'fade');
         return () => {
             StatusBar.setHidden(false, 'fade');
         };
@@ -58,23 +60,7 @@ export default function FriendsListPage() {
     };
 
     const timeAgo = (iso?: string) => {
-        if (!iso) return 'Unknown';
-        try {
-            const then = new Date(iso).getTime();
-            const now = Date.now();
-            const diff = Math.max(0, now - then);
-            const sec = Math.floor(diff / 1000);
-            if (sec < 30) return 'Just now';
-            if (sec < 60) return `${sec}s ago`;
-            const min = Math.floor(sec / 60);
-            if (min < 60) return `${min}m ago`;
-            const hr = Math.floor(min / 60);
-            if (hr < 24) return `${hr}h ago`;
-            const days = Math.floor(hr / 24);
-            return `${days} day${days > 1 ? 's' : ''} ago`;
-        } catch {
-            return 'Unknown';
-        }
+        return 'Just now';
     };
 
     const toFriend = (m: MemberLocation): Friend | null => {
@@ -96,6 +82,16 @@ export default function FriendsListPage() {
     useEffect(() => {
         const loadInitial = async () => {
             try {
+                // Get current user ID from token
+                const { TokenManager } = await import('@/utils/storage');
+                const token = await TokenManager.getAccessToken();
+                let userId: string | null = null;
+                if (token) {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    userId = payload.sub;
+                    setCurrentUserId(userId);
+                }
+
                 // Restore preferences
                 const savedRadius = await AppStorage.getItem<number>('friends_radius');
                 if (typeof savedRadius === 'number') setSelectedRadius(savedRadius);
@@ -113,6 +109,17 @@ export default function FriendsListPage() {
                 const saved = await AppStorage.getItem<GroupInfo>('friends_group');
                 if (saved?.group_id) {
                     setGroup(saved);
+                    // Get group info to check ownership
+                    const info = await FriendsAPI.getGroupInfo(saved.group_id);
+                    if (info.data && userId) {
+                        const isOwner = info.data.owner_id === userId;
+                        console.log('[FriendsList] Owner check:', { 
+                            ownerId: info.data.owner_id, 
+                            userId, 
+                            isOwner 
+                        });
+                        setIsGroupOwner(isOwner);
+                    }
                     const resp = await FriendsAPI.listMembers(saved.group_id);
                     if (resp.data) setMembers(resp.data.members);
                 }
@@ -144,10 +151,7 @@ export default function FriendsListPage() {
                             await AppStorage.removeItem('friends_group');
                             if (!disbandAlertShown.current) {
                                 disbandAlertShown.current = true;
-                                // Lightweight toast-like alert
-                                if (Platform.OS === 'web') {
-                                    alert('This group has been disbanded.');
-                                }
+                                Alert.alert('Group Disbanded', 'The group owner has disbanded this group.');
                             }
                         }
                     }
@@ -179,8 +183,77 @@ export default function FriendsListPage() {
         if (isInitialized.current) AppStorage.setItem('friends_share_location', shareMyLocation);
     }, [shareMyLocation]);
 
+    const openDirections = (friend: Friend) => {
+        const lat = friend.location.lat;
+        const lng = friend.location.lng;
+        const label = encodeURIComponent(friend.name);
+        
+        // Open Google Maps with walking directions
+        const url = Platform.select({
+            ios: `maps://app?daddr=${lat},${lng}&dirflg=w`,
+            android: `google.navigation:q=${lat},${lng}&mode=w`,
+            default: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`
+        });
+        
+        Linking.openURL(url!).catch(() => {
+            // Fallback to web URL if native app fails
+            const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
+            Linking.openURL(webUrl);
+        });
+    };
+
+    const handleLeaveGroup = () => {
+        if (!group) return;
+        
+        Alert.alert(
+            'Leave Group',
+            'Are you sure you want to leave this group?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Leave',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await FriendsAPI.leaveGroup(group.group_id);
+                            await AppStorage.removeItem('friends_group');
+                            setGroup(null);
+                            setMembers([]);
+                            setFriends([]);
+                            Alert.alert('Success', 'You have left the group');
+                            router.back();
+                        } catch (error: any) {
+                            Alert.alert('Error', error?.response?.data?.detail || 'Failed to leave group');
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
     return (
         <View style={styles.container}>
+            {/* Header */}
+            <View style={styles.header}>
+                <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => router.back()}
+                >
+                    <IconSymbol name="chevron.left" size={24} color="#11181C" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Friends List</Text>
+                {group && !isGroupOwner ? (
+                    <TouchableOpacity
+                        style={styles.leaveButton}
+                        onPress={handleLeaveGroup}
+                    >
+                        <IconSymbol name="rectangle.portrait.and.arrow.right" size={24} color="#ef4444" />
+                    </TouchableOpacity>
+                ) : (
+                    <View style={styles.placeholder} />
+                )}
+            </View>
+
             <ScrollView
                 style={styles.content}
                 contentContainerStyle={styles.contentContainer}
@@ -259,7 +332,10 @@ export default function FriendsListPage() {
                             <View style={styles.distanceBadge}>
                                 <Text style={styles.distanceText}>{friend.distance}</Text>
                             </View>
-                            <TouchableOpacity style={styles.directionsButton}>
+                            <TouchableOpacity 
+                                style={styles.directionsButton}
+                                onPress={() => openDirections(friend)}
+                            >
                                 <IconSymbol name="arrow.triangle.turn.up.right.circle.fill" size={24} color="#0a7ea4" />
                             </TouchableOpacity>
                         </View>
@@ -306,7 +382,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingTop: Platform.OS === 'ios' ? 60 : 20,
+        paddingTop: Platform.OS === 'ios' ? 60 : 48,
         paddingBottom: 16,
         backgroundColor: '#fff',
         borderBottomWidth: 1,
@@ -325,6 +401,12 @@ const styles = StyleSheet.create({
     },
     placeholder: {
         width: 40,
+    },
+    leaveButton: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     content: {
         flex: 1,

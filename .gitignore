@@ -362,3 +362,4 @@ vite.config.ts.timestamp-*
 
 # vscode
 .vscode/
+mobile_app/.env

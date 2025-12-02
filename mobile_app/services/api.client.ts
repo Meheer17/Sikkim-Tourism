@@ -126,6 +126,21 @@ class ApiClient {
             errorMessage = respData?.detail || 'Authentication failed. Please check your credentials.';
             errorTitle = 'Authentication Error';
         }
+        // Handle 403 Forbidden
+        else if (error.response?.status === 403) {
+            // Check if it's an approval-related error
+            const detail = respData?.detail || '';
+            if (detail.toLowerCase().includes('approval') || detail.toLowerCase().includes('pending')) {
+                errorMessage = detail;
+                errorTitle = 'Account Pending Approval';
+            } else {
+                errorMessage = respData?.detail || 'You do not have permission to access this resource.';
+                errorTitle = 'Access Denied';
+            }
+            if (__DEV__ && appConfig.api.enableLogs) {
+                console.warn('⚠️ 403 Forbidden:', detail);
+            }
+        }
         // Handle 404 Not Found
         else if (error.response?.status === 404) {
             errorMessage = 'The requested resource was not found.';
@@ -165,8 +180,11 @@ class ApiClient {
         if (__DEV__ && appConfig.api.enableLogs) {
             console.warn('❌ API Error:', {
                 status: error.response?.status,
+                statusText: error.response?.statusText,
                 message: errorMessage,
                 url: error.config?.url,
+                responseData: error.response?.data,
+                headers: error.response?.headers,
             });
         }
     }

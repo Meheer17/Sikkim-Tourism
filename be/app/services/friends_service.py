@@ -115,11 +115,14 @@ class FriendsService:
         members: List[dict] = []
         for mid in member_ids_str:
             u = users_map.get(mid)
-            name = u.get("name") if u else None
+            name = None
             initials = None
-            if name:
-                parts = name.split()
-                initials = "".join(p[0].upper() for p in parts[:2] if p)
+            
+            if u:
+                name = u.get("name")
+                if name:
+                    parts = name.split()
+                    initials = "".join(p[0].upper() for p in parts[:2] if p)
 
             loc = locations.get(mid, {})
             members.append({
@@ -144,12 +147,19 @@ class FriendsService:
         if not group:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
 
+        # Handle created_at field - convert to string if it exists
+        created_at = group.get("created_at")
+        if created_at:
+            created_at = str(created_at) if not isinstance(created_at, str) else created_at
+        else:
+            created_at = ""
+
         return {
             "group_id": str(group["_id"]),
-            "code": group["code"],
-            "owner_id": str(group["owner_id"]),
+            "code": group.get("code", ""),
+            "owner_id": str(group.get("owner_id", "")),
             "member_count": len(group.get("members", [])),
-            "created_at": group.get("created_at"),
+            "created_at": created_at,
         }
 
     async def validate_group_exists(self, group_id: str) -> bool:
@@ -185,6 +195,35 @@ class FriendsService:
         # Delete the group
         result = await db.groups.delete_one({"_id": gid})
         return result.deleted_count > 0
+
+    async def leave_group(self, group_id: str, user_id: str) -> bool:
+        """Leave a group - removes user from members list"""
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
+
+        gid = ObjectId(group_id) if ObjectId.is_valid(group_id) else group_id
+        uid = ObjectId(user_id) if ObjectId.is_valid(user_id) else user_id
+
+        # Check if group exists
+        group = await db.groups.find_one({"_id": gid})
+        if not group:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+
+        # Owner cannot leave, they must disband
+        if str(group["owner_id"]) == str(uid):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Group owner cannot leave. Disband the group instead.")
+
+        # Remove user from members list
+        await db.groups.update_one(
+            {"_id": gid},
+            {"$pull": {"members": uid}}
+        )
+
+        # Delete user's location record for this group
+        await db.group_locations.delete_one({"group_id": gid, "user_id": uid})
+
+        return True
 
 
 friends_service = FriendsService()

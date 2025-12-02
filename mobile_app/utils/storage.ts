@@ -101,7 +101,7 @@ export class TokenManager {
     }
 }
 
-// Regular storage for non-sensitive data (also using SecureStore for better security)
+// Regular storage for non-sensitive data (using localStorage for persistence)
 export class AppStorage {
     private static isWeb = Platform.OS === 'web';
 
@@ -109,7 +109,8 @@ export class AppStorage {
         try {
             const serializedValue = typeof value === 'string' ? value : JSON.stringify(value);
             if (this.isWeb) {
-                sessionStorage.setItem(key, serializedValue);
+                // Use localStorage instead of sessionStorage for persistence across sessions
+                localStorage.setItem(key, serializedValue);
             } else {
                 await SecureStore.setItemAsync(key, serializedValue);
             }
@@ -123,7 +124,8 @@ export class AppStorage {
         try {
             let value: string | null;
             if (this.isWeb) {
-                value = sessionStorage.getItem(key);
+                // Use localStorage instead of sessionStorage for persistence across sessions
+                value = localStorage.getItem(key);
             } else {
                 value = await SecureStore.getItemAsync(key);
             }
@@ -147,7 +149,8 @@ export class AppStorage {
     static async removeItem(key: string): Promise<void> {
         try {
             if (this.isWeb) {
-                sessionStorage.removeItem(key);
+                // Use localStorage instead of sessionStorage for persistence across sessions
+                localStorage.removeItem(key);
             } else {
                 await SecureStore.deleteItemAsync(key);
             }
@@ -160,7 +163,8 @@ export class AppStorage {
     static async clear(): Promise<void> {
         try {
             if (this.isWeb) {
-                sessionStorage.clear();
+                // Use localStorage instead of sessionStorage for persistence across sessions
+                localStorage.clear();
             } else {
                 // For mobile, we need to track keys separately or clear specific known keys
                 console.warn('Clear all not supported on native. Clear specific keys instead.');
@@ -174,7 +178,8 @@ export class AppStorage {
     static async getAllKeys(): Promise<string[]> {
         try {
             if (this.isWeb) {
-                return Object.keys(sessionStorage);
+                // Use localStorage instead of sessionStorage for persistence across sessions
+                return Object.keys(localStorage);
             } else {
                 // SecureStore doesn't provide a way to list all keys
                 console.warn('getAllKeys not supported on native SecureStore');

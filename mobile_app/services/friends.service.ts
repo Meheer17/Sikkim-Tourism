@@ -66,6 +66,10 @@ export const FriendsAPI = {
     return apiClient.delete<{ message: string }>(`/friends/groups/${groupId}`);
   },
 
+  async leaveGroup(groupId: string) {
+    return apiClient.post<{ message: string }>(`/friends/groups/${groupId}/leave`);
+  },
+
   async validateGroup(groupId: string) {
     return apiClient.get<{ exists: boolean }>(`/friends/groups/${groupId}/validate`);
   },

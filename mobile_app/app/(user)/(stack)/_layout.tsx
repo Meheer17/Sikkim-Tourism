@@ -70,6 +70,13 @@ export default function StackLayout() {
         }}
       />
       <Stack.Screen
+        name="friends-list"
+        options={{
+          title: 'Friends List',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="ai-planner"
         options={{
           title: 'AI Travel Planner',

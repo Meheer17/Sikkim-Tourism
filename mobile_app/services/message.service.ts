@@ -18,7 +18,8 @@ class MessageService {
     if (params?.limit !== undefined) qs.append('limit', String(params.limit));
     if (params?.uid) qs.append('uid', params.uid);
     if (params?.cid) qs.append('cid', params.cid);
-    const url = `${this.baseUrl}${qs.toString() ? `?${qs.toString()}` : ''}`;
+    // Add trailing slash to avoid 307 redirect
+    const url = `${this.baseUrl}/${qs.toString() ? `?${qs.toString()}` : ''}`;
     return apiClient.get<MessageModel[]>(url);
   }
 

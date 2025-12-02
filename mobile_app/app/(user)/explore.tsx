@@ -402,11 +402,10 @@ export default function ExploreScreen() {
             // onError={() => setMapError(true)}
             >
               {nearbyPlaces
-                // Show all mapped places (coordinates are defaulted if missing)
                 .filter(place => place.latitude !== undefined && place.longitude !== undefined)
-                .map((place) => (
+                .map((place, index) => (
                   <Marker
-                    key={place.id}
+                    key={`marker-${place.id}-${index}`}
                     coordinate={{
                       latitude: place.latitude!,
                       longitude: place.longitude!,
@@ -495,22 +494,21 @@ export default function ExploreScreen() {
           onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         >
           {loading ? (
-            <View key="loading" style={{ padding: 20, alignItems: 'center' }}>
+            <View style={{ padding: 20, alignItems: 'center' }}>
               <ActivityIndicator size="large" color={tint as string} />
               <Text style={[{ color: muted, marginTop: 10 }]}>Loading places...</Text>
             </View>
           ) : nearbyPlaces.length === 0 ? (
-            <View key="empty" style={{ padding: 20, alignItems: 'center' }}>
+            <View style={{ padding: 20, alignItems: 'center' }}>
               <Text style={[{ color: muted }]}>No places found</Text>
             </View>
           ) : (
-            nearbyPlaces.map((place) => (
-              <View key={place.id}>
-                <PlaceCard
-                  place={place}
-                  onPress={handlePlacePress}
-                />
-              </View>
+            nearbyPlaces.map((place, index) => (
+              <PlaceCard
+                key={`place-${place.id}-${index}`}
+                place={place}
+                onPress={handlePlacePress}
+              />
             ))
           )}
         </ScrollView>

@@ -27,7 +27,8 @@ class LocationService {
         const qs = new URLSearchParams();
         if (params?.skip !== undefined) qs.append('skip', String(params.skip));
         if (params?.limit !== undefined) qs.append('limit', String(params.limit));
-        const url = `${this.baseUrl}${qs.toString() ? `?${qs.toString()}` : ''}`;
+        // Add trailing slash to avoid 307 redirect
+        const url = `${this.baseUrl}/${qs.toString() ? `?${qs.toString()}` : ''}`;
         const resp = await apiClient.get<LocationModel[]>(url);
         return resp;
     }

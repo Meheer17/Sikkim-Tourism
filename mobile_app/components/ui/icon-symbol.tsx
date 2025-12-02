@@ -96,6 +96,8 @@ const MAPPING = {
   'arrow.up': 'arrow-upward',
   'arrow.down': 'arrow-downward',
   'arrow.triangle.turn.up.right.diamond.fill': 'directions',
+  'arrow.triangle.turn.up.right.circle.fill': 'directions',
+  'rectangle.portrait.and.arrow.right': 'exit-to-app',
 
   // Social & Sharing
   'square.and.arrow.up': 'share',

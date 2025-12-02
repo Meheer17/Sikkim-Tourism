@@ -97,8 +97,17 @@ export default function ServicesScreen() {
             }, {}));
 
             setServices(mappedServices);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to load services:', error);
+            // Handle 403 Forbidden - user might not have access yet
+            if (error?.response?.status === 403) {
+                console.warn('Access forbidden - user may not be approved yet');
+                setServices([]); // Set empty services instead of crashing
+            } else {
+                // Log other errors but don't crash
+                console.error('Unexpected error loading services:', error);
+                setServices([]);
+            }
         }
     };
 

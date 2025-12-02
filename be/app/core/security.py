@@ -56,6 +56,10 @@ async def get_current_user_id(
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    # Debug logging
+    print(f"[DEBUG] Authenticated user_id: {user_id}")
+    
     return user_id
 
 
@@ -71,4 +75,26 @@ async def get_current_admin_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
         )
+    return current_user_id
+
+
+async def get_current_approved_user_id(
+    current_user_id: str = Depends(get_current_user_id)
+) -> str:
+    """Check if current user is approved and return user_id"""
+    from app.services.user_service import user_service
+    
+    user = await user_service.get_by_id(current_user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+    
+    if not user.approved:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account is pending approval. Please wait for an administrator to approve your account."
+        )
+    
     return current_user_id

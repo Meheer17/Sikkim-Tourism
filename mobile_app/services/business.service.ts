@@ -40,7 +40,8 @@ class BusinessService {
     if (params?.position_lng !== undefined) qs.append('position_lng', String(params.position_lng));
     if (params?.radius_m !== undefined) qs.append('radius_m', String(params.radius_m));
     if (params?.type_id) qs.append('type_id', params.type_id);
-    const url = `${this.baseUrl}${qs.toString() ? `?${qs.toString()}` : ''}`;
+    // Add trailing slash to avoid 307 redirect
+    const url = `${this.baseUrl}/${qs.toString() ? `?${qs.toString()}` : ''}`;
     return apiClient.get<BusinessModel[]>(url);
   }
 
@@ -64,6 +65,7 @@ class BusinessService {
     const qs = new URLSearchParams();
     if (params?.skip !== undefined) qs.append('skip', String(params.skip));
     if (params?.limit !== undefined) qs.append('limit', String(params.limit));
+    // Add trailing slash to avoid 307 redirect when no query params
     const url = `${this.baseUrl}/me${qs.toString() ? `?${qs.toString()}` : ''}`;
     return apiClient.get<BusinessModel[]>(url);
   }

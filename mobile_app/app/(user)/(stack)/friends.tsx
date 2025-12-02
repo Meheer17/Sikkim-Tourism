@@ -52,6 +52,7 @@ export default function FriendsScreen() {
     const fetchIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const [currentPosition, setCurrentPosition] = useState<{ lat: number; lng: number } | null>(null);
     const [isInitialized, setIsInitialized] = useState(false);
+    const disbandAlertShown = useRef(false);
 
     const filteredFriends = friends.filter((friend) => {
         if (!friend.sharingLocation) return false;
@@ -77,23 +78,7 @@ export default function FriendsScreen() {
     };
 
     const timeAgo = (iso?: string) => {
-        if (!iso) return 'Unknown';
-        try {
-            const then = new Date(iso).getTime();
-            const now = Date.now();
-            const diff = Math.max(0, now - then);
-            const sec = Math.floor(diff / 1000);
-            if (sec < 30) return 'Just now';
-            if (sec < 60) return `${sec}s ago`;
-            const min = Math.floor(sec / 60);
-            if (min < 60) return `${min} min ago`;
-            const hr = Math.floor(min / 60);
-            if (hr < 24) return `${hr} hr ago`;
-            const days = Math.floor(hr / 24);
-            return `${days} day${days > 1 ? 's' : ''} ago`;
-        } catch {
-            return 'Unknown';
-        }
+        return 'Just now';
     };
 
     const toFriend = (m: MemberLocation): Friend | null => {
@@ -119,75 +104,125 @@ export default function FriendsScreen() {
 
     useEffect(() => { refreshFriendsFromMembers(); }, [members, currentPosition]);
 
-    // Load group from storage on mount
-    useEffect(() => {
-        if (isInitialized) return; // Prevent re-running on navigation back
-        
-        (async () => {
-            // Get current user ID from token
-            const { TokenManager } = await import('@/utils/storage');
-            const token = await TokenManager.getAccessToken();
-            let userId: string | null = null;
-            if (token) {
-                // Decode JWT to get user ID
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                userId = payload.sub;
-                setCurrentUserId(userId);
-            }
-
-            const saved = await AppStorage.getItem<GroupInfo>('friends_group');
-            if (saved?.group_id && saved?.code) {
-                // Validate that the group still exists before loading it
-                try {
-                    const validation = await FriendsAPI.validateGroup(saved.group_id);
-                    if (validation.data && validation.data.exists) {
-                        // Group exists, load it
-                        setGroup(saved);
-                        // Fetch group info to check if user is owner
-                        const info = await FriendsAPI.getGroupInfo(saved.group_id);
-                        if (info.data && userId) {
-                            setIsGroupOwner(info.data.owner_id === userId);
-                        }
-                        setShowGroupPrompt(false);
-                    } else {
-                        // Group was disbanded, clear storage
-                        await AppStorage.removeItem('friends_group');
-                        setGroup(null);
-                        setShowGroupPrompt(true);
-                        setPromptMode('choose');
-                    }
-                } catch (e) {
-                    // Error validating or fetching group info, clear storage
-                    await AppStorage.removeItem('friends_group');
-                    setGroup(null);
-                    setShowGroupPrompt(true);
-                    setPromptMode('choose');
-                }
-            } else {
-                setShowGroupPrompt(true);
-                setPromptMode('choose');
-            }
-            setIsInitialized(true);
-        })();
-        return () => {
-            if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
-            if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
-        };
-    }, [isInitialized]);
-
-    // Hide navigation bar on Android when screen is focused
+    // Load group from storage on mount and when screen gains focus
     useFocusEffect(
         React.useCallback(() => {
+            let isMounted = true;
+            
+            const loadGroupData = async () => {
+                try {
+                    console.log('[Friends] Loading group from storage...');
+                    
+                    // Get current user ID from token
+                    const { TokenManager } = await import('@/utils/storage');
+                    const token = await TokenManager.getAccessToken();
+                    let userId: string | null = null;
+                    if (token) {
+                        // Decode JWT to get user ID
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        userId = payload.sub;
+                        setCurrentUserId(userId);
+                    }
+
+                    const saved = await AppStorage.getItem<GroupInfo>('friends_group');
+                    console.log('[Friends] Loaded from storage:', saved);
+                    
+                    if (!isMounted) return;
+                    
+                    if (saved?.group_id && saved?.code) {
+                        // Load group immediately without waiting for validation
+                        console.log('[Friends] Loading saved group:', saved.group_id);
+                        setGroup(saved);
+                        setShowGroupPrompt(false);
+                        setIsInitialized(true);
+                        
+                        // Validate and get owner info in background (non-blocking)
+                        (async () => {
+                            try {
+                                const [validation, info] = await Promise.all([
+                                    FriendsAPI.validateGroup(saved.group_id),
+                                    FriendsAPI.getGroupInfo(saved.group_id)
+                                ]);
+                                
+                                if (!isMounted) return;
+                                
+                                // Check if group still exists
+                                if (!validation.data?.exists) {
+                                    console.log('[Friends] Group no longer exists, clearing storage');
+                                    await AppStorage.removeItem('friends_group');
+                                    if (!isMounted) return;
+                                    setGroup(null);
+                                    setShowGroupPrompt(true);
+                                    setPromptMode('choose');
+                                    if (!disbandAlertShown.current) {
+                                        disbandAlertShown.current = true;
+                                        Alert.alert('Group Disbanded', 'The group owner has disbanded this group.');
+                                    }
+                                    return;
+                                }
+                                
+                                // Update owner info
+                                if (info.data && userId) {
+                                    setIsGroupOwner(info.data.owner_id === userId);
+                                }
+                            } catch (e: any) {
+                                console.error('[Friends] Background validation error:', e);
+                                // Only clear on 404, keep group for other errors
+                                if (e?.response?.status === 404) {
+                                    console.log('[Friends] Group not found (404), clearing storage');
+                                    await AppStorage.removeItem('friends_group');
+                                    if (!isMounted) return;
+                                    setGroup(null);
+                                    setShowGroupPrompt(true);
+                                    setPromptMode('choose');
+                                    if (!disbandAlertShown.current) {
+                                        disbandAlertShown.current = true;
+                                        Alert.alert('Group Disbanded', 'The group owner has disbanded this group.');
+                                    }
+                                }
+                            }
+                        })();
+                    } else {
+                        console.log('[Friends] No saved group found, showing prompt');
+                        if (!isMounted) return;
+                        setShowGroupPrompt(true);
+                        setPromptMode('choose');
+                        setIsInitialized(true);
+                    }
+                } catch (error) {
+                    console.error('[Friends] Error loading group data:', error);
+                    if (isMounted) {
+                        setShowGroupPrompt(true);
+                        setPromptMode('choose');
+                        setIsInitialized(true);
+                    }
+                }
+            };
+            
+            loadGroupData();
+            
+            // Hide navigation bar on Android when screen is focused
             if (Platform.OS === 'android') {
                 StatusBar.setHidden(true);
             }
+            
             return () => {
+                isMounted = false;
+                // Restore navigation bar on Android when leaving screen
                 if (Platform.OS === 'android') {
                     StatusBar.setHidden(false);
                 }
             };
         }, [])
     );
+
+    // Cleanup intervals on unmount
+    useEffect(() => {
+        return () => {
+            if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
+            if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
+        };
+    }, []);
 
     // Start polling when group and sharing are active
     useEffect(() => {
@@ -205,9 +240,24 @@ export default function FriendsScreen() {
             if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
             if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current);
 
-            // Initial fetch immediately
-            await updateMyLocationOnce();
-            await fetchMembersOnce();
+            // Try to get cached location first (instant)
+            try {
+                const lastKnown = await Location.getLastKnownPositionAsync();
+                if (lastKnown) {
+                    setCurrentPosition({ 
+                        lat: lastKnown.coords.latitude, 
+                        lng: lastKnown.coords.longitude 
+                    });
+                }
+            } catch (e) {
+                console.log('[Friends] No cached location available');
+            }
+
+            // Fetch members immediately (don't wait for location)
+            fetchMembersOnce();
+
+            // Get accurate location in background (don't await)
+            updateMyLocationOnce();
 
             // Then schedule intervals
             locationIntervalRef.current = setInterval(() => {
@@ -260,11 +310,15 @@ export default function FriendsScreen() {
                         setFriends([]);
                         setShowGroupPrompt(true);
                         setPromptMode('choose');
-                        Alert.alert('Group Disbanded', 'The group owner has disbanded this group.');
+                        if (!disbandAlertShown.current) {
+                            disbandAlertShown.current = true;
+                            Alert.alert('Group Disbanded', 'The group owner has disbanded this group.');
+                        }
                     }
                 }
             }
         } catch (error) {
+            console.error('[Friends] Error fetching members:', error);
             // If we get an error fetching members, the group might not exist
             if (group) {
                 try {
@@ -277,9 +331,14 @@ export default function FriendsScreen() {
                         setFriends([]);
                         setShowGroupPrompt(true);
                         setPromptMode('choose');
-                        Alert.alert('Group Disbanded', 'The group owner has disbanded this group.');
+                        if (!disbandAlertShown.current) {
+                            disbandAlertShown.current = true;
+                            Alert.alert('Group Disbanded', 'The group owner has disbanded this group.');
+                        }
                     }
-                } catch {}
+                } catch (validationError) {
+                    console.error('[Friends] Error validating group:', validationError);
+                }
             }
         }
     };
@@ -287,16 +346,24 @@ export default function FriendsScreen() {
     const handleCreateGroup = async () => {
         setLoadingGroupAction(true);
         try {
+            console.log('[Friends] Creating new group...');
             const resp = await FriendsAPI.createGroup();
             if (resp.data) {
                 const g = { group_id: resp.data.group_id, code: resp.data.code };
+                console.log('[Friends] Group created:', g);
                 await AppStorage.setItem('friends_group', g);
+                
+                // Verify the save
+                const verified = await AppStorage.getItem<GroupInfo>('friends_group');
+                console.log('[Friends] Verified saved group:', verified);
+                
                 setGroup(g);
                 setIsGroupOwner(true);
                 setCreatedGroupCode(resp.data.code);
                 setPromptMode('created');
             }
         } catch (error: any) {
+            console.error('[Friends] Error creating group:', error);
             Alert.alert('Error', error?.response?.data?.detail || 'Failed to create group');
         } finally {
             setLoadingGroupAction(false);
@@ -308,15 +375,23 @@ export default function FriendsScreen() {
         Keyboard.dismiss(); // Dismiss keyboard before processing
         setLoadingGroupAction(true);
         try {
+            console.log('[Friends] Joining group with code:', joinCode);
             const resp = await FriendsAPI.joinGroup(joinCode);
             if (resp.data) {
                 const g = { group_id: resp.data.group_id, code: resp.data.code };
+                console.log('[Friends] Joined group:', g);
                 await AppStorage.setItem('friends_group', g);
+                
+                // Verify the save
+                const verified = await AppStorage.getItem<GroupInfo>('friends_group');
+                console.log('[Friends] Verified saved group:', verified);
+                
                 setGroup(g);
                 setIsGroupOwner(false);
                 setShowGroupPrompt(false);
             }
         } catch (error: any) {
+            console.error('[Friends] Error joining group:', error);
             Alert.alert('Error', error?.response?.data?.detail || 'Failed to join group');
         } finally {
             setLoadingGroupAction(false);
