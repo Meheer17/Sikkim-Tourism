@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Colors } from '@/constants/theme';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import AdminBusinesses from './businesses';
 import AdminUsers from './users';
 
 export default function AdminManage() {
     const [tab, setTab] = useState<'businesses' | 'users'>('businesses');
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
 
     const tabs: { key: 'businesses' | 'users'; label: string }[] = [
         { key: 'businesses', label: 'Businesses' },
@@ -13,16 +18,24 @@ export default function AdminManage() {
     ];
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Manage</Text>
-                <Text style={styles.headerSub}>Review and manage entities from one place</Text>
+        <View style={[styles.container, { backgroundColor: background }]}>
+            <View style={[styles.header, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
+                <Text style={[styles.headerTitle, { color: text }]}>Manage</Text>
+                <Text style={[styles.headerSub, { color: muted }]}>Review and manage entities from one place</Text>
             </View>
 
-            <View style={styles.tabSwitch}>
+            <View style={[styles.tabSwitch, { backgroundColor: card }]}>
                 {tabs.map(t => (
-                    <TouchableOpacity key={t.key} style={[styles.switchBtn, tab === t.key && styles.switchBtnActive]} onPress={() => setTab(t.key)}>
-                        <Text style={[styles.switchText, tab === t.key && styles.switchTextActive]}>{t.label}</Text>
+                    <TouchableOpacity 
+                        key={t.key} 
+                        style={[
+                            styles.switchBtn,
+                            { backgroundColor: card, borderColor: muted + '40' },
+                            tab === t.key && [styles.switchBtnActive, { backgroundColor: tint + '15', borderColor: tint }]
+                        ]} 
+                        onPress={() => setTab(t.key)}
+                    >
+                        <Text style={[styles.switchText, { color: muted }, tab === t.key && [styles.switchTextActive, { color: tint }]]}>{t.label}</Text>
                     </TouchableOpacity>
                 ))}
             </View>
@@ -36,13 +49,13 @@ export default function AdminManage() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fa' },
-    header: { padding: 20, paddingTop: 60, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-    headerTitle: { fontSize: 28, fontWeight: '700', color: '#11181C' },
-    headerSub: { fontSize: 13, color: '#687076', marginTop: 4 },
-    tabSwitch: { flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#fff', gap: 8 },
-    switchBtn: { flex: 1, paddingVertical: 10, borderRadius: 999, borderWidth: 1, borderColor: '#e5e7eb', backgroundColor: '#fff', alignItems: 'center' },
-    switchBtnActive: { backgroundColor: '#e0f2fe', borderColor: '#38bdf8' },
-    switchText: { fontSize: 13, color: '#334155', fontWeight: '600' },
-    switchTextActive: { color: Colors.light.tint },
+    container: { flex: 1 },
+    header: { padding: 20, paddingTop: 60, borderBottomWidth: 1 },
+    headerTitle: { fontSize: 28, fontWeight: '700' },
+    headerSub: { fontSize: 13, marginTop: 4 },
+    tabSwitch: { flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
+    switchBtn: { flex: 1, paddingVertical: 10, borderRadius: 999, borderWidth: 1, alignItems: 'center' },
+    switchBtnActive: {},
+    switchText: { fontSize: 13, fontWeight: '600' },
+    switchTextActive: {},
 });

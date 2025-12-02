@@ -70,7 +70,14 @@ async def get_current_admin_user(
     from app.services.user_service import user_service
     
     user = await user_service.get_by_id(current_user_id)
-    if not user or user.role != "admin":
+    # Debug: print role for troubleshooting
+    try:
+        print(f"[DEBUG] Admin check for user_id={current_user_id}, role={getattr(user, 'role', None)}")
+    except Exception:
+        pass
+
+    role = (getattr(user, "role", None) or "").strip().lower()
+    if not user or role not in {"admin", "superadmin"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"

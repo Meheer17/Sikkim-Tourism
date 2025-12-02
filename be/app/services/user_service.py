@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from bson import ObjectId
 from fastapi import HTTPException, status
@@ -156,6 +156,32 @@ class UserService:
         
         result = await collection.delete_one({"_id": ObjectId(user_id)})
         return result.deleted_count > 0
+    
+    async def list(self, skip: int = 0, limit: int = 100) -> List[User]:
+        """List all users with pagination"""
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
+        collection = db.users
+        
+        cursor = collection.find().skip(skip).limit(limit).sort("created_at", -1)
+        users = await cursor.to_list(length=limit)
+        
+        return [
+            User(
+                id=str(user["_id"]),
+                name=user.get("name", ""),
+                address=user.get("address"),
+                gender=user.get("gender"),
+                email=user.get("email", ""),
+                role=user.get("role", "user"),
+                approved=user.get("approved", False),
+                last_synced_at=user.get("last_synced_at"),
+                created_at=user.get("created_at", datetime.utcnow()),
+                updated_at=user.get("updated_at", datetime.utcnow())
+            )
+            for user in users
+        ]
 
 
 user_service = UserService()

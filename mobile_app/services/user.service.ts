@@ -34,6 +34,10 @@ class UserService {
     const url = `${this.usersBase}${qs.toString() ? `?${qs.toString()}` : ''}`;
     return apiClient.get<User[]>(url);
   }
+
+  async updateRole(userId: string, role: string): Promise<ApiResponse<User>> {
+    return apiClient.put<User>(`/users/${userId}/role`, { role });
+  }
 }
 
 export const userService = new UserService();

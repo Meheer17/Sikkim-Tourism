@@ -184,8 +184,8 @@ export default function AdminUsersScreen() {
             </View>
 
             {/* Search and Filter */}
-            <View style={styles.searchContainer}>
-                <View style={[styles.searchBar, { backgroundColor: card }]}>
+            <View style={[styles.searchContainer, { backgroundColor: card }]}>
+                <View style={[styles.searchBar, { backgroundColor: background, borderColor: muted + '40' }]}>
                     <IconSymbol name="magnifyingglass" size={20} color={muted} />
                     <TextInput
                         style={[styles.searchInput, { color: text }]}
@@ -201,7 +201,7 @@ export default function AdminUsersScreen() {
                     )}
                 </View>
                 <TouchableOpacity
-                    style={styles.filterButton}
+                    style={[styles.filterButton, { backgroundColor: tint + '15' }]}
                     onPress={() => setShowFilters(!showFilters)}
                 >
                     <IconSymbol name="slider.horizontal.3" size={20} color={tint} />
@@ -210,10 +210,10 @@ export default function AdminUsersScreen() {
 
             {/* Filters */}
             {showFilters && (
-                <View style={styles.filtersContainer}>
+                <View style={[styles.filtersContainer, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
                     {/* Role Filter */}
                     <View style={styles.filterSection}>
-                        <Text style={styles.filterLabel}>Role</Text>
+                        <Text style={[styles.filterLabel, { color: text }]}>Role</Text>
                         <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -224,14 +224,14 @@ export default function AdminUsersScreen() {
                                     key={role}
                                     style={[
                                         styles.filterChip,
-                                        selectedRole === role && styles.filterChipActive,
+                                        { backgroundColor: selectedRole === role ? tint : background, borderColor: selectedRole === role ? tint : muted + '40' },
                                     ]}
                                     onPress={() => setSelectedRole(role)}
                                 >
                                     <Text
                                         style={[
                                             styles.filterChipText,
-                                            selectedRole === role && styles.filterChipTextActive,
+                                            { color: selectedRole === role ? '#fff' : muted },
                                         ]}
                                     >
                                         {role}
@@ -243,7 +243,7 @@ export default function AdminUsersScreen() {
 
                     {/* Status Filter */}
                     <View style={styles.filterSection}>
-                        <Text style={styles.filterLabel}>Status</Text>
+                        <Text style={[styles.filterLabel, { color: text }]}>Status</Text>
                         <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -254,14 +254,14 @@ export default function AdminUsersScreen() {
                                     key={status}
                                     style={[
                                         styles.filterChip,
-                                        selectedStatus === status && styles.filterChipActive,
+                                        { backgroundColor: selectedStatus === status ? tint : background, borderColor: selectedStatus === status ? tint : muted + '40' },
                                     ]}
                                     onPress={() => setSelectedStatus(status)}
                                 >
                                     <Text
                                         style={[
                                             styles.filterChipText,
-                                            selectedStatus === status && styles.filterChipTextActive,
+                                            { color: selectedStatus === status ? '#fff' : muted },
                                         ]}
                                     >
                                         {status}
@@ -280,13 +280,16 @@ export default function AdminUsersScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {loading && (
-                    <View style={styles.emptyState}>\n                        <Text style={styles.emptySubtitle}>Loading users...</Text>\n                    </View>
+                    <View style={styles.emptyState}>
+                        <Text style={[styles.emptySubtitle, { color: muted }]}>Loading users...</Text>
+                    </View>
                 )}
                 {!loading && filteredUsers.length > 0 ? (
-                    filteredUsers.map((user) => (
-                        <TouchableOpacity
-                            key={user.id}
-                            style={styles.userCard}
+                    <>
+                        {filteredUsers.map((user) => (
+                            <TouchableOpacity
+                                key={user.id}
+                            style={[styles.userCard, { backgroundColor: card, borderColor: muted + '20' }]}
                             onPress={() => handleUserPress(user)}
                             activeOpacity={0.7}
                         >
@@ -297,10 +300,10 @@ export default function AdminUsersScreen() {
                                     </Text>
                                 </View>
                                 <View style={styles.userInfo}>
-                                    <Text style={styles.userName}>
+                                    <Text style={[styles.userName, { color: text }]}>
                                         {user.firstName} {user.lastName}
                                     </Text>
-                                    <Text style={styles.userEmail}>{user.email}</Text>
+                                    <Text style={[styles.userEmail, { color: muted }]}>{user.email}</Text>
                                 </View>
                                 <View style={styles.badges}>
                                     <View
@@ -323,28 +326,28 @@ export default function AdminUsersScreen() {
                                         size={8}
                                         color={getStatusColor(user.status)}
                                     />
-                                    <Text style={styles.metaText}>
+                                    <Text style={[styles.metaText, { color: muted }]}>
                                         {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                                     </Text>
                                 </View>
                                 <View style={styles.metaItem}>
-                                    <IconSymbol name="calendar" size={14} color="#687076" />
-                                    <Text style={styles.metaText}>
+                                    <IconSymbol name="calendar" size={14} color={muted} />
+                                    <Text style={[styles.metaText, { color: muted }]}>
                                         Joined {formatDate(user.joinedDate)}
                                     </Text>
                                 </View>
                             </View>
 
-                            <View style={styles.userStats}>
+                            <View style={[styles.userStats, { borderColor: muted + '20' }]}>
                                 <View style={styles.statItem}>
-                                    <IconSymbol name="ticket.fill" size={16} color="#687076" />
-                                    <Text style={styles.statValue}>{user.totalBookings}</Text>
-                                    <Text style={styles.statLabel}>Bookings</Text>
+                                    <IconSymbol name="ticket.fill" size={16} color={muted} />
+                                    <Text style={[styles.statValue, { color: text }]}>{user.totalBookings}</Text>
+                                    <Text style={[styles.statLabel, { color: muted }]}>Bookings</Text>
                                 </View>
                                 <View style={styles.statItem}>
-                                    <IconSymbol name="indianrupeesign.circle.fill" size={16} color="#687076" />
-                                    <Text style={styles.statValue}>₹{(user.totalSpent || 1000 / 1000).toFixed(1)}k</Text>
-                                    <Text style={styles.statLabel}>Spent</Text>
+                                    <IconSymbol name="indianrupeesign.circle.fill" size={16} color={muted} />
+                                    <Text style={[styles.statValue, { color: text }]}>₹{(user.totalSpent || 1000 / 1000).toFixed(1)}k</Text>
+                                    <Text style={[styles.statLabel, { color: muted }]}>Spent</Text>
                                 </View>
                                 <View style={styles.statItem}>
                                     <IconSymbol
@@ -400,12 +403,13 @@ export default function AdminUsersScreen() {
                                 )}
                             </View>
                         </TouchableOpacity>
-                    ))
+                    ))}
+                    </>
                 ) : (!loading && (
                     <View style={styles.emptyState}>
-                        <IconSymbol name="person.2.fill" size={64} color="#d1d5db" />
-                        <Text style={styles.emptyTitle}>No users found</Text>
-                        <Text style={styles.emptySubtitle}>
+                        <IconSymbol name="person.2.fill" size={64} color={muted} />
+                        <Text style={[styles.emptyTitle, { color: text }]}>No users found</Text>
+                        <Text style={[styles.emptySubtitle, { color: muted }]}>
                             Try adjusting your search or filters
                         </Text>
                     </View>
@@ -418,40 +422,34 @@ export default function AdminUsersScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 20,
-        paddingTop: 60,
-        backgroundColor: '#fff',
+        paddingTop: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
     },
     headerTitle: {
         fontSize: 28,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
     },
     headerSubtitle: {
         fontSize: 14,
-        color: '#687076',
     },
     searchContainer: {
         flexDirection: 'row',
         padding: 16,
         gap: 12,
-        backgroundColor: '#fff',
     },
     searchBar: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f3f4f6',
         borderRadius: 12,
+        borderWidth: 1,
         paddingHorizontal: 12,
         paddingVertical: 10,
         gap: 8,
@@ -459,22 +457,18 @@ const styles = StyleSheet.create({
     searchInput: {
         flex: 1,
         fontSize: 16,
-        color: '#11181C',
     },
     filterButton: {
         width: 44,
         height: 44,
         borderRadius: 12,
-        backgroundColor: '#e8f4f8',
         justifyContent: 'center',
         alignItems: 'center',
     },
     filtersContainer: {
-        backgroundColor: '#fff',
         paddingHorizontal: 16,
         paddingBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
     },
     filterSection: {
         marginBottom: 12,
@@ -482,7 +476,6 @@ const styles = StyleSheet.create({
     filterLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#11181C',
         marginBottom: 8,
     },
     filterChips: {
@@ -492,21 +485,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: '#f3f4f6',
         borderWidth: 1,
-        borderColor: '#e5e7eb',
-    },
-    filterChipActive: {
-        backgroundColor: '#0a7ea4',
-        borderColor: '#0a7ea4',
     },
     filterChipText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#687076',
-    },
-    filterChipTextActive: {
-        color: '#fff',
     },
     scrollView: {
         flex: 1,
@@ -516,8 +499,8 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     },
     userCard: {
-        backgroundColor: '#fff',
         borderRadius: 16,
+        borderWidth: 1,
         padding: 16,
         marginBottom: 12,
         elevation: 2,
@@ -551,12 +534,10 @@ const styles = StyleSheet.create({
     userName: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 2,
     },
     userEmail: {
         fontSize: 13,
-        color: '#687076',
     },
     badges: {
         gap: 4,
@@ -582,7 +563,6 @@ const styles = StyleSheet.create({
     },
     metaText: {
         fontSize: 13,
-        color: '#687076',
     },
     userStats: {
         flexDirection: 'row',
@@ -590,7 +570,6 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderTopWidth: 1,
         borderBottomWidth: 1,
-        borderColor: '#f3f4f6',
         marginBottom: 12,
     },
     statItem: {
@@ -600,11 +579,9 @@ const styles = StyleSheet.create({
     statValue: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#11181C',
     },
     statLabel: {
         fontSize: 11,
-        color: '#687076',
     },
     userActions: {
         flexDirection: 'row',
@@ -647,13 +624,11 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#11181C',
         marginTop: 16,
         marginBottom: 8,
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#687076',
         textAlign: 'center',
     },
 });

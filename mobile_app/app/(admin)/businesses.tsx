@@ -179,8 +179,8 @@ export default function AdminBusinessesScreen() {
             </View>
 
             {/* Search and Filter */}
-            <View style={styles.searchContainer}>
-                <View style={[styles.searchBar, { backgroundColor: card }]}>
+            <View style={[styles.searchContainer, { backgroundColor: card }]}>
+                <View style={[styles.searchBar, { backgroundColor: background, borderColor: muted + '40' }]}>
                     <IconSymbol name="magnifyingglass" size={20} color={muted} />
                     <TextInput
                         style={[styles.searchInput, { color: text }]}
@@ -196,7 +196,7 @@ export default function AdminBusinessesScreen() {
                     )}
                 </View>
                 <TouchableOpacity
-                    style={styles.filterButton}
+                    style={[styles.filterButton, { backgroundColor: tint + '15' }]}
                     onPress={() => setShowFilters(!showFilters)}
                 >
                     <IconSymbol name="slider.horizontal.3" size={20} color={tint} />
@@ -205,7 +205,7 @@ export default function AdminBusinessesScreen() {
 
             {/* Filters */}
             {showFilters && (
-                <View style={[styles.filtersContainer, { backgroundColor: card }]}>
+                <View style={[styles.filtersContainer, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
                     {/* Category Filter */}
                     <View style={styles.filterSection}>
                         <Text style={[styles.filterLabel, { color: text }]}>Category</Text>
@@ -219,14 +219,14 @@ export default function AdminBusinessesScreen() {
                                     key={category}
                                     style={[
                                         styles.filterChip,
-                                        selectedCategory === category && [styles.filterChipActive, { backgroundColor: tint }],
+                                        { backgroundColor: selectedCategory === category ? tint : background, borderColor: selectedCategory === category ? tint : muted + '40' },
                                     ]}
                                     onPress={() => setSelectedCategory(category)}
                                 >
                                     <Text
                                         style={[
                                             styles.filterChipText,
-                                            selectedCategory === category && styles.filterChipTextActive,
+                                            { color: selectedCategory === category ? '#fff' : muted },
                                         ]}
                                     >
                                         {category}
@@ -249,14 +249,14 @@ export default function AdminBusinessesScreen() {
                                     key={status}
                                     style={[
                                         styles.filterChip,
-                                        selectedStatus === status && [styles.filterChipActive, { backgroundColor: tint }],
+                                        { backgroundColor: selectedStatus === status ? tint : background, borderColor: selectedStatus === status ? tint : muted + '40' },
                                     ]}
                                     onPress={() => setSelectedStatus(status)}
                                 >
                                     <Text
                                         style={[
                                             styles.filterChipText,
-                                            selectedStatus === status && styles.filterChipTextActive,
+                                            { color: selectedStatus === status ? '#fff' : muted },
                                         ]}
                                     >
                                         {status}
@@ -283,12 +283,12 @@ export default function AdminBusinessesScreen() {
                     filteredBusinesses.map((business) => (
                         <TouchableOpacity
                             key={business.id}
-                            style={[styles.businessCard, { backgroundColor: card }]}
+                            style={[styles.businessCard, { backgroundColor: card, borderColor: muted + '20' }]}
                             onPress={() => handleBusinessPress(business)}
                             activeOpacity={0.7}
                         >
                             <View style={styles.businessHeader}>
-                                <View style={styles.businessIconContainer}>
+                                <View style={[styles.businessIconContainer, { backgroundColor: tint + '15' }]}>
                                     <IconSymbol
                                         name={(business.icon as any) || 'star.fill'}
                                         size={24}
@@ -330,8 +330,8 @@ export default function AdminBusinessesScreen() {
                                 </View>
                             </View>
 
-                            <View style={styles.businessFooter}>
-                                <Text style={[styles.businessPrice, { color: text }]}>₹{business.price}</Text>
+                            <View style={[styles.businessFooter, { borderTopColor: muted + '20' }]}>
+                                <Text style={[styles.businessPrice, { color: tint }]}>₹{business.price}</Text>
                                 <View style={styles.businessActions}>
                                     {business.status === 'pending' && (
                                         <>
@@ -398,9 +398,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 20,
-        paddingTop: 60,
+        paddingTop: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
     },
     headerTitle: {
         fontSize: 28,
@@ -408,6 +407,7 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     headerSubtitle: {
+        fontSize: 14,
     },
     addButton: {
         width: 44,
@@ -421,14 +421,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         padding: 16,
         gap: 12,
-        backgroundColor: '#fff',
     },
     searchBar: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f3f4f6',
         borderRadius: 12,
+        borderWidth: 1,
         paddingHorizontal: 12,
         paddingVertical: 10,
         gap: 8,
@@ -436,22 +435,18 @@ const styles = StyleSheet.create({
     searchInput: {
         flex: 1,
         fontSize: 16,
-        color: '#11181C',
     },
     filterButton: {
         width: 44,
         height: 44,
         borderRadius: 12,
-        backgroundColor: '#e8f4f8',
         justifyContent: 'center',
         alignItems: 'center',
     },
     filtersContainer: {
-        backgroundColor: '#fff',
         paddingHorizontal: 16,
         paddingBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
     },
     filterSection: {
         marginBottom: 12,
@@ -459,7 +454,6 @@ const styles = StyleSheet.create({
     filterLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#11181C',
         marginBottom: 8,
     },
     filterChips: {
@@ -469,21 +463,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: '#f3f4f6',
         borderWidth: 1,
-        borderColor: '#e5e7eb',
-    },
-    filterChipActive: {
-        backgroundColor: '#0a7ea4',
-        borderColor: '#0a7ea4',
     },
     filterChipText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#687076',
-    },
-    filterChipTextActive: {
-        color: '#fff',
     },
     scrollView: {
         flex: 1,
@@ -494,6 +478,7 @@ const styles = StyleSheet.create({
     },
     businessCard: {
         borderRadius: 16,
+        borderWidth: 1,
         padding: 16,
         marginBottom: 12,
         elevation: 2,
@@ -511,7 +496,6 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#e8f4f8',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
@@ -560,12 +544,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingTop: 12,
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6',
     },
     businessPrice: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#0a7ea4',
     },
     businessActions: {
         flexDirection: 'row',

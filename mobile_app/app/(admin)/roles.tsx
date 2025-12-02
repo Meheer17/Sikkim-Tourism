@@ -81,7 +81,7 @@ export default function AdminRolesScreen() {
             const mappedUsers: AdminUser[] = backendUsers.map((u: any) => {
                 const [firstName = '', lastName = ''] = (u.name || '').split(' ');
                 return {
-                    id: u._id,
+                    id: u.id || u._id,  // Try both id and _id fields
                     email: u.email,
                     firstName: firstName,
                     lastName: lastName,
@@ -127,11 +127,16 @@ export default function AdminRolesScreen() {
         setShowRoleModal(true);
     };
 
-    const handleRoleChange = () => {
+    const handleRoleChange = async () => {
         if (!selectedUser || !selectedRole) return;
 
         if (selectedRole === selectedUser.role) {
             Alert.alert('No Change', 'The selected role is the same as the current role');
+            return;
+        }
+
+        if (!selectedUser.id) {
+            Alert.alert('Error', 'User ID is missing. Please refresh and try again.');
             return;
         }
 
@@ -142,16 +147,32 @@ export default function AdminRolesScreen() {
                 { text: 'Cancel', style: 'cancel' },
                 {
                     text: 'Confirm',
-                    onPress: () => {
-                        // TODO: API call to change role
-                        setUsers(prev =>
-                            prev.map(u =>
-                                u.id === selectedUser.id ? { ...u, role: selectedRole } : u
-                            )
-                        );
-                        setShowRoleModal(false);
-                        setSelectedUser(null);
-                        Alert.alert('Success', 'Role updated successfully');
+                    onPress: async () => {
+                        try {
+                            setLoading(true);
+                            console.log('Updating role for user:', selectedUser.id, 'to:', selectedRole);
+                            await userService.updateRole(selectedUser.id, selectedRole);
+                            
+                            // Update local state only after successful API call
+                            setUsers(prev =>
+                                prev.map(u =>
+                                    u.id === selectedUser.id ? { ...u, role: selectedRole } : u
+                                )
+                            );
+                            setFilteredUsers(prev =>
+                                prev.map(u =>
+                                    u.id === selectedUser.id ? { ...u, role: selectedRole } : u
+                                )
+                            );
+                            setShowRoleModal(false);
+                            setSelectedUser(null);
+                            Alert.alert('Success', 'Role updated successfully');
+                        } catch (error) {
+                            console.error('Failed to update role:', error);
+                            Alert.alert('Error', 'Failed to update user role. Please try again.');
+                        } finally {
+                            setLoading(false);
+                        }
                     },
                 },
             ]
@@ -169,41 +190,41 @@ export default function AdminRolesScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
                 <View>
-                    <Text style={styles.headerTitle}>Role Management</Text>
-                    <Text style={styles.headerSubtitle}>
+                    <Text style={[styles.headerTitle, { color: text }]}>Role Management</Text>
+                    <Text style={[styles.headerSubtitle, { color: muted }]}>
                         Assign and manage user roles
                     </Text>
                 </View>
             </View>
 
             {/* Info Card */}
-            <View style={styles.infoCard}>
-                <IconSymbol name="info.circle.fill" size={24} color="#3b82f6" />
+            <View style={[styles.infoCard, { backgroundColor: tint + '15', borderColor: tint + '30' }]}>
+                <IconSymbol name="info.circle.fill" size={24} color={tint} />
                 <View style={styles.infoContent}>
-                    <Text style={styles.infoTitle}>About Roles</Text>
-                    <Text style={styles.infoText}>
+                    <Text style={[styles.infoTitle, { color: tint }]}>About Roles</Text>
+                    <Text style={[styles.infoText, { color: tint }]}>
                         Roles determine user permissions and access levels. Choose carefully as this affects what users can do.
                     </Text>
                 </View>
             </View>
 
             {/* Search Bar */}
-            <View style={styles.searchContainer}>
-                <IconSymbol name="magnifyingglass" size={20} color="#687076" />
+            <View style={[styles.searchContainer, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
+                <IconSymbol name="magnifyingglass" size={20} color={muted} />
                 <TextInput
-                    style={styles.searchInput}
+                    style={[styles.searchInput, { color: text }]}
                     placeholder="Search users..."
-                    placeholderTextColor="#687076"
+                    placeholderTextColor={muted}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                 />
                 {searchQuery.length > 0 && (
                     <TouchableOpacity onPress={() => setSearchQuery('')}>
-                        <IconSymbol name="xmark.circle.fill" size={20} color="#687076" />
+                        <IconSymbol name="xmark.circle.fill" size={20} color={muted} />
                     </TouchableOpacity>
                 )}
             </View>
@@ -222,7 +243,7 @@ export default function AdminRolesScreen() {
                     filteredUsers.map((user) => (
                         <TouchableOpacity
                             key={user.id}
-                            style={styles.userCard}
+                            style={[styles.userCard, { backgroundColor: card, borderColor: muted + '40' }]}
                             onPress={() => handleUserPress(user)}
                             activeOpacity={0.7}
                         >
@@ -233,10 +254,10 @@ export default function AdminRolesScreen() {
                                     </Text>
                                 </View>
                                 <View style={styles.userInfo}>
-                                    <Text style={styles.userName}>
+                                    <Text style={[styles.userName, { color: text }]}>
                                         {user.firstName} {user.lastName}
                                     </Text>
-                                    <Text style={styles.userEmail}>{user.email}</Text>
+                                    <Text style={[styles.userEmail, { color: muted }]}>{user.email}</Text>
                                 </View>
                                 <View
                                     style={[
@@ -250,17 +271,17 @@ export default function AdminRolesScreen() {
                                 </View>
                             </View>
 
-                            <View style={styles.userFooter}>
-                                <Text style={styles.changeRoleText}>Tap to change role</Text>
-                                <IconSymbol name="chevron.right" size={16} color="#687076" />
+                            <View style={[styles.userFooter, { borderTopColor: muted + '20' }]}>
+                                <Text style={[styles.changeRoleText, { color: muted }]}>Tap to change role</Text>
+                                <IconSymbol name="chevron.right" size={16} color={muted} />
                             </View>
                         </TouchableOpacity>
                     ))
                 ) : (
                     <View style={styles.emptyState}>
-                        <IconSymbol name="person.2.fill" size={64} color="#d1d5db" />
-                        <Text style={styles.emptyTitle}>No users found</Text>
-                        <Text style={styles.emptySubtitle}>
+                        <IconSymbol name="person.2.fill" size={64} color={muted} />
+                        <Text style={[styles.emptyTitle, { color: text }]}>No users found</Text>
+                        <Text style={[styles.emptySubtitle, { color: muted }]}>
                             Try adjusting your search
                         </Text>
                     </View>
@@ -275,38 +296,39 @@ export default function AdminRolesScreen() {
                 onRequestClose={() => setShowRoleModal(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
+                    <View style={[styles.modalContent, { backgroundColor: card }]}>
                         {/* Modal Header */}
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Change Role</Text>
+                        <View style={[styles.modalHeader, { borderBottomColor: muted + '40' }]}>
+                            <Text style={[styles.modalTitle, { color: text }]}>Change Role</Text>
                             <TouchableOpacity
                                 onPress={() => setShowRoleModal(false)}
                                 style={styles.closeButton}
                             >
-                                <IconSymbol name="xmark" size={24} color="#687076" />
+                                <IconSymbol name="xmark" size={24} color={muted} />
                             </TouchableOpacity>
                         </View>
 
+                        <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={true}>
                         {selectedUser && (
                             <>
                                 {/* User Info */}
-                                <View style={styles.modalUserInfo}>
+                                <View style={[styles.modalUserInfo, { backgroundColor: background }]}>
                                     <View style={styles.modalUserAvatar}>
                                         <Text style={styles.modalAvatarText}>
                                             {selectedUser.firstName.charAt(0)}{selectedUser.lastName.charAt(0)}
                                         </Text>
                                     </View>
                                     <View>
-                                        <Text style={styles.modalUserName}>
+                                        <Text style={[styles.modalUserName, { color: text }]}>
                                             {selectedUser.firstName} {selectedUser.lastName}
                                         </Text>
-                                        <Text style={styles.modalUserEmail}>{selectedUser.email}</Text>
+                                        <Text style={[styles.modalUserEmail, { color: muted }]}>{selectedUser.email}</Text>
                                     </View>
                                 </View>
 
                                 {/* Current Role */}
                                 <View style={styles.currentRoleSection}>
-                                    <Text style={styles.sectionLabel}>Current Role</Text>
+                                    <Text style={[styles.sectionLabel, { color: muted }]}>Current Role</Text>
                                     <View
                                         style={[
                                             styles.currentRoleBadge,
@@ -321,19 +343,17 @@ export default function AdminRolesScreen() {
 
                                 {/* Role Options */}
                                 <View style={styles.roleOptionsSection}>
-                                    <Text style={styles.sectionLabel}>Select New Role</Text>
-                                    <ScrollView
-                                        style={styles.roleOptions}
-                                        showsVerticalScrollIndicator={false}
-                                    >
+                                    <Text style={[styles.sectionLabel, { color: muted }]}>Select New Role</Text>
+                                    <View style={styles.roleOptions}>
                                         {ROLE_OPTIONS.map((option) => (
                                             <TouchableOpacity
                                                 key={option.role}
                                                 style={[
                                                     styles.roleOption,
+                                                    { backgroundColor: card },
                                                     selectedRole === option.role && styles.roleOptionSelected,
                                                     {
-                                                        borderColor: selectedRole === option.role ? option.color : '#e5e7eb',
+                                                        borderColor: selectedRole === option.role ? option.color : muted + '40',
                                                     },
                                                 ]}
                                                 onPress={() => setSelectedRole(option.role)}
@@ -351,8 +371,8 @@ export default function AdminRolesScreen() {
                                                     />
                                                 </View>
                                                 <View style={styles.roleOptionInfo}>
-                                                    <Text style={styles.roleOptionTitle}>{option.title}</Text>
-                                                    <Text style={styles.roleOptionDescription}>
+                                                    <Text style={[styles.roleOptionTitle, { color: text }]}>{option.title}</Text>
+                                                    <Text style={[styles.roleOptionDescription, { color: muted }]}>
                                                         {option.description}
                                                     </Text>
                                                 </View>
@@ -361,16 +381,16 @@ export default function AdminRolesScreen() {
                                                 )}
                                             </TouchableOpacity>
                                         ))}
-                                    </ScrollView>
+                                    </View>
                                 </View>
 
                                 {/* Reason Input */}
                                 <View style={styles.reasonSection}>
-                                    <Text style={styles.sectionLabel}>Reason (Optional)</Text>
+                                    <Text style={[styles.sectionLabel, { color: muted }]}>Reason (Optional)</Text>
                                     <TextInput
-                                        style={styles.reasonInput}
+                                        style={[styles.reasonInput, { backgroundColor: background, color: text, borderColor: muted + '40' }]}
                                         placeholder="Why are you changing this user's role?"
-                                        placeholderTextColor="#9ca3af"
+                                        placeholderTextColor={muted}
                                         value={reason}
                                         onChangeText={setReason}
                                         multiline
@@ -380,12 +400,12 @@ export default function AdminRolesScreen() {
                                 </View>
 
                                 {/* Action Buttons */}
-                                <View style={styles.modalActions}>
+                                <View style={[styles.modalActions, { backgroundColor: card }]}>
                                     <TouchableOpacity
-                                        style={styles.cancelButton}
+                                        style={[styles.cancelButton, { backgroundColor: background }]}
                                         onPress={() => setShowRoleModal(false)}
                                     >
-                                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                                        <Text style={[styles.cancelButtonText, { color: muted }]}>Cancel</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={[
@@ -400,6 +420,7 @@ export default function AdminRolesScreen() {
                                 </View>
                             </>
                         )}
+                        </ScrollView>
                     </View>
                 </View>
             </Modal>
@@ -481,7 +502,6 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     },
     userCard: {
-        backgroundColor: '#fff',
         borderRadius: 12,
         padding: 16,
         marginBottom: 12,
@@ -490,6 +510,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 8,
+        borderWidth: 1,
     },
     userHeader: {
         flexDirection: 'row',
@@ -516,12 +537,10 @@ const styles = StyleSheet.create({
     userName: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 2,
     },
     userEmail: {
         fontSize: 13,
-        color: '#687076',
     },
     roleBadge: {
         paddingHorizontal: 12,
@@ -568,11 +587,13 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: '#fff',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-        paddingBottom: 40,
         maxHeight: '90%',
+        flex: 1,
+    },
+    modalScrollView: {
+        flex: 1,
     },
     modalHeader: {
         flexDirection: 'row',
@@ -580,12 +601,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#f3f4f6',
     },
     modalTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#11181C',
     },
     closeButton: {
         width: 32,
@@ -597,7 +616,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 20,
-        backgroundColor: '#f8f9fa',
     },
     modalUserAvatar: {
         width: 56,
@@ -616,12 +634,10 @@ const styles = StyleSheet.create({
     modalUserName: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
     },
     modalUserEmail: {
         fontSize: 14,
-        color: '#687076',
     },
     currentRoleSection: {
         padding: 20,
@@ -630,7 +646,6 @@ const styles = StyleSheet.create({
     sectionLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#687076',
         marginBottom: 12,
     },
     currentRoleBadge: {
@@ -644,12 +659,11 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     roleOptionsSection: {
-        padding: 20,
+        paddingHorizontal: 20,
         paddingTop: 12,
-        flex: 1,
+        paddingBottom: 12,
     },
     roleOptions: {
-        flex: 1,
     },
     roleOption: {
         flexDirection: 'row',
@@ -657,12 +671,9 @@ const styles = StyleSheet.create({
         padding: 16,
         borderRadius: 12,
         borderWidth: 2,
-        borderColor: '#e5e7eb',
         marginBottom: 12,
-        backgroundColor: '#fff',
     },
     roleOptionSelected: {
-        backgroundColor: '#f8f9fa',
     },
     roleIcon: {
         width: 48,
@@ -678,12 +689,10 @@ const styles = StyleSheet.create({
     roleOptionTitle: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
     },
     roleOptionDescription: {
         fontSize: 13,
-        color: '#687076',
         lineHeight: 18,
     },
     reasonSection: {
@@ -691,31 +700,28 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     reasonInput: {
-        backgroundColor: '#f8f9fa',
         borderRadius: 12,
         padding: 12,
         fontSize: 14,
-        color: '#11181C',
         minHeight: 80,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
     },
     modalActions: {
         flexDirection: 'row',
         gap: 12,
         paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 40,
     },
     cancelButton: {
         flex: 1,
         paddingVertical: 14,
         borderRadius: 12,
-        backgroundColor: '#f3f4f6',
         alignItems: 'center',
     },
     cancelButtonText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#687076',
     },
     confirmButton: {
         flex: 1,
