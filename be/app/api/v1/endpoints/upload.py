@@ -1,20 +1,11 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, status, HTTPException, Query, Body
-from enum import Enum
+from fastapi import APIRouter, Depends, UploadFile, File, Form, status, HTTPException
 from typing import Optional
 from pydantic import BaseModel
 
 from app.core.security import get_current_user_id
 from app.services.upload_service import upload_service
-from app.models.file import File as FileModel
 
 router = APIRouter()
-
-
-class UploadType(str, Enum):
-    glb = "glb"
-    image = "image"
-    audio = "audio"
-    video = "video"
 
 
 class UploadFromUrlRequest(BaseModel):
@@ -22,38 +13,52 @@ class UploadFromUrlRequest(BaseModel):
     location_id: Optional[str] = None
 
 
-@router.post("/image", status_code=status.HTTP_201_CREATED)
-async def upload_image_to_cdn(
-    file: UploadFile = File(..., description="Image file to upload"),
-    location_id: Optional[str] = Form(None, description="Optional location ID to associate with the image"),
+@router.post("", status_code=status.HTTP_201_CREATED)
+async def upload_file(
+    file: UploadFile = File(..., description="File to upload (image, video, or 3D model)"),
+    location_id: Optional[str] = Form(None, description="Optional location ID to associate with the file"),
     current_user_id: str = Depends(get_current_user_id)
 ):
     """
-    Upload an image to the CDN.
+    Upload a file to the CDN with automatic compression for images and videos.
     
-    - **file**: Image file to upload (jpg, png, gif, etc.)
-    - **location_id**: Optional - If provided, saves the image metadata to database
+    - **file**: File to upload (supports images, videos, and 3D models)
+    - **location_id**: Optional - If provided, saves the file metadata to database
     - Returns the CDN URL and upload details
-    """
-    result = await upload_service.upload_image(
-        file=file,
-        location_id=location_id,
-        user_id=current_user_id
-    )
-    return result
-
-
-@router.post("/image/public", status_code=status.HTTP_201_CREATED)
-async def upload_image_public(
-    file: UploadFile = File(..., description="Image file to upload")
-):
-    """
-    Upload an image to the CDN without authentication.
     
-    - **file**: Image file to upload (jpg, png, gif, etc.)
-    - Returns the CDN URL and upload details
+    Supported formats:
+    - Images: jpg, png, gif, webp (auto-compressed)
+    - Videos: mp4, mov, avi, webm (auto-compressed)
+    - Models: glb, gltf
     """
-    result = await upload_service.upload_image(file=file)
+    content_type = file.content_type or ""
+    
+    # Route to appropriate upload handler based on content type
+    if content_type.startswith('image/'):
+        result = await upload_service.upload_image(
+            file=file,
+            location_id=location_id,
+            user_id=current_user_id
+        )
+    elif content_type.startswith('video/'):
+        result = await upload_service.upload_video(
+            file=file,
+            location_id=location_id,
+            user_id=current_user_id
+        )
+    elif content_type in ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream'] or \
+         file.filename.endswith(('.glb', '.gltf')):
+        result = await upload_service.upload_model(
+            file=file,
+            location_id=location_id,
+            user_id=current_user_id
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported file type: {content_type}. Supported: images, videos, 3D models"
+        )
+    
     return result
 
 
@@ -63,121 +68,36 @@ async def upload_from_url(
     current_user_id: str = Depends(get_current_user_id)
 ):
     """
-    Upload a file from URL to the CDN.
+    Upload a file from URL to the CDN with automatic compression.
     
-    - **url**: URL of the file to upload (image, video, etc.)
+    - **url**: URL of the file to upload (image, video, or 3D model)
     - **location_id**: Optional - If provided, saves the file metadata to database
     - Returns the CDN URL and upload details
-    """
-    result = await upload_service.upload_from_url(
-        url=request.url,
-        location_id=request.location_id,
-        user_id=current_user_id
-    )
-    return result
-
-
-@router.post("/from-url/public", status_code=status.HTTP_201_CREATED)
-async def upload_from_url_public(
-    request: UploadFromUrlRequest
-):
-    """
-    Upload a file from URL to the CDN without authentication.
     
-    - **url**: URL of the file to upload (image, video, etc.)
-    - Returns the CDN URL and upload details
+    The file type is auto-detected from the URL/content type.
+    Images and videos are automatically compressed.
     """
-    result = await upload_service.upload_from_url(url=request.url)
-    return result
-
-
-@router.post("/model", status_code=status.HTTP_201_CREATED)
-async def upload_model_to_cdn(
-    file: UploadFile = File(..., description="3D model file to upload (.glb, .gltf)"),
-    location_id: Optional[str] = Form(None, description="Optional location ID to associate with the model"),
-    current_user_id: str = Depends(get_current_user_id)
-):
-    """
-    Upload a 3D model to the CDN.
+    # Try to detect file type from URL
+    url_lower = request.url.lower()
     
-    - **file**: 3D model file to upload (.glb, .gltf)
-    - **location_id**: Optional - If provided, saves the model metadata to database
-    - Returns the CDN URL and upload details
-    """
-    result = await upload_service.upload_model(
-        file=file,
-        location_id=location_id,
-        user_id=current_user_id
-    )
-    return result
-
-
-@router.post("/model/public", status_code=status.HTTP_201_CREATED)
-async def upload_model_public(
-    file: UploadFile = File(..., description="3D model file to upload (.glb, .gltf)")
-):
-    """
-    Upload a 3D model to the CDN without authentication.
+    if url_lower.endswith(('.glb', '.gltf')):
+        result = await upload_service.upload_model_from_url(
+            url=request.url,
+            location_id=request.location_id,
+            user_id=current_user_id
+        )
+    elif url_lower.endswith(('.mp4', '.mov', '.avi', '.webm', '.mkv')):
+        result = await upload_service.upload_video_from_url(
+            url=request.url,
+            location_id=request.location_id,
+            user_id=current_user_id
+        )
+    else:
+        # Default to image/general file upload
+        result = await upload_service.upload_from_url(
+            url=request.url,
+            location_id=request.location_id,
+            user_id=current_user_id
+        )
     
-    - **file**: 3D model file to upload (.glb, .gltf)
-    - Returns the CDN URL and upload details
-    """
-    result = await upload_service.upload_model(file=file)
-    return result
-
-
-@router.post("/model/from-url", status_code=status.HTTP_201_CREATED)
-async def upload_model_from_url(
-    request: UploadFromUrlRequest,
-    current_user_id: str = Depends(get_current_user_id)
-):
-    """
-    Upload a 3D model from URL to the CDN.
-    
-    - **url**: URL of the 3D model file to upload (.glb, .gltf)
-    - **location_id**: Optional - If provided, saves the model metadata to database
-    - Returns the CDN URL and upload details
-    """
-    result = await upload_service.upload_model_from_url(
-        url=request.url,
-        location_id=request.location_id,
-        user_id=current_user_id
-    )
-    return result
-
-
-@router.post("/model/from-url/public", status_code=status.HTTP_201_CREATED)
-async def upload_model_from_url_public(
-    request: UploadFromUrlRequest
-):
-    """
-    Upload a 3D model from URL to the CDN without authentication.
-    
-    - **url**: URL of the 3D model file to upload (.glb, .gltf)
-    - Returns the CDN URL and upload details
-    """
-    result = await upload_service.upload_model_from_url(url=request.url)
-    return result
-
-
-@router.post("/{type}", response_model=FileModel, status_code=status.HTTP_201_CREATED)
-async def upload_file(
-    type: UploadType,
-    file: UploadFile = File(...),
-    name: str = Form(..., max_length=512),
-    message_id: str = Form(...),
-    size: int = Form(..., gt=0),
-    metadata: str = Form(...),  # JSON string
-    current_user_id: str = Depends(get_current_user_id)
-):
-    """Upload file ('glb' | 'image' | 'audio' | 'video'); creates FILES record"""
-    result = await upload_service.process_upload(
-        file=file,
-        upload_type=type.value,
-        name=name,
-        message_id=message_id,
-        size=size,
-        metadata=metadata,
-        user_id=current_user_id
-    )
     return result

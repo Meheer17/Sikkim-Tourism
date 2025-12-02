@@ -3,6 +3,11 @@ from bson import ObjectId
 from fastapi import UploadFile, HTTPException, status
 import httpx
 from typing import Optional
+from PIL import Image
+import io
+import tempfile
+import os
+from moviepy.editor import VideoFileClip
 
 from app.core.database import get_database
 from app.models.file import FileInDB
@@ -25,6 +30,146 @@ class UploadService:
             raise RuntimeError("Database not connected")
         return db.files
     
+    async def compress_image(self, file_content: bytes, max_size_mb: float = 1.0, quality: int = 85) -> bytes:
+        """
+        Compress image to reduce file size
+        
+        Args:
+            file_content: Original image bytes
+            max_size_mb: Maximum size in MB (default 1.0 MB)
+            quality: JPEG quality 1-100 (default 85)
+            
+        Returns:
+            Compressed image bytes
+        """
+        try:
+            # Open image
+            img = Image.open(io.BytesIO(file_content))
+            
+            # Convert RGBA to RGB if needed
+            if img.mode in ('RGBA', 'LA', 'P'):
+                # Create white background
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # Calculate max dimensions to maintain aspect ratio
+            max_dimension = 2048  # Max width or height
+            if img.width > max_dimension or img.height > max_dimension:
+                img.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
+            
+            # Compress image
+            output = io.BytesIO()
+            current_quality = quality
+            
+            # Iteratively reduce quality until size is acceptable
+            while current_quality > 20:
+                output.seek(0)
+                output.truncate()
+                img.save(output, format='JPEG', quality=current_quality, optimize=True)
+                
+                size_mb = output.tell() / (1024 * 1024)
+                if size_mb <= max_size_mb:
+                    break
+                    
+                current_quality -= 5
+            
+            return output.getvalue()
+            
+        except Exception as e:
+            # If compression fails, return original
+            print(f"Image compression failed: {str(e)}")
+            return file_content
+    
+    async def compress_video(self, file_content: bytes, original_filename: str, max_size_mb: float = 10.0) -> bytes:
+        """
+        Compress video to reduce file size
+        
+        Args:
+            file_content: Original video bytes
+            original_filename: Original filename to preserve extension
+            max_size_mb: Maximum size in MB (default 10.0 MB)
+            
+        Returns:
+            Compressed video bytes
+        """
+        temp_input = None
+        temp_output = None
+        
+        try:
+            # Create temporary files
+            file_ext = os.path.splitext(original_filename)[1] or '.mp4'
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_in:
+                temp_input = temp_in.name
+                temp_in.write(file_content)
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_out:
+                temp_output = temp_out.name
+            
+            # Load video
+            video = VideoFileClip(temp_input)
+            
+            # Calculate target bitrate based on max size
+            duration = video.duration
+            target_bitrate = int((max_size_mb * 8 * 1024) / duration) if duration > 0 else 1000
+            target_bitrate = max(500, min(target_bitrate, 2000))  # Between 500-2000 kbps
+            
+            # Resize if too large
+            max_dimension = 1280
+            if video.w > max_dimension or video.h > max_dimension:
+                scale_factor = min(max_dimension / video.w, max_dimension / video.h)
+                new_width = int(video.w * scale_factor)
+                new_height = int(video.h * scale_factor)
+                # Ensure dimensions are even (required for h264)
+                new_width = new_width if new_width % 2 == 0 else new_width - 1
+                new_height = new_height if new_height % 2 == 0 else new_height - 1
+                video = video.resize((new_width, new_height))
+            
+            # Write compressed video
+            video.write_videofile(
+                temp_output,
+                codec='libx264',
+                audio_codec='aac',
+                bitrate=f"{target_bitrate}k",
+                preset='medium',
+                threads=4,
+                logger=None  # Suppress moviepy logs
+            )
+            
+            video.close()
+            
+            # Read compressed video
+            with open(temp_output, 'rb') as f:
+                compressed_content = f.read()
+            
+            # If compressed size is still larger than original, return original
+            if len(compressed_content) > len(file_content):
+                return file_content
+            
+            return compressed_content
+            
+        except Exception as e:
+            print(f"Video compression failed: {str(e)}")
+            return file_content
+            
+        finally:
+            # Cleanup temp files
+            if temp_input and os.path.exists(temp_input):
+                try:
+                    os.unlink(temp_input)
+                except:
+                    pass
+            if temp_output and os.path.exists(temp_output):
+                try:
+                    os.unlink(temp_output)
+                except:
+                    pass
+    
     async def get_by_id(self, file_id: str) -> FileInDB:
         """Get file by ID"""
         if not ObjectId.is_valid(file_id):
@@ -35,11 +180,15 @@ class UploadService:
             return FileInDB(**file)
         return None
     
-    async def upload_to_cdn(self, file: UploadFile) -> dict:
-        """Upload image to external CDN"""
+    async def upload_to_cdn(self, file: UploadFile, compress: bool = True) -> dict:
+        """Upload image to external CDN with optional compression"""
         try:
             # Read file content
             file_content = await file.read()
+            
+            # Compress image if requested and it's an image
+            if compress and file.content_type and file.content_type.startswith('image/'):
+                file_content = await self.compress_image(file_content)
             
             # Reset file pointer for potential reuse
             await file.seek(0)
@@ -164,33 +313,78 @@ class UploadService:
                 detail=f"Model upload failed: {str(e)}"
             )
     
-    async def upload_from_url_to_cdn(self, url: str) -> dict:
-        """Upload file from URL to external CDN"""
+    async def upload_from_url_to_cdn(self, url: str, compress: bool = True) -> dict:
+        """Upload file from URL to external CDN with optional compression"""
         try:
-            headers = {
-                "X-API-Key": self.cdn_api_key,
-                "Content-Type": "application/json"
-            }
-            
-            payload = {
-                "url": url
-            }
-            
-            # Upload to CDN
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(
-                    self.cdn_url,
-                    headers=headers,
-                    json=payload
-                )
-                
-                if response.status_code == 200:
-                    return response.json()
-                else:
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail=f"CDN upload failed: {response.text}"
+            # If compression is requested, download the file first
+            if compress:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    download_response = await client.get(url)
+                    
+                    if download_response.status_code != 200:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Failed to download file from URL: {url}"
+                        )
+                    
+                    file_content = download_response.content
+                    content_type = download_response.headers.get('content-type', '')
+                    
+                    # Compress if it's an image or video
+                    if content_type.startswith('image/'):
+                        file_content = await self.compress_image(file_content)
+                    elif content_type.startswith('video/'):
+                        filename = url.split('/')[-1]
+                        file_content = await self.compress_video(file_content, filename)
+                    
+                    # Upload compressed content
+                    files = {
+                        "file": (url.split('/')[-1], file_content, content_type)
+                    }
+                    
+                    headers = {
+                        "X-API-Key": self.cdn_api_key
+                    }
+                    
+                    upload_response = await client.post(
+                        self.cdn_url,
+                        headers=headers,
+                        files=files
                     )
+                    
+                    if upload_response.status_code == 200:
+                        return upload_response.json()
+                    else:
+                        raise HTTPException(
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"CDN upload failed: {upload_response.text}"
+                        )
+            else:
+                # Direct URL upload without compression
+                headers = {
+                    "X-API-Key": self.cdn_api_key,
+                    "Content-Type": "application/json"
+                }
+                
+                payload = {
+                    "url": url
+                }
+                
+                # Upload to CDN
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    response = await client.post(
+                        self.cdn_url,
+                        headers=headers,
+                        json=payload
+                    )
+                    
+                    if response.status_code == 200:
+                        return response.json()
+                    else:
+                        raise HTTPException(
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"CDN upload failed: {response.text}"
+                        )
                     
         except httpx.RequestError as e:
             raise HTTPException(
@@ -390,6 +584,180 @@ class UploadService:
             "cdn_url": cdn_response.get("url", ""),
             "cdn_response": cdn_response,
             "source_url": url
+        }
+    
+    async def upload_video(
+        self,
+        file: UploadFile,
+        location_id: Optional[str] = None,
+        user_id: Optional[str] = None
+    ) -> dict:
+        """Upload video to CDN with automatic compression and optionally save metadata to database"""
+        
+        # Validate file type
+        if not file.content_type or not file.content_type.startswith('video/'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only video files are allowed"
+            )
+        
+        # Read and compress video
+        file_content = await file.read()
+        compressed_content = await self.compress_video(file_content, file.filename)
+        
+        # Upload compressed video to CDN
+        try:
+            files = {
+                "file": (file.filename, compressed_content, file.content_type)
+            }
+            
+            headers = {
+                "X-API-Key": self.cdn_api_key
+            }
+            
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    self.cdn_url,
+                    headers=headers,
+                    files=files
+                )
+                
+                if response.status_code != 200:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"CDN upload failed: {response.text}"
+                    )
+                
+                cdn_response = response.json()
+        
+        except httpx.RequestError as e:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"CDN service unavailable: {str(e)}"
+            )
+        
+        # Optionally save to database if location_id is provided
+        if location_id and ObjectId.is_valid(location_id):
+            file_data = {
+                "file_name": file.filename,
+                "file_path": cdn_response.get("url", ""),
+                "file_type": "video",
+                "l_id": ObjectId(location_id),
+                "uploaded_by": ObjectId(user_id) if user_id and ObjectId.is_valid(user_id) else None,
+                "cdn_response": cdn_response,
+                "created_at": datetime.utcnow(),
+                "original_size": len(file_content),
+                "compressed_size": len(compressed_content)
+            }
+            
+            result = await self._collection().insert_one(file_data)
+            file_data["_id"] = result.inserted_id
+            
+            return {
+                "file_id": str(result.inserted_id),
+                "cdn_url": cdn_response.get("url", ""),
+                "cdn_response": cdn_response,
+                "filename": file.filename,
+                "compression_ratio": f"{(1 - len(compressed_content)/len(file_content)) * 100:.1f}%"
+            }
+        
+        # Return CDN response without saving to DB
+        return {
+            "cdn_url": cdn_response.get("url", ""),
+            "cdn_response": cdn_response,
+            "filename": file.filename,
+            "compression_ratio": f"{(1 - len(compressed_content)/len(file_content)) * 100:.1f}%"
+        }
+    
+    async def upload_video_from_url(
+        self,
+        url: str,
+        location_id: Optional[str] = None,
+        user_id: Optional[str] = None
+    ) -> dict:
+        """Upload video from URL to CDN with automatic compression and optionally save metadata to database"""
+        
+        # Download the video
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                download_response = await client.get(url)
+                
+                if download_response.status_code != 200:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Failed to download video from URL: {url}"
+                    )
+                
+                file_content = download_response.content
+                content_type = download_response.headers.get('content-type', 'video/mp4')
+                filename = url.split('/')[-1]
+                
+                # Compress video
+                compressed_content = await self.compress_video(file_content, filename)
+                
+                # Upload compressed video to CDN
+                files = {
+                    "file": (filename, compressed_content, content_type)
+                }
+                
+                headers = {
+                    "X-API-Key": self.cdn_api_key
+                }
+                
+                upload_response = await client.post(
+                    self.cdn_url,
+                    headers=headers,
+                    files=files
+                )
+                
+                if upload_response.status_code != 200:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"CDN upload failed: {upload_response.text}"
+                    )
+                
+                cdn_response = upload_response.json()
+        
+        except httpx.RequestError as e:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"CDN service unavailable: {str(e)}"
+            )
+        
+        # Optionally save to database if location_id is provided
+        if location_id and ObjectId.is_valid(location_id):
+            file_data = {
+                "file_name": filename,
+                "file_path": cdn_response.get("url", ""),
+                "file_type": "video",
+                "l_id": ObjectId(location_id),
+                "uploaded_by": ObjectId(user_id) if user_id and ObjectId.is_valid(user_id) else None,
+                "cdn_response": cdn_response,
+                "created_at": datetime.utcnow(),
+                "source_url": url,
+                "original_size": len(file_content),
+                "compressed_size": len(compressed_content)
+            }
+            
+            result = await self._collection().insert_one(file_data)
+            file_data["_id"] = result.inserted_id
+            
+            return {
+                "file_id": str(result.inserted_id),
+                "cdn_url": cdn_response.get("url", ""),
+                "cdn_response": cdn_response,
+                "filename": filename,
+                "source_url": url,
+                "compression_ratio": f"{(1 - len(compressed_content)/len(file_content)) * 100:.1f}%"
+            }
+        
+        # Return CDN response without saving to DB
+        return {
+            "cdn_url": cdn_response.get("url", ""),
+            "cdn_response": cdn_response,
+            "source_url": url,
+            "filename": filename,
+            "compression_ratio": f"{(1 - len(compressed_content)/len(file_content)) * 100:.1f}%"
         }
     
     async def process_upload(
