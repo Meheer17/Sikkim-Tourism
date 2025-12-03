@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Keyboa
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 interface ChatMessage {
     id: string;
@@ -15,6 +17,8 @@ interface ChatMessage {
 
 export default function CommunityChatScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputMessage, setInputMessage] = useState('');
     const scrollViewRef = useRef<ScrollView>(null);
@@ -59,8 +63,8 @@ export default function CommunityChatScreen() {
                     <IconSymbol name="chevron.left" size={24} color={text as string} />
                 </TouchableOpacity>
                 <View style={styles.headerCenter}>
-                    <Text style={[styles.headerTitle, { color: text }]}>Community Chat</Text>
-                    <Text style={[styles.headerSubtitle, { color: mutedText }]}>Connect with fellow travelers</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>{t.communityChat || 'Community Chat'}</Text>
+                    <Text style={[styles.headerSubtitle, { color: mutedText }]}>{t.connectTravelers || 'Connect with fellow travelers'}</Text>
                 </View>
                 <View style={styles.onlineIndicator}>
                     <View style={styles.onlineDot} />
@@ -137,7 +141,7 @@ export default function CommunityChatScreen() {
                     </TouchableOpacity>
                     <TextInput
                         style={[styles.input, { color: text, backgroundColor: screenBg }]}
-                        placeholder="Type a message..."
+                        placeholder={t.typeMessage || 'Type a message...'}
                         placeholderTextColor={mutedText as string}
                         value={inputMessage}
                         onChangeText={setInputMessage}

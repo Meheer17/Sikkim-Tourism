@@ -5,6 +5,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -84,6 +86,8 @@ function ZoomableImage({ uri }: { uri: string }) {
 export default function PlaceDetailsScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = getLanguageTranslations(language);
   const background = useThemeColor('background');
   const card = useThemeColor('card');
   const text = useThemeColor('text');
@@ -260,7 +264,7 @@ export default function PlaceDetailsScreen() {
 
           {/* Description */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: text }]}>About</Text>
+            <Text style={[styles.sectionTitle, { color: text }]}>{t.about || 'About'}</Text>
             <Text style={[styles.description, { color: muted }]}>{place.description}</Text>
           </View>
 

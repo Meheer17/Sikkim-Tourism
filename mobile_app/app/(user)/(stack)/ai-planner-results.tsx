@@ -4,6 +4,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { aiPlannerService } from '@/services/ai-planner.service';
 import type { TravelPlan as TravelPlanType, Answer } from '@/services/ai-planner.service';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 interface TravelPlan {
     id: string;
@@ -22,6 +24,8 @@ interface TravelPlan {
 export default function AIPlannerResults() {
     const router = useRouter();
     const params = useLocalSearchParams();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
     const [travelPlans, setTravelPlans] = useState<TravelPlan[]>([]);
     const [loading, setLoading] = useState(true);
@@ -112,8 +116,8 @@ export default function AIPlannerResults() {
                     <IconSymbol name="chevron.left" size={24} color="#11181C" />
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
-                    <Text style={styles.headerTitle}>Your Travel Plans</Text>
-                    <Text style={styles.headerSubtitle}>AI-powered recommendations</Text>
+                    <Text style={styles.headerTitle}>{t.yourTravelPlans || 'Your Travel Plans'}</Text>
+                    <Text style={styles.headerSubtitle}>{t.aiPoweredRecommendations || 'AI-powered recommendations'}</Text>
                 </View>
                 <View style={styles.aiIconBadge}>
                     <IconSymbol name="sparkles" size={20} color="#667eea" />
@@ -123,22 +127,22 @@ export default function AIPlannerResults() {
             {loading ? (
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#667eea" />
-                    <Text style={styles.loadingText}>Generating your personalized travel plans...</Text>
-                    <Text style={styles.loadingSubtext}>This may take a moment</Text>
+                    <Text style={styles.loadingText}>{t.generatingPlans || 'Generating your personalized travel plans...'}</Text>
+                    <Text style={styles.loadingSubtext}>{t.thisMayTakeMoment || 'This may take a moment'}</Text>
                 </View>
             ) : error || travelPlans.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <IconSymbol name="exclamationmark.triangle" size={64} color="#ef4444" />
-                    <Text style={styles.emptyText}>{error || 'No Travel Plans Available'}</Text>
+                    <Text style={styles.emptyText}>{error || (t.noTravelPlansAvailable || 'No Travel Plans Available')}</Text>
                     <Text style={styles.emptySubtext}>
-                        {error ? 'Please try again.' : "We couldn't generate travel plans at this time."}
+                        {error ? (t.pleaseTryAgain || 'Please try again.') : (t.couldntGeneratePlans || "We couldn't generate travel plans at this time.")}
                     </Text>
                     <TouchableOpacity
                         style={styles.retryButton}
                         onPress={() => router.back()}
                     >
                         <IconSymbol name="arrow.counterclockwise" size={20} color="#667eea" />
-                        <Text style={styles.retryButtonText}>Try Again</Text>
+                        <Text style={styles.retryButtonText}>{t.tryAgain || 'Try Again'}</Text>
                     </TouchableOpacity>
                 </View>
             ) : (
@@ -147,9 +151,9 @@ export default function AIPlannerResults() {
                     <View style={styles.infoCard}>
                         <IconSymbol name="checkmark.circle.fill" size={32} color="#10b981" />
                         <View style={styles.infoText}>
-                            <Text style={styles.infoTitle}>Plans Ready!</Text>
+                            <Text style={styles.infoTitle}>{t.plansReady || 'Plans Ready!'}</Text>
                             <Text style={styles.infoSubtitle}>
-                                We've created {travelPlans.length} personalized travel plans based on your preferences
+                                {t.createdPlansCount?.replace('{count}', travelPlans.length.toString()) || `We've created ${travelPlans.length} personalized travel plans based on your preferences`}
                             </Text>
                         </View>
                     </View>
@@ -174,7 +178,7 @@ export default function AIPlannerResults() {
                         <View style={[styles.planHeader, { backgroundColor: plan.image_color }]}>
                             <View style={styles.planHeaderContent}>
                                 <View style={styles.planBadge}>
-                                    <Text style={styles.planBadgeText}>Plan {index + 1}</Text>
+                                    <Text style={styles.planBadgeText}>{t.plan || 'Plan'} {index + 1}</Text>
                                 </View>
                                 <View style={styles.ratingContainer}>
                                     <IconSymbol name="star.fill" size={16} color="#fff" />

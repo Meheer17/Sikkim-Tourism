@@ -1,9 +1,13 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useThemeColor } from '@/hooks/use-theme-color';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function BusinessBookings() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const bookings = [
         { id: 'b1', service: 'Cab Ride', customer: 'John Doe', date: 'Nov 28, 2025', status: 'confirmed', amount: 800 },
         { id: 'b2', service: 'Trekking', customer: 'Sara', date: 'Nov 29, 2025', status: 'pending', amount: 2500 },

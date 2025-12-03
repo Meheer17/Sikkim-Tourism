@@ -1,28 +1,32 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useRouter } from 'expo-router';
-import { IconSymbol } from '@/components/ui/icon-symbol';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function BusinessDashboard() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const background = useThemeColor('background');
     const card = useThemeColor('card');
     const textColor = useThemeColor('text');
     const muted = useThemeColor('mutedText');
     const tint = useThemeColor('tint');
     const stats = [
-        { title: 'Today Bookings', value: '12', icon: 'ticket.fill', color: '#f59e0b', bg: '#fef3c7' },
-        { title: 'Revenue', value: '₹32k', icon: 'indianrupeesign.circle.fill', color: '#10b981', bg: '#d1fae5' },
-        { title: 'Active Services', value: '5', icon: 'square.grid.2x2.fill', color: '#3b82f6', bg: '#dbeafe' },
-        { title: 'Pending Requests', value: '3', icon: 'tray.full.fill', color: '#8b5cf6', bg: '#ede9fe' },
+        { title: t.todayBookings || 'Today Bookings', value: '12', icon: 'ticket.fill', color: '#f59e0b', bg: '#fef3c7' },
+        { title: t.revenue || 'Revenue', value: '₹32k', icon: 'indianrupeesign.circle.fill', color: '#10b981', bg: '#d1fae5' },
+        { title: t.activeServices || 'Active Services', value: '5', icon: 'square.grid.2x2.fill', color: '#3b82f6', bg: '#dbeafe' },
+        { title: t.pendingRequests || 'Pending Requests', value: '3', icon: 'tray.full.fill', color: '#8b5cf6', bg: '#ede9fe' },
     ];
 
     return (
         <View style={styles.container}>
             <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { backgroundColor: background }]} showsVerticalScrollIndicator={false}>
                 <View style={[styles.header, { backgroundColor: card }]}>
-                    <Text style={[styles.headerTitle, { color: textColor }]}>Business Dashboard</Text>
+                    <Text style={[styles.headerTitle, { color: textColor }]}>{t.businessDashboard || 'Business Dashboard'}</Text>
                 </View>
                 <View style={styles.statsGrid}>
                     {stats.map((s, i) => (
@@ -36,23 +40,23 @@ export default function BusinessDashboard() {
                     ))}
                 </View>
 
-                <Text style={[styles.sectionTitle, { color: textColor }]}>Quick Actions</Text>
+                <Text style={[styles.sectionTitle, { color: textColor }]}>{t.quickActions || 'Quick Actions'}</Text>
                 <View style={styles.quickActions}>
                     <TouchableOpacity style={[styles.actionCard, { backgroundColor: card }]} onPress={() => router.push('/(business)/(stack)/add-place' as any)}>
                         <IconSymbol name="map.fill" size={32} color="#10b981" />
-                        <Text style={[styles.actionText, { color: textColor }]}>Add Place</Text>
+                        <Text style={[styles.actionText, { color: textColor }]}>{t.addPlace || 'Add Place'}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={[styles.actionCard, { backgroundColor: card }]} onPress={() => router.push('/(business)/(stack)/add-service' as any)}>
                         <IconSymbol name="plus.circle.fill" size={32} color={tint} />
-                        <Text style={[styles.actionText, { color: textColor }]}>Add Service</Text>
+                        <Text style={[styles.actionText, { color: textColor }]}>{t.addService || 'Add Service'}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={[styles.actionCard, { backgroundColor: card }]} onPress={() => router.push('/(business)/(stack)/add-event' as any)}>
                         <IconSymbol name="calendar.badge.plus" size={32} color="#f59e0b" />
-                        <Text style={[styles.actionText, { color: textColor }]}>Add Event</Text>
+                        <Text style={[styles.actionText, { color: textColor }]}>{t.addEvent || 'Add Event'}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={[styles.actionCard, { backgroundColor: card }]} onPress={() => router.push('/(business)/bookings' as any)}>
                         <IconSymbol name="ticket.fill" size={32} color="#ef4444" />
-                        <Text style={[styles.actionText, { color: textColor }]}>Bookings</Text>
+                        <Text style={[styles.actionText, { color: textColor }]}>{t.bookings || 'Bookings'}</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>

@@ -1,18 +1,23 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function FavoritesScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <View style={styles.header}>
                 <IconSymbol name="heart.fill" size={48} color="#ef4444" />
-                <Text style={styles.title}>My Favorites</Text>
-                <Text style={styles.subtitle}>Your favorite places and services</Text>
+                <Text style={styles.title}>{t.myFavorites}</Text>
+                <Text style={styles.subtitle}>{t.favoriteSubtitle}</Text>
             </View>
 
             <View style={styles.placeholder}>
-                <Text style={styles.placeholderText}>Favorites content coming soon...</Text>
+                <Text style={styles.placeholderText}>{t.favoritesComingSoon}</Text>
             </View>
         </ScrollView>
     );

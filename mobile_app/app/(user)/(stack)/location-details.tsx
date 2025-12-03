@@ -6,6 +6,8 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { locationService } from '@/services/location.service';
 import { useAuth } from '@/hooks/useAuth';
 import AudioNarration from '@/components/immersive/AudioNarration';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -24,6 +26,8 @@ interface LocationDetails {
 export default function LocationDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [location, setLocation] = useState<LocationDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -85,9 +89,9 @@ export default function LocationDetailsScreen() {
         return (
             <View style={[styles.container, styles.centered, { backgroundColor: background }]}>
                 <IconSymbol name="exclamationmark.triangle" size={48} color={muted} />
-                <Text style={[styles.errorText, { color: text }]}>Location not found</Text>
+                <Text style={[styles.errorText, { color: text }]}>{t.locationNotFound || 'Location not found'}</Text>
                 <TouchableOpacity style={[styles.button, { backgroundColor: tint }]} onPress={() => router.back()}>
-                    <Text style={styles.buttonText}>Go Back</Text>
+                    <Text style={styles.buttonText}>{t.goBack || 'Go Back'}</Text>
                 </TouchableOpacity>
             </View>
         );

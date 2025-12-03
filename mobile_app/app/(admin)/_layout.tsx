@@ -1,11 +1,11 @@
+import { Stack, usePathname, useRouter } from 'expo-router';
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Stack, useRouter, usePathname } from 'expo-router';
-import Animated, { FadeInDown, SlideInUp, SlideOutDown, Easing } from 'react-native-reanimated';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, { Easing, FadeInDown, SlideInUp, SlideOutDown } from 'react-native-reanimated';
 
+import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { ThemedText } from '@/components/themed-text';
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 

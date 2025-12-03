@@ -6,9 +6,13 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { businessService } from '@/services';
 import { BusinessType } from '@/services/business.service';
 import { useRouter } from 'expo-router';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 export default function ServicesScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [services, setServices] = useState<Service[]>([]);
     const [filteredServices, setFilteredServices] = useState<Service[]>([]);
     const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
@@ -158,8 +162,8 @@ export default function ServicesScreen() {
         <View style={[styles.container, { backgroundColor: screenBg }]}>
             {/* Header */}
             <View style={[styles.header, { backgroundColor: cardBg }]}>
-                <Text style={[styles.headerTitle, { color: text }]}>Services</Text>
-                <Text style={[styles.headerSubtitle, { color: mutedText }]}>Discover amazing experiences</Text>
+                <Text style={[styles.headerTitle, { color: text }]}>{t.services || 'Services'}</Text>
+                <Text style={[styles.headerSubtitle, { color: mutedText }]}>{t.discover_experiences || 'Discover amazing experiences'}</Text>
             </View>
 
             {/* Search Bar */}
@@ -167,7 +171,7 @@ export default function ServicesScreen() {
                 <IconSymbol name="magnifyingglass" size={20} color={mutedText as string} />
                 <TextInput
                     style={[styles.searchInput, { color: text }]}
-                    placeholder="Search services..."
+                    placeholder={t.search_services || 'Search services...'}
                     placeholderTextColor={mutedText as string}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
@@ -217,7 +221,7 @@ export default function ServicesScreen() {
             >
                 {loading ? (
                     <View style={styles.emptyState}>
-                        <Text style={[styles.emptyTitle, { color: text }]}>Loading services...</Text>
+                        <Text style={[styles.emptyTitle, { color: text }]}>{t.loading_services || 'Loading services...'}</Text>
                     </View>
                 ) : filteredServices.length > 0 ? (
                     filteredServices.map((service) => (
@@ -230,9 +234,9 @@ export default function ServicesScreen() {
                 ) : (
                     <View style={styles.emptyState}>
                         <IconSymbol name="magnifyingglass" size={64} color={border as string} />
-                        <Text style={[styles.emptyTitle, { color: text }]}>No services found</Text>
+                        <Text style={[styles.emptyTitle, { color: text }]}>{t.no_services_found || 'No services found'}</Text>
                         <Text style={[styles.emptySubtitle, { color: mutedText }]}>
-                            Try adjusting your search or filters
+                            {t.adjust_filters || 'Try adjusting your search or filters'}
                         </Text>
                     </View>
                 )}

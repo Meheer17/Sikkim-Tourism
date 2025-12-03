@@ -1,18 +1,23 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function BookingHistoryScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <View style={styles.header}>
                 <IconSymbol name="clock.fill" size={48} color="#3b82f6" />
-                <Text style={styles.title}>Booking History</Text>
-                <Text style={styles.subtitle}>View all your past bookings</Text>
+                <Text style={styles.title}>{t.bookingHistoryPage}</Text>
+                <Text style={styles.subtitle}>{t.bookingHistorySubtitle}</Text>
             </View>
 
             <View style={styles.placeholder}>
-                <Text style={styles.placeholderText}>Booking history coming soon...</Text>
+                <Text style={styles.placeholderText}>{t.bookingHistoryComingSoon}</Text>
             </View>
         </ScrollView>
     );

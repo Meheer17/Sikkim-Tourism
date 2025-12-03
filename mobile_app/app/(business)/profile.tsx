@@ -1,13 +1,17 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useAuth } from '@/hooks/useAuth';
-import { useThemeColor } from '@/hooks/use-theme-color';
 import ThemeToggle from '@/components/common/ThemeToggle';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function BusinessProfileScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const { user, logout } = useAuth();
     const background = useThemeColor('background');
     const card = useThemeColor('card');
@@ -18,12 +22,12 @@ export default function BusinessProfileScreen() {
     const handleLogout = async () => { await logout(); router.replace('/(auth)/login' as any); };
 
     const menu = [
-        { label: 'My Services', icon: 'square.grid.2x2.fill', route: '/(business)/services' },
-        { label: 'Bookings', icon: 'ticket.fill', route: '/(business)/bookings' },
-        { label: 'Requests', icon: 'tray.full.fill', route: '/(business)/requests' },
-        { label: 'Edit Profile', icon: 'pencil', route: '/(business)/(stack)/edit-profile' },
-        { label: 'Payouts', icon: 'banknote.fill', route: '/(business)/(stack)/payouts' },
-        { label: 'Settings', icon: 'gearshape.fill', route: '/(business)/(stack)/settings' },
+        { label: t.myServices || 'My Services', icon: 'square.grid.2x2.fill', route: '/(business)/services' },
+        { label: t.bookings || 'Bookings', icon: 'ticket.fill', route: '/(business)/bookings' },
+        { label: t.requests || 'Requests', icon: 'tray.full.fill', route: '/(business)/requests' },
+        { label: t.editProfile || 'Edit Profile', icon: 'pencil', route: '/(business)/(stack)/edit-profile' },
+        { label: t.payouts || 'Payouts', icon: 'banknote.fill', route: '/(business)/(stack)/payouts' },
+        { label: t.settings || 'Settings', icon: 'gearshape.fill', route: '/(business)/(stack)/settings' },
     ];
 
     return (
@@ -37,7 +41,7 @@ export default function BusinessProfileScreen() {
                     <Text style={[styles.email, { color: muted }]}>{user?.email}</Text>
                     <View style={[styles.badge, { backgroundColor: tint }]}>
                         <IconSymbol name="briefcase.fill" size={16} color="#fff" />
-                        <Text style={styles.badgeText}>Business</Text>
+                        <Text style={styles.badgeText}>{t.business || 'Business'}</Text>
                     </View>
                 </View>
 
@@ -58,7 +62,7 @@ export default function BusinessProfileScreen() {
 
                 <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: card, borderColor: '#fee2e2' }]} onPress={handleLogout}>
                     <IconSymbol name="rectangle.portrait.and.arrow.right" size={20} color="#ef4444" />
-                    <Text style={styles.logoutText}>Logout</Text>
+                    <Text style={styles.logoutText}>{t.logout || 'Logout'}</Text>
                 </TouchableOpacity>
             </ScrollView>
         </View>

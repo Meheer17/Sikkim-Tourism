@@ -8,6 +8,8 @@ import PlaceCard, { Place } from '@/components/explore/PlaceCard';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { locationService } from '@/services';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 type CategoryFilter = 'all' | 'tourism' | 'business' | 'emergency' | 'localhelp' | 'event' | 'other';
 type DistanceFilter = 'all' | '5' | '10' | '25' | '50';
@@ -70,6 +72,8 @@ export default function ExploreScreen() {
   const mapRef = useRef<MapView>(null);
   const router = useRouter();
   const { permissions, requestLocationPermission, getCurrentLocation } = usePermissions();
+  const { language } = useLanguage();
+  const t = getLanguageTranslations(language);
 
   // Filter state
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -561,7 +565,7 @@ export default function ExploreScreen() {
           {/* Modal Header */}
           <View style={styles.modalHeader}>
             <View>
-              <Text style={[styles.modalTitle, { color: text }]}>Nearby Places</Text>
+              <Text style={[styles.modalTitle, { color: text }]}>{t.nearbyPlaces || 'Nearby Places'}</Text>
               <Text style={[styles.modalSubtitle, { color: muted }]}>
                 {nearbyPlaces.length} places found
               </Text>
@@ -594,11 +598,11 @@ export default function ExploreScreen() {
           {loading ? (
             <View style={{ padding: 20, alignItems: 'center' }}>
               <ActivityIndicator size="large" color={tint as string} />
-              <Text style={[{ color: muted, marginTop: 10 }]}>Loading places...</Text>
+              <Text style={[{ color: muted, marginTop: 10 }]}>{t.loading_places || 'Loading places...'}</Text>
             </View>
           ) : nearbyPlaces.length === 0 ? (
             <View style={{ padding: 20, alignItems: 'center' }}>
-              <Text style={[{ color: muted }]}>No places found</Text>
+              <Text style={[{ color: muted }]}>{t.noResults || 'No places found'}</Text>
             </View>
           ) : (
             nearbyPlaces.map((place, index) => (

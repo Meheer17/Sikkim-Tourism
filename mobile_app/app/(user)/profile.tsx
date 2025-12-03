@@ -6,6 +6,8 @@ import MenuSection, { MenuItem } from '@/components/profile/MenuSection';
 import { useAuth } from '@/hooks/useAuth';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import ThemeToggle from '@/components/common/ThemeToggle';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 
 // Configuration for menu items - easy to add/remove
@@ -108,6 +110,35 @@ const SETTINGS_MENU_ITEMS: MenuItem[] = [
 export default function ProfileScreen() {
     const router = useRouter();
     const { user, logout } = useAuth();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+
+    // Create translated menu items
+    const ACCOUNT_MENU_ITEMS_TRANSLATED: MenuItem[] = [
+        { id: 'edit-profile', label: t.editProfile || 'Edit Profile', icon: 'pencil', route: '/(user)/(stack)/edit-profile' },
+        { id: 'favorites', label: t.myFavorites || 'My Favorites', icon: 'heart.fill', route: '/(user)/(stack)/favorites' },
+        { id: 'bookings-history', label: t.bookingHistory || 'Booking History', icon: 'clock.fill', route: '/(user)/(stack)/booking-history' },
+        { id: 'saved-places', label: t.savedPlaces || 'Saved Places', icon: 'bookmark.fill', route: '/(user)/(stack)/saved-places' },
+    ];
+
+    const SUPPORT_MENU_ITEMS_TRANSLATED: MenuItem[] = [
+        { id: 'help', label: t.helpSupport || 'Help & Support', icon: 'questionmark.circle.fill', route: '/(user)/(stack)/help-support' },
+        { id: 'safety', label: t.safetyCenter || 'Safety Center', icon: 'shield.fill', route: '/(user)/(stack)/safety' },
+        { id: 'terms', label: t.termsConditions || 'Terms & Conditions', icon: 'doc.text.fill', route: '/(user)/(stack)/terms' },
+        { id: 'privacy', label: t.privacyPolicy || 'Privacy Policy', icon: 'lock.fill', route: '/(user)/(stack)/privacy' },
+    ];
+
+    const BUSINESS_MENU_ITEMS_TRANSLATED: MenuItem[] = [
+        { id: 'my-businesses', label: t.myBusinesses || 'My Businesses', icon: 'building.2', route: '/(user)/(stack)/my-businesses' },
+        { id: 'create-business', label: t.createBusiness || 'Create Business', icon: 'building.2.fill', route: '/(user)/(stack)/create-business' },
+    ];
+
+    const SETTINGS_MENU_ITEMS_TRANSLATED: MenuItem[] = [
+        { id: 'friends', label: t.friendsLocation || 'Friends & Location', icon: 'person.2.fill', route: '/(user)/(stack)/friends' },
+        { id: 'notifications', label: t.notifications || 'Notifications', icon: 'bell.fill', route: '/(user)/(stack)/notifications' },
+        { id: 'language', label: t.language || 'Language', icon: 'globe', route: '/(user)/(stack)/language' },
+        { id: 'about', label: t.about || 'About', icon: 'info.circle.fill', route: '/(user)/(stack)/about' },
+    ];
 
     // Theme colors
     const screenBg = useThemeColor('background');
@@ -153,7 +184,7 @@ export default function ProfileScreen() {
                         style={[styles.editProfileButton, { backgroundColor: soft }]}
                         onPress={() => router.push('/(user)/(stack)/edit-profile' as any)}
                     >
-                        <Text style={[styles.editProfileText, { color: tint }]}>Edit Profile</Text>
+                        <Text style={[styles.editProfileText, { color: tint }]}>{t.editProfile || 'Edit Profile'}</Text>
                         <IconSymbol name="pencil" size={14} color={tint as string} />
                     </TouchableOpacity>
                 </View>
@@ -161,7 +192,7 @@ export default function ProfileScreen() {
                 {/* Favorites Card Section */}
                 <View style={[styles.favoritesCard, { backgroundColor: cardBg }]}>
                     <View style={styles.favoritesHeader}>
-                        <Text style={[styles.favoritesTitle, { color: text }]}>Quick Access</Text>
+                        <Text style={[styles.favoritesTitle, { color: text }]}>{t.quickAccess || 'Quick Access'}</Text>
                     </View>
                     <View style={styles.quickAccessGrid}>
                         <TouchableOpacity
@@ -171,7 +202,7 @@ export default function ProfileScreen() {
                             <View style={[styles.quickAccessIcon, { backgroundColor: '#fee2e2' }]}>
                                 <IconSymbol name="heart.fill" size={24} color="#ef4444" />
                             </View>
-                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>Favorites</Text>
+                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>{t.myFavorites || 'Favorites'}</Text>
                             <Text style={[styles.quickAccessCount, { color: text }]}>12</Text>
                         </TouchableOpacity>
 
@@ -182,7 +213,7 @@ export default function ProfileScreen() {
                             <View style={[styles.quickAccessIcon, { backgroundColor: '#dbeafe' }]}>
                                 <IconSymbol name="mappin.circle.fill" size={24} color="#3b82f6" />
                             </View>
-                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>Saved</Text>
+                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>{t.saved || 'Saved'}</Text>
                             <Text style={[styles.quickAccessCount, { color: text }]}>8</Text>
                         </TouchableOpacity>
 
@@ -193,7 +224,7 @@ export default function ProfileScreen() {
                             <View style={[styles.quickAccessIcon, { backgroundColor: '#fef3c7' }]}>
                                 <IconSymbol name="star.fill" size={24} color="#f59e0b" />
                             </View>
-                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>Reviews</Text>
+                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>{t.reviews || 'Reviews'}</Text>
                             <Text style={[styles.quickAccessCount, { color: text }]}>5</Text>
                         </TouchableOpacity>
 
@@ -204,7 +235,7 @@ export default function ProfileScreen() {
                             <View style={[styles.quickAccessIcon, { backgroundColor: '#dcfce7' }]}>
                                 <IconSymbol name="ticket.fill" size={24} color="#10b981" />
                             </View>
-                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>Vouchers</Text>
+                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>{t.vouchers || 'Vouchers'}</Text>
                             <Text style={[styles.quickAccessCount, { color: text }]}>3</Text>
                         </TouchableOpacity>
                     </View>
@@ -212,29 +243,29 @@ export default function ProfileScreen() {
                 <View style={styles.padding}>
                     {/* Account Menu Section */}
                     <MenuSection
-                        title="Account"
-                        items={ACCOUNT_MENU_ITEMS}
+                        title={t.account || 'Account'}
+                        items={ACCOUNT_MENU_ITEMS_TRANSLATED}
                         onItemPress={handleMenuItemPress}
                     />
 
                     {/* Business Menu Section */}
                     <MenuSection
-                        title="Business"
-                        items={BUSINESS_MENU_ITEMS}
+                        title={t.business || 'Business'}
+                        items={BUSINESS_MENU_ITEMS_TRANSLATED}
                         onItemPress={handleMenuItemPress}
                     />
 
                     {/* Support Menu Section */}
                     <MenuSection
-                        title="Help & Support"
-                        items={SUPPORT_MENU_ITEMS}
+                        title={t.helpSupport || 'Help & Support'}
+                        items={SUPPORT_MENU_ITEMS_TRANSLATED}
                         onItemPress={handleMenuItemPress}
                     />
 
                     {/* Settings Menu Section */}
                     <MenuSection
-                        title="Settings"
-                        items={SETTINGS_MENU_ITEMS}
+                        title={t.settings || 'Settings'}
+                        items={SETTINGS_MENU_ITEMS_TRANSLATED}
                         onItemPress={handleMenuItemPress}
                     />
                 </View>
@@ -246,7 +277,7 @@ export default function ProfileScreen() {
                     {/* Logout Button */}
                     <TouchableOpacity style={[styles.logoutButton, { backgroundColor: cardBg }]} onPress={handleLogout}>
                         <IconSymbol name="rectangle.portrait.and.arrow.right" size={20} color="#ef4444" />
-                        <Text style={styles.logoutText}>Logout</Text>
+                        <Text style={styles.logoutText}>{t.logout || 'Logout'}</Text>
                     </TouchableOpacity>
                 </View>
                 {/* App Version */}
