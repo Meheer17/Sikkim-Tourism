@@ -6,6 +6,8 @@ import { Business } from '@/types/admin.types';
 import { useApi } from '@/hooks/useApi';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { businessService, BusinessModel } from '@/services/business.service';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 // Removed static mock data. Data now loads exclusively from backend.
 
@@ -14,6 +16,8 @@ const STATUSES = ['All', 'Active', 'Pending', 'Suspended'];
 
 export default function AdminBusinessesScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [businesses, setBusinesses] = useState<Business[]>([]);
     const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -165,9 +169,9 @@ export default function AdminBusinessesScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: card }]}>
                 <View>
-                    <Text style={[styles.headerTitle, { color: text }]}>Businesses</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>{t.businesses || 'Businesses'}</Text>
                     <Text style={[styles.headerSubtitle, { color: muted }]}>
-                        {filteredBusinesses.length} businesses found
+                        {filteredBusinesses.length} {t.businessesFound || 'businesses found'}
                     </Text>
                 </View>
                 <TouchableOpacity
@@ -184,7 +188,7 @@ export default function AdminBusinessesScreen() {
                     <IconSymbol name="magnifyingglass" size={20} color={muted} />
                     <TextInput
                         style={[styles.searchInput, { color: text }]}
-                        placeholder="Search businesses..."
+                        placeholder={t.searchBusinesses || 'Search businesses...'}
                         placeholderTextColor={muted}
                         value={searchQuery}
                         onChangeText={setSearchQuery}

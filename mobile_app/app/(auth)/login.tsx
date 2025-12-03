@@ -8,18 +8,26 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import Toast from 'react-native-toast-message';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
+import { SUPPORTED_LANGUAGES } from '@/constants/languages';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 export default function LoginScreen() {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
+    const [showLanguageModal, setShowLanguageModal] = React.useState(false);
     const router = useRouter();
     const { login } = useAuth();
+    const { language, setLanguage } = useLanguage();
+    const t = getLanguageTranslations(language);
 
     const background = useThemeColor('background');
     const card = useThemeColor('card');
@@ -31,8 +39,8 @@ export default function LoginScreen() {
         if (!email || !password) {
             Toast.show({
                 type: 'error',
-                text1: 'Missing Fields',
-                text2: 'Please enter email and password',
+                text1: t.missingFields || 'Missing Fields',
+                text2: t.enterEmailPassword || 'Please enter email and password',
             });
             return;
         }
@@ -46,8 +54,8 @@ export default function LoginScreen() {
         } catch (error: any) {
             Toast.show({
                 type: 'error',
-                text1: 'Login Failed',
-                text2: error.message || 'Please check your credentials',
+                text1: t.loginFailed || 'Login Failed',
+                text2: error.message || (t.checkCredentials || 'Please check your credentials'),
             });
         } finally {
             setIsLoading(false);
@@ -60,15 +68,27 @@ export default function LoginScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.content}>
-                    <Text style={[styles.title, { color: text }]}>Welcome Back</Text>
-                    <Text style={[styles.subtitle, { color: muted }]}>Sign in to continue</Text>
+                    {/* Language Selector Button */}
+                    <TouchableOpacity
+                        style={styles.languageButton}
+                        onPress={() => setShowLanguageModal(true)}
+                    >
+                        <IconSymbol name="globe" size={20} color={tint as string} />
+                        <Text style={[styles.languageButtonText, { color: tint }]}>
+                            {SUPPORTED_LANGUAGES.find(l => l.code === language)?.nativeName || 'English'}
+                        </Text>
+                        <IconSymbol name="chevron.down" size={16} color={muted as string} />
+                    </TouchableOpacity>
+
+                    <Text style={[styles.title, { color: text }]}>{t.welcomeBack || 'Welcome Back'}</Text>
+                    <Text style={[styles.subtitle, { color: muted }]}>{t.signInToContinue || 'Sign in to continue'}</Text>
 
                     <View style={styles.form}>
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.label, { color: text }]}>Email</Text>
+                            <Text style={[styles.label, { color: text }]}>{t.email || 'Email'}</Text>
                             <TextInput
                                 style={[styles.input, { backgroundColor: card, borderColor: muted + '40', color: text }]}
-                                placeholder="Enter your email"
+                                placeholder={t.enterEmail || 'Enter your email'}
                                 placeholderTextColor={muted}
                                 value={email}
                                 onChangeText={setEmail}
@@ -80,10 +100,10 @@ export default function LoginScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.label, { color: text }]}>Password</Text>
+                            <Text style={[styles.label, { color: text }]}>{t.password || 'Password'}</Text>
                             <TextInput
                                 style={[styles.input, { backgroundColor: card, borderColor: muted + '40', color: text }]}
-                                placeholder="Enter your password"
+                                placeholder={t.enterPassword || 'Enter your password'}
                                 placeholderTextColor={muted}
                                 value={password}
                                 onChangeText={setPassword}
@@ -98,7 +118,7 @@ export default function LoginScreen() {
                             onPress={handleLogin}
                             disabled={isLoading}>
                             <Text style={styles.buttonText}>
-                                {isLoading ? 'Signing In...' : 'Sign In'}
+                                {isLoading ? (t.signingIn || 'Signing In...') : (t.signIn || 'Sign In')}
                             </Text>
                         </TouchableOpacity>
 
@@ -106,11 +126,54 @@ export default function LoginScreen() {
                             onPress={() => router.push('/register' as any)}
                             disabled={isLoading}>
                             <Text style={[styles.linkText, { color: muted }]}>
-                                Don't have an account? <Text style={[styles.linkBold, { color: tint }]}>Sign Up</Text>
+                                {t.noAccount || "Don't have an account?"} <Text style={[styles.linkBold, { color: tint }]}>{t.signUp || 'Sign Up'}</Text>
                             </Text>
                         </TouchableOpacity>
                     </View>
                 </View>
+
+                {/* Language Selection Modal */}
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={showLanguageModal}
+                    onRequestClose={() => setShowLanguageModal(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={[styles.modalContent, { backgroundColor: card }]}>
+                            <View style={[styles.modalHeader, { borderBottomColor: muted + '40' }]}>
+                                <Text style={[styles.modalTitle, { color: text }]}>{t.selectLanguage || 'Select Language'}</Text>
+                                <TouchableOpacity onPress={() => setShowLanguageModal(false)}>
+                                    <IconSymbol name="xmark" size={24} color={muted as string} />
+                                </TouchableOpacity>
+                            </View>
+                            <ScrollView style={styles.languageList}>
+                                {SUPPORTED_LANGUAGES.map((lang) => (
+                                    <TouchableOpacity
+                                        key={lang.code}
+                                        style={[
+                                            styles.languageItem,
+                                            { borderBottomColor: muted + '20' },
+                                            language === lang.code && [styles.languageItemSelected, { backgroundColor: tint + '15' }]
+                                        ]}
+                                        onPress={() => {
+                                            setLanguage(lang.code);
+                                            setShowLanguageModal(false);
+                                        }}
+                                    >
+                                        <View>
+                                            <Text style={[styles.languageNativeName, { color: text }]}>{lang.nativeName}</Text>
+                                            <Text style={[styles.languageEnglishName, { color: muted }]}>{lang.name}</Text>
+                                        </View>
+                                        {language === lang.code && (
+                                            <IconSymbol name="checkmark" size={24} color={tint as string} />
+                                        )}
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    </View>
+                </Modal>
             </ScrollView>
         </KeyboardAvoidingView>
     );
@@ -175,5 +238,61 @@ const styles = StyleSheet.create({
     },
     linkBold: {
         fontWeight: '600',
+    },
+    languageButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-end',
+        gap: 8,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        marginBottom: 20,
+    },
+    languageButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        maxHeight: '70%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 20,
+        borderBottomWidth: 1,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+    },
+    languageList: {
+        maxHeight: 400,
+    },
+    languageItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
+    },
+    languageItemSelected: {
+        borderLeftWidth: 3,
+    },
+    languageNativeName: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    languageEnglishName: {
+        fontSize: 13,
+        marginTop: 2,
     },
 });

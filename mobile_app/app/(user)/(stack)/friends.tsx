@@ -6,6 +6,8 @@ import * as Location from 'expo-location';
 import { FriendsAPI, MemberLocation } from '@/services/friends.service';
 import { AppStorage } from '@/utils/storage';
 import MapView, { Marker, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_HEIGHT = SCREEN_HEIGHT;
@@ -33,6 +35,8 @@ const RADIUS_OPTIONS = [1, 5, 10, 25, 50];
 
 export default function FriendsScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [group, setGroup] = useState<GroupInfo | null>(null);
     const [isGroupOwner, setIsGroupOwner] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -519,9 +523,9 @@ export default function FriendsScreen() {
                     <IconSymbol name="chevron.left" size={24} color="#11181C" />
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
-                    <Text style={styles.headerTitle}>Friends & Location</Text>
+                    <Text style={styles.headerTitle}>{t.friendsLocation || 'Friends & Location'}</Text>
                     <Text style={styles.headerSubtitle}>
-                        {filteredFriends.length} nearby friends {group ? `(code ${group.code})` : ''}
+                        {filteredFriends.length} {t.nearbyFriends || 'nearby friends'} {group ? `(${t.code || 'code'} ${group.code})` : ''}
                     </Text>
                 </View>
                 {isGroupOwner ? (
@@ -589,9 +593,9 @@ export default function FriendsScreen() {
                 ) : (
                     <View style={styles.mapPlaceholder}>
                         <IconSymbol name="map.fill" size={64} color="#0a7ea4" />
-                        <Text style={styles.mapPlaceholderText}>Locating...</Text>
+                        <Text style={styles.mapPlaceholderText}>{t.locating || 'Locating...'}</Text>
                         <Text style={styles.mapSubtext}>
-                            {group ? `Group ${group.code}` : 'Create or join a group'}
+                            {group ? `${t.group || 'Group'} ${group.code}` : (t.createJoinGroup || 'Create or join a group')}
                         </Text>
                     </View>
                 )}

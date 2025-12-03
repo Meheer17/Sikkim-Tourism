@@ -14,6 +14,8 @@ import { AdminUser, UserRole } from '@/types/admin.types';
 import { useApi } from '@/hooks/useApi';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { userService } from '@/services';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 interface RoleOption {
     role: UserRole;
@@ -23,6 +25,8 @@ interface RoleOption {
     color: string;
     bgColor: string;
 }
+
+// Note: Role options will use translations dynamically in the component
 
 const ROLE_OPTIONS: RoleOption[] = [
     {
@@ -52,6 +56,8 @@ const ROLE_OPTIONS: RoleOption[] = [
 ];
 
 export default function AdminRolesScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>([]);
     const [searchQuery, setSearchQuery] = useState('');

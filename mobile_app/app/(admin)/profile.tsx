@@ -4,10 +4,14 @@ import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/hooks/useAuth';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 export default function AdminProfileScreen() {
     const router = useRouter();
     const { user, logout } = useAuth();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
 
     const background = useThemeColor('background');
     const card = useThemeColor('card');
@@ -22,35 +26,35 @@ export default function AdminProfileScreen() {
 
     const menuSections = [
         {
-            title: 'Admin Tools',
+            title: t.adminTools || 'Admin Tools',
             items: [
                 {
-                    label: 'System Settings',
+                    label: t.systemSettings || 'System Settings',
                     icon: 'gearshape.fill',
                     route: '/(admin)/(stack)/settings',
                 },
                 {
-                    label: 'Analytics',
+                    label: t.analytics || 'Analytics',
                     icon: 'chart.bar.fill',
                     route: '/(admin)/(stack)/analytics',
                 },
                 {
-                    label: 'Reports',
+                    label: t.reports || 'Reports',
                     icon: 'doc.text.fill',
                     route: '/(admin)/(stack)/reports',
                 },
             ],
         },
         {
-            title: 'Account',
+            title: t.account || 'Account',
             items: [
                 {
-                    label: 'Edit Profile',
+                    label: t.editProfile || 'Edit Profile',
                     icon: 'person.crop.circle.fill',
                     route: '/(admin)/(stack)/edit-profile',
                 },
                 {
-                    label: 'Security',
+                    label: t.security || 'Security',
                     icon: 'lock.shield.fill',
                     route: '/(admin)/(stack)/security',
                 },
@@ -78,7 +82,7 @@ export default function AdminProfileScreen() {
                         </View>
                     </View>
                     <Text style={[styles.userName, { color: text }]}>{user?.name}</Text>
-                    <Text style={styles.userRole}>Administrator</Text>
+                    <Text style={styles.userRole}>{t.administrator || 'Administrator'}</Text>
                     <Text style={[styles.userEmail, { color: muted }]}>{user?.email}</Text>
                 </View>
 

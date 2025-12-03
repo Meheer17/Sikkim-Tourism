@@ -3,9 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useThemeColor } from '@/hooks/use-theme-color';
 import AdminBusinesses from './businesses';
 import AdminUsers from './users';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 export default function AdminManage() {
     const [tab, setTab] = useState<'businesses' | 'users'>('businesses');
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const background = useThemeColor('background');
     const card = useThemeColor('card');
     const text = useThemeColor('text');
@@ -13,15 +17,15 @@ export default function AdminManage() {
     const tint = useThemeColor('tint');
 
     const tabs: { key: 'businesses' | 'users'; label: string }[] = [
-        { key: 'businesses', label: 'Businesses' },
-        { key: 'users', label: 'Users' },
+        { key: 'businesses', label: t.businesses || 'Businesses' },
+        { key: 'users', label: t.users || 'Users' },
     ];
 
     return (
         <View style={[styles.container, { backgroundColor: background }]}>
             <View style={[styles.header, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
-                <Text style={[styles.headerTitle, { color: text }]}>Manage</Text>
-                <Text style={[styles.headerSub, { color: muted }]}>Review and manage entities from one place</Text>
+                <Text style={[styles.headerTitle, { color: text }]}>{t.manage || 'Manage'}</Text>
+                <Text style={[styles.headerSub, { color: muted }]}>{t.reviewManageEntities || 'Review and manage entities from one place'}</Text>
             </View>
 
             <View style={[styles.tabSwitch, { backgroundColor: card }]}>

@@ -17,6 +17,8 @@ import { Place } from '@/types/admin.types';
 import { useApi } from '@/hooks/useApi';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { locationService, LocationModel } from '@/services/location.service';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_HEIGHT = SCREEN_HEIGHT * 0.64;
@@ -37,6 +39,8 @@ const STATUSES = ['All', 'Active', 'Draft', 'Archived'];
 export default function AdminPlacesScreen() {
     const router = useRouter();
     const mapRef = useRef<MapView>(null);
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [places, setPlaces] = useState<Place[]>([]);
     const [filteredPlaces, setFilteredPlaces] = useState<Place[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -269,9 +273,9 @@ export default function AdminPlacesScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
                 <View>
-                    <Text style={[styles.headerTitle, { color: text }]}>Places</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>{t.places || 'Places'}</Text>
                     <Text style={[styles.headerSubtitle, { color: muted }]}>
-                        {filteredPlaces.length} places found
+                        {filteredPlaces.length} {t.placesFound || 'places found'}
                     </Text>
                 </View>
                 <TouchableOpacity

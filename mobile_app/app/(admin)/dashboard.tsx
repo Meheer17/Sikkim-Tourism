@@ -5,6 +5,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { DashboardStats, RecentActivity } from '@/types/admin.types';
 import { useApi } from '@/hooks/useApi';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 // Removed all static mock data. Dashboard now initializes empty and awaits API.
 
@@ -20,6 +22,8 @@ interface StatCardData {
 
 export default function AdminDashboardScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [stats, setStats] = useState<DashboardStats>({
         totalUsers: 0,
         totalBusinesses: 0,
@@ -96,7 +100,7 @@ export default function AdminDashboardScreen() {
 
     const statCards: StatCardData[] = [
         {
-            title: 'Total Users',
+            title: t.totalUsers || 'Total Users',
             value: stats.totalUsers.toLocaleString(),
             icon: 'person.2.fill',
             color: '#3b82f6',
@@ -105,7 +109,7 @@ export default function AdminDashboardScreen() {
             changeType: 'increase',
         },
         {
-            title: 'Businesses',
+            title: t.businesses || 'Businesses',
             value: stats.totalBusinesses.toString(),
             icon: 'building.2.fill',
             color: '#8b5cf6',
@@ -114,7 +118,7 @@ export default function AdminDashboardScreen() {
             changeType: 'increase',
         },
         {
-            title: 'Places',
+            title: t.places || 'Places',
             value: stats.totalPlaces.toString(),
             icon: 'map.fill',
             color: '#10b981',
@@ -123,7 +127,7 @@ export default function AdminDashboardScreen() {
             changeType: 'increase',
         },
         {
-            title: 'Bookings',
+            title: t.bookings || 'Bookings',
             value: stats.totalBookings.toLocaleString(),
             icon: 'ticket.fill',
             color: '#f59e0b',
@@ -132,7 +136,7 @@ export default function AdminDashboardScreen() {
             changeType: 'increase',
         },
         {
-            title: 'Revenue',
+            title: t.revenue || 'Revenue',
             value: `₹${(stats.revenue / 100000).toFixed(1)}L`,
             icon: 'indianrupeesign.circle.fill',
             color: '#ef4444',
@@ -141,7 +145,7 @@ export default function AdminDashboardScreen() {
             changeType: 'increase',
         },
         {
-            title: 'Active Users',
+            title: t.activeUsers || 'Active Users',
             value: stats.activeUsers.toString(),
             icon: 'person.circle.fill',
             color: '#06b6d4',
@@ -190,8 +194,8 @@ export default function AdminDashboardScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: card }]}>
                 <View>
-                    <Text style={[styles.headerTitle, { color: text }]}>Admin Dashboard</Text>
-                    <Text style={[styles.headerSubtitle, { color: muted }]}>Welcome back, Admin</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>{t.adminDashboard || 'Admin Dashboard'}</Text>
+                    <Text style={[styles.headerSubtitle, { color: muted }]}>{t.welcomeBackAdmin || 'Welcome back, Admin'}</Text>
                 </View>
                 <TouchableOpacity
                     style={styles.profileButton}

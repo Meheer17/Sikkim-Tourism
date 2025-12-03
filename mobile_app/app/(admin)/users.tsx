@@ -6,6 +6,8 @@ import { AdminUser, UserRole } from '@/types/admin.types';
 import { useApi } from '@/hooks/useApi';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { userService } from '@/services/user.service';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 // Removed static mock users. Data now sourced only from backend.
 
@@ -14,6 +16,8 @@ const STATUSES = ['All', 'Active', 'Suspended'];
 
 export default function AdminUsersScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>([]);
     const [loading, setLoading] = useState<boolean>(true);

@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Activit
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { aiPlannerService } from '@/services/ai-planner.service';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 interface Question {
     id: string;
@@ -18,6 +20,8 @@ interface Answer {
 
 export default function AIPlanner() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<Answer[]>([]);
     const [progressAnimation] = useState(new Animated.Value(0));
@@ -51,12 +55,12 @@ export default function AIPlanner() {
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <IconSymbol name="chevron.left" size={24} color="#0a7ea4" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>AI Travel Planner</Text>
+                    <Text style={styles.headerTitle}>{t.aiTravelPlanner || 'AI Travel Planner'}</Text>
                     <View style={{ width: 24 }} />
                 </View>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#667eea" />
-                    <Text style={styles.loadingText}>Loading questions...</Text>
+                    <Text style={styles.loadingText}>{t.loadingQuestions || 'Loading questions...'}</Text>
                 </View>
             </View>
         );
@@ -70,16 +74,16 @@ export default function AIPlanner() {
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <IconSymbol name="chevron.left" size={24} color="#0a7ea4" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>AI Travel Planner</Text>
+                    <Text style={styles.headerTitle}>{t.aiTravelPlanner || 'AI Travel Planner'}</Text>
                     <View style={{ width: 24 }} />
                 </View>
                 <View style={styles.emptyContainer}>
                     <IconSymbol name="exclamationmark.triangle" size={64} color="#ef4444" />
-                    <Text style={styles.emptyText}>{error || 'No questions available'}</Text>
-                    <Text style={styles.emptySubtext}>Please check back later</Text>
+                    <Text style={styles.emptyText}>{error || t.noQuestionsAvailable || 'No questions available'}</Text>
+                    <Text style={styles.emptySubtext}>{t.checkBackLater || 'Please check back later'}</Text>
                     <TouchableOpacity style={styles.retryButton} onPress={loadQuestions}>
                         <IconSymbol name="arrow.clockwise" size={20} color="#667eea" />
-                        <Text style={styles.retryButtonText}>Retry</Text>
+                        <Text style={styles.retryButtonText}>{t.retry || 'Retry'}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -201,9 +205,9 @@ export default function AIPlanner() {
                     <IconSymbol name="chevron.left" size={24} color="#11181C" />
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
-                    <Text style={styles.headerTitle}>AI Travel Planner</Text>
+                    <Text style={styles.headerTitle}>{t.aiTravelPlanner || 'AI Travel Planner'}</Text>
                     <Text style={styles.headerSubtitle}>
-                        Question {currentQuestionIndex + 1} of {questions.length}
+                        {t.question || 'Question'} {currentQuestionIndex + 1} {t.of || 'of'} {questions.length}
                     </Text>
                 </View>
                 <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
@@ -216,7 +220,7 @@ export default function AIPlanner() {
                 <View style={styles.progressBar}>
                     <View style={[styles.progressFill, { width: `${progress}%` }]} />
                 </View>
-                <Text style={styles.progressText}>{Math.round(progress)}% Complete</Text>
+                <Text style={styles.progressText}>{Math.round(progress)}% {t.complete || 'Complete'}</Text>
             </View>
 
             {/* Question Content */}
@@ -231,7 +235,7 @@ export default function AIPlanner() {
                     </View>
                     <Text style={styles.questionText}>{currentQuestion.question}</Text>
                     {currentQuestion.type === 'multiple' && (
-                        <Text style={styles.multipleHint}>Select all that apply</Text>
+                        <Text style={styles.multipleHint}>{t.selectAllApply || 'Select all that apply'}</Text>
                     )}
                 </View>
 
@@ -273,7 +277,7 @@ export default function AIPlanner() {
                     disabled={!canProceed()}
                 >
                     <Text style={styles.nextButtonText}>
-                        {currentQuestionIndex === questions.length - 1 ? 'Get Recommendations' : 'Next Question'}
+                        {currentQuestionIndex === questions.length - 1 ? (t.getRecommendations || 'Get Recommendations') : (t.nextQuestion || 'Next Question')}
                     </Text>
                     <IconSymbol name="arrow.right" size={20} color="#fff" />
                 </TouchableOpacity>

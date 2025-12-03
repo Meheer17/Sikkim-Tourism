@@ -4,17 +4,13 @@ import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { businessService, BusinessModel } from '@/services/business.service';
-
-const CATEGORIES = [
-    { key: 'transport', label: 'Transport', icon: 'car.fill', color: '#3b82f6', bg: '#dbeafe' },
-    { key: 'stay', label: 'Stay', icon: 'bed.double.fill', color: '#10b981', bg: '#d1fae5' },
-    { key: 'adventure', label: 'Adventure', icon: 'mountain.2.fill', color: '#f59e0b', bg: '#fef3c7' },
-    { key: 'food', label: 'Food', icon: 'fork.knife', color: '#ef4444', bg: '#fee2e2' },
-    { key: 'shopping', label: 'Shopping', icon: 'bag.fill', color: '#8b5cf6', bg: '#ede9fe' },
-];
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 export default function BusinessServices() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [selected, setSelected] = useState<string | null>(null);
     const [businesses, setBusinesses] = useState<BusinessModel[]>([]);
     const [loading, setLoading] = useState(true);
@@ -24,6 +20,14 @@ export default function BusinessServices() {
     const muted = useThemeColor('mutedText');
     const tint = useThemeColor('tint');
     const scheme = useColorScheme();
+
+    const CATEGORIES = [
+        { key: 'transport', label: t.transport || 'Transport', icon: 'car.fill', color: '#3b82f6', bg: '#dbeafe' },
+        { key: 'stay', label: t.stay || 'Stay', icon: 'bed.double.fill', color: '#10b981', bg: '#d1fae5' },
+        { key: 'adventure', label: t.adventure || 'Adventure', icon: 'mountain.2.fill', color: '#f59e0b', bg: '#fef3c7' },
+        { key: 'food', label: t.food || 'Food', icon: 'fork.knife', color: '#ef4444', bg: '#fee2e2' },
+        { key: 'shopping', label: t.shopping || 'Shopping', icon: 'bag.fill', color: '#8b5cf6', bg: '#ede9fe' },
+    ];
 
     useEffect(() => {
         loadMyBusinesses();
@@ -47,12 +51,12 @@ export default function BusinessServices() {
         <View style={[styles.container, { backgroundColor: background }]}>
             <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { backgroundColor: background }]}>
                 <View style={[styles.header, { backgroundColor: card }]}>
-                    <Text style={[styles.headerTitle, { color: textColor }]}>Your Services</Text>
+                    <Text style={[styles.headerTitle, { color: textColor }]}>{t.yourServices || 'Your Services'}</Text>
                     <TouchableOpacity style={[styles.addBtn, { backgroundColor: tint }]} onPress={() => router.push('/(business)/(stack)/add-service' as any)}>
                         <IconSymbol name="plus" size={20} color="#fff" />
                     </TouchableOpacity>
                 </View>
-                <Text style={[styles.sectionTitle, { color: textColor }]}>Business Nature</Text>
+                <Text style={[styles.sectionTitle, { color: textColor }]}>{t.businessNature || 'Business Nature'}</Text>
                 <View style={styles.categoryGrid}>
                     {CATEGORIES.map((c) => {
                         const active = selected === c.key;
@@ -72,19 +76,19 @@ export default function BusinessServices() {
                         );
                     })}
                 </View>
-                <Text style={[styles.sectionTitle, { color: textColor }]}>Manage Services</Text>
+                <Text style={[styles.sectionTitle, { color: textColor }]}>{t.manageServices || 'Manage Services'}</Text>
                 <View style={styles.actionsRow}>
                     <TouchableOpacity style={[styles.action, { backgroundColor: card }]} onPress={() => router.push('/(business)/(stack)/add-service' as any)}>
                         <IconSymbol name="plus.circle.fill" size={28} color={tint} />
-                        <Text style={[styles.actionText, { color: textColor }]}>Add Service</Text>
+                        <Text style={[styles.actionText, { color: textColor }]}>{t.addService || 'Add Service'}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={[styles.action, { backgroundColor: card }]} onPress={() => router.push('/(business)/(stack)/manage-services' as any)}>
                         <IconSymbol name="square.grid.2x2.fill" size={28} color={tint} />
-                        <Text style={[styles.actionText, { color: textColor }]}>Manage All</Text>
+                        <Text style={[styles.actionText, { color: textColor }]}>{t.manageAll || 'Manage All'}</Text>
                     </TouchableOpacity>
                 </View>
 
-                <Text style={[styles.sectionTitle, { color: textColor }]}>Your Services ({businesses.length})</Text>
+                <Text style={[styles.sectionTitle, { color: textColor }]}>{t.yourServices || 'Your Services'} ({businesses.length})</Text>
                 {loading ? (
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color={tint} />
@@ -92,8 +96,8 @@ export default function BusinessServices() {
                 ) : businesses.length === 0 ? (
                     <View style={[styles.emptyCard, { backgroundColor: card }]}>
                         <IconSymbol name="square.grid.2x2" size={48} color={muted} />
-                        <Text style={[styles.emptyText, { color: muted }]}>No services yet</Text>
-                        <Text style={[styles.emptySubtext, { color: muted }]}>Add your first service to get started</Text>
+                        <Text style={[styles.emptyText, { color: muted }]}>{t.noServicesYet || 'No services yet'}</Text>
+                        <Text style={[styles.emptySubtext, { color: muted }]}>{t.addFirstService || 'Add your first service to get started'}</Text>
                     </View>
                 ) : (
                     businesses.map((biz) => (

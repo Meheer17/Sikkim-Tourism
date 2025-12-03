@@ -22,12 +22,12 @@ export default function BusinessProfileScreen() {
     const handleLogout = async () => { await logout(); router.replace('/(auth)/login' as any); };
 
     const menu = [
-        { label: 'My Services', icon: 'square.grid.2x2.fill', route: '/(business)/services' },
-        { label: 'Bookings', icon: 'ticket.fill', route: '/(business)/bookings' },
-        { label: 'Requests', icon: 'tray.full.fill', route: '/(business)/requests' },
-        { label: 'Edit Profile', icon: 'pencil', route: '/(business)/(stack)/edit-profile' },
-        { label: 'Payouts', icon: 'banknote.fill', route: '/(business)/(stack)/payouts' },
-        { label: 'Settings', icon: 'gearshape.fill', route: '/(business)/(stack)/settings' },
+        { label: t.myServices || 'My Services', icon: 'square.grid.2x2.fill', route: '/(business)/services' },
+        { label: t.bookings || 'Bookings', icon: 'ticket.fill', route: '/(business)/bookings' },
+        { label: t.requests || 'Requests', icon: 'tray.full.fill', route: '/(business)/requests' },
+        { label: t.editProfile || 'Edit Profile', icon: 'pencil', route: '/(business)/(stack)/edit-profile' },
+        { label: t.payouts || 'Payouts', icon: 'banknote.fill', route: '/(business)/(stack)/payouts' },
+        { label: t.settings || 'Settings', icon: 'gearshape.fill', route: '/(business)/(stack)/settings' },
     ];
 
     return (
@@ -41,7 +41,7 @@ export default function BusinessProfileScreen() {
                     <Text style={[styles.email, { color: muted }]}>{user?.email}</Text>
                     <View style={[styles.badge, { backgroundColor: tint }]}>
                         <IconSymbol name="briefcase.fill" size={16} color="#fff" />
-                        <Text style={styles.badgeText}>Business</Text>
+                        <Text style={styles.badgeText}>{t.business || 'Business'}</Text>
                     </View>
                 </View>
 
@@ -62,7 +62,7 @@ export default function BusinessProfileScreen() {
 
                 <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: card, borderColor: '#fee2e2' }]} onPress={handleLogout}>
                     <IconSymbol name="rectangle.portrait.and.arrow.right" size={20} color="#ef4444" />
-                    <Text style={styles.logoutText}>Logout</Text>
+                    <Text style={styles.logoutText}>{t.logout || 'Logout'}</Text>
                 </TouchableOpacity>
             </ScrollView>
         </View>

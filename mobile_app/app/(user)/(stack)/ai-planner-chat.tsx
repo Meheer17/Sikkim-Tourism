@@ -16,11 +16,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { aiChatService, ChatMessage, ChatResponse } from '@/services/ai-chat.service';
 import { platformConfig } from '@/config/api.config';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 export default function AIPlannerChatScreen() {
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
   const insets = useSafeAreaInsets();
+  const { language } = useLanguage();
+  const t = getLanguageTranslations(language);
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -43,7 +47,7 @@ export default function AIPlannerChatScreen() {
       {
         role: 'assistant',
         content:
-          "👋 Hi! I'm your Sikkim travel planning assistant. Tell me about your dream trip! For example:\n\n• I need a 3-day adventure trip\n• Planning a romantic honeymoon\n• Family vacation ideas for next month",
+          t.aiPlannerGreeting || "👋 Hi! I'm your Sikkim travel planning assistant. Tell me about your dream trip! For example:\n\n• I need a 3-day adventure trip\n• Planning a romantic honeymoon\n• Family vacation ideas for next month",
         timestamp: new Date().toISOString(),
       },
     ]);
@@ -94,7 +98,7 @@ export default function AIPlannerChatScreen() {
       const errorMessage: ChatMessage = {
         role: 'assistant',
         content:
-          '❌ Sorry, I encountered an error. Please try again or start a new conversation.',
+          t.aiChatError || '❌ Sorry, I encountered an error. Please try again or start a new conversation.',
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -163,7 +167,7 @@ export default function AIPlannerChatScreen() {
       {
         role: 'assistant',
         content:
-          "👋 Let's start fresh! Tell me about your Sikkim travel plans.",
+          t.aiPlannerResetGreeting || "👋 Let's start fresh! Tell me about your Sikkim travel plans.",
         timestamp: new Date().toISOString(),
       },
     ]);
@@ -178,7 +182,7 @@ export default function AIPlannerChatScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>AI Travel Planner</Text>
+        <Text style={styles.headerTitle}>{t.aiTravelPlanner || 'AI Travel Planner'}</Text>
         <TouchableOpacity onPress={resetChat} style={styles.resetButton}>
           <Ionicons name="refresh" size={24} color="#fff" />
         </TouchableOpacity>
@@ -217,16 +221,16 @@ export default function AIPlannerChatScreen() {
 
         {isTyping && (
           <View style={[styles.messageBubble, styles.assistantBubble]}>
-            <Text style={styles.typingText}>AI is typing...</Text>
+            <Text style={styles.typingText}>{t.aiTyping || 'AI is typing...'}</Text>
           </View>
         )}
 
         {/* Preferences Summary (when ready) */}
         {isReadyToGenerate && (
           <View style={styles.preferencesSummary}>
-            <Text style={styles.preferencesTitle}>✅ Ready to generate plans!</Text>
+            <Text style={styles.preferencesTitle}>{t.readyToGenerate || '✅ Ready to generate plans!'}</Text>
             <Text style={styles.preferencesText}>
-              Based on your preferences:
+              {t.basedOnPreferences || 'Based on your preferences:'}
             </Text>
             {Object.entries(extractedPreferences).map(([key, value]) => {
               if (value && value !== null && (!Array.isArray(value) || value.length > 0)) {

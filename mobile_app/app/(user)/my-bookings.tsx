@@ -16,6 +16,14 @@ const STATUS_FILTERS = [
 export default function MyBookingsScreen() {
     const { language } = useLanguage();
     const t = getLanguageTranslations(language);
+
+    // Create translated filter labels
+    const STATUS_FILTERS_TRANSLATED = [
+        { key: 'all', label: t.all || 'All' },
+        { key: 'active', label: t.active || 'Active' },
+        { key: 'upcoming', label: t.upcoming || 'Upcoming' },
+        { key: 'completed', label: t.completed || 'Completed' },
+    ];
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
     const [selectedFilter, setSelectedFilter] = useState('all');
@@ -84,14 +92,14 @@ export default function MyBookingsScreen() {
                         <IconSymbol name="checkmark.circle.fill" size={24} color="#10b981" />
                     </View>
                     <Text style={[styles.statValue, { color: text }]}>{activeCount}</Text>
-                    <Text style={[styles.statLabel, { color: mutedText }]}>Active</Text>
+                    <Text style={[styles.statLabel, { color: mutedText }]}>{t.active || 'Active'}</Text>
                 </View>
                 <View style={[styles.statCard, { backgroundColor: cardBg }]}>
                     <View style={[styles.statIcon, { backgroundColor: '#dbeafe' }]}>
                         <IconSymbol name="clock.fill" size={24} color="#3b82f6" />
                     </View>
                     <Text style={[styles.statValue, { color: text }]}>{upcomingCount}</Text>
-                    <Text style={[styles.statLabel, { color: mutedText }]}>Upcoming</Text>
+                    <Text style={[styles.statLabel, { color: mutedText }]}>{t.upcoming || 'Upcoming'}</Text>
                 </View>
                 <View style={[styles.statCard, { backgroundColor: cardBg }]}>
                     <View style={[styles.statIcon, { backgroundColor: '#fef3c7' }]}>
@@ -100,7 +108,7 @@ export default function MyBookingsScreen() {
                     <Text style={[styles.statValue, { color: text }]}>
                         {bookings.reduce((sum, b) => sum + b.price, 0)}
                     </Text>
-                    <Text style={[styles.statLabel, { color: mutedText }]}>Total Spent</Text>
+                    <Text style={[styles.statLabel, { color: mutedText }]}>{t.totalSpent || 'Total Spent'}</Text>
                 </View>
             </View>
 
@@ -111,7 +119,7 @@ export default function MyBookingsScreen() {
                 style={styles.filtersContainer}
                 contentContainerStyle={styles.filtersContent}
             >
-                {STATUS_FILTERS.map((filter) => (
+                {STATUS_FILTERS_TRANSLATED.map((filter) => (
                     <TouchableOpacity
                         key={filter.key}
                         style={[
