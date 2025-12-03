@@ -16,6 +16,36 @@
 
 ---
 
+## **Completion Status: 61%**
+
+## ✅ **Completed Features (13/21)**
+
+- ✅ 360° panoramic views
+- ✅ Multi-language narrated walkthroughs (6 languages with TTS)
+- ✅ Geo-tagged monastery locations
+- ✅ Document upload system (images, videos, audio)
+- ✅ Events & festivals scheduling system
+- ✅ AI trip planner
+- ✅ Complete 6-language translation system
+- ✅ Real-time location sharing & group planning
+- ✅ Business portal for monasteries
+- ✅ Admin panel for content moderation
+- ✅ Media compression for optimized delivery
+- ✅ Location-based audio guides (GPS)
+- ✅ Tourism analytics dashboard
+
+## 📝 **To-Do Features (9/21)**
+
+- ⬜ Booking system for events
+- ⬜ Community chat & messaging
+- ⬜ Travel routes & nearby attractions on map
+- ⬜ Local transport integration
+- ⬜ Participatory archiving (user contributions)
+- ⬜ Document View for Scanned manuscripts, murals, and historical documents.
+- ⬜ Calendar View for Events
+- ⬜ AI-powered search for archived documents
+- ⬜ Offline mode for remote areas
+
 ## 🌟 About The Project
 
 **Sikkim Tourism** is an innovative digital platform developed for Smart India Hackathon 2025, designed to revolutionize the tourism experience in Sikkim. Our solution combines cutting-edge technology with user-centric design to provide tourists with:
@@ -244,176 +274,6 @@ After starting Expo:
 
 ---
 
-## 📱 Mobile App Structure
-
-```
-mobile_app/
-├── app/                         # Expo Router screens
-│   ├── (admin)/                 # Admin portal screens
-│   │   ├── dashboard.tsx        # Admin dashboard
-│   │   ├── users.tsx            # User management
-│   │   ├── businesses.tsx       # Business approvals
-│   │   └── places.tsx           # Place management
-│   ├── (auth)/                  # Authentication screens
-│   │   ├── login.tsx            # Login with language selector
-│   │   └── register.tsx         # User registration
-│   ├── (business)/              # Business portal screens
-│   │   ├── dashboard.tsx        # Business dashboard
-│   │   ├── services.tsx         # Service management
-│   │   ├── bookings.tsx         # Booking management
-│   │   └── profile.tsx          # Business profile
-│   └── (user)/                  # User portal screens
-│       ├── home.tsx             # Explore destinations
-│       ├── explore.tsx          # Search & discover
-│       ├── services.tsx         # Browse services
-│       ├── my-bookings.tsx      # User bookings
-│       ├── profile.tsx          # User profile
-│       ├── community-chat.tsx   # Community features
-│       └── (stack)/             # Stack navigation screens
-│           ├── ai-planner.tsx   # AI trip planning
-│           ├── place-details.tsx# Place information
-│           ├── friends.tsx      # Location sharing
-│           └── language.tsx     # Language settings
-├── components/                  # Reusable components
-│   ├── auth/                    # Auth components
-│   ├── bookings/                # Booking components
-│   ├── common/                  # Shared components
-│   ├── explore/                 # Exploration components
-│   ├── immersive/               # 360° viewer components
-│   ├── profile/                 # Profile components
-│   └── ui/                      # UI primitives
-├── contexts/                    # React contexts
-│   ├── ThemeContext.tsx         # Dark/Light theme
-│   └── LanguageContext.tsx      # Multi-lingual support
-├── services/                    # API service layer
-│   ├── api.client.ts            # Axios instance
-│   ├── auth.service.ts          # Authentication
-│   ├── business.service.ts      # Business operations
-│   ├── location.service.ts      # Location services
-│   ├── message.service.ts       # Messaging
-│   └── user.service.ts          # User operations
-├── constants/                   # App constants
-│   ├── languages.ts             # Supported languages
-│   ├── translations.ts          # Translation strings
-│   └── theme.ts                 # Theme configuration
-└── hooks/                       # Custom React hooks
-    ├── useAuth.ts               # Authentication hook
-    ├── useApi.ts                # API request hook
-    └── useThemeColor.ts         # Theme color hook
-```
-
----
-
-## 🔧 Backend API Structure
-
-```
-be/
-├── app/
-│   ├── main.py                  # FastAPI application entry
-│   ├── api/v1/                  # API routes
-│   │   ├── auth.py              # Authentication endpoints
-│   │   ├── users.py             # User management
-│   │   ├── locations.py         # Location endpoints
-│   │   ├── businesses.py        # Business endpoints
-│   │   ├── services.py          # Service endpoints
-│   │   ├── messages.py          # Messaging endpoints
-│   │   ├── communities.py       # Community features
-│   │   └── files.py             # File upload/CDN
-│   ├── core/
-│   │   ├── config.py            # App configuration
-│   │   ├── database.py          # MongoDB connection
-│   │   └── security.py          # JWT & password hashing
-│   ├── models/                  # Pydantic models
-│   │   ├── user.py              # User model
-│   │   ├── business.py          # Business model
-│   │   ├── location.py          # Location model
-│   │   ├── service.py           # Service model
-│   │   ├── message.py           # Message model
-│   │   └── community.py         # Community model
-│   ├── schemas/                 # Request/Response schemas
-│   ├── services/                # Business logic
-│   │   ├── auth_service.py      # Auth operations
-│   │   ├── user_service.py      # User operations
-│   │   ├── business_service.py  # Business operations
-│   │   └── ai_service.py        # AI integration
-│   ├── middleware/
-│   │   ├── error_handlers.py    # Error handling
-│   │   └── logging.py           # Request logging
-│   └── utils/
-│       └── logging.py           # Logging utilities
-├── requirements.txt             # Python dependencies
-├── api_doc.md                   # API documentation
-└── README.md                    # Backend readme
-```
-
----
-
-## 📚 API Documentation
-
-### Authentication Endpoints
-
-#### Sign Up
-```http
-POST /api/v1/auth/signup
-Content-Type: application/json
-
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "securepassword123",
-  "address": "Gangtok, Sikkim",
-  "gender": "male"
-}
-```
-
-#### Sign In
-```http
-POST /api/v1/auth/signin
-Content-Type: application/json
-
-{
-  "email": "john@example.com",
-  "password": "securepassword123"
-}
-```
-
-Response:
-```json
-{
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer",
-  "user": {
-    "id": "507f1f77bcf86cd799439011",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "role": "user"
-  }
-}
-```
-
-### Protected Endpoints
-
-All protected endpoints require JWT authentication:
-
-```http
-Authorization: Bearer <your-jwt-token>
-```
-
-### Key Endpoints
-
-- **Locations**: `/api/v1/locations` - CRUD operations for tourist places
-- **Businesses**: `/api/v1/businesses` - Business listings and management
-- **Services**: `/api/v1/services` - Service offerings (hotels, transport, etc.)
-- **Bookings**: `/api/v1/bookings` - Booking management
-- **Communities**: `/api/v1/communities` - Community groups and chat
-- **Messages**: `/api/v1/messages` - Real-time messaging
-- **Files**: `/api/v1/upload/{type}` - File upload (images, videos, 3D models, audio)
-- **AI Planner**: `/api/v1/ai/plan-trip` - AI-powered trip planning
-
-For complete API documentation, visit `http://localhost:8000/docs` after starting the backend.
-
----
-
 ## 🌍 Multi-Lingual Support
 
 The app supports **6 languages**:
@@ -427,22 +287,7 @@ The app supports **6 languages**:
 | Assamese | as | অসমীয়া |
 | Sikkimese | si | Sikkim |
 
-### How It Works
-
-1. **Language Selection**: Users can select their preferred language from the login screen
-2. **Context-Based**: Uses React Context (`LanguageContext`) for global state
-3. **Translation Keys**: All UI strings use translation keys with fallback to English
-4. **Persistent**: Language preference stored in SecureStore
-
-### Adding New Languages
-
-1. Add language to `mobile_app/constants/languages.ts`
-2. Add translations to `mobile_app/constants/translations.ts`
-3. Run translation check: `node mobile_app/scripts/check-translations.js`
-
----
-
-## 🎨 Features Deep Dive
+## 🎨 Features
 
 ### 1. AI Travel Planner
 
@@ -485,9 +330,7 @@ Powered by Google Gemini AI, provides:
 - Revenue analytics
 - Review management
 
----
-
-## 🔐 Security Features
+### 6. Security
 
 - **JWT Authentication**: Secure token-based auth (7-day expiry)
 - **Password Hashing**: Bcrypt with salt rounds
@@ -499,63 +342,6 @@ Powered by Google Gemini AI, provides:
 
 ---
 
-## 🧪 Testing
-
-### Backend Tests
-
-```bash
-cd be
-pytest tests/ -v
-```
-
-### Frontend Tests
-
-```bash
-cd mobile_app
-npm test
-```
-
----
-
-## 📦 Deployment
-
-### Backend Deployment (Production)
-
-1. **Setup MongoDB Atlas**
-   - Create cluster at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-   - Update `MONGODB_URL` in environment variables
-
-2. **Deploy to Cloud**
-   ```bash
-   # Example: Deploy to Railway/Render/Heroku
-   # Set environment variables
-   # Start with: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-   ```
-
-3. **Environment Variables**
-   - Set all `.env` variables in production
-   - Use secure `SECRET_KEY`
-   - Disable `DEBUG` mode
-
-### Mobile App Deployment
-
-#### Build for Android
-```bash
-cd mobile_app
-eas build --platform android
-```
-
-#### Build for iOS
-```bash
-cd mobile_app
-eas build --platform ios
-```
-
-#### Update Over-The-Air (OTA)
-```bash
-eas update --branch production
-```
-
 ## 👥 Team
 
 **Team Name**: Promatrs
@@ -566,25 +352,15 @@ eas update --branch production
 - **Team Member 4**: Tanveer Muhammed S
 - **Team Member 5**: Shaik Mahummad 
 
----
+<!-- ---
 
 ## 📧 Contact & Support
 
 - **GitHub**: [github.com/Meheer17/Sikkim-Tourism](https://github.com/Meheer17/Sikkim-Tourism)
-- **Issues**: [Report Bug/Request Feature](https://github.com/Meheer17/Sikkim-Tourism/issues)
+- **Issues**: [Report Bug/Request Feature](https://github.com/Meheer17/Sikkim-Tourism/issues) -->
 <!-- - **Email**: [your-email@example.com] -->
 
----
-
-## 🙏 Acknowledgments
-
-- **Smart India Hackathon 2025** - For the opportunity
-- **Google Gemini AI** - AI capabilities
-- **Expo Team** - Amazing development platform
-- **FastAPI** - Modern Python web framework
-- **MongoDB** - Flexible database solution
-
----
+<!-- ---
 
 ## 🗺️ Roadmap
 
@@ -597,7 +373,7 @@ eas update --branch production
 - [ ] Social media integration
 - [ ] Review and rating system
 - [ ] Emergency contact features
-- [ ] Weather API integration
+- [ ] Weather API integration -->
 
 ---
 
