@@ -60,7 +60,7 @@ class AIChatService {
   async startChatSession(initialMessage: string): Promise<ChatResponse> {
     const response = await apiClient.post<ChatResponse>('/ai-planner/chat/start', {
       initial_message: initialMessage,
-    });
+    }, { timeout: 30000 }); // 30 second timeout for AI responses
     return response.data!;
   }
 
@@ -74,7 +74,7 @@ class AIChatService {
     const response = await apiClient.post<ChatResponse>('/ai-planner/chat/message', {
       session_id: sessionId,
       message,
-    });
+    }, { timeout: 30000 }); // 30 second timeout for AI responses
     return response.data!;
   }
 
@@ -86,7 +86,8 @@ class AIChatService {
   async generatePlansFromChat(sessionId: string): Promise<TravelPlanResponse> {
     const response = await apiClient.post<TravelPlanResponse>(
       `/ai-planner/chat/${sessionId}/generate`,
-      {} // Empty body for POST request
+      {}, // Empty body for POST request
+      { timeout: 60000 } // 60 second timeout for plan generation (longer process)
     );
     return response.data!;
   }

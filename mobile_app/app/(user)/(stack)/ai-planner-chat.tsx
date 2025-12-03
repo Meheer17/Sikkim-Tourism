@@ -16,7 +16,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { aiChatService, ChatMessage, ChatResponse } from '@/services/ai-chat.service';
 import { platformConfig } from '@/config/api.config';
-import { pl } from 'zod/v4/locales';
 
 export default function AIPlannerChatScreen() {
   const router = useRouter();
@@ -109,8 +108,19 @@ export default function AIPlannerChatScreen() {
     if (!sessionId || !isReadyToGenerate) return;
 
     setIsLoading(true);
+    setIsTyping(true);
+    
+    const loadingMessage: ChatMessage = {
+      role: 'assistant',
+      content: '🎨 Creating your personalized travel plans... This may take 10-15 seconds.',
+      timestamp: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, loadingMessage]);
+
     try {
+      console.log('🚀 Generating plans for session:', sessionId);
       const travelPlans = await aiChatService.generatePlansFromChat(sessionId);
+      console.log('✅ Plans generated successfully:', travelPlans);
 
       // Navigate to results with plans
       router.push({
@@ -121,15 +131,29 @@ export default function AIPlannerChatScreen() {
         },
       });
     } catch (error: any) {
-      console.error('Failed to generate plans:', error);
+      console.error('❌ Failed to generate plans:', error);
+      
+      let errorText = '❌ Failed to generate travel plans. ';
+      
+      if (error.message?.includes('Network Error')) {
+        errorText += 'Backend server is not running. Please start the backend server and try again.';
+      } else if (error.response?.status === 404) {
+        errorText += 'Session expired. Please start a new conversation.';
+      } else if (error.response?.status === 500) {
+        errorText += 'Server error. Please check backend logs for details.';
+      } else {
+        errorText += 'Please try again or start a new conversation.';
+      }
+      
       const errorMessage: ChatMessage = {
         role: 'assistant',
-        content: '❌ Failed to generate travel plans. Please try again.',
+        content: errorText,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      setIsTyping(false);
     }
   };
 

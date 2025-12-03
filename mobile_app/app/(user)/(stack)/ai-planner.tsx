@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Activit
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { aiPlannerService } from '@/services/ai-planner.service';
-import type { Question as QuestionType, Answer } from '@/services/ai-planner.service';
 
 interface Question {
     id: string;

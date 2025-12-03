@@ -29,7 +29,26 @@ class AIPlannerService:
     def __init__(self):
         if settings.GEMINI_API_KEY:
             genai.configure(api_key=settings.GEMINI_API_KEY)
-            self.model = genai.GenerativeModel('gemini-flash-latest')
+            # Configure safety settings to be less restrictive for travel planning
+            safety_settings = [
+                {
+                    "category": "HARM_CATEGORY_HARASSMENT",
+                    "threshold": "BLOCK_ONLY_HIGH"
+                },
+                {
+                    "category": "HARM_CATEGORY_HATE_SPEECH",
+                    "threshold": "BLOCK_ONLY_HIGH"
+                },
+                {
+                    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                    "threshold": "BLOCK_ONLY_HIGH"
+                },
+                {
+                    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                    "threshold": "BLOCK_ONLY_HIGH"
+                }
+            ]
+            self.model = genai.GenerativeModel('gemini-flash-latest', safety_settings=safety_settings)
         else:
             self.model = None
     
@@ -252,11 +271,47 @@ Only set is_ready to true when you have at least: duration, budget, and traveler
         try:
             print(f"Calling Gemini API with prompt length: {len(response_prompt)}")
             response = self.model.generate_content(response_prompt)
+            
+            # Check if response was blocked by safety filters
+            if not response.candidates or not response.candidates[0].content.parts:
+                print(f"⚠️ Gemini response blocked or empty. Finish reason: {response.candidates[0].finish_reason if response.candidates else 'No candidates'}")
+                
+                # Return a fallback response asking user to clarify
+                return {
+                    "message": "I'd be happy to help you plan a trip to Sikkim! Note that I specialize in Sikkim tourism. Could you please confirm if you meant Sikkim, or would you like recommendations for visiting Sikkim instead? Also, let me know your budget range (budget-friendly, moderate, or luxury) and any specific interests (nature, culture, adventure, relaxation)?",
+                    "preferences": {
+                        "duration_days": None,
+                        "budget_category": None,
+                        "traveler_type": None,
+                        "companions": None,
+                        "interests": [],
+                        "special_requirements": []
+                    },
+                    "is_ready": False
+                }
+            
             print(f"Gemini API response received, text length: {len(response.text)}")
             print(f"Gemini response text: {response.text[:500]}")
             result = self._parse_json_response(response.text)
             print(f"Parsed result: {result}")
             return result
+        except ValueError as e:
+            # Handle safety filter blocking
+            if "finish_reason" in str(e):
+                print(f"⚠️ Gemini safety filter triggered: {e}")
+                return {
+                    "message": "I'd be happy to help you plan a trip to Sikkim! To get started, could you tell me:\n1. Your budget range (budget-friendly, moderate, or luxury)\n2. What type of experience you're looking for (adventure, relaxation, culture, nature)\n3. Any specific interests or activities?\n\nNote: I specialize in Sikkim tourism specifically.",
+                    "preferences": {
+                        "duration_days": None,
+                        "budget_category": None,
+                        "traveler_type": None,
+                        "companions": None,
+                        "interests": [],
+                        "special_requirements": []
+                    },
+                    "is_ready": False
+                }
+            raise
         except Exception as e:
             print(f"Error in _get_ai_chat_response: {e}")
             import traceback
@@ -277,16 +332,21 @@ Only set is_ready to true when you have at least: duration, budget, and traveler
             print(f"Error creating location context: {e}")
             location_context = "Various locations in Sikkim"
         
-        return f"""You are a Sikkim travel planning assistant. You help users plan trips using ONLY the following real locations from our database:
+        return f"""You are a helpful Sikkim travel planning assistant. You specialize in creating travel plans for Sikkim, India.
+
+IMPORTANT: You ONLY plan trips to Sikkim. If a user mentions other locations (like Shillong, Darjeeling, etc.), politely clarify that you specialize in Sikkim tourism and ask if they'd like to visit Sikkim instead.
+
+Available Sikkim locations in our database:
 
 {location_context}
 
 Your job:
-1. Have a natural conversation to understand the user's preferences
-2. Ask follow-up questions to collect: duration, budget, interests, companions
-3. When you have enough information, indicate you're ready to generate personalized plans
-4. ONLY reference locations from the database provided above
-5. Be friendly, helpful, and enthusiastic about Sikkim tourism"""
+1. Have a natural, friendly conversation to understand the user's preferences
+2. If they mention non-Sikkim locations, politely redirect to Sikkim tourism
+3. Ask follow-up questions to collect: duration, budget, interests, companions
+4. When you have enough information, indicate you're ready to generate personalized plans
+5. ONLY reference locations from the Sikkim database provided above
+6. Be enthusiastic about Sikkim's natural beauty, culture, and attractions"""
     
     def _parse_json_response(self, response_text: str) -> Dict[str, Any]:
         """Parse JSON from Gemini response, handling markdown code blocks"""
@@ -326,6 +386,15 @@ Your job:
         try:
             print("🤖 Calling Gemini API for plan generation...")
             response = self.model.generate_content(prompt)
+            
+            # Check if response was blocked by safety filters
+            if not response.candidates or not response.candidates[0].content.parts:
+                print(f"⚠️ Gemini plan generation blocked. Finish reason: {response.candidates[0].finish_reason if response.candidates else 'No candidates'}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="AI safety filters blocked the response. This may be due to content concerns. Please try adjusting your preferences or try again."
+                )
+            
             print(f"✅ Gemini response received, length: {len(response.text)}")
             
             plans_data = self._parse_json_response(response.text)
@@ -339,11 +408,26 @@ Your job:
             plans = [TravelPlan(**plan) for plan in plans_data]
             
             # Validate plans use only database locations
-            self._validate_plans_use_db_data(plans, locations)
+            self._validate_plans_use_db_data(plans, locations, None)
             
             print(f"✅ Successfully generated {len(plans)} travel plans")
             return plans
             
+        except HTTPException:
+            # Re-raise HTTP exceptions as-is
+            raise
+        except ValueError as e:
+            # Handle safety filter blocking
+            if "finish_reason" in str(e):
+                print(f"⚠️ Gemini safety filter triggered during plan generation: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="AI safety filters blocked the response. Please try generating plans again or adjust your preferences."
+                )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to parse AI response: {str(e)}"
+            )
         except Exception as e:
             print(f"❌ Error generating plans: {e}")
             import traceback
@@ -656,13 +740,19 @@ RESPOND IN THIS EXACT JSON FORMAT:
     def _validate_plans_use_db_data(
         self, 
         plans: List[TravelPlan], 
-        locations: List[Dict], 
-        businesses: List[Dict]
+        locations: List[Any], 
+        businesses: Optional[List[Dict]] = None
     ) -> None:
         """Validate that generated plans only reference database locations and businesses"""
-        location_ids = {loc['id'] for loc in locations}
-        location_names = {loc['name'].lower() for loc in locations}
-        business_names = {biz['name'].lower() for biz in businesses}
+        if isinstance(locations[0], dict):
+            location_ids = {loc['id'] for loc in locations}
+            location_names = {loc['name'].lower() for loc in locations}
+        else:
+            location_ids = {loc.get('_id') or loc.get('id') for loc in locations}
+            location_names = {loc.get('name', '').lower() for loc in locations}
+        
+        if businesses:
+            business_names = {biz['name'].lower() for biz in businesses}
         
         for plan in plans:
             # Check that location IDs are from database

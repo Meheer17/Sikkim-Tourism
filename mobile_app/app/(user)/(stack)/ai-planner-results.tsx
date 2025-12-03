@@ -28,18 +28,39 @@ export default function AIPlannerResults() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        generatePlans();
+        loadPlans();
     }, []);
 
-    const generatePlans = async () => {
+    const loadPlans = async () => {
         try {
             setLoading(true);
             setError(null);
 
-            // Parse answers from params
+            // Check if plans are already provided (from chat flow)
+            if (params.plans) {
+                const plansData = JSON.parse(params.plans as string);
+                const plans: TravelPlan[] = plansData.map((plan: any) => ({
+                    id: plan.id,
+                    title: plan.title,
+                    duration: plan.duration,
+                    budget: plan.budget,
+                    description: plan.description,
+                    highlights: plan.highlights,
+                    activities: plan.activities,
+                    accommodation: plan.accommodation,
+                    best_for: plan.best_for,
+                    rating: plan.rating,
+                    image_color: plan.image_color,
+                }));
+                setTravelPlans(plans);
+                setLoading(false);
+                return;
+            }
+
+            // Otherwise, generate from answers (legacy flow)
             const answersJson = params.answers as string;
             if (!answersJson) {
-                setError('No answers provided');
+                setError('No plans or answers provided');
                 setLoading(false);
                 return;
             }
@@ -66,8 +87,8 @@ export default function AIPlannerResults() {
 
             setTravelPlans(plans);
         } catch (err) {
-            console.error('Error generating travel plans:', err);
-            setError('Failed to generate travel plans. Please try again.');
+            console.error('Error loading travel plans:', err);
+            setError('Failed to load travel plans. Please try again.');
         } finally {
             setLoading(false);
         }

@@ -10,7 +10,7 @@ import AudioNarration from '@/components/immersive/AudioNarration';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 interface LocationDetails {
-    _id: string;
+    id: string;
     name: string;
     description: string;
     short_description: string;
@@ -62,7 +62,7 @@ export default function LocationDetailsScreen() {
         router.push({
             pathname: '/(user)/(stack)/immersive-experience',
             params: {
-                placeId: location._id,
+                placeId: location.id,
                 panorama360Url: location.metadata.panorama_360,
                 placeName: location.name,
                 placeDescription: location.description,
@@ -241,7 +241,7 @@ export default function LocationDetailsScreen() {
             {location.description && (
                 <AudioNarration
                     narrationText={location.description}
-                    locationId={location._id}
+                    locationId={location.id}
                     locationLatitude={location.position.y} // position.y is latitude
                     locationLongitude={location.position.x} // position.x is longitude
                     autoPlayOnProximity={true}
@@ -318,7 +318,6 @@ const styles = StyleSheet.create({
     indicator: {
         height: 8,
         borderRadius: 4,
-        transition: 'all 0.3s',
     },
     infoCard: {
         margin: 16,
