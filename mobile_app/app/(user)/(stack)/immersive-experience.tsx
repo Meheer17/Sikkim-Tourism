@@ -14,6 +14,7 @@ import NavigationHotspot, {
     NavigationHotspot as HotspotType,
 } from '@/components/immersive/NavigationHotspot';
 import AudioNarration from '@/components/immersive/AudioNarration';
+import { ttsService } from '@/services/tts.service';
 
 interface Viewpoint {
     id: string;
@@ -119,6 +120,10 @@ export default function ImmersiveExperienceScreen() {
     const placeId = params.placeId as string;
     const panorama360Url = params.panorama360Url as string;
     const placeName = params.placeName as string;
+    const placeDescription = params.placeDescription as string;
+    const shortDescription = params.shortDescription as string;
+    const latitude = params.latitude ? parseFloat(params.latitude as string) : undefined;
+    const longitude = params.longitude ? parseFloat(params.longitude as string) : undefined;
 
     const [currentViewpointIndex, setCurrentViewpointIndex] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -132,8 +137,20 @@ export default function ImmersiveExperienceScreen() {
     useEffect(() => {
         // Simulate loading
         const timer = setTimeout(() => setLoading(false), 1500);
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(timer);
+            // Stop TTS when leaving this view or changing viewpoint
+            ttsService.stop();
+        };
     }, [currentViewpointIndex]);
+
+    useEffect(() => {
+        // Cleanup TTS when component unmounts (user exits the view)
+        return () => {
+            ttsService.stop();
+            console.log('🔊 Stopped TTS - exited immersive view');
+        };
+    }, []);
 
     useEffect(() => {
         // Auto-hide info after 5 seconds
@@ -156,7 +173,9 @@ export default function ImmersiveExperienceScreen() {
         }
     };
 
-    const handleBack = () => {
+    const handleBack = async () => {
+        // Stop TTS before navigating back
+        await ttsService.stop();
         router.back();
     };
 
@@ -221,16 +240,20 @@ export default function ImmersiveExperienceScreen() {
 
             {showInfo && (
                 <View style={styles.infoPanel} pointerEvents="box-none">
-                    <Text style={styles.infoTitle}>{currentViewpoint.name}</Text>
-                    <Text style={styles.infoDescription}>{currentViewpoint.description}</Text>
+                    <Text style={styles.infoTitle}>{placeName || currentViewpoint.name}</Text>
+                    <Text style={styles.infoDescription}>
+                        {shortDescription || currentViewpoint.description}
+                    </Text>
                 </View>
             )}
 
-            {currentViewpoint.narrationText && !loading && (
+            {!loading && (placeDescription || currentViewpoint.narrationText) && (
                 <AudioNarration
-                    // audioSource={currentViewpoint.audioUrl ? { uri: currentViewpoint.audioUrl } : undefined}
-                    narrationText={currentViewpoint.narrationText}
-                    autoPlay={false}
+                    narrationText={placeDescription || currentViewpoint.narrationText}
+                    locationId={placeId}
+                    locationLatitude={latitude}
+                    locationLongitude={longitude}
+                    autoPlayOnProximity={false}
                 />
             )}
 

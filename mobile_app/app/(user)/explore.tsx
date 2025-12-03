@@ -156,8 +156,8 @@ export default function ExploreScreen() {
           modelPath: loc.metadata?.model_url || undefined, // Only set if admin uploaded a 3D model
           has360Images: !!loc.metadata?.panorama_360, // Check if admin uploaded 360 panorama image
           panorama360Url: loc.metadata?.panorama_360 || undefined, // URL to 360 panorama
-          latitude: loc.position?.x || 27.3389,  // position.x is latitude
-          longitude: loc.position?.y || 88.6065, // position.y is longitude
+          latitude: loc.position?.y || 27.3389,  // position.y is latitude (CORRECT)
+          longitude: loc.position?.x || 88.6065, // position.x is longitude (CORRECT)
         };
       });
 

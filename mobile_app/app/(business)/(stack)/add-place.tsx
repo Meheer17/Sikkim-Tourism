@@ -45,7 +45,7 @@ export default function AddPlaceScreen() {
                 name: name.trim(),
                 description: description.trim(),
                 short_description: shortDescription.trim(),
-                position: { x: lat, y: lng },
+                position: { x: lng, y: lat }, // x=longitude, y=latitude
                 metadata: {},
                 type,
             });

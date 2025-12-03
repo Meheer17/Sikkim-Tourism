@@ -12,6 +12,8 @@ import {
     Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
+import * as Location from 'expo-location';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { businessService, BusinessType } from '@/services/business.service';
@@ -33,6 +35,14 @@ export default function CreateBusinessScreen() {
     const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
     const [selectedTypeId, setSelectedTypeId] = useState('');
     const [loadingTypes, setLoadingTypes] = useState(true);
+    const [showMap, setShowMap] = useState(false);
+    const [mapRegion, setMapRegion] = useState({
+        latitude: 27.3314, // Default to Sikkim coordinates
+        longitude: 88.6138,
+        latitudeDelta: 0.5,
+        longitudeDelta: 0.5,
+    });
+    const [markerPosition, setMarkerPosition] = useState<{ latitude: number; longitude: number } | null>(null);
 
     const background = useThemeColor('background');
     const card = useThemeColor('card');
@@ -42,9 +52,28 @@ export default function CreateBusinessScreen() {
 
     useEffect(() => {
         loadBusinessTypes();
+        requestLocationPermission();
         // Set default scheduled_at to current date in ISO format
         setScheduledAt(new Date().toISOString());
     }, []);
+
+    const requestLocationPermission = async () => {
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status === 'granted') {
+                const location = await Location.getCurrentPositionAsync({});
+                const { latitude: lat, longitude: lng } = location.coords;
+                setMapRegion({
+                    latitude: lat,
+                    longitude: lng,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05,
+                });
+            }
+        } catch (error) {
+            console.log('Location permission error:', error);
+        }
+    };
 
     const loadBusinessTypes = async () => {
         try {
@@ -64,6 +93,59 @@ export default function CreateBusinessScreen() {
             Alert.alert('Error', 'Failed to load business types. Please try again.');
         } finally {
             setLoadingTypes(false);
+        }
+    };
+
+    const handleMapPress = (event: any) => {
+        const { latitude: lat, longitude: lng } = event.nativeEvent.coordinate;
+        setMarkerPosition({ latitude: lat, longitude: lng });
+        setLatitude(lat.toFixed(6));
+        setLongitude(lng.toFixed(6));
+    };
+
+    const handleUseCurrentLocation = async () => {
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'Location permission is required to use this feature');
+                return;
+            }
+
+            const location = await Location.getCurrentPositionAsync({});
+            const { latitude: lat, longitude: lng } = location.coords;
+            
+            setLatitude(lat.toFixed(6));
+            setLongitude(lng.toFixed(6));
+            setMarkerPosition({ latitude: lat, longitude: lng });
+            setMapRegion({
+                latitude: lat,
+                longitude: lng,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+            });
+
+            Toast.show({
+                type: 'success',
+                text1: 'Location Set',
+                text2: 'Current location has been set',
+            });
+        } catch (error) {
+            Alert.alert('Error', 'Failed to get current location');
+        }
+    };
+
+    const handleManualCoordinateChange = () => {
+        const lat = parseFloat(latitude);
+        const lng = parseFloat(longitude);
+        
+        if (!isNaN(lat) && !isNaN(lng)) {
+            setMarkerPosition({ latitude: lat, longitude: lng });
+            setMapRegion({
+                latitude: lat,
+                longitude: lng,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+            });
         }
     };
 
@@ -208,25 +290,73 @@ export default function CreateBusinessScreen() {
                         </Picker>
                     </View>
 
-                    <Text style={[styles.label, { color: text }]}>Location (Optional)</Text>
+                    <Text style={[styles.label, { color: text }]}>Location</Text>
+                    
+                    {/* Map Toggle Button */}
+                    <TouchableOpacity
+                        style={[styles.mapToggleButton, { backgroundColor: background, borderColor: tint }]}
+                        onPress={() => setShowMap(!showMap)}
+                    >
+                        <IconSymbol name={showMap ? 'map.fill' : 'map'} size={20} color={tint} />
+                        <Text style={[styles.mapToggleText, { color: tint }]}>
+                            {showMap ? 'Hide Map' : 'Select Location on Map'}
+                        </Text>
+                    </TouchableOpacity>
+
+                    {/* Map View */}
+                    {showMap && (
+                        <View style={styles.mapSection}>
+                            <MapView
+                                style={styles.map}
+                                provider={PROVIDER_DEFAULT}
+                                region={mapRegion}
+                                onPress={handleMapPress}
+                                showsUserLocation
+                                showsMyLocationButton
+                            >
+                                {markerPosition && (
+                                    <Marker
+                                        coordinate={markerPosition}
+                                        title="Business Location"
+                                        description="Tap on map to change location"
+                                    />
+                                )}
+                            </MapView>
+                            <TouchableOpacity
+                                style={[styles.currentLocationButton, { backgroundColor: tint }]}
+                                onPress={handleUseCurrentLocation}
+                            >
+                                <IconSymbol name="location.fill" size={18} color="#fff" />
+                                <Text style={styles.currentLocationText}>Use Current Location</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+
+                    {/* Manual Coordinate Input */}
                     <View style={styles.hoursRow}>
                         <View style={styles.hoursItem}>
-                            <Text style={[styles.hoursLabel, { color: muted }]}>Latitude (x)</Text>
+                            <Text style={[styles.hoursLabel, { color: muted }]}>Latitude</Text>
                             <TextInput
                                 style={[styles.input, { backgroundColor: background, color: text }]}
                                 value={latitude}
-                                onChangeText={setLatitude}
+                                onChangeText={(text) => {
+                                    setLatitude(text);
+                                }}
+                                onBlur={handleManualCoordinateChange}
                                 placeholder="27.3314"
                                 placeholderTextColor={muted}
                                 keyboardType="decimal-pad"
                             />
                         </View>
                         <View style={styles.hoursItem}>
-                            <Text style={[styles.hoursLabel, { color: muted }]}>Longitude (y)</Text>
+                            <Text style={[styles.hoursLabel, { color: muted }]}>Longitude</Text>
                             <TextInput
                                 style={[styles.input, { backgroundColor: background, color: text }]}
                                 value={longitude}
-                                onChangeText={setLongitude}
+                                onChangeText={(text) => {
+                                    setLongitude(text);
+                                }}
+                                onBlur={handleManualCoordinateChange}
                                 placeholder="88.6138"
                                 placeholderTextColor={muted}
                                 keyboardType="decimal-pad"
@@ -384,6 +514,43 @@ const styles = StyleSheet.create({
     hoursLabel: {
         fontSize: 14,
         marginBottom: 4,
+    },
+    mapToggleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 12,
+        borderRadius: 8,
+        borderWidth: 1,
+        gap: 8,
+        marginBottom: 12,
+    },
+    mapToggleText: {
+        fontSize: 15,
+        fontWeight: '500',
+    },
+    mapSection: {
+        marginBottom: 16,
+        borderRadius: 12,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+    },
+    map: {
+        width: '100%',
+        height: 300,
+    },
+    currentLocationButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 12,
+        gap: 8,
+    },
+    currentLocationText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
     },
     button: {
         flexDirection: 'row',

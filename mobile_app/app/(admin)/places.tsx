@@ -96,8 +96,8 @@ export default function AdminPlacesScreen() {
                         description: loc.description,
                         category: loc.type === 'tourism' ? 'Natural Beauty' : loc.type,
                         location: {
-                            latitude: loc.position?.x ?? 0,
-                            longitude: loc.position?.y ?? 0,
+                            latitude: loc.position?.y ?? 0,  // position.y is latitude
+                            longitude: loc.position?.x ?? 0, // position.x is longitude
                             address: '',
                             city: '',
                             state: '',
@@ -141,7 +141,8 @@ export default function AdminPlacesScreen() {
                 longitudeDelta: 0.05,
             }, 1000);
         }
-        // router.push(`/(admin)/(stack)/place-details?id=${place.id}` as any);
+        // Navigate to place details
+        router.push(`/(admin)/(stack)/place-details?id=${place.id}` as any);
     };
 
     const handleEditPlace = (place: Place) => {
@@ -349,25 +350,30 @@ export default function AdminPlacesScreen() {
             </View>
 
             {/* Search Bar */}
-            <TouchableOpacity
+            <View 
                 style={[styles.searchBarContainer, { backgroundColor: card, borderBottomColor: muted + '40' }]}
-                onPress={() => setShowSearchModal(true)}
-                activeOpacity={0.7}
+                pointerEvents="auto"
             >
-                <View style={[styles.searchBarButton, { backgroundColor: background, borderColor: muted + '40' }]}>
-                    <IconSymbol name="magnifyingglass" size={20} color={muted} />
-                    <Text style={[styles.searchPlaceholder, { color: muted }]}>
-                        {searchQuery || selectedCategory !== 'All' || selectedStatus !== 'All'
-                            ? `${filteredPlaces.length} places found`
-                            : 'Search or View Places...'}
-                    </Text>
-                    {(searchQuery || selectedCategory !== 'All' || selectedStatus !== 'All') && (
-                        <View style={[styles.activeFilterBadge, { backgroundColor: tint }]}>
-                            <IconSymbol name="line.horizontal.3.decrease.circle.fill" size={20} color="#fff" />
-                        </View>
-                    )}
-                </View>
-            </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => setShowSearchModal(true)}
+                    activeOpacity={0.7}
+                    style={{ flex: 1 }}
+                >
+                    <View style={[styles.searchBarButton, { backgroundColor: background, borderColor: muted + '40' }]}>
+                        <IconSymbol name="magnifyingglass" size={20} color={muted} />
+                        <Text style={[styles.searchPlaceholder, { color: muted }]}>
+                            {searchQuery || selectedCategory !== 'All' || selectedStatus !== 'All'
+                                ? `${filteredPlaces.length} places found`
+                                : 'Search or View Places...'}
+                        </Text>
+                        {(searchQuery || selectedCategory !== 'All' || selectedStatus !== 'All') && (
+                            <View style={[styles.activeFilterBadge, { backgroundColor: tint }]}>
+                                <IconSymbol name="line.horizontal.3.decrease.circle.fill" size={20} color="#fff" />
+                            </View>
+                        )}
+                    </View>
+                </TouchableOpacity>
+            </View>
 
             {/* Empty placeholder for layout */}
             <View style={{ flex: 1 }}>
@@ -732,12 +738,14 @@ const styles = StyleSheet.create({
     },
     searchBarContainer: {
         padding: 16,
-        borderBottomWidth: 1,
+        zIndex: 10,
+        elevation: 5,
+        minHeight: 80,
     },
     searchBarButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: 12,
+        borderRadius: 16,
         borderWidth: 1,
         paddingHorizontal: 16,
         paddingVertical: 14,
@@ -762,7 +770,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 20,
-        paddingTop: 60,
+        paddingTop: 20,
         borderBottomWidth: 1,
     },
     modalTitle: {
@@ -783,6 +791,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         paddingHorizontal: 12,
         paddingVertical: 12,
+
         gap: 8,
     },
     searchInput: {

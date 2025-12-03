@@ -8,6 +8,7 @@ export { locationService } from './location.service';
 export { userService } from './user.service';
 export { communityService } from './community.service';
 export { messageService } from './message.service';
+export { ttsService } from './tts.service';
 
 // Re-export types for convenience
 export type {

@@ -8,7 +8,6 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Zoomable Image Component
 function ZoomableImage({ uri }: { uri: string }) {
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
@@ -144,8 +143,12 @@ export default function PlaceDetailsScreen() {
       pathname: '/(user)/(stack)/immersive-experience',
       params: { 
         placeId: place.id || 'rumtek-monastery',
-        panorama360Url: params.panorama360Url || '',
+        panorama360Url: params.panorama360Url as string || '',
         placeName: place.name,
+        placeDescription: place.description,
+        shortDescription: params.shortDescription as string || place.description,
+        latitude: params.latitude as string || '',
+        longitude: params.longitude as string || '',
       },
     } as any);
   };

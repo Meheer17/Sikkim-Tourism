@@ -127,7 +127,7 @@ export default function EditPlaceScreen() {
                 name: formData.name,
                 description: formData.description,
                 short_description: formData.short_description,
-                position: { x: lat, y: lng },
+                position: { x: lng, y: lat }, // x=longitude, y=latitude
                 type: formData.type,
                 metadata: formData.metadata,
             });
@@ -176,7 +176,7 @@ export default function EditPlaceScreen() {
 
     const handleUploadImages = async () => {
         try {
-            const images = await FilePicker.pickImage({ 
+            const images = await FilePicker.pickImageWithSource({ 
                 allowsMultipleSelection: true,
                 allowsEditing: false 
             });
@@ -255,7 +255,7 @@ export default function EditPlaceScreen() {
 
     const handleUpload360Image = async () => {
         try {
-            const images = await FilePicker.pickImage({ 
+            const images = await FilePicker.pickImageWithSource({ 
                 allowsMultipleSelection: false,
                 allowsEditing: false 
             });

@@ -5,8 +5,10 @@ import ServiceCard, { Service } from '@/components/services/ServiceCard';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { businessService } from '@/services';
 import { BusinessType } from '@/services/business.service';
+import { useRouter } from 'expo-router';
 
 export default function ServicesScreen() {
+    const router = useRouter();
     const [services, setServices] = useState<Service[]>([]);
     const [filteredServices, setFilteredServices] = useState<Service[]>([]);
     const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
@@ -149,8 +151,7 @@ export default function ServicesScreen() {
     };
 
     const handleServicePress = (service: Service) => {
-        console.log('Service pressed:', service);
-        // TODO: Navigate to service details
+        router.push(`/(user)/(stack)/business-details?id=${service.id}` as any);
     };
 
     return (

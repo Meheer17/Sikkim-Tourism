@@ -5,6 +5,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { locationService } from '@/services/location.service';
 import { useAuth } from '@/hooks/useAuth';
+import AudioNarration from '@/components/immersive/AudioNarration';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -53,6 +54,23 @@ export default function LocationDetailsScreen() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleOpen360View = () => {
+        if (!location?.metadata?.panorama_360) return;
+        
+        router.push({
+            pathname: '/(user)/(stack)/immersive-experience',
+            params: {
+                placeId: location._id,
+                panorama360Url: location.metadata.panorama_360,
+                placeName: location.name,
+                placeDescription: location.description,
+                shortDescription: location.short_description,
+                latitude: location.position.y.toString(), // y is latitude
+                longitude: location.position.x.toString(), // x is longitude
+            },
+        } as any);
     };
 
     if (loading) {
@@ -197,6 +215,16 @@ export default function LocationDetailsScreen() {
 
                 {/* Action Buttons */}
                 <View style={styles.actionsContainer}>
+                    {location.metadata?.panorama_360 && (
+                        <TouchableOpacity 
+                            style={[styles.actionButton, { backgroundColor: '#10b981' }]}
+                            onPress={handleOpen360View}
+                        >
+                            <IconSymbol name="view.3d" size={20} color="#fff" />
+                            <Text style={styles.actionButtonText}>360° View</Text>
+                        </TouchableOpacity>
+                    )}
+
                     <TouchableOpacity style={[styles.actionButton, { backgroundColor: tint }]}>
                         <IconSymbol name="map.fill" size={20} color="#fff" />
                         <Text style={styles.actionButtonText}>Get Directions</Text>
@@ -208,6 +236,18 @@ export default function LocationDetailsScreen() {
                     </TouchableOpacity>
                 </View>
             </ScrollView>
+
+            {/* Audio Narration with Proximity Detection */}
+            {location.description && (
+                <AudioNarration
+                    narrationText={location.description}
+                    locationId={location._id}
+                    locationLatitude={location.position.y} // position.y is latitude
+                    locationLongitude={location.position.x} // position.x is longitude
+                    autoPlayOnProximity={true}
+                    proximityRadius={100} // 100 meters
+                />
+            )}
         </View>
     );
 }

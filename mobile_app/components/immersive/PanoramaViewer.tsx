@@ -89,8 +89,18 @@ export default function PanoramaViewer({
                 asset = Asset.fromModule(imageSource);
                 await asset.downloadAsync();
             } else if (imageSource?.uri) {
-                asset = Asset.fromURI(imageSource.uri);
+                // For URI, ensure we're getting the full resolution
+                const uri = imageSource.uri;
+                console.log('Loading panorama from URI:', uri.substring(0, 100) + '...');
+                
+                asset = Asset.fromURI(uri);
                 await asset.downloadAsync();
+                
+                console.log('Asset downloaded:', {
+                    width: asset.width,
+                    height: asset.height,
+                    uri: asset.uri
+                });
             }
 
             if (!asset) {
@@ -98,8 +108,9 @@ export default function PanoramaViewer({
                 return;
             }
 
-            // Pass the Asset object directly to loadTextureAsync for full resolution
+            // Load texture with full resolution
             texture = await loadTextureAsync({ asset });
+            
             console.log('Texture image:', texture.image && {
                 width: texture.image.width,
                 height: texture.image.height,
@@ -115,12 +126,8 @@ export default function PanoramaViewer({
         }
         // Fix texture mapping for equirectangular panorama
         texture.flipY = true;
-        texture.encoding = 3000; // THREE.LinearEncoding (prevent color washing)
-        texture.wrapS = texture.wrapT = 1000; // THREE.ClampToEdgeWrapping
-        texture.repeat.set(1, 1);
+        // Removed encoding/filter settings that were causing render errors
         texture.generateMipmaps = true; // Enable mipmaps for better quality
-        texture.minFilter = 1008; // THREE.LinearMipmapLinearFilter
-        texture.magFilter = 1006; // THREE.LinearFilter
         texture.needsUpdate = true;
 
         // Log texture details for debugging

@@ -17,6 +17,7 @@ export interface ImagePickerOptions {
     aspect?: [number, number];
     quality?: number;
     allowsMultipleSelection?: boolean;
+    useDocumentPicker?: boolean; // Allow picking from Files app
 }
 
 export interface DocumentPickerOptions {
@@ -31,7 +32,28 @@ export class FilePicker {
      */
     static async pickImage(options: ImagePickerOptions = {}): Promise<PickedFile[]> {
         try {
-            // Request permissions
+            // Use DocumentPicker if explicitly requested (allows Files app access)
+            if (options.useDocumentPicker) {
+                const result = await DocumentPicker.getDocumentAsync({
+                    type: 'image/*',
+                    copyToCacheDirectory: true,
+                    multiple: options.allowsMultipleSelection ?? false,
+                });
+
+                if (!result.canceled) {
+                    const assets = result.assets || [];
+                    return assets.map(asset => ({
+                        uri: asset.uri,
+                        name: asset.name,
+                        type: asset.mimeType || 'image/jpeg',
+                        size: asset.size || 0,
+                    }));
+                }
+
+                return [];
+            }
+
+            // Default: Request permissions for photo library
             const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
             if (permissionResult.granted === false) {
@@ -95,6 +117,46 @@ export class FilePicker {
             Alert.alert('Error', 'Failed to pick image. Please try again.');
             return [];
         }
+    }
+
+    /**
+     * Pick image with source selection (Photos or Files)
+     */
+    static async pickImageWithSource(options: ImagePickerOptions = {}): Promise<PickedFile[]> {
+        return new Promise((resolve) => {
+            Alert.alert(
+                'Select Source',
+                'Choose where to pick images from',
+                [
+                    {
+                        text: 'Photos',
+                        onPress: async () => {
+                            const result = await FilePicker.pickImage({
+                                ...options,
+                                useDocumentPicker: false,
+                            });
+                            resolve(result);
+                        },
+                    },
+                    {
+                        text: 'Files',
+                        onPress: async () => {
+                            const result = await FilePicker.pickImage({
+                                ...options,
+                                useDocumentPicker: true,
+                            });
+                            resolve(result);
+                        },
+                    },
+                    {
+                        text: 'Cancel',
+                        style: 'cancel',
+                        onPress: () => resolve([]),
+                    },
+                ],
+                { cancelable: true }
+            );
+        });
     }
 
     /**

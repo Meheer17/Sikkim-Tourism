@@ -33,6 +33,7 @@ CDN_API_KEY = "promatrs@25"
 # Paths
 DATA_DIR = Path(__file__).parent.parent / "app-data"
 CSV_FILE = DATA_DIR / "data.csv"
+PANO_CSV_FILE = DATA_DIR / "pano.csv"
 PHOTOS_DIR = DATA_DIR / "photos"
 
 
@@ -54,6 +55,35 @@ class DataUploader:
         if self.client:
             self.client.close()
             print("\n✓ MongoDB connection closed")
+    
+    async def download_and_upload_panorama_to_cdn(self, pano_url: str, location_name: str) -> Optional[str]:
+        """
+        Process panorama URL - for panoramas we use Google's CDN directly
+        since they serve high quality without compression
+        """
+        try:
+            # Verify the URL works
+            async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+                print(f"   Verifying panorama URL...", end=" ")
+                response = await client.head(pano_url)
+                
+                if response.status_code == 200:
+                    print(f"✓ Valid (Google CDN)")
+                    # Return the high-quality Google URL directly
+                    # Google's CDN is fast and doesn't compress further
+                    return pano_url
+                else:
+                    print(f"✗ Invalid URL: {response.status_code}")
+                    return None
+                    
+        except Exception as e:
+            print(f"✗ Error: {str(e)}")
+            self.failed_uploads.append({
+                'location': location_name,
+                'file': 'panorama-360',
+                'error': str(e)
+            })
+            return None
     
     async def upload_image_to_cdn(self, image_path: Path, location_name: str, image_index: int) -> Optional[str]:
         """Upload a single image to CDN with unique filename"""
@@ -235,6 +265,38 @@ class DataUploader:
         # Default to tourism
         return 'tourism'
     
+    async def read_pano_csv_data(self) -> Dict[str, str]:
+        """Read panorama 360 image URLs from CSV and upgrade resolution"""
+        print("\n📄 Reading panorama CSV data...")
+        
+        pano_map = {}
+        
+        if not PANO_CSV_FILE.exists():
+            print(f"   ⚠️  Panorama CSV not found: {PANO_CSV_FILE}")
+            return pano_map
+        
+        with open(PANO_CSV_FILE, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                location_name = row['Location '].strip()
+                pano_url = row['360 Image'].strip()
+                
+                # Upgrade resolution to maximum quality
+                # Remove any existing size parameters and request maximum resolution
+                if '=w' in pano_url:
+                    # Remove existing size params
+                    base_url = pano_url.split('=w')[0]
+                    # Request maximum resolution: 3200x1600 for equirectangular panoramas
+                    upgraded_url = f"{base_url}=w3200-h1600-k-no"
+                else:
+                    upgraded_url = pano_url
+                
+                pano_map[location_name] = upgraded_url
+                print(f"   📸 {location_name}: {upgraded_url[:80]}...")
+        
+        print(f"   ✓ Found {len(pano_map)} panorama images (upgraded to max resolution)")
+        return pano_map
+    
     async def read_csv_data(self) -> List[Dict]:
         """Read and parse CSV data"""
         print("\n📄 Reading CSV data...")
@@ -277,9 +339,22 @@ class DataUploader:
         print(f"   ✓ Parsed {len(locations)} locations from CSV")
         return locations
     
-    async def create_location_in_db(self, location_data: Dict, image_urls: List[str]) -> bool:
+    async def create_location_in_db(self, location_data: Dict, image_urls: List[str], pano_url: Optional[str] = None) -> bool:
         """Create location document in database"""
         try:
+            # Prepare metadata
+            metadata = {
+                'images': image_urls,
+                'coordinates_original': location_data['coordinates_str'],
+                'image_count': len(image_urls),
+                'imported': True,
+                'imported_at': datetime.utcnow().isoformat()
+            }
+            
+            # Add panorama URL if available
+            if pano_url:
+                metadata['panorama_360'] = pano_url
+            
             # Prepare location document
             # NOTE: Backend position uses x=longitude, y=latitude
             location_doc = {
@@ -291,13 +366,7 @@ class DataUploader:
                     'y': location_data['latitude']     # y = latitude
                 },
                 'type': location_data['type'],
-                'metadata': {
-                    'images': image_urls,
-                    'coordinates_original': location_data['coordinates_str'],
-                    'image_count': len(image_urls),
-                    'imported': True,
-                    'imported_at': datetime.utcnow().isoformat()
-                },
+                'metadata': metadata,
                 'created_at': datetime.utcnow(),
                 'updated_at': datetime.utcnow()
             }
@@ -330,10 +399,14 @@ class DataUploader:
             print("\n❌ No valid locations found in CSV")
             return
         
+        # Read panorama data
+        pano_map = await self.read_pano_csv_data()
+        
         print(f"\n📤 Starting upload process for {len(locations)} locations...")
         print("=" * 80)
         
         success_count = 0
+        pano_added_count = 0
         
         for i, location in enumerate(locations, 1):
             print(f"\n[{i}/{len(locations)}] Processing: {location['name']}")
@@ -342,8 +415,17 @@ class DataUploader:
             # Upload images
             image_urls = await self.upload_location_images(location['name'])
             
+            # Check for panorama URL and download/upload to CDN
+            pano_cdn_url = None
+            pano_google_url = pano_map.get(location['name'])
+            if pano_google_url:
+                print(f"   🌐 Processing 360° panorama...")
+                pano_cdn_url = await self.download_and_upload_panorama_to_cdn(pano_google_url, location['name'])
+                if pano_cdn_url:
+                    pano_added_count += 1
+            
             # Create location in database
-            if await self.create_location_in_db(location, image_urls):
+            if await self.create_location_in_db(location, image_urls, pano_cdn_url):
                 success_count += 1
             
             # Small delay to avoid overwhelming the CDN
@@ -355,6 +437,7 @@ class DataUploader:
         print("=" * 80)
         print(f"Total locations processed: {len(locations)}")
         print(f"Successfully uploaded: {success_count}")
+        print(f"360° panoramas added: {pano_added_count}")
         print(f"Failed: {len(locations) - success_count}")
         
         if self.failed_uploads:

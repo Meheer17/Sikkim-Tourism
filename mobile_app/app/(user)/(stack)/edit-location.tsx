@@ -58,8 +58,8 @@ export default function EditLocationScreen() {
                 setName(loc.name);
                 setShortDescription(loc.short_description);
                 setDescription(loc.description);
-                setLatitude(String(loc.position.x));
-                setLongitude(String(loc.position.y));
+                setLatitude(String(loc.position.y));  // position.y is latitude
+                setLongitude(String(loc.position.x)); // position.x is longitude
                 setType(loc.type);
             } else {
                 Alert.alert('Error', 'Failed to load location');
