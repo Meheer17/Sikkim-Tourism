@@ -1,0 +1,874 @@
+import google.generativeai as genai
+from typing import List, Dict, Any, Optional
+import json
+from datetime import datetime, timedelta
+import random
+import uuid
+from fastapi import HTTPException, status
+
+from app.core.config import settings
+from app.services.location_service import location_service
+from app.services.business_service import business_service
+from app.schemas.ai_planner import (
+    Question, 
+    Answer, 
+    TravelPlan, 
+    TravelPlanResponse,
+    DayItinerary,
+    ActivityDetail,
+    ChatMessage,
+    ChatResponse
+)
+
+
+# In-memory storage for chat sessions (in production, use Redis or database)
+chat_sessions: Dict[str, Dict[str, Any]] = {}
+
+
+class AIPlannerService:
+    def __init__(self):
+        if settings.GEMINI_API_KEY:
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            self.model = genai.GenerativeModel('gemini-flash-latest')
+        else:
+            self.model = None
+    
+    # Chat-based travel planning methods
+    
+    async def create_chat_session(self, initial_message: str) -> ChatResponse:
+        """Create a new chat session and handle the first user message"""
+        try:
+            if not self.model:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Gemini API is not configured"
+                )
+            
+            session_id = str(uuid.uuid4())
+            
+            # Fetch database context (same as before)
+            locations = await self._get_locations_from_db()
+            if not locations:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="No locations available in database"
+                )
+            
+            # Create system prompt for conversational assistant
+            system_prompt = self._create_system_prompt(locations)
+            
+            # Initialize chat history
+            messages = [
+                ChatMessage(role="system", content=system_prompt, timestamp=datetime.now()),
+                ChatMessage(role="user", content=initial_message, timestamp=datetime.now())
+            ]
+            
+            # Get AI response
+            ai_response = await self._get_ai_chat_response(messages, locations)
+            
+            # Store session
+            chat_sessions[session_id] = {
+                "messages": messages + [ChatMessage(role="assistant", content=ai_response["message"], timestamp=datetime.now())],
+                "locations": locations,
+                "preferences": ai_response.get("preferences", {}),
+                "is_ready": ai_response.get("is_ready", False),
+                "created_at": datetime.now()
+            }
+            print(f"✅ Created chat session: {session_id}, is_ready: {ai_response.get('is_ready', False)}")
+            print(f"📊 Total active sessions: {len(chat_sessions)}")
+            
+            return ChatResponse(
+                session_id=session_id,
+                message=ai_response["message"],
+                requires_input=not ai_response.get("is_ready", False),
+                is_complete=ai_response.get("is_ready", False),
+                extracted_preferences=ai_response.get("preferences")
+            )
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"Error in create_chat_session: {e}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to create chat session: {str(e)}"
+            )
+    
+    async def continue_chat(self, session_id: str, user_message: str) -> ChatResponse:
+        """Continue an existing chat conversation"""
+        if not self.model:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Gemini API is not configured"
+            )
+        
+        # Retrieve session
+        session = chat_sessions.get(session_id)
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Chat session not found. Please start a new conversation."
+            )
+        
+        # Add user message
+        session["messages"].append(
+            ChatMessage(role="user", content=user_message, timestamp=datetime.now())
+        )
+        
+        # Get AI response
+        ai_response = await self._get_ai_chat_response(
+            session["messages"], 
+            session["locations"],
+            session["preferences"]
+        )
+        
+        # Update session
+        session["messages"].append(
+            ChatMessage(role="assistant", content=ai_response["message"], timestamp=datetime.now())
+        )
+        session["preferences"].update(ai_response.get("preferences", {}))
+        session["is_ready"] = ai_response.get("is_ready", False)
+        
+        return ChatResponse(
+            session_id=session_id,
+            message=ai_response["message"],
+            requires_input=not ai_response.get("is_ready", False),
+            is_complete=ai_response.get("is_ready", False),
+            extracted_preferences=ai_response.get("preferences")
+        )
+    
+    async def generate_plans_from_chat(self, session_id: str) -> TravelPlanResponse:
+        """Generate travel plans from a completed chat session"""
+        print(f"🔍 Looking for session: {session_id}")
+        print(f"📊 Available sessions: {list(chat_sessions.keys())}")
+        
+        session = chat_sessions.get(session_id)
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Chat session not found. Session may have expired. Please start a new conversation. Active sessions: {len(chat_sessions)}"
+            )
+        
+        if not session.get("is_ready"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Not enough information collected yet. Please continue the conversation."
+            )
+        
+        # Generate plans using collected preferences
+        plans = await self._generate_plans_from_preferences(
+            session["preferences"],
+            session["locations"]
+        )
+        
+        # Filter out system messages from conversation history
+        conversation_history = []
+        for msg in session["messages"]:
+            try:
+                if isinstance(msg, ChatMessage):
+                    if msg.role != "system":
+                        conversation_history.append(msg)
+                elif isinstance(msg, dict):
+                    if msg.get("role") != "system":
+                        conversation_history.append(ChatMessage(**msg))
+            except Exception as e:
+                print(f"Error processing message for history: {e}")
+                continue
+        
+        return TravelPlanResponse(
+            plans=plans,
+            generated_at=datetime.now(),
+            based_on_preferences=session["preferences"],
+            conversation_history=conversation_history
+        )
+    
+    async def _get_ai_chat_response(
+        self, 
+        messages: List[ChatMessage], 
+        locations: List[Any],
+        current_preferences: Optional[Dict] = None
+    ) -> Dict[str, Any]:
+        """Get AI response in conversation, extract preferences, and determine if ready to plan"""
+        
+        try:
+            # Build conversation context for Gemini
+            conversation_parts = []
+            for msg in messages:
+                try:
+                    role = msg.role if hasattr(msg, 'role') else str(msg.get('role', 'unknown'))
+                    content = msg.content if hasattr(msg, 'content') else str(msg.get('content', ''))
+                    conversation_parts.append(f"{role.upper()}: {content}")
+                except Exception as msg_err:
+                    print(f"Error processing message: {msg_err}, msg={msg}")
+                    continue
+            
+            conversation_text = "\n\n".join(conversation_parts)
+            print(f"Conversation text built successfully, length: {len(conversation_text)}")
+        except Exception as e:
+            print(f"Error building conversation text: {e}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to build conversation: {str(e)}"
+            )
+        
+        # Create prompt for response generation
+        response_prompt = f"""
+{conversation_text}
+
+ASSISTANT INSTRUCTIONS:
+You are a helpful Sikkim travel planning assistant. Based on the conversation so far:
+
+1. Respond naturally to the user's latest message
+2. If critical information is missing, ask ONE follow-up question about the most important missing detail
+3. Critical details needed:
+   - Travel duration (how many days)
+   - Budget range
+   - Type of experience (adventure, culture, nature, relaxation, etc.)
+   - Travel companions (solo, couple, family, friends)
+   - Specific interests or must-see places
+
+Current preferences collected: {json.dumps(current_preferences or {}, indent=2)}
+
+RESPOND IN THIS JSON FORMAT:
+{{
+    "message": "Your friendly response to the user with a question if needed",
+    "preferences": {{
+        "duration_days": <number or null>,
+        "budget_category": "budget|moderate|comfortable|luxury or null",
+        "traveler_type": "adventure|culture|nature|relaxation|photography or null",
+        "companions": "solo|couple|family|friends or null",
+        "interests": ["interest1", "interest2", ...],
+        "special_requirements": ["requirement1", ...]
+    }},
+    "is_ready": <true if you have enough info to generate plans, false otherwise>
+}}
+
+Only set is_ready to true when you have at least: duration, budget, and traveler type.
+"""
+        
+        try:
+            print(f"Calling Gemini API with prompt length: {len(response_prompt)}")
+            response = self.model.generate_content(response_prompt)
+            print(f"Gemini API response received, text length: {len(response.text)}")
+            print(f"Gemini response text: {response.text[:500]}")
+            result = self._parse_json_response(response.text)
+            print(f"Parsed result: {result}")
+            return result
+        except Exception as e:
+            print(f"Error in _get_ai_chat_response: {e}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to get AI response: {str(e)}"
+            )
+    
+    def _create_system_prompt(self, locations: List[Any]) -> str:
+        """Create system prompt with database context"""
+        try:
+            location_context = "\n".join([
+                f"- {loc.get('name', 'Unknown')}: {loc.get('description', loc.get('short_description', 'No description'))[:100]}"
+                for loc in locations[:20]  # First 20 locations
+            ])
+        except Exception as e:
+            print(f"Error creating location context: {e}")
+            location_context = "Various locations in Sikkim"
+        
+        return f"""You are a Sikkim travel planning assistant. You help users plan trips using ONLY the following real locations from our database:
+
+{location_context}
+
+Your job:
+1. Have a natural conversation to understand the user's preferences
+2. Ask follow-up questions to collect: duration, budget, interests, companions
+3. When you have enough information, indicate you're ready to generate personalized plans
+4. ONLY reference locations from the database provided above
+5. Be friendly, helpful, and enthusiastic about Sikkim tourism"""
+    
+    def _parse_json_response(self, response_text: str) -> Dict[str, Any]:
+        """Parse JSON from Gemini response, handling markdown code blocks"""
+        try:
+            # Clean the response if it has markdown code blocks
+            cleaned_text = response_text.strip()
+            if cleaned_text.startswith("```json"):
+                cleaned_text = cleaned_text[7:]
+            if cleaned_text.startswith("```"):
+                cleaned_text = cleaned_text[3:]
+            if cleaned_text.endswith("```"):
+                cleaned_text = cleaned_text[:-3]
+            cleaned_text = cleaned_text.strip()
+            
+            return json.loads(cleaned_text)
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error: {e}")
+            print(f"Response text: {response_text[:500]}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="AI returned invalid JSON response"
+            )
+    
+    async def _generate_plans_from_preferences(
+        self, 
+        preferences: Dict[str, Any], 
+        locations: List[Any]
+    ) -> List[TravelPlan]:
+        """Generate travel plans from extracted preferences (similar to existing method)"""
+        
+        print(f"🎯 Generating plans with preferences: {preferences}")
+        print(f"📍 Available locations: {len(locations)}")
+        
+        prompt = self._create_planning_prompt(preferences, locations)
+        print(f"📝 Prompt created, length: {len(prompt)}")
+        
+        try:
+            print("🤖 Calling Gemini API for plan generation...")
+            response = self.model.generate_content(prompt)
+            print(f"✅ Gemini response received, length: {len(response.text)}")
+            
+            plans_data = self._parse_json_response(response.text)
+            print(f"📊 Parsed plans data: {type(plans_data)}")
+            
+            # Validate and parse plans
+            if not isinstance(plans_data, list):
+                plans_data = plans_data.get("plans", [])
+            
+            print(f"🔢 Number of plans: {len(plans_data)}")
+            plans = [TravelPlan(**plan) for plan in plans_data]
+            
+            # Validate plans use only database locations
+            self._validate_plans_use_db_data(plans, locations)
+            
+            print(f"✅ Successfully generated {len(plans)} travel plans")
+            return plans
+            
+        except Exception as e:
+            print(f"❌ Error generating plans: {e}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to generate travel plans: {str(e)}"
+            )
+    
+    def _validate_plans_use_db_data(
+        self, 
+        plans: List[TravelPlan], 
+        locations: List[Any],
+        businesses: Optional[List[Dict]] = None
+    ) -> None:
+        """Validate that generated plans only reference database locations and businesses"""
+        if isinstance(locations[0], dict):
+            location_ids = {loc['id'] for loc in locations}
+            location_names = {loc['name'].lower() for loc in locations}
+        else:
+            location_ids = {loc.get('_id') or loc.get('id') for loc in locations}
+            location_names = {loc.get('name', '').lower() for loc in locations}
+        
+        if businesses:
+            business_names = {biz['name'].lower() for biz in businesses}
+        
+        for plan in plans:
+            # Check that location IDs are from database
+            for loc_id in plan.locations_included:
+                if loc_id not in location_ids:
+                    print(f"Warning: Plan includes non-database location ID: {loc_id}")
+            
+            # Check highlights reference real locations
+            for highlight in plan.highlights:
+                highlight_lower = highlight.lower()
+                found = any(loc_name in highlight_lower for loc_name in location_names)
+                if not found:
+                    print(f"Warning: Highlight may not reference database location: {highlight}")
+    
+    def _create_planning_prompt(self, preferences: Dict, locations: List[Any]) -> str:
+        """Create prompt for plan generation from preferences"""
+        
+        try:
+            locations_json = json.dumps([{
+                "id": loc.get("id") or loc.get("_id"),
+                "name": loc.get("name", "Unknown"),
+                "description": loc.get("description") or loc.get("short_description", ""),
+                "category": loc.get("category") or loc.get("type", ""),
+                "activities": loc.get("activities", [])
+            } for loc in locations], indent=2)
+        except Exception as e:
+            print(f"Error creating locations JSON: {e}")
+            import traceback
+            traceback.print_exc()
+            locations_json = "[]"
+        
+        duration = preferences.get("duration_days", 3)
+        budget = preferences.get("budget_category", "moderate")
+        traveler_type = preferences.get("traveler_type", "nature")
+        
+        return f"""Generate 3 personalized travel plans for Sikkim based on these preferences:
+- Duration: {duration} days
+- Budget: {budget}
+- Traveler Type: {traveler_type}
+- Companions: {preferences.get('companions', 'not specified')}
+- Interests: {', '.join(preferences.get('interests', []))}
+
+AVAILABLE LOCATIONS (USE ONLY THESE):
+{locations_json}
+
+CRITICAL RULES:
+1. Use ONLY locations from the provided database
+2. Reference locations by their exact "id" in locations_included
+3. Generate {duration}-day detailed itineraries
+4. Match budget category: {budget}
+5. Match traveler type: {traveler_type}
+
+RESPOND IN THIS EXACT JSON FORMAT:
+[
+  {{
+    "id": "plan_1",
+    "title": "Plan Title",
+    "duration": "{duration} days",
+    "budget": "{budget.capitalize()}",
+    "description": "Brief description",
+    "highlights": ["highlight1", "highlight2", "highlight3"],
+    "activities": ["activity1", "activity2"],
+    "accommodation": "Accommodation type",
+    "best_for": "Who is this for",
+    "rating": 4.5,
+    "image_color": "#hexcolor",
+    "detailed_itinerary": [
+      {{
+        "day": 1,
+        "title": "Day 1 Title",
+        "activities": [
+          {{
+            "name": "Activity Name",
+            "description": "What you'll do",
+            "duration": "2 hours",
+            "time": "09:00 AM"
+          }}
+        ]
+      }}
+    ],
+    "locations_included": ["location_id_1", "location_id_2"],
+    "estimated_costs": {{
+      "accommodation": "₹X,XXX",
+      "food": "₹X,XXX",
+      "activities": "₹X,XXX",
+      "transport": "₹X,XXX",
+      "total": "₹X,XXX"
+    }}
+  }}
+]"""
+    
+    # Legacy question-based methods (keeping for backward compatibility)
+    
+    async def get_questions(self) -> List[Question]:
+        """Return the questionnaire for travel planning"""
+        questions = [
+            Question(
+                id="1",
+                question="What type of traveler are you?",
+                type="single",
+                options=['Adventure Seeker', 'Culture Enthusiast', 'Nature Lover', 'Relaxation Focused', 'Photography Buff']
+            ),
+            Question(
+                id="2",
+                question="What is your preferred travel duration?",
+                type="single",
+                options=['1-2 days', '3-5 days', '1 week', '2 weeks', 'Flexible']
+            ),
+            Question(
+                id="3",
+                question="What is your budget range?",
+                type="single",
+                options=['Budget (₹5k-15k)', 'Moderate (₹15k-30k)', 'Comfortable (₹30k-50k)', 'Luxury (₹50k+)']
+            ),
+            Question(
+                id="4",
+                question="Which activities interest you? (Select multiple)",
+                type="multiple",
+                options=['Trekking', 'Monastery Visits', 'River Rafting', 'Cable Car Rides', 'Local Cuisine', 'Shopping', 'Photography']
+            ),
+            Question(
+                id="5",
+                question="What is your preferred accommodation?",
+                type="single",
+                options=['Budget Hotels', 'Mid-range Hotels', 'Luxury Resorts', 'Homestays', 'No Preference']
+            ),
+            Question(
+                id="6",
+                question="When do you plan to travel?",
+                type="single",
+                options=['This Month', 'Next Month', 'Next 3 Months', 'Next 6 Months', 'Not Sure Yet']
+            ),
+            Question(
+                id="7",
+                question="Who are you traveling with?",
+                type="single",
+                options=['Solo', 'Partner/Spouse', 'Family', 'Friends', 'Group Tour']
+            ),
+        ]
+        return questions
+    
+    async def _get_locations_from_db(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Fetch all tourism locations from database"""
+        locations = await location_service.get_all(skip=0, limit=limit)
+        
+        if not locations:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No locations found in database. Please add tourism locations first."
+            )
+        
+        location_data = []
+        for loc in locations:
+            location_data.append({
+                "id": str(loc.id),
+                "name": loc.name,
+                "description": loc.description,
+                "short_description": loc.short_description,
+                "position": {"lat": loc.position.y, "lng": loc.position.x},
+                "type": loc.type,
+                "metadata": loc.metadata
+            })
+        
+        return location_data
+    
+    async def _get_businesses_from_db(self, limit: int = 30) -> List[Dict[str, Any]]:
+        """Fetch accommodations and services from database"""
+        businesses = await business_service.get_all(skip=0, limit=limit)
+        
+        business_data = []
+        for biz in businesses:
+            business_data.append({
+                "id": str(biz.id),
+                "name": biz.name,
+                "description": biz.description,
+                "business_type": biz.business_type,
+                "position": {"lat": biz.position.y, "lng": biz.position.x},
+                "contact": biz.contact,
+                "metadata": biz.metadata
+            })
+        
+        return business_data
+    
+    def _parse_answers(self, answers: List[Answer]) -> Dict[str, Any]:
+        """Parse answers into structured preferences"""
+        preferences = {}
+        
+        for answer in answers:
+            q_id = answer.question_id
+            if q_id == "1":
+                preferences["traveler_type"] = answer.answer
+            elif q_id == "2":
+                preferences["duration"] = answer.answer
+            elif q_id == "3":
+                preferences["budget"] = answer.answer
+            elif q_id == "4":
+                preferences["activities"] = answer.answer if isinstance(answer.answer, list) else [answer.answer]
+            elif q_id == "5":
+                preferences["accommodation"] = answer.answer
+            elif q_id == "6":
+                preferences["travel_time"] = answer.answer
+            elif q_id == "7":
+                preferences["travel_companions"] = answer.answer
+        
+        return preferences
+    
+    def _extract_duration_days(self, duration_str: str) -> int:
+        """Extract number of days from duration string"""
+        if "1-2" in duration_str:
+            return 2
+        elif "3-5" in duration_str:
+            return 4
+        elif "week" in duration_str.lower():
+            if "2" in duration_str:
+                return 14
+            return 7
+        else:
+            return 5  # Default
+    
+    def _extract_budget_range(self, budget_str: str) -> tuple:
+        """Extract budget range from string"""
+        if "5k-15k" in budget_str:
+            return (5000, 15000)
+        elif "15k-30k" in budget_str:
+            return (15000, 30000)
+        elif "30k-50k" in budget_str:
+            return (30000, 50000)
+        elif "50k+" in budget_str:
+            return (50000, 100000)
+        return (10000, 30000)
+    
+    async def generate_travel_plans(self, answers: List[Answer]) -> TravelPlanResponse:
+        """Generate AI-powered travel plans using Gemini API and database data ONLY"""
+        
+        # Validate Gemini API is configured
+        if not self.model or not settings.GEMINI_API_KEY:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Gemini API is not configured. Please contact administrator to set up GEMINI_API_KEY."
+            )
+        
+        # Parse user preferences
+        preferences = self._parse_answers(answers)
+        
+        # Fetch data from database - will raise 404 if no data
+        locations = await self._get_locations_from_db()
+        businesses = await self._get_businesses_from_db()
+        
+        # Extract key parameters
+        num_days = self._extract_duration_days(preferences.get("duration", "3-5 days"))
+        budget_min, budget_max = self._extract_budget_range(preferences.get("budget", "Moderate (₹15k-30k)"))
+        
+        # Prepare prompt for Gemini with STRICT instructions to use only provided data
+        prompt = self._create_gemini_prompt(preferences, locations, businesses, num_days, budget_min, budget_max)
+        
+        # Generate plans with Gemini - NO FALLBACK
+        try:
+            response = self.model.generate_content(prompt)
+            plans_data = self._parse_gemini_response(response.text, locations, businesses)
+            
+            if not plans_data:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="AI failed to generate valid travel plans. Please try again."
+                )
+            
+            # Validate that plans only use database locations
+            self._validate_plans_use_db_data(plans_data, locations, businesses)
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"Gemini API error: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to generate travel plans with AI: {str(e)}"
+            )
+        
+        return TravelPlanResponse(
+            plans=plans_data,
+            generated_at=datetime.now(),
+            based_on_preferences=preferences
+        )
+    
+    def _validate_plans_use_db_data(
+        self, 
+        plans: List[TravelPlan], 
+        locations: List[Dict], 
+        businesses: List[Dict]
+    ) -> None:
+        """Validate that generated plans only reference database locations and businesses"""
+        location_ids = {loc['id'] for loc in locations}
+        location_names = {loc['name'].lower() for loc in locations}
+        business_names = {biz['name'].lower() for biz in businesses}
+        
+        for plan in plans:
+            # Check that location IDs are from database
+            for loc_id in plan.locations_included:
+                if loc_id not in location_ids:
+                    print(f"Warning: Plan includes non-database location ID: {loc_id}")
+            
+            # Check highlights reference real locations
+            for highlight in plan.highlights:
+                highlight_lower = highlight.lower()
+                found = any(loc_name in highlight_lower for loc_name in location_names)
+                if not found:
+                    print(f"Warning: Highlight may not reference database location: {highlight}")
+    
+    def _create_gemini_prompt(
+        self, 
+        preferences: Dict[str, Any], 
+        locations: List[Dict], 
+        businesses: List[Dict],
+        num_days: int,
+        budget_min: int,
+        budget_max: int
+    ) -> str:
+        """Create detailed prompt for Gemini API with STRICT data source requirements"""
+        
+        # Create detailed location list with IDs
+        location_details = "\n".join([
+            f"ID: {loc['id']} | Name: {loc['name']} | Description: {loc['short_description']} | Type: {loc['type']} | Coordinates: ({loc['position']['lat']}, {loc['position']['lng']})"
+            for loc in locations[:40]
+        ])
+        
+        # Create detailed business list
+        business_details = "\n".join([
+            f"ID: {biz['id']} | Name: {biz['name']} | Type: {biz.get('business_type', 'N/A')} | Description: {biz['description']}"
+            for biz in businesses[:25]
+        ])
+        
+        prompt = f"""You are an expert travel planner for Sikkim, India. Generate 3 diverse travel itineraries based STRICTLY on the database locations and businesses provided below.
+
+USER PREFERENCES:
+- Traveler Type: {preferences.get('traveler_type', 'General')}
+- Duration: {num_days} days
+- Budget Range: ₹{budget_min:,} - ₹{budget_max:,}
+- Preferred Activities: {', '.join(preferences.get('activities', ['Sightseeing']))}
+- Accommodation: {preferences.get('accommodation', 'Mid-range Hotels')}
+- Travel Companions: {preferences.get('travel_companions', 'Solo')}
+
+AVAILABLE LOCATIONS FROM DATABASE (USE ONLY THESE):
+{location_details}
+
+AVAILABLE ACCOMMODATIONS & SERVICES FROM DATABASE (USE ONLY THESE):
+{business_details}
+
+CRITICAL INSTRUCTIONS:
+1. You MUST ONLY use locations and businesses from the lists above
+2. Do NOT invent, imagine, or suggest any locations not in the database
+3. Use the exact names from the database
+4. Include the location IDs in locations_included array
+5. Create 3 different travel plans with varying themes matching user preferences
+6. Each plan must include:
+   - A catchy title matching the theme
+   - Duration matching {num_days} days / {num_days-1} nights
+   - Budget estimate within ₹{budget_min:,} - ₹{budget_max:,}
+   - Comprehensive description
+   - 4-7 key highlights using EXACT location names from database
+   - Day-by-day detailed itinerary with specific database locations
+   - Accommodation recommendations from database businesses
+   - Realistic timing and distances between locations
+   - Estimated costs breakdown
+   - Best suited traveler type
+
+Return ONLY valid JSON (no markdown, no code blocks) with this exact structure:
+{{
+  "plans": [
+    {{
+      "title": "Adventure Through Sikkim's Peaks",
+      "duration": "{num_days} Days / {num_days-1} Nights",
+      "budget": "₹{budget_min//1000}k - ₹{budget_max//1000}k",
+      "description": "Detailed 2-3 sentence description",
+      "highlights": ["Exact Location Name 1", "Exact Location Name 2", "Exact Location Name 3", "Exact Location Name 4"],
+      "activities": ["Activity 1", "Activity 2", "Activity 3"],
+      "accommodation": "Type from preferences",
+      "best_for": "Target audience from preferences",
+      "rating": 4.7,
+      "image_color": "#10b981",
+      "detailed_itinerary": [
+        {{
+          "day": 1,
+          "title": "Day 1: Specific Theme",
+          "activities": [
+            {{
+              "name": "Visit Exact Location Name",
+              "description": "What to do there based on database info",
+              "duration": "2-3 hours",
+              "time": "09:00 AM"
+            }},
+            {{
+              "name": "Lunch at Exact Business Name",
+              "description": "Local cuisine experience",
+              "duration": "1 hour",
+              "time": "12:30 PM"
+            }}
+          ]
+        }}
+      ],
+      "locations_included": ["location_id_1", "location_id_2", "location_id_3"],
+      "estimated_costs": {{
+        "accommodation": {int(budget_min * 0.4)},
+        "food": {int(budget_min * 0.25)},
+        "transport": {int(budget_min * 0.15)},
+        "activities": {int(budget_min * 0.15)},
+        "miscellaneous": {int(budget_min * 0.05)}
+      }}
+    }}
+  ]
+}}
+
+VALIDATION CHECKLIST BEFORE RETURNING:
+✓ All location names are from the database list above
+✓ All business names are from the database list above
+✓ Location IDs match the database IDs
+✓ No fictional or imagined places included
+✓ JSON is valid with no markdown formatting
+✓ All 3 plans are different themes
+✓ Budget calculations are realistic
+✓ Timing in itinerary is logical
+
+Return ONLY the JSON response, nothing else."""
+        
+        return prompt
+    
+    def _parse_gemini_response(
+        self, 
+        response_text: str, 
+        locations: List[Dict], 
+        businesses: List[Dict]
+    ) -> List[TravelPlan]:
+        """Parse Gemini's JSON response into TravelPlan objects"""
+        
+        try:
+            # Clean the response if it has markdown code blocks
+            cleaned_text = response_text.strip()
+            if cleaned_text.startswith("```json"):
+                cleaned_text = cleaned_text[7:]
+            if cleaned_text.startswith("```"):
+                cleaned_text = cleaned_text[3:]
+            if cleaned_text.endswith("```"):
+                cleaned_text = cleaned_text[:-3]
+            cleaned_text = cleaned_text.strip()
+            
+            data = json.loads(cleaned_text)
+            plans = []
+            
+            for idx, plan_data in enumerate(data.get("plans", [])):
+                # Build detailed itinerary
+                itinerary = []
+                for day_data in plan_data.get("detailed_itinerary", []):
+                    activities = [
+                        ActivityDetail(**activity)
+                        for activity in day_data.get("activities", [])
+                    ]
+                    itinerary.append(DayItinerary(
+                        day=day_data["day"],
+                        title=day_data["title"],
+                        activities=activities
+                    ))
+                
+                plan = TravelPlan(
+                    id=f"plan_{idx + 1}_{int(datetime.now().timestamp())}",
+                    title=plan_data.get("title", "Sikkim Adventure"),
+                    duration=plan_data.get("duration", "5 Days / 4 Nights"),
+                    budget=plan_data.get("budget", "₹15k - ₹30k"),
+                    description=plan_data.get("description", ""),
+                    highlights=plan_data.get("highlights", []),
+                    activities=plan_data.get("activities", []),
+                    accommodation=plan_data.get("accommodation", "Mid-range Hotels"),
+                    best_for=plan_data.get("best_for", "All travelers"),
+                    rating=plan_data.get("rating", 4.5),
+                    image_color=plan_data.get("image_color", "#10b981"),
+                    detailed_itinerary=itinerary,
+                    locations_included=plan_data.get("locations_included", []),
+                    estimated_costs=plan_data.get("estimated_costs", {
+                        "accommodation": 0,
+                        "food": 0,
+                        "transport": 0,
+                        "activities": 0,
+                        "miscellaneous": 0
+                    })
+                )
+                plans.append(plan)
+            
+            return plans
+            
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error: {e}")
+            print(f"Response text: {response_text[:1000]}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="AI returned invalid JSON response. Please try again."
+            )
+        except Exception as e:
+            print(f"Error parsing Gemini response: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to parse AI response: {str(e)}"
+            )
+
+
+ai_planner_service = AIPlannerService()

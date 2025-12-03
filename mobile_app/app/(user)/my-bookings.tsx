@@ -4,46 +4,6 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import BookingCard, { Booking } from '@/components/bookings/BookingCard';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
-// Mock data - replace with actual API call
-const MOCK_BOOKINGS: Booking[] = [
-    {
-        id: '1',
-        serviceName: 'Local Cab Service',
-        bookingDate: 'Today, 2:30 PM',
-        status: 'active',
-        serviceType: 'Transport',
-        price: 800,
-        bookingCode: 'TC-2024-001',
-    },
-    {
-        id: '2',
-        serviceName: 'Museum Entry Pass',
-        bookingDate: 'Tomorrow, 10:00 AM',
-        status: 'upcoming',
-        serviceType: 'Culture',
-        price: 150,
-        bookingCode: 'ME-2024-002',
-    },
-    {
-        id: '3',
-        serviceName: 'Mountain Trekking Guide',
-        bookingDate: 'Nov 25, 2024',
-        status: 'upcoming',
-        serviceType: 'Adventure',
-        price: 2500,
-        bookingCode: 'TG-2024-003',
-    },
-    {
-        id: '4',
-        serviceName: 'River Rafting',
-        bookingDate: 'Nov 15, 2024',
-        status: 'completed',
-        serviceType: 'Adventure',
-        price: 1500,
-        bookingCode: 'RR-2024-004',
-    },
-];
-
 const STATUS_FILTERS = [
     { key: 'all', label: 'All' },
     { key: 'active', label: 'Active' },
@@ -78,7 +38,7 @@ export default function MyBookingsScreen() {
         // const response = await apiClient.get('/bookings');
         // setBookings(response.data);
 
-        setBookings(MOCK_BOOKINGS);
+        setBookings([]);
     };
 
     const filterBookings = () => {

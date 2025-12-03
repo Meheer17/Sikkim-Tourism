@@ -123,8 +123,23 @@ class ApiClient {
         }
         // Handle 401 Unauthorized
         else if (error.response?.status === 401) {
-            errorMessage = respData?.detail || 'Authentication failed. Please check your credentials.';
-            errorTitle = 'Authentication Error';
+            const detail = respData?.detail || '';
+            // Check if it's a "user not found" or "not registered" error
+            if (detail.toLowerCase().includes('user not found') || 
+                detail.toLowerCase().includes('not registered') ||
+                detail.toLowerCase().includes('no user found') ||
+                detail.toLowerCase().includes('does not exist')) {
+                errorMessage = 'This account is not registered. Please sign up first.';
+                errorTitle = 'Account Not Found';
+            } else if (detail.toLowerCase().includes('incorrect') || 
+                       detail.toLowerCase().includes('invalid credentials') ||
+                       detail.toLowerCase().includes('wrong password')) {
+                errorMessage = 'Incorrect email or password. Please try again.';
+                errorTitle = 'Invalid Credentials';
+            } else {
+                errorMessage = detail || 'Authentication failed. Please check your credentials.';
+                errorTitle = 'Authentication Error';
+            }
         }
         // Handle 403 Forbidden
         else if (error.response?.status === 403) {

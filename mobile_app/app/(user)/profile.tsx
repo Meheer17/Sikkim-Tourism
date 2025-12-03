@@ -149,7 +149,10 @@ export default function ProfileScreen() {
                     </View>
                     <Text style={[styles.userName, { color: text }]}>{user?.name}</Text>
                     <Text style={[styles.userEmail, { color: mutedText }]}>{user?.email}</Text>
-                    <TouchableOpacity style={[styles.editProfileButton, { backgroundColor: soft }]}>
+                    <TouchableOpacity
+                        style={[styles.editProfileButton, { backgroundColor: soft }]}
+                        onPress={() => router.push('/(user)/(stack)/edit-profile' as any)}
+                    >
                         <Text style={[styles.editProfileText, { color: tint }]}>Edit Profile</Text>
                         <IconSymbol name="pencil" size={14} color={tint as string} />
                     </TouchableOpacity>

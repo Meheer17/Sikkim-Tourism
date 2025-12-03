@@ -9,6 +9,8 @@ export { userService } from './user.service';
 export { communityService } from './community.service';
 export { messageService } from './message.service';
 export { ttsService } from './tts.service';
+export { aiPlannerService } from './ai-planner.service';
+export { aiChatService } from './ai-chat.service';
 
 // Re-export types for convenience
 export type {

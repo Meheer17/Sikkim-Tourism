@@ -5,6 +5,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/hooks/useAuth';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { userService } from '@/services';
+import { platformConfig } from '@/config/api.config';
 
 export default function EditProfileScreen() {
     const router = useRouter();
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingTop: 60,
+        paddingTop: platformConfig.isIOS ? 20 : 60,
         paddingBottom: 16,
         borderBottomWidth: 1,
     },

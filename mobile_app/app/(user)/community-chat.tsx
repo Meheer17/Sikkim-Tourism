@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
-// Mock chat messages
 interface ChatMessage {
     id: string;
     userName: string;
@@ -14,68 +13,9 @@ interface ChatMessage {
     isCurrentUser: boolean;
 }
 
-const MOCK_MESSAGES: ChatMessage[] = [
-    {
-        id: '1',
-        userName: 'Rajesh Kumar',
-        userAvatar: 'RK',
-        message: 'Hey everyone! Just visited Tsomgo Lake, absolutely breathtaking! 🏔️',
-        timestamp: '10:30 AM',
-        isCurrentUser: false,
-    },
-    {
-        id: '2',
-        userName: 'Priya Sharma',
-        userAvatar: 'PS',
-        message: 'That sounds amazing! How was the weather?',
-        timestamp: '10:32 AM',
-        isCurrentUser: false,
-    },
-    {
-        id: '3',
-        userName: 'You',
-        userAvatar: 'ME',
-        message: 'I\'m planning to visit next week. Any tips?',
-        timestamp: '10:35 AM',
-        isCurrentUser: true,
-    },
-    {
-        id: '4',
-        userName: 'Rajesh Kumar',
-        userAvatar: 'RK',
-        message: 'Definitely carry warm clothes! It gets really cold up there. Also, book a permit in advance.',
-        timestamp: '10:37 AM',
-        isCurrentUser: false,
-    },
-    {
-        id: '5',
-        userName: 'Amit Patel',
-        userAvatar: 'AP',
-        message: 'Anyone tried the local momos near MG Marg? They\'re incredible! 🥟',
-        timestamp: '10:40 AM',
-        isCurrentUser: false,
-    },
-    {
-        id: '6',
-        userName: 'Sneha Desai',
-        userAvatar: 'SD',
-        message: 'Yes! The place near the taxi stand? Love that spot!',
-        timestamp: '10:42 AM',
-        isCurrentUser: false,
-    },
-    {
-        id: '7',
-        userName: 'You',
-        userAvatar: 'ME',
-        message: 'Thanks for the recommendations! Really helpful 😊',
-        timestamp: '10:45 AM',
-        isCurrentUser: true,
-    },
-];
-
 export default function CommunityChatScreen() {
     const router = useRouter();
-    const [messages, setMessages] = useState<ChatMessage[]>(MOCK_MESSAGES);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputMessage, setInputMessage] = useState('');
     const scrollViewRef = useRef<ScrollView>(null);
 

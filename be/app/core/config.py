@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     # Security
     PASSWORD_MIN_LENGTH: int = 8
     
+    # Gemini API
+    GEMINI_API_KEY: str = ""
+    
     class Config:
         env_file = ".env"
         case_sensitive = True

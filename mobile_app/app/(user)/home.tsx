@@ -128,7 +128,7 @@ export default function HomeScreen() {
                 {/* AI Planner Banner */}
                 <TouchableOpacity
                     style={styles.aiPlannerBanner}
-                    onPress={() => router.push('/(user)/(stack)/ai-planner' as any)}
+                    onPress={() => router.push('/(user)/(stack)/ai-planner-chat' as any)}
                     activeOpacity={0.8}
                 >
                     <View style={styles.aiPlannerLeft}>
@@ -136,9 +136,9 @@ export default function HomeScreen() {
                             <IconSymbol name="sparkles" size={32} color="#fff" />
                         </View>
                         <View style={styles.aiPlannerText}>
-                            <Text style={styles.aiPlannerTitle}>Plan with AI</Text>
+                            <Text style={styles.aiPlannerTitle}>Chat with AI Planner</Text>
                             <Text style={styles.aiPlannerSubtitle}>
-                                Get personalized travel recommendations
+                                Natural conversation for personalized trips
                             </Text>
                         </View>
                     </View>
