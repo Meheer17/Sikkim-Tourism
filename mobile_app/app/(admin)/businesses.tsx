@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Business } from '@/types/admin.types';
-import { useApi } from '@/hooks/useApi';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useApi } from '@/hooks/useApi';
+import { Business } from '@/types/admin.types';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
 
 // Mock data - replace with actual API
 const MOCK_BUSINESSES: Business[] = [
@@ -108,8 +111,12 @@ const MOCK_BUSINESSES: Business[] = [
 const CATEGORIES = ['All', 'Adventure', 'Transport', 'Culture', 'Food', 'Wellness'];
 const STATUSES = ['All', 'Active', 'Pending', 'Suspended'];
 
+
+
 export default function AdminBusinessesScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [businesses, setBusinesses] = useState<Business[]>(MOCK_BUSINESSES);
     const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>(MOCK_BUSINESSES);
     const [searchQuery, setSearchQuery] = useState('');
@@ -123,6 +130,8 @@ export default function AdminBusinessesScreen() {
     const text = useThemeColor('text');
     const muted = useThemeColor('mutedText');
     const tint = useThemeColor('tint');
+    
+
 
     const filterBusinesses = useCallback(() => {
         let filtered = businesses;
@@ -208,9 +217,9 @@ export default function AdminBusinessesScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: card }]}>
                 <View>
-                    <Text style={[styles.headerTitle, { color: text }]}>Businesses</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>{t?.businesses ?? 'Businesses'}</Text>
                     <Text style={[styles.headerSubtitle, { color: muted }]}>
-                        {filteredBusinesses.length} businesses found
+                        {filteredBusinesses.length} {t?.businesses_found ?? 'businesses found'}
                     </Text>
                 </View>
                 <TouchableOpacity
@@ -227,7 +236,7 @@ export default function AdminBusinessesScreen() {
                     <IconSymbol name="magnifyingglass" size={20} color={muted} />
                     <TextInput
                         style={[styles.searchInput, { color: text }]}
-                        placeholder="Search businesses..."
+                        placeholder={t?.searchBusinesses ?? 'Search businesses...'}
                         placeholderTextColor={muted}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
@@ -251,7 +260,7 @@ export default function AdminBusinessesScreen() {
                 <View style={[styles.filtersContainer, { backgroundColor: card }]}>
                     {/* Category Filter */}
                     <View style={styles.filterSection}>
-                        <Text style={[styles.filterLabel, { color: text }]}>Category</Text>
+                        <Text style={[styles.filterLabel, { color: text }]}>{t?.category ?? 'Category'}</Text>
                         <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -281,7 +290,7 @@ export default function AdminBusinessesScreen() {
 
                     {/* Status Filter */}
                     <View style={styles.filterSection}>
-                        <Text style={[styles.filterLabel, { color: text }]}>Status</Text>
+                        <Text style={[styles.filterLabel, { color: text }]}>{t?.status ?? 'Status'}</Text>
                         <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -416,9 +425,9 @@ export default function AdminBusinessesScreen() {
                 ) : (
                     <View style={styles.emptyState}>
                         <IconSymbol name="building.2.fill" size={64} color={muted} />
-                        <Text style={[styles.emptyTitle, { color: text }]}>No businesses found</Text>
+                        <Text style={[styles.emptyTitle, { color: text }]}>{t?.noBusinessesFound ?? 'No businesses found'}</Text>
                         <Text style={[styles.emptySubtitle, { color: muted }]}>
-                            Try adjusting your search or filters
+                            {t?.try_adjusting ?? 'Try adjusting your search or filters'}
                         </Text>
                     </View>
                 )}

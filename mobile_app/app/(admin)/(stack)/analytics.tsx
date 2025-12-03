@@ -1,7 +1,11 @@
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function AdminAnalytics() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const stats = [
         { label: 'Active Organizations', value: 12 },
         { label: 'Active Businesses', value: 48 },

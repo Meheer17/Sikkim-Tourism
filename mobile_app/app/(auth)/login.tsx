@@ -1,24 +1,28 @@
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
+import { UserRole } from '@/types/api.types';
+import { AuthUtils } from '@/utils/auth';
+import { TokenManager } from '@/utils/storage';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-    View,
+    Alert,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Alert,
-    Modal,
+    View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/hooks/useAuth';
-import { AuthUtils } from '@/utils/auth';
-import { TokenManager } from '@/utils/storage';
-import { UserRole } from '@/types/api.types';
 import Toast from 'react-native-toast-message';
 
 export default function LoginScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
@@ -30,8 +34,8 @@ export default function LoginScreen() {
         if (!email || !password) {
             Toast.show({
                 type: 'error',
-                text1: 'Missing Fields',
-                text2: 'Please enter email and password',
+                text1: t.missingFields,
+                text2: t.pleaseEnter,
             });
             return;
         }
@@ -45,8 +49,8 @@ export default function LoginScreen() {
         } catch (error: any) {
             Toast.show({
                 type: 'error',
-                text1: 'Login Failed',
-                text2: error.message || 'Please check your credentials',
+                text1: t.loginFailed,
+                text2: error.message || t.checkCredentials,
             });
         } finally {
             setIsLoading(false);

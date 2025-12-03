@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { AdminUser, UserRole } from '@/types/admin.types';
-import { useApi } from '@/hooks/useApi';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useApi } from '@/hooks/useApi';
+import { AdminUser, UserRole } from '@/types/admin.types';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 // Mock data - replace with actual API
 const MOCK_USERS: AdminUser[] = [
@@ -107,6 +109,8 @@ const STATUSES = ['All', 'Active', 'Suspended'];
 
 export default function AdminUsersScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [users, setUsers] = useState<AdminUser[]>(MOCK_USERS);
     const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>(MOCK_USERS);
     const [searchQuery, setSearchQuery] = useState('');

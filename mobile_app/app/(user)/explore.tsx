@@ -1,12 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder, ActivityIndicator, Platform } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import * as Location from 'expo-location';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useRouter } from 'expo-router';
 import PlaceCard, { Place } from '@/components/explore/PlaceCard';
-import { usePermissions } from '@/hooks/usePermissions';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { usePermissions } from '@/hooks/usePermissions';
+import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Dimensions, PanResponder, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_HEIGHT = SCREEN_HEIGHT * 0.4;
@@ -135,6 +137,8 @@ const MOCK_NEARBY_PLACES: Place[] = [
 ];
 
 export default function ExploreScreen() {
+  const { language } = useLanguage();
+  const t = getLanguageTranslations(language);
   const [nearbyPlaces, setNearbyPlaces] = useState<Place[]>(MOCK_NEARBY_PLACES);
   const [region, setRegion] = useState(SIKKIM_REGION);
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
@@ -538,9 +542,9 @@ export default function ExploreScreen() {
           {/* Modal Header */}
           <View style={styles.modalHeader}>
             <View>
-              <Text style={[styles.modalTitle, { color: text }]}>Nearby Places</Text>
+              <Text style={[styles.modalTitle, { color: text }]}>{t?.nearbyPlaces ?? 'Nearby Places'}</Text>
               <Text style={[styles.modalSubtitle, { color: muted }]}>
-                {nearbyPlaces.length} places found
+                {nearbyPlaces.length} {t?.loading_places ?? 'places found'}
               </Text>
             </View>
             <TouchableOpacity style={[styles.filterButton, { backgroundColor: soft }] }>

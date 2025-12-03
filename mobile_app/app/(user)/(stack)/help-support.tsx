@@ -1,39 +1,44 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const HELP_TOPICS = [
-    { id: '1', title: 'How to book a service', icon: 'questionmark.circle' },
-    { id: '2', title: 'Payment methods', icon: 'creditcard' },
-    { id: '3', title: 'Cancellation policy', icon: 'xmark.circle' },
-    { id: '4', title: 'Refund process', icon: 'arrow.uturn.backward' },
+    { id: '1', title: 'howToBook', icon: 'questionmark.circle' },
+    { id: '2', title: 'paymentMethods', icon: 'creditcard' },
+    { id: '3', title: 'cancellationPolicy', icon: 'xmark.circle' },
+    { id: '4', title: 'refundProcess', icon: 'arrow.uturn.backward' },
 ];
 
 export default function HelpSupportScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <View style={styles.header}>
                 <IconSymbol name="questionmark.circle.fill" size={48} color="#0a7ea4" />
-                <Text style={styles.title}>Help & Support</Text>
-                <Text style={styles.subtitle}>We're here to help you</Text>
+                <Text style={styles.title}>{t.helpAndSupport}</Text>
+                <Text style={styles.subtitle}>{t.weAreHere}</Text>
             </View>
 
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Common Topics</Text>
+                <Text style={styles.sectionTitle}>{t.commonTopics}</Text>
                 {HELP_TOPICS.map((topic) => (
                     <TouchableOpacity key={topic.id} style={styles.topicCard}>
                         <IconSymbol name={topic.icon as any} size={24} color="#0a7ea4" />
-                        <Text style={styles.topicTitle}>{topic.title}</Text>
+                        <Text style={styles.topicTitle}>{t[topic.title as keyof typeof t]}</Text>
                         <IconSymbol name="chevron.right" size={16} color="#687076" />
                     </TouchableOpacity>
                 ))}
             </View>
 
             <View style={styles.contactCard}>
-                <Text style={styles.contactTitle}>Need more help?</Text>
-                <Text style={styles.contactText}>Contact us at support@tourist.com</Text>
+                <Text style={styles.contactTitle}>{t.needMoreHelp}</Text>
+                <Text style={styles.contactText}>{t.contactUs}</Text>
                 <TouchableOpacity style={styles.contactButton}>
-                    <Text style={styles.contactButtonText}>Contact Support</Text>
+                    <Text style={styles.contactButtonText}>{t.contactSupport}</Text>
                 </TouchableOpacity>
             </View>
         </ScrollView>

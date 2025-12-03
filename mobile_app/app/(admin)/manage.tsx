@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Colors } from '@/constants/theme';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AdminBusinesses from './businesses';
 import AdminOrganizations from './organizations';
 import AdminUsers from './users';
 
 export default function AdminManage() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [tab, setTab] = useState<'businesses' | 'organizations' | 'users'>('businesses');
 
     const tabs: { key: 'businesses' | 'organizations' | 'users'; label: string }[] = [

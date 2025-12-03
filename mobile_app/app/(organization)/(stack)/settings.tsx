@@ -1,7 +1,11 @@
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 export default function OrgSettings() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [publicListings, setPublicListings] = React.useState(true);
     const [autoPublishEvents, setAutoPublishEvents] = React.useState(false);
     const [notifyOnSales, setNotifyOnSales] = React.useState(true);

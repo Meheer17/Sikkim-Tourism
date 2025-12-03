@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    StatusBar,
-    ActivityIndicator,
-} from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import PanoramaViewer from '@/components/immersive/PanoramaViewer';
+import AudioNarration from '@/components/immersive/AudioNarration';
 import NavigationHotspot, {
     NavigationHotspot as HotspotType,
 } from '@/components/immersive/NavigationHotspot';
-import AudioNarration from '@/components/immersive/AudioNarration';
+import PanoramaViewer from '@/components/immersive/PanoramaViewer';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 interface Viewpoint {
     id: string;

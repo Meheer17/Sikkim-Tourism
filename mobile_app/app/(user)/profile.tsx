@@ -1,84 +1,86 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useRouter } from 'expo-router';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import MenuSection, { MenuItem } from '@/components/profile/MenuSection';
-import { useAuth } from '@/hooks/useAuth';
-import { useThemeColor } from '@/hooks/use-theme-color';
 import ThemeToggle from '@/components/common/ThemeToggle';
+import MenuSection, { MenuItem } from '@/components/profile/MenuSection';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 
 // Configuration for menu items - easy to add/remove
-const ACCOUNT_MENU_ITEMS: MenuItem[] = [
+const getAccountMenuItems = (t: any): MenuItem[] => [
     {
         id: 'favorites',
-        label: 'My Favorites',
+        label: t.myFavorites,
         icon: 'heart.fill',
         route: '/(user)/(stack)/favorites',
     },
     {
         id: 'bookings-history',
-        label: 'Booking History',
+        label: t.bookingHistoryMenu,
         icon: 'clock.fill',
         route: '/(user)/(stack)/booking-history',
     },
     {
         id: 'saved-places',
-        label: 'Saved Places',
+        label: t.savedPlaces,
         icon: 'bookmark.fill',
         route: '/(user)/(stack)/saved-places',
     },
 ];
 
-const SUPPORT_MENU_ITEMS: MenuItem[] = [
+const getSupportMenuItems = (t: any): MenuItem[] => [
     {
         id: 'help',
-        label: 'Help & Support',
+        label: t.helpSupport,
         icon: 'questionmark.circle.fill',
         route: '/(user)/(stack)/help-support',
     },
     {
         id: 'safety',
-        label: 'Safety Center',
+        label: t.safetyCenter,
         icon: 'shield.fill',
         route: '/(user)/(stack)/safety',
     },
     {
         id: 'terms',
-        label: 'Terms & Conditions',
+        label: t.terms,
         icon: 'doc.text.fill',
         route: '/(user)/(stack)/terms',
     },
     {
         id: 'privacy',
-        label: 'Privacy Policy',
+        label: t.privacy,
         icon: 'lock.fill',
         route: '/(user)/(stack)/privacy',
     },
 ];
 
-const SETTINGS_MENU_ITEMS: MenuItem[] = [
+const getSettingsMenuItems = (t: any): MenuItem[] => [
     {
         id: 'friends',
-        label: 'Friends & Location',
+        label: t.friendsLocation,
         icon: 'person.2.fill',
         route: '/(user)/(stack)/friends',
     },
     {
         id: 'notifications',
-        label: 'Notifications',
+        label: t.notifications,
         icon: 'bell.fill',
         route: '/(user)/(stack)/notifications',
     },
     {
         id: 'language',
-        label: 'Language',
+        label: t.language,
         icon: 'globe',
         route: '/(user)/(stack)/language',
     },
     {
         id: 'about',
-        label: 'About',
+        label: t.about,
         icon: 'info.circle.fill',
         route: '/(user)/(stack)/about',
     },
@@ -87,6 +89,8 @@ const SETTINGS_MENU_ITEMS: MenuItem[] = [
 export default function ProfileScreen() {
     const router = useRouter();
     const { user, logout } = useAuth();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
 
     // Theme colors
     const screenBg = useThemeColor('background');
@@ -131,7 +135,7 @@ export default function ProfileScreen() {
                     </Text>
                     <Text style={[styles.userEmail, { color: mutedText }]}>{user?.email}</Text>
                     <TouchableOpacity style={[styles.editProfileButton, { backgroundColor: soft }]}>
-                        <Text style={[styles.editProfileText, { color: tint }]}>Edit Profile</Text>
+                        <Text style={[styles.editProfileText, { color: tint }]}>{t.editProfile}</Text>
                         <IconSymbol name="pencil" size={14} color={tint as string} />
                     </TouchableOpacity>
                 </View>
@@ -190,22 +194,22 @@ export default function ProfileScreen() {
                 <View style={styles.padding}>
                     {/* Account Menu Section */}
                     <MenuSection
-                        title="Account"
-                        items={ACCOUNT_MENU_ITEMS}
+                        title={t.myProfile}
+                        items={getAccountMenuItems(t)}
                         onItemPress={handleMenuItemPress}
                     />
 
                     {/* Support Menu Section */}
                     <MenuSection
-                        title="Help & Support"
-                        items={SUPPORT_MENU_ITEMS}
+                        title={t.helpSupport}
+                        items={getSupportMenuItems(t)}
                         onItemPress={handleMenuItemPress}
                     />
 
                     {/* Settings Menu Section */}
                     <MenuSection
-                        title="Settings"
-                        items={SETTINGS_MENU_ITEMS}
+                        title={t.settings}
+                        items={getSettingsMenuItems(t)}
                         onItemPress={handleMenuItemPress}
                     />
                 </View>
@@ -217,7 +221,7 @@ export default function ProfileScreen() {
                     {/* Logout Button */}
                     <TouchableOpacity style={[styles.logoutButton, { backgroundColor: cardBg }]} onPress={handleLogout}>
                         <IconSymbol name="rectangle.portrait.and.arrow.right" size={20} color="#ef4444" />
-                        <Text style={styles.logoutText}>Logout</Text>
+                        <Text style={styles.logoutText}>{t.logout}</Text>
                     </TouchableOpacity>
                 </View>
                 {/* App Version */}

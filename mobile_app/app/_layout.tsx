@@ -1,10 +1,11 @@
-import { DefaultTheme, DarkTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
+import { Colors } from '@/constants/theme';
+import { LanguageProvider } from '@/contexts/LanguageContext';
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
+import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import Toast from 'react-native-toast-message';
-import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
-import { Colors } from '@/constants/theme';
 
 function RootNavigator() {
   const { actualTheme } = useTheme();
@@ -30,8 +31,10 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <RootNavigator />
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider>
+        <RootNavigator />
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }

@@ -1,17 +1,21 @@
+import { Stack, usePathname, useRouter } from 'expo-router';
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Stack, useRouter, usePathname } from 'expo-router';
-import Animated, { SlideInUp, SlideOutDown, FadeInDown, Easing } from 'react-native-reanimated';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, { Easing, FadeInDown, SlideInUp, SlideOutDown } from 'react-native-reanimated';
 
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useThemeColor } from '@/hooks/use-theme-color';
 import { ThemedText } from '@/components/themed-text';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function UserLayout() {
     const router = useRouter();
     const pathname = usePathname();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const tint = useThemeColor('tint');
     const icon = useThemeColor('icon');
     const cardBg = useThemeColor('card');
@@ -19,11 +23,11 @@ export default function UserLayout() {
     const activeTabBg = useThemeColor('activeTabBg');
 
     const tabs = [
-        { name: 'Home', icon: 'house.fill', route: '/(user)/home' },
-        { name: 'Services', icon: 'square.grid.2x2.fill', route: '/(user)/services' },
-        { name: 'Explore', icon: 'map.fill', route: '/(user)/explore' },
-        { name: 'Bookings', icon: 'ticket.fill', route: '/(user)/my-bookings' },
-        { name: 'Chat', icon: 'bubble.left.and.bubble.right.fill', route: '/(user)/community-chat' },
+        { name: t.home ?? 'Home', icon: 'house.fill', route: '/(user)/home' },
+        { name: t.services ?? 'Services', icon: 'square.grid.2x2.fill', route: '/(user)/services' },
+        { name: t.explore ?? 'Explore', icon: 'map.fill', route: '/(user)/explore' },
+        { name: t.bookings ?? 'Bookings', icon: 'ticket.fill', route: '/(user)/my-bookings' },
+        { name: t.chat ?? 'Chat', icon: 'bubble.left.and.bubble.right.fill', route: '/(user)/community-chat' },
     ];
 
     const handleTabPress = (route: string) => {

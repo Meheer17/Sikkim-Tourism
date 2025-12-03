@@ -1,12 +1,16 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React from 'react';
+import { Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function PlaceDetailsScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = getLanguageTranslations(language);
   const background = useThemeColor('background');
   const card = useThemeColor('card');
   const text = useThemeColor('text');

@@ -1,7 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Dimensions, Animated, PanResponder } from 'react-native';
-import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useRouter } from 'expo-router';
+import React, { useRef, useState } from 'react';
+import { Animated, Dimensions, PanResponder, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_HEIGHT = SCREEN_HEIGHT * 0.45;
@@ -101,6 +103,8 @@ const RADIUS_OPTIONS = [1, 5, 10, 25, 50];
 
 export default function FriendsScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [friends] = useState<Friend[]>(MOCK_FRIENDS);
     const [selectedRadius, setSelectedRadius] = useState(10); // in km
     const [shareMyLocation, setShareMyLocation] = useState(true);
@@ -205,9 +209,9 @@ export default function FriendsScreen() {
                     <IconSymbol name="chevron.left" size={24} color="#11181C" />
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
-                    <Text style={styles.headerTitle}>Friends & Location</Text>
+                    <Text style={styles.headerTitle}>{t.friendsLocation}</Text>
                     <Text style={styles.headerSubtitle}>
-                        {filteredFriends.length} nearby friends
+                        {filteredFriends.length} {t.friendsLocationSubtitle}
                     </Text>
                 </View>
                 <TouchableOpacity style={styles.addButton}>
@@ -219,9 +223,9 @@ export default function FriendsScreen() {
             <View style={styles.mapContainer}>
                 <View style={styles.mapPlaceholder}>
                     <IconSymbol name="map.fill" size={64} color="#0a7ea4" />
-                    <Text style={styles.mapPlaceholderText}>Live Location Map</Text>
+                    <Text style={styles.mapPlaceholderText}>{t.location} {t.explore}</Text>
                     <Text style={styles.mapSubtext}>
-                        Showing friends within {selectedRadius} km radius
+                        {t.searchRadius} {selectedRadius} km
                     </Text>
 
                     {/* Friend Markers Preview */}
@@ -300,9 +304,9 @@ export default function FriendsScreen() {
                                 />
                             </View>
                             <View>
-                                <Text style={styles.shareLocationTitle}>Share My Location</Text>
+                                <Text style={styles.shareLocationTitle}>{t.shareMyLocation}</Text>
                                 <Text style={styles.shareLocationSubtitle}>
-                                    {shareMyLocation ? 'Friends can see your location' : 'Location sharing is off'}
+                                    {shareMyLocation ? t.shareLocationToggleOn : t.shareLocationToggleOff}
                                 </Text>
                             </View>
                         </View>
@@ -316,7 +320,7 @@ export default function FriendsScreen() {
 
                     {/* Radius Selector */}
                     <View style={styles.radiusSection}>
-                        <Text style={styles.radiusTitle}>Search Radius</Text>
+                        <Text style={styles.radiusTitle}>{t.searchRadius}</Text>
                         <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -346,7 +350,7 @@ export default function FriendsScreen() {
 
                     {/* Friends List */}
                     <Text style={styles.sectionTitle}>
-                        Nearby Friends ({filteredFriends.length})
+                        {t.nearbyFriends} ({filteredFriends.length})
                     </Text>
 
                     {filteredFriends.map((friend) => (
@@ -389,7 +393,7 @@ export default function FriendsScreen() {
                     {friends.filter(f => !f.sharingLocation).length > 0 && (
                         <>
                             <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
-                                Not Sharing Location
+                                {t.notSharingLocation}
                             </Text>
                             {friends.filter(f => !f.sharingLocation).map((friend) => (
                                 <View key={friend.id} style={styles.friendCard}>
@@ -401,7 +405,7 @@ export default function FriendsScreen() {
                                         </View>
                                         <View style={styles.friendInfo}>
                                             <Text style={styles.friendName}>{friend.name}</Text>
-                                            <Text style={styles.offlineText}>Location sharing disabled</Text>
+                                            <Text style={styles.offlineText}>{t.locationSharingDisabled}</Text>
                                         </View>
                                     </View>
                                 </View>

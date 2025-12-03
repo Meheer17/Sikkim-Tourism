@@ -1,8 +1,10 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
-import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useRouter } from 'expo-router';
+import React, { useRef, useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 // Mock chat messages
 interface ChatMessage {
@@ -75,6 +77,8 @@ const MOCK_MESSAGES: ChatMessage[] = [
 
 export default function CommunityChatScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [messages, setMessages] = useState<ChatMessage[]>(MOCK_MESSAGES);
     const [inputMessage, setInputMessage] = useState('');
     const scrollViewRef = useRef<ScrollView>(null);
@@ -119,8 +123,8 @@ export default function CommunityChatScreen() {
                     <IconSymbol name="chevron.left" size={24} color={text as string} />
                 </TouchableOpacity>
                 <View style={styles.headerCenter}>
-                    <Text style={[styles.headerTitle, { color: text }]}>Community Chat</Text>
-                    <Text style={[styles.headerSubtitle, { color: mutedText }]}>Connect with fellow travelers</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>{t.community}</Text>
+                    <Text style={[styles.headerSubtitle, { color: mutedText }]}>{t.chat}</Text>
                 </View>
                 <View style={styles.onlineIndicator}>
                     <View style={styles.onlineDot} />
@@ -197,7 +201,7 @@ export default function CommunityChatScreen() {
                     </TouchableOpacity>
                     <TextInput
                         style={[styles.input, { color: text, backgroundColor: screenBg }]}
-                        placeholder="Type a message..."
+                        placeholder={t.typeMessage}
                         placeholderTextColor={mutedText as string}
                         value={inputMessage}
                         onChangeText={setInputMessage}

@@ -1,7 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export interface Booking {
     id: string;
@@ -31,6 +33,8 @@ export default function BookingCard({ booking, onPress }: BookingCardProps) {
     const text = useThemeColor('text');
     const muted = useThemeColor('mutedText');
     const border = useThemeColor('border');
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
 
     return (
         <TouchableOpacity
@@ -55,17 +59,17 @@ export default function BookingCard({ booking, onPress }: BookingCardProps) {
 
             <View style={styles.details}>
                 <View style={styles.detailRow}>
-                    <IconSymbol name="calendar" size={16} color={muted} />
+                    <View style={styles.iconSpacerSmall}><IconSymbol name="calendar" size={16} color={muted} /></View>
                     <Text style={[styles.detailText, { color: muted }]}>{booking.bookingDate}</Text>
                 </View>
                 {booking.bookingCode && (
                     <View style={styles.detailRow}>
-                        <IconSymbol name="number" size={16} color={muted} />
+                        <View style={styles.iconSpacerSmall}><IconSymbol name="number" size={16} color={muted} /></View>
                         <Text style={[styles.detailText, { color: muted }]}>{booking.bookingCode}</Text>
                     </View>
                 )}
                 <View style={styles.detailRow}>
-                    <IconSymbol name="indianrupeesign" size={16} color={muted} />
+                    <View style={styles.iconSpacerSmall}><IconSymbol name="indianrupeesign" size={16} color={muted} /></View>
                     <Text style={[styles.detailText, { color: muted }]}>₹{booking.price}</Text>
                 </View>
             </View>
@@ -109,7 +113,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: 12,
-        gap: 4,
     },
     statusText: {
         fontSize: 12,
@@ -120,13 +123,12 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     details: {
-        gap: 8,
     },
     detailRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
     },
+    iconSpacerSmall: { marginRight: 8 },
     detailText: {
         fontSize: 14,
     },

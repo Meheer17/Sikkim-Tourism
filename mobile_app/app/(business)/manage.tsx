@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import BusinessBookings from './bookings';
 import BusinessRequests from './requests';
 
 export default function BusinessManage() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [tab, setTab] = useState<'bookings' | 'requests'>('bookings');
     const background = useThemeColor('background');
     const card = useThemeColor('card');

@@ -1,18 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { useApi } from '@/hooks/useApi';
+import { AdminUser, UserRole } from '@/types/admin.types';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    TextInput,
     Alert,
     Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { AdminUser, UserRole } from '@/types/admin.types';
-import { useApi } from '@/hooks/useApi';
-import { useThemeColor } from '@/hooks/use-theme-color';
 
 // Mock data - replace with actual API
 const MOCK_USERS: AdminUser[] = [
@@ -97,6 +99,8 @@ const ROLE_OPTIONS: RoleOption[] = [
 ];
 
 export default function AdminRolesScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [users, setUsers] = useState<AdminUser[]>(MOCK_USERS);
     const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>(MOCK_USERS);
     const [searchQuery, setSearchQuery] = useState('');

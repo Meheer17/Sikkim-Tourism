@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 // Mock data - replace with actual API call
 const MOCK_ALL_SERVICES: Service[] = [
@@ -75,6 +77,8 @@ const MOCK_ALL_SERVICES: Service[] = [
 const CATEGORIES = ['All', 'Adventure', 'Culture', 'Transport', 'Food'];
 
 export default function ServicesScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [services, setServices] = useState<Service[]>([]);
     const [filteredServices, setFilteredServices] = useState<Service[]>([]);
     const [selectedCategory, setSelectedCategory] = useState('All');
@@ -132,8 +136,8 @@ export default function ServicesScreen() {
         <View style={[styles.container, { backgroundColor: screenBg }]}>
             {/* Header */}
             <View style={[styles.header, { backgroundColor: cardBg }]}>
-                <Text style={[styles.headerTitle, { color: text }]}>Services</Text>
-                <Text style={[styles.headerSubtitle, { color: mutedText }]}>Discover amazing experiences</Text>
+                <Text style={[styles.headerTitle, { color: text }]}>{t.allServices}</Text>
+                <Text style={[styles.headerSubtitle, { color: mutedText }]}>{t.explore_places}</Text>
             </View>
 
             {/* Search Bar */}
@@ -141,7 +145,7 @@ export default function ServicesScreen() {
                 <IconSymbol name="magnifyingglass" size={20} color={mutedText as string} />
                 <TextInput
                     style={[styles.searchInput, { color: text }]}
-                    placeholder="Search services..."
+                    placeholder={t.searchServices}
                     placeholderTextColor={mutedText as string}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
@@ -200,9 +204,9 @@ export default function ServicesScreen() {
                 ) : (
                     <View style={styles.emptyState}>
                         <IconSymbol name="magnifyingglass" size={64} color={border as string} />
-                        <Text style={[styles.emptyTitle, { color: text }]}>No services found</Text>
+                        <Text style={[styles.emptyTitle, { color: text }]}>{t.noResults}</Text>
                         <Text style={[styles.emptySubtitle, { color: mutedText }]}>
-                            Try adjusting your search or filters
+                            {t.search}
                         </Text>
                     </View>
                 )}

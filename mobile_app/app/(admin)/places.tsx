@@ -1,19 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { useApi } from '@/hooks/useApi';
+import { Place } from '@/types/admin.types';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    TextInput,
     Alert,
     Dimensions,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Place } from '@/types/admin.types';
-import { useApi } from '@/hooks/useApi';
-import { useThemeColor } from '@/hooks/use-theme-color';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_HEIGHT = SCREEN_HEIGHT * 0.35;
@@ -162,6 +164,8 @@ const STATUSES = ['All', 'Active', 'Draft', 'Archived'];
 
 export default function AdminPlacesScreen() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [places, setPlaces] = useState<Place[]>(MOCK_PLACES);
     const [filteredPlaces, setFilteredPlaces] = useState<Place[]>(MOCK_PLACES);
     const [searchQuery, setSearchQuery] = useState('');

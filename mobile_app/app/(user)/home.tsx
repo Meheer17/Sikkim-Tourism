@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Mock data - replace with actual API call
 const MOCK_SERVICES: Service[] = [
@@ -45,6 +47,8 @@ const MOCK_SERVICES: Service[] = [
 export default function HomeScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [services, setServices] = useState<Service[]>([]);
     const [refreshing, setRefreshing] = useState(false);
     const background = useThemeColor('background');
@@ -100,8 +104,8 @@ export default function HomeScreen() {
                 {/* Header */}
                 <View style={styles.header}>
                     <View>
-                        <Text style={[styles.greeting, { color: text }]}>Welcome Back!</Text>
-                        <Text style={[styles.subtitle, { color: muted }]}>Explore amazing services</Text>
+                        <Text style={[styles.greeting, { color: text }]}>{t.welcomeBack}</Text>
+                        <Text style={[styles.subtitle, { color: muted }]}>{t.explore_places}</Text>
                     </View>
                     <TouchableOpacity 
                         style={[styles.profileButton, { backgroundColor: card }]}
@@ -116,17 +120,17 @@ export default function HomeScreen() {
                     <View style={[styles.statCard, { backgroundColor: card }]}>
                         <IconSymbol name="ticket.fill" size={24} color={tint} />
                         <Text style={[styles.statValue, { color: text }]}>12</Text>
-                        <Text style={[styles.statLabel, { color: muted }]}>Bookings</Text>
+                        <Text style={[styles.statLabel, { color: muted }]}>{t?.bookings ?? 'Bookings'}</Text>
                     </View>
                     <View style={[styles.statCard, { backgroundColor: card }]}>
                         <IconSymbol name="heart.fill" size={24} color="#ef4444" />
                         <Text style={[styles.statValue, { color: text }]}>8</Text>
-                        <Text style={[styles.statLabel, { color: muted }]}>Favorites</Text>
+                        <Text style={[styles.statLabel, { color: muted }]}>{t?.myFavorites ?? 'Favorites'}</Text>
                     </View>
                     <View style={[styles.statCard, { backgroundColor: card }]}>
                         <IconSymbol name="mappin.circle.fill" size={24} color="#10b981" />
                         <Text style={[styles.statValue, { color: text }]}>5</Text>
-                        <Text style={[styles.statLabel, { color: muted }]}>Visited</Text>
+                        <Text style={[styles.statLabel, { color: muted }]}>{t?.bookingHistoryPage ?? 'Visited'}</Text>
                     </View>
                 </View>
 
@@ -141,9 +145,9 @@ export default function HomeScreen() {
                             <IconSymbol name="sparkles" size={32} color="#fff" />
                         </View>
                         <View style={styles.aiPlannerText}>
-                            <Text style={styles.aiPlannerTitle}>Plan with AI</Text>
+                            <Text style={styles.aiPlannerTitle}>{t?.aiPlanner ?? 'Plan with AI'}</Text>
                             <Text style={styles.aiPlannerSubtitle}>
-                                Get personalized travel recommendations
+                                {t?.getDiscount ?? 'Get personalized travel recommendations'}
                             </Text>
                         </View>
                     </View>
@@ -153,9 +157,9 @@ export default function HomeScreen() {
                 {/* Services Section */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={[styles.sectionTitle, { color: text }]}>Popular Services</Text>
+                        <Text style={[styles.sectionTitle, { color: text }]}>{t?.popular_services ?? 'Popular Services'}</Text>
                         <TouchableOpacity onPress={handleViewAllServices}>
-                            <Text style={[styles.viewAllText, { color: tint }]}>View All</Text>
+                            <Text style={[styles.viewAllText, { color: tint }]}>{t?.viewAll ?? 'View All'}</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -173,8 +177,8 @@ export default function HomeScreen() {
                     <View style={styles.bannerContent}>
                         <IconSymbol name="sparkles" size={32} color="#fbbf24" />
                         <View style={styles.bannerText}>
-                            <Text style={[styles.bannerTitle, { color: text }]}>Special Offer!</Text>
-                            <Text style={[styles.bannerSubtitle, { color: muted }]}>Get 20% off on first booking</Text>
+                            <Text style={[styles.bannerTitle, { color: text }]}>{t?.specialOffer ?? 'Special Offer!'}</Text>
+                            <Text style={[styles.bannerSubtitle, { color: muted }]}>{t?.getDiscount ?? 'Get 20% off on first booking'}</Text>
                         </View>
                     </View>
                 </View>

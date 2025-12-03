@@ -1,19 +1,23 @@
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    StyleSheet,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/hooks/useAuth';
 import Toast from 'react-native-toast-message';
 
 export default function RegisterScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [formData, setFormData] = React.useState({
         firstName: '',
         lastName: '',
@@ -32,7 +36,7 @@ export default function RegisterScreen() {
         if (!firstName || !lastName || !email || !password || !confirmPassword) {
             Toast.show({
                 type: 'error',
-                text1: 'Missing Fields',
+                text1: t.missingFields,
                 text2: 'Please fill in all required fields',
             });
             return;
@@ -41,8 +45,8 @@ export default function RegisterScreen() {
         if (password !== confirmPassword) {
             Toast.show({
                 type: 'error',
-                text1: 'Password Mismatch',
-                text2: 'Passwords do not match',
+                text1: t.passwordMismatch,
+                text2: t.passwordMismatch,
             });
             return;
         }

@@ -1,8 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'expo-router';
+import React, { useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
 
 type OrgStatus = 'pending' | 'approved' | 'suspended';
 type OrgCategory = 'monastery' | 'museum' | 'park' | 'community' | 'venue';
@@ -23,9 +26,21 @@ type Organization = {
 
 export default function AdminOrganizations() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [search, setSearch] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<OrgCategory | 'all'>('all');
     const [statusFilter, setStatusFilter] = useState<OrgStatus | 'all'>('all');
+
+    const getCategoryLabel = (c: OrgCategory | 'all') => {
+        if (c === 'all') return t?.all ?? 'All';
+        return (t && (t as any)[c]) ?? c;
+    };
+
+    const getStatusLabel = (s: OrgStatus | 'all') => {
+        if (s === 'all') return t?.all ?? 'All';
+        return (t && (t as any)[s]) ?? s;
+    };
     const [orgs, setOrgs] = useState<Organization[]>([
         { id: 'o1', name: 'Peace Monastery', category: 'monastery', owner: 'Tenzin Lama', email: 'peace@monastery.com', phone: '+91 90000 11111', createdAt: '2024-05-18', status: 'approved', placesCount: 3, eventsCount: 12, ticketsSold: 1540 },
         { id: 'o2', name: 'City Museum', category: 'museum', owner: 'Arjun Patel', email: 'info@citymuseum.org', phone: '+91 90000 22222', createdAt: '2024-08-09', status: 'pending', placesCount: 1, eventsCount: 5, ticketsSold: 320 },
@@ -52,26 +67,26 @@ export default function AdminOrganizations() {
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}><Text style={styles.headerTitle}>Organizations</Text></View>
+            <View style={styles.header}><Text style={styles.headerTitle}>{t?.organizations ?? 'Organizations'}</Text></View>
 
             <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
                 <View style={styles.filters}>
-                    <View style={styles.searchBox}>
-                        <IconSymbol name="magnifyingglass" size={18} color="#687076" />
-                        <TextInput style={styles.searchInput} placeholder="Search orgs or owners" value={search} onChangeText={setSearch} />
-                    </View>
+                        <View style={styles.searchBox}>
+                            <View style={styles.iconSpacer}><IconSymbol name="magnifyingglass" size={18} color="#687076" /></View>
+                            <TextInput style={styles.searchInput} placeholder={t?.search_orgs ?? 'Search orgs or owners'} value={search} onChangeText={setSearch} />
+                        </View>
 
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }}>
                         {categories.map(c => (
                             <TouchableOpacity key={c} style={[styles.chip, categoryFilter === c && styles.chipActive]} onPress={() => setCategoryFilter(c)}>
-                                <Text style={[styles.chipText, categoryFilter === c && styles.chipTextActive]}>{c}</Text>
+                                <Text style={[styles.chipText, categoryFilter === c && styles.chipTextActive]}>{getCategoryLabel(c)}</Text>
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
                         {statuses.map(s => (
                             <TouchableOpacity key={s} style={[styles.chip, statusFilter === s && styles.chipActive]} onPress={() => setStatusFilter(s)}>
-                                <Text style={[styles.chipText, statusFilter === s && styles.chipTextActive]}>{s}</Text>
+                                <Text style={[styles.chipText, statusFilter === s && styles.chipTextActive]}>{getStatusLabel(s as OrgStatus)}</Text>
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
@@ -82,49 +97,49 @@ export default function AdminOrganizations() {
                         <View style={styles.row}>
                             <View>
                                 <Text style={styles.title}>{o.name}</Text>
-                                <Text style={styles.subtitle}>{o.owner} • {o.category}</Text>
+                                <Text style={styles.subtitle}>{o.owner} • {(t && (t as any)[o.category]) ?? o.category}</Text>
                             </View>
                             <View style={[styles.badge, { backgroundColor: badgeBg(o.status) }]}>
-                                <Text style={[styles.badgeText, { color: badgeColor(o.status) }]}>{o.status}</Text>
+                                <Text style={[styles.badgeText, { color: badgeColor(o.status) }]}>{getStatusLabel(o.status)}</Text>
                             </View>
                         </View>
 
                         <View style={[styles.row, { marginTop: 8 }]}>
-                            <View style={styles.stat}><IconSymbol name="map.fill" size={16} color="#687076" /><Text style={styles.statText}>{o.placesCount} places</Text></View>
-                            <View style={styles.stat}><IconSymbol name="calendar" size={16} color="#687076" /><Text style={styles.statText}>{o.eventsCount} events</Text></View>
-                            <View style={styles.stat}><IconSymbol name="ticket.fill" size={16} color="#687076" /><Text style={styles.statText}>{o.ticketsSold} tickets</Text></View>
+                                <View style={styles.stat}><View style={styles.iconSpacerSmall}><IconSymbol name="map.fill" size={16} color="#687076" /></View><Text style={styles.statText}>{o.placesCount} {t?.places ?? 'places'}</Text></View>
+                                <View style={styles.stat}><View style={styles.iconSpacerSmall}><IconSymbol name="calendar" size={16} color="#687076" /></View><Text style={styles.statText}>{o.eventsCount} {t?.events ?? 'events'}</Text></View>
+                                <View style={styles.stat}><View style={styles.iconSpacerSmall}><IconSymbol name="ticket.fill" size={16} color="#687076" /></View><Text style={styles.statText}>{o.ticketsSold} {t?.tickets ?? 'tickets'}</Text></View>
                         </View>
 
                         <View style={styles.row}>
-                            <Text style={styles.meta}>Added {o.createdAt}</Text>
+                            <Text style={styles.meta}>{(t?.added ?? 'Added')} {o.createdAt}</Text>
                             <Text style={styles.meta}>{o.email} • {o.phone}</Text>
                         </View>
 
                         <View style={styles.actions}>
                             <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#0a7ea4' }]} onPress={() => setStatus(o.id, 'approved')}>
-                                <IconSymbol name="checkmark" size={16} color="#fff" />
-                                <Text style={styles.actionText}>Approve</Text>
+                                <View style={styles.iconSpacerSmall}><IconSymbol name="checkmark" size={16} color="#fff" /></View>
+                                <Text style={styles.actionText}>{t?.approve ?? 'Approve'}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#f59e0b' }]} onPress={() => setStatus(o.id, 'pending')}>
-                                <IconSymbol name="clock" size={16} color="#fff" />
-                                <Text style={styles.actionText}>Pending</Text>
+                                <View style={styles.iconSpacerSmall}><IconSymbol name="clock" size={16} color="#fff" /></View>
+                                <Text style={styles.actionText}>{t?.pending ?? 'Pending'}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#ef4444' }]} onPress={() => setStatus(o.id, 'suspended')}>
-                                <IconSymbol name="nosign" size={16} color="#fff" />
-                                <Text style={styles.actionText}>Suspend</Text>
+                                <View style={styles.iconSpacerSmall}><IconSymbol name="nosign" size={16} color="#fff" /></View>
+                                <Text style={styles.actionText}>{t?.suspend ?? 'Suspend'}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#6b7280' }]} onPress={() => removeOrg(o.id)}>
-                                <IconSymbol name="trash" size={16} color="#fff" />
-                                <Text style={styles.actionText}>Delete</Text>
+                                <View style={styles.iconSpacerSmall}><IconSymbol name="trash" size={16} color="#fff" /></View>
+                                <Text style={styles.actionText}>{t?.delete ?? 'Delete'}</Text>
                             </TouchableOpacity>
                         </View>
 
                         <View style={styles.row}>
                             <TouchableOpacity style={[styles.secondaryBtn]} onPress={() => router.push('/(admin)/(stack)/analytics') as any}>
-                                <Text style={styles.secondaryText}>View analytics</Text>
+                                <Text style={styles.secondaryText}>{t?.view_analytics ?? 'View analytics'}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.secondaryBtn]} onPress={() => router.push('/(admin)/(stack)/settings') as any}>
-                                <Text style={styles.secondaryText}>Org settings</Text>
+                                <Text style={styles.secondaryText}>{t?.org_settings ?? 'Org settings'}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -145,7 +160,7 @@ const styles = StyleSheet.create({
     scroll: { flex: 1 },
     content: { padding: 16, paddingBottom: 120 },
     filters: { backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 12 },
-    searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
+    searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
     searchInput: { flex: 1, fontSize: 14, color: '#11181C' },
     chip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, borderWidth: 1, borderColor: '#e5e7eb', marginRight: 8, backgroundColor: '#fff' },
     chipActive: { backgroundColor: '#e0f2fe', borderColor: '#38bdf8' },
@@ -157,13 +172,15 @@ const styles = StyleSheet.create({
     subtitle: { fontSize: 13, color: '#687076', marginTop: 2 },
     badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
     badgeText: { fontSize: 12, fontWeight: '600' },
-    stat: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    stat: { flexDirection: 'row', alignItems: 'center' },
     statText: { fontSize: 13, color: '#687076' },
     meta: { fontSize: 12, color: '#94a3b8' },
     actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12, marginBottom: 8 },
-    actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
+    actionBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
+    iconSpacer: { marginRight: 8 },
+    iconSpacerSmall: { marginRight: 6 },
     actionText: { fontSize: 13, fontWeight: '600', color: '#fff' },
     secondaryBtn: { paddingVertical: 8, paddingHorizontal: 12 },
-    secondaryText: { fontSize: 13, fontWeight: '600', color: Colors.tint },
-    fab: { position: 'absolute', right: 20, bottom: 90, width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.tint, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12 },
+    secondaryText: { fontSize: 13, fontWeight: '600', color: Colors.light.tint },
+    fab: { position: 'absolute', right: 20, bottom: 90, width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.light.tint, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12 },
 });

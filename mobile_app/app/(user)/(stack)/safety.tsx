@@ -1,50 +1,56 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-const SAFETY_TIPS = [
+const getSafetyTips = (t: any) => [
     {
         id: '1',
-        title: 'Verify Service Providers',
-        description: 'Always check ratings and reviews before booking',
+        title: t.verifySP,
+        description: t.verifySPDesc,
         icon: 'checkmark.shield.fill',
     },
     {
         id: '2',
-        title: 'Emergency Contacts',
-        description: 'Keep local emergency numbers handy',
+        title: t.emergencyContacts,
+        description: t.emergencyContactsDesc,
         icon: 'phone.fill',
     },
     {
         id: '3',
-        title: 'Share Your Location',
-        description: 'Let someone know your travel plans',
+        title: t.shareLocation,
+        description: t.shareLocationDesc,
         icon: 'location.fill',
     },
     {
         id: '4',
-        title: 'Secure Payments',
-        description: 'Always use secure payment methods',
+        title: t.securePayments,
+        description: t.securePaymentsDesc,
         icon: 'lock.fill',
     },
 ];
 
 export default function SafetyScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+    const SAFETY_TIPS = getSafetyTips(t);
+
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <View style={styles.header}>
                 <IconSymbol name="shield.fill" size={48} color="#10b981" />
-                <Text style={styles.title}>Safety Center</Text>
-                <Text style={styles.subtitle}>Your safety is our priority</Text>
+                <Text style={styles.title}>{t.safetyCenter}</Text>
+                <Text style={styles.subtitle}>{t.yourSafetyPriority}</Text>
             </View>
 
             <View style={styles.emergencyCard}>
                 <IconSymbol name="exclamationmark.triangle.fill" size={32} color="#ef4444" />
-                <Text style={styles.emergencyTitle}>Emergency Helpline</Text>
+                <Text style={styles.emergencyTitle}>{t.emergencyHelpline}</Text>
                 <Text style={styles.emergencyNumber}>+91-100</Text>
             </View>
 
-            <Text style={styles.sectionTitle}>Safety Tips</Text>
+            <Text style={styles.sectionTitle}>{t.safetyTips}</Text>
             {SAFETY_TIPS.map((tip) => (
                 <View key={tip.id} style={styles.tipCard}>
                     <View style={styles.tipIconContainer}>
