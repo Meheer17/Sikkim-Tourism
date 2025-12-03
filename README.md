@@ -1,7 +1,7 @@
-# SIH25061 - Smart India Hackathon 2025
 
 <div align="center">
 
+# SIH25061 - Smart India Hackathon 2025
 # 🏔️ Digitize and Showcase Monasteries of Sikkim for Tourism and Cultural Preservation
 
 ![Sikkim Tourism](https://img.shields.io/badge/Smart%20India%20Hackathon-2025-orange?style=for-the-badge)
