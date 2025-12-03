@@ -1,8 +1,86 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking, FlatList, Dimensions, Modal, StatusBar, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Zoomable Image Component
+function ZoomableImage({ uri }: { uri: string }) {
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedTranslateX = useSharedValue(0);
+  const savedTranslateY = useSharedValue(0);
+
+  const pinchGesture = Gesture.Pinch()
+    .onUpdate((event) => {
+      scale.value = savedScale.value * event.scale;
+    })
+    .onEnd(() => {
+      if (scale.value < 1) {
+        scale.value = withSpring(1);
+        savedScale.value = 1;
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+        savedTranslateX.value = 0;
+        savedTranslateY.value = 0;
+      } else if (scale.value > 3) {
+        scale.value = withSpring(3);
+        savedScale.value = 3;
+      } else {
+        savedScale.value = scale.value;
+      }
+    });
+
+  const panGesture = Gesture.Pan()
+    .enabled(scale.value > 1)
+    .onUpdate((event) => {
+      translateX.value = savedTranslateX.value + event.translationX;
+      translateY.value = savedTranslateY.value + event.translationY;
+    })
+    .onEnd(() => {
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
+      
+      if (scale.value <= 1) {
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+        savedTranslateX.value = 0;
+        savedTranslateY.value = 0;
+      }
+    });
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+        { scale: scale.value },
+      ],
+    };
+  });
+
+  const composed = Gesture.Race(pinchGesture, panGesture);
+
+  return (
+    <View style={styles.fullScreenImageWrapper}>
+      <GestureDetector gesture={composed}>
+        <Animated.View style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT, justifyContent: 'center', alignItems: 'center' }}>
+          <Animated.Image
+            source={{ uri }}
+            style={[styles.fullScreenImage, animatedStyle]}
+            resizeMode="contain"
+          />
+        </Animated.View>
+      </GestureDetector>
+    </View>
+  );
+}
 
 export default function PlaceDetailsScreen() {
   const params = useLocalSearchParams();
@@ -16,6 +94,18 @@ export default function PlaceDetailsScreen() {
   const soft = useThemeColor('tintSoftBg');
 
   // Parse the place data from params
+  const imagesParam = params.images as string;
+  let images: string[] = [];
+  try {
+    images = imagesParam ? JSON.parse(imagesParam) : [];
+  } catch (e) {
+    console.error('Failed to parse images:', e);
+  }
+  
+  const has360Images =
+    (typeof params.has360Images === 'string' && params.has360Images === 'true') ||
+    (typeof params.has360Images === 'boolean' && params.has360Images === true);
+  
   const place = {
     id: params.id as string,
     name: params.name as string,
@@ -24,12 +114,26 @@ export default function PlaceDetailsScreen() {
     rating: params.rating ? parseFloat(params.rating as string) : undefined,
     category: params.category as string,
     imageUrl: params.imageUrl as string | undefined,
+    images: images,
     modelPath: params.modelPath as string | undefined,
+    has360Images: has360Images,
+  };
+  
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [fullScreenVisible, setFullScreenVisible] = useState(false);
+  const [fullScreenImageIndex, setFullScreenImageIndex] = useState(0);
+
+  const handleImagePress = (index: number) => {
+    setFullScreenImageIndex(index);
+    setFullScreenVisible(true);
   };
 
   const handleOpenImmersiveView = () => {
     if (place.modelPath) {
-      const url = `https://models.shrishesha.space/viewer/${place.modelPath.toLowerCase()}.glb`;
+      // If modelPath is a full URL, use it directly; otherwise construct viewer URL
+      const url = place.modelPath.startsWith('http') 
+        ? place.modelPath 
+        : `https://models.shrishesha.space/viewer/${place.modelPath}`;
       Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
     }
   };
@@ -38,16 +142,74 @@ export default function PlaceDetailsScreen() {
     // Navigate to the immersive 360 experience screen
     router.push({
       pathname: '/(user)/(stack)/immersive-experience',
-      params: { placeId: place.id || 'rumtek-monastery' },
+      params: { 
+        placeId: place.id || 'rumtek-monastery',
+        panorama360Url: params.panorama360Url || '',
+        placeName: place.name,
+      },
     } as any);
   };
 
   return (
     <View style={[styles.container, { backgroundColor: background }]}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Image Header */}
+        {/* Image Header - Gallery Carousel */}
         <View style={styles.imageContainer}>
-          {place.imageUrl ? (
+          {place.images && place.images.length > 0 ? (
+            <>
+              <FlatList
+                data={place.images}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={(event) => {
+                  const index = Math.floor(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                  setCurrentImageIndex(index);
+                }}
+                renderItem={({ item, index }) => (
+                  <TouchableOpacity 
+                    activeOpacity={0.9}
+                    onPress={() => handleImagePress(index)}
+                  >
+                    <Image
+                      source={{ uri: item }}
+                      style={[styles.image, { width: SCREEN_WIDTH }]}
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
+                )}
+                keyExtractor={(item, index) => `image-${index}`}
+              />
+              
+              {/* Image Counter */}
+              {place.images.length > 1 && (
+                <View style={[styles.imageCounter, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
+                  <Text style={styles.imageCounterText}>
+                    {currentImageIndex + 1} / {place.images.length}
+                  </Text>
+                </View>
+              )}
+              
+              {/* Pagination Dots */}
+              {place.images.length > 1 && place.images.length <= 10 && (
+                <View style={styles.paginationDots}>
+                  {place.images.map((_, index) => (
+                    <View
+                      key={`dot-${index}`}
+                      style={[
+                        styles.dot,
+                        {
+                          backgroundColor: index === currentImageIndex ? '#fff' : 'rgba(255,255,255,0.5)',
+                          width: index === currentImageIndex ? 8 : 6,
+                          height: index === currentImageIndex ? 8 : 6,
+                        },
+                      ]}
+                    />
+                  ))}
+                </View>
+              )}
+            </>
+          ) : place.imageUrl ? (
             <Image
               source={{ uri: place.imageUrl }}
               style={styles.image}
@@ -99,34 +261,36 @@ export default function PlaceDetailsScreen() {
             <Text style={[styles.description, { color: muted }]}>{place.description}</Text>
           </View>
 
-          {/* Immersive Experience Buttons */}
-          <View style={styles.immersiveButtonsContainer}>
-            {/* 360 Experience Button */}
-            {place.category === 'Religious Site' && (
-              <TouchableOpacity 
-                style={[styles.immersiveButton, { backgroundColor: tint, shadowColor: tint as string }]}
-                onPress={handleOpen360Experience}
-                activeOpacity={0.8}
-              >
-                <IconSymbol name="arrow.triangle.turn.up.right.diamond.fill" size={24} color="#fff" />
-                <Text style={styles.immersiveButtonText}>360° Virtual Tour</Text>
-                <IconSymbol name="arrow.right" size={20} color="#fff" />
-              </TouchableOpacity>
-            )}
+          {/* Immersive Experience Buttons - Only show if features are available */}
+          {(place.has360Images || place.modelPath) && (
+            <View style={styles.immersiveButtonsContainer}>
+              {/* 360 Experience Button - Show if admin uploaded 360 images */}
+              {place.has360Images && (
+                <TouchableOpacity 
+                  style={[styles.immersiveButton, { backgroundColor: tint, shadowColor: tint as string }]}
+                  onPress={handleOpen360Experience}
+                  activeOpacity={0.8}
+                >
+                  <IconSymbol name="arrow.triangle.turn.up.right.diamond.fill" size={24} color="#fff" />
+                  <Text style={styles.immersiveButtonText}>360° Virtual Tour</Text>
+                  <IconSymbol name="arrow.right" size={20} color="#fff" />
+                </TouchableOpacity>
+              )}
 
-            {/* 3D Model View Button */}
-            {place.modelPath && (
-              <TouchableOpacity 
-                style={[styles.immersiveButton, { backgroundColor: '#8b5cf6', shadowColor: '#8b5cf6' }]}
-                onPress={handleOpenImmersiveView}
-                activeOpacity={0.8}
-              >
-                <IconSymbol name="cube.fill" size={24} color="#fff" />
-                <Text style={styles.immersiveButtonText}>3D Model View</Text>
-                <IconSymbol name="arrow.right" size={20} color="#fff" />
-              </TouchableOpacity>
-            )}
-          </View>
+              {/* 3D Model View Button - Only show if admin uploaded a model */}
+              {place.modelPath && (
+                <TouchableOpacity 
+                  style={[styles.immersiveButton, { backgroundColor: '#8b5cf6', shadowColor: '#8b5cf6' }]}
+                  onPress={handleOpenImmersiveView}
+                  activeOpacity={0.8}
+                >
+                  <IconSymbol name="cube.fill" size={24} color="#fff" />
+                  <Text style={styles.immersiveButtonText}>3D Model View</Text>
+                  <IconSymbol name="arrow.right" size={20} color="#fff" />
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
 
           {/* Additional Information */}
           <View style={styles.section}>
@@ -182,6 +346,82 @@ export default function PlaceDetailsScreen() {
           </View>
         </View>
       </ScrollView>
+      
+      {/* Full-Screen Image Viewer Modal */}
+      <Modal
+        visible={fullScreenVisible}
+        transparent={false}
+        animationType="fade"
+        onRequestClose={() => setFullScreenVisible(false)}
+        statusBarTranslucent={true}
+      >
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <View style={styles.fullScreenContainer}>
+            <StatusBar hidden={Platform.OS === 'ios'} barStyle="light-content" />
+            
+            {/* Close Button */}
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setFullScreenVisible(false)}
+            >
+              <IconSymbol name="xmark" size={28} color="#fff" />
+            </TouchableOpacity>
+            
+            {/* Full-Screen Image Carousel */}
+            {place.images && place.images.length > 0 && (
+              <>
+                <FlatList
+                  data={place.images}
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  scrollEnabled={true}
+                  initialScrollIndex={fullScreenImageIndex}
+                  getItemLayout={(data, index) => ({
+                    length: SCREEN_WIDTH,
+                    offset: SCREEN_WIDTH * index,
+                    index,
+                  })}
+                  onMomentumScrollEnd={(event) => {
+                    const index = Math.floor(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                    setFullScreenImageIndex(index);
+                  }}
+                  renderItem={({ item }) => (
+                    <ZoomableImage uri={item} />
+                  )}
+                  keyExtractor={(item, index) => `fullscreen-${index}`}
+                />
+                
+                {/* Full-Screen Counter */}
+                <View style={styles.fullScreenCounter}>
+                  <Text style={styles.fullScreenCounterText}>
+                    {fullScreenImageIndex + 1} / {place.images.length}
+                  </Text>
+                </View>
+                
+                {/* Full-Screen Pagination Dots */}
+                {place.images.length > 1 && place.images.length <= 10 && (
+                  <View style={styles.fullScreenPagination}>
+                    {place.images.map((_, index) => (
+                      <View
+                        key={`fullscreen-dot-${index}`}
+                        style={[
+                          styles.fullScreenDot,
+                          {
+                            backgroundColor: index === fullScreenImageIndex ? '#fff' : 'rgba(255,255,255,0.5)',
+                            width: index === fullScreenImageIndex ? 10 : 8,
+                            height: index === fullScreenImageIndex ? 10 : 8,
+                          },
+                        ]}
+                      />
+                    ))}
+                  </View>
+                )}
+              </>
+            )}
+          </View>
+        </GestureHandlerRootView>
+      </Modal>
     </View>
   );
 }
@@ -201,7 +441,33 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: '100%',
+    height: 300,
+  },
+  imageCounter: {
+    position: 'absolute',
+    top: 60,
+    right: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  imageCounterText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  paginationDots: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dot: {
+    borderRadius: 4,
   },
   placeholderImage: {
     width: '100%',
@@ -353,5 +619,62 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  fullScreenContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
+    right: 20,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullScreenImageWrapper: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+  },
+  fullScreenImage: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+  },
+  fullScreenCounter: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
+    left: 20,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    zIndex: 10,
+  },
+  fullScreenCounterText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  fullScreenPagination: {
+    position: 'absolute',
+    bottom: 40,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  fullScreenDot: {
+    borderRadius: 5,
   },
 });

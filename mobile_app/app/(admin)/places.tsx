@@ -87,9 +87,11 @@ export default function AdminPlacesScreen() {
         const loadLocations = async () => {
             try {
                 const resp = await locationService.list({ skip: 0, limit: 100 });
+                console.log('Raw location response:', JSON.stringify(resp.data?.[0], null, 2));
                 if (resp.success && resp.data) {
-                    const mapped: Place[] = resp.data.map((loc: LocationModel) => ({
-                        id: loc._id,
+                    const mapped: Place[] = resp.data.map((loc: any) => {
+                        return {
+                        id: loc.id,
                         name: loc.name,
                         description: loc.description,
                         category: loc.type === 'tourism' ? 'Natural Beauty' : loc.type,
@@ -114,7 +116,8 @@ export default function AdminPlacesScreen() {
                         createdBy: '',
                         createdAt: loc.created_at || '',
                         updatedAt: loc.updated_at || '',
-                    }));
+                    };
+                    });
                     setPlaces(mapped);
                     setFilteredPlaces(mapped);
                 }
@@ -142,6 +145,12 @@ export default function AdminPlacesScreen() {
     };
 
     const handleEditPlace = (place: Place) => {
+        if (!place.id) {
+            Alert.alert('Error', 'Place ID is missing');
+            console.error('Cannot edit place without ID:', place);
+            return;
+        }
+        console.log('Editing place with ID:', place.id);
         router.push(`/(admin)/(stack)/edit-place?id=${place.id}` as any);
     };
 
@@ -350,7 +359,7 @@ export default function AdminPlacesScreen() {
                     <Text style={[styles.searchPlaceholder, { color: muted }]}>
                         {searchQuery || selectedCategory !== 'All' || selectedStatus !== 'All'
                             ? `${filteredPlaces.length} places found`
-                            : 'Search places...'}
+                            : 'Search or View Places...'}
                     </Text>
                     {(searchQuery || selectedCategory !== 'All' || selectedStatus !== 'All') && (
                         <View style={[styles.activeFilterBadge, { backgroundColor: tint }]}>

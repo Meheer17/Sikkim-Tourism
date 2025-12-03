@@ -184,9 +184,10 @@ class LocationService:
         update_data = location_update.model_dump(exclude_unset=True)
         update_data["updated_at"] = datetime.utcnow()
         
-        # Convert position to dict if present
+        # Convert position to dict if present (only if it's a Pydantic model)
         if "position" in update_data and update_data["position"]:
-            update_data["position"] = update_data["position"].model_dump()
+            if hasattr(update_data["position"], "model_dump"):
+                update_data["position"] = update_data["position"].model_dump()
         
         await self.collection.update_one(
             {"_id": ObjectId(location_id)},

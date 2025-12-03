@@ -10,8 +10,11 @@ export interface Place {
     distance: string;
     rating?: number;
     imageUrl?: string;
+    images?: string[]; // Array of all images
     category: string;
     modelPath?: string;
+    has360Images?: boolean; // Flag for 360° images uploaded by admin
+    panorama360Url?: string; // URL to 360° panorama image
     latitude?: number;
     longitude?: number;
 }
@@ -27,6 +30,12 @@ export default function PlaceCard({ place, onPress }: PlaceCardProps) {
     const card = useThemeColor('card');
     const tint = useThemeColor('tint');
     const soft = useThemeColor('tintSoftBg');
+    
+    // Debug logging
+    React.useEffect(() => {
+        console.log(`🎴 PlaceCard [${place.name}]: imageUrl =`, place.imageUrl || 'NO IMAGE');
+    }, [place.imageUrl]);
+    
     const handleDirections = (e: any) => {
         // Stop propagation to prevent card press
         e.stopPropagation();
@@ -73,6 +82,8 @@ export default function PlaceCard({ place, onPress }: PlaceCardProps) {
                         source={{ uri: place.imageUrl }}
                         style={styles.image}
                         resizeMode="cover"
+                        onError={(e) => console.log(`❌ Image load error for ${place.name}:`, e.nativeEvent.error)}
+                        onLoad={() => console.log(`✅ Image loaded for ${place.name}`)}
                     />
                 ) : (
                     <View style={[styles.placeholderImage, { backgroundColor: soft }] }>
@@ -134,6 +145,9 @@ const styles = StyleSheet.create({
     image: {
         width: '100%',
         height: '100%',
+        borderTopRightRadius: 12,
+        borderBottomRightRadius: 12,
+        
     },
     placeholderImage: {
         width: '100%',
@@ -144,7 +158,9 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
-        padding: 12,
+        padding: 5,
+        paddingLeft: 15,
+        paddingBottom: 0
     },
     header: {
         flexDirection: 'row',
@@ -157,6 +173,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '700',
         marginRight: 8,
+
     },
     ratingContainer: {
         flexDirection: 'row',
@@ -198,10 +215,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 4,
         paddingHorizontal: 8,
-        paddingVertical: 5,
+        paddingVertical: 4,
         backgroundColor: '#e8f4f8',
         borderRadius: 8,
         flexShrink: 0,
+        paddingBottom: 2,
     },
     directionsText: {
         fontSize: 12,

@@ -17,6 +17,7 @@ import { AuthUtils } from '@/utils/auth';
 import { TokenManager } from '@/utils/storage';
 import { UserRole } from '@/types/api.types';
 import Toast from 'react-native-toast-message';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export default function LoginScreen() {
     const [email, setEmail] = React.useState('');
@@ -25,6 +26,12 @@ export default function LoginScreen() {
     const [showRoleModal, setShowRoleModal] = React.useState(false);
     const router = useRouter();
     const { login } = useAuth();
+
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -71,7 +78,7 @@ export default function LoginScreen() {
                     },
                     {
                         text: 'Admin',
-                        onPress: () => { setEmail('meheer@adflyn.com'); setPassword('meheer17'); },
+                        onPress: () => { setEmail('admin@sikkimtourism.com'); setPassword('Admin@ST25'); },
                     },
                     {
                         text: 'Cancel',
@@ -136,19 +143,20 @@ export default function LoginScreen() {
 
     return (
         <KeyboardAvoidingView
-            style={styles.container}
+            style={[styles.container, { backgroundColor: background }]}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.content}>
-                    <Text style={styles.title}>Welcome Back</Text>
-                    <Text style={styles.subtitle}>Sign in to continue</Text>
+                    <Text style={[styles.title, { color: text }]}>Welcome Back</Text>
+                    <Text style={[styles.subtitle, { color: muted }]}>Sign in to continue</Text>
 
                     <View style={styles.form}>
                         <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Email</Text>
+                            <Text style={[styles.label, { color: text }]}>Email</Text>
                             <TextInput
-                                style={styles.input}
+                                style={[styles.input, { backgroundColor: card, borderColor: muted + '40', color: text }]}
                                 placeholder="Enter your email"
+                                placeholderTextColor={muted}
                                 value={email}
                                 onChangeText={setEmail}
                                 keyboardType="email-address"
@@ -159,10 +167,11 @@ export default function LoginScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Password</Text>
+                            <Text style={[styles.label, { color: text }]}>Password</Text>
                             <TextInput
-                                style={styles.input}
+                                style={[styles.input, { backgroundColor: card, borderColor: muted + '40', color: text }]}
                                 placeholder="Enter your password"
+                                placeholderTextColor={muted}
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry
@@ -172,7 +181,7 @@ export default function LoginScreen() {
                         </View>
 
                         <TouchableOpacity
-                            style={[styles.button, isLoading && styles.buttonDisabled]}
+                            style={[styles.button, { backgroundColor: tint }, isLoading && styles.buttonDisabled]}
                             onPress={handleLogin}
                             disabled={isLoading}>
                             <Text style={styles.buttonText}>
@@ -193,8 +202,8 @@ export default function LoginScreen() {
                         <TouchableOpacity
                             onPress={() => router.push('/register' as any)}
                             disabled={isLoading}>
-                            <Text style={styles.linkText}>
-                                Don't have an account? <Text style={styles.linkBold}>Sign Up</Text>
+                            <Text style={[styles.linkText, { color: muted }]}>
+                                Don't have an account? <Text style={[styles.linkBold, { color: tint }]}>Sign Up</Text>
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -209,41 +218,41 @@ export default function LoginScreen() {
                 onRequestClose={() => setShowRoleModal(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Choose Mock Login Role</Text>
-                        <Text style={styles.modalSubtitle}>Select a role for testing</Text>
+                    <View style={[styles.modalContent, { backgroundColor: card }]}>
+                        <Text style={[styles.modalTitle, { color: text }]}>Choose Mock Login Role</Text>
+                        <Text style={[styles.modalSubtitle, { color: muted }]}>Select a role for testing</Text>
 
                         <ScrollView style={styles.roleScrollView}>
                             <TouchableOpacity
-                                style={styles.roleButton}
+                                style={[styles.roleButton, { backgroundColor: background, borderColor: muted + '40' }]}
                                 onPress={() => { setEmail('user@a.c'); setPassword('meheer17'); setShowRoleModal(false); }}
                             >
-                                <Text style={styles.roleButtonText}>👤 User</Text>
-                                <Text style={styles.roleButtonDesc}>Regular tourist user</Text>
+                                <Text style={[styles.roleButtonText, { color: text }]}>👤 User</Text>
+                                <Text style={[styles.roleButtonDesc, { color: muted }]}>Regular tourist user</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={styles.roleButton}
+                                style={[styles.roleButton, { backgroundColor: background, borderColor: muted + '40' }]}
                                 onPress={() => { setEmail('mahi@a.com'); setPassword('Meheer17'); setShowRoleModal(false); }}
                             >
-                                <Text style={styles.roleButtonText}>💼 Business</Text>
-                                <Text style={styles.roleButtonDesc}>Service provider</Text>
+                                <Text style={[styles.roleButtonText, { color: text }]}>💼 Business</Text>
+                                <Text style={[styles.roleButtonDesc, { color: muted }]}>Service provider</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={styles.roleButton}
-                                onPress={() => { setEmail('meheer@adflyn.com'); setPassword('meheer17'); setShowRoleModal(false); }}
+                                style={[styles.roleButton, { backgroundColor: background, borderColor: muted + '40' }]}
+                                onPress={() => { setEmail('admin@sikkimtourism.com'); setPassword('Admin@ST25'); setShowRoleModal(false); }}
                             >
-                                <Text style={styles.roleButtonText}>⚙️ Admin</Text>
-                                <Text style={styles.roleButtonDesc}>System administrator</Text>
+                                <Text style={[styles.roleButtonText, { color: text }]}>⚙️ Admin</Text>
+                                <Text style={[styles.roleButtonDesc, { color: muted }]}>System administrator</Text>
                             </TouchableOpacity>
                         </ScrollView>
 
                         <TouchableOpacity
-                            style={styles.modalCancelButton}
+                            style={[styles.modalCancelButton, { backgroundColor: background }]}
                             onPress={() => setShowRoleModal(false)}
                         >
-                            <Text style={styles.modalCancelText}>Cancel</Text>
+                            <Text style={[styles.modalCancelText, { color: muted }]}>Cancel</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -255,7 +264,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     scrollContent: {
         flexGrow: 1,
@@ -268,12 +276,10 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: '#000',
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 16,
-        color: '#666',
         marginBottom: 40,
     },
     form: {
@@ -285,19 +291,15 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#000',
         marginBottom: 8,
     },
     input: {
-        backgroundColor: '#F5F5F5',
         borderRadius: 12,
         padding: 16,
         fontSize: 16,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
     },
     button: {
-        backgroundColor: '#007AFF',
         borderRadius: 12,
         padding: 16,
         alignItems: 'center',
@@ -327,12 +329,10 @@ const styles = StyleSheet.create({
     },
     linkText: {
         textAlign: 'center',
-        color: '#666',
         marginTop: 24,
         fontSize: 14,
     },
     linkBold: {
-        color: '#007AFF',
         fontWeight: '600',
     },
     // Modal styles for Android role selection
@@ -342,7 +342,6 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: '#fff',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingTop: 20,
@@ -352,14 +351,12 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#000',
         textAlign: 'center',
         marginBottom: 8,
         paddingHorizontal: 20,
     },
     modalSubtitle: {
         fontSize: 14,
-        color: '#666',
         textAlign: 'center',
         marginBottom: 20,
         paddingHorizontal: 20,
@@ -369,27 +366,22 @@ const styles = StyleSheet.create({
         maxHeight: 400,
     },
     roleButton: {
-        backgroundColor: '#F5F5F5',
         borderRadius: 12,
         padding: 16,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
     },
     roleButtonText: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#000',
         marginBottom: 4,
     },
     roleButtonDesc: {
         fontSize: 13,
-        color: '#666',
     },
     modalCancelButton: {
         marginTop: 20,
         marginHorizontal: 20,
-        backgroundColor: '#F5F5F5',
         borderRadius: 12,
         padding: 16,
         alignItems: 'center',
@@ -397,6 +389,5 @@ const styles = StyleSheet.create({
     modalCancelText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#666',
     },
 });

@@ -5,7 +5,7 @@ export interface LocationPosition { x: number; y: number }
 export type LocationType = 'emergency' | 'localhelp' | 'business' | 'event' | 'tourism' | 'other';
 
 export interface LocationModel {
-    _id: string;
+    id: string;
     name: string;
     description: string;
     short_description: string;
@@ -33,15 +33,15 @@ class LocationService {
         return resp;
     }
 
-    async create(data: Omit<LocationModel, '_id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<LocationModel>> {
-        return apiClient.post<LocationModel>(this.baseUrl, data);
+    async create(data: Omit<LocationModel, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<LocationModel>> {
+        return apiClient.post<LocationModel>(`${this.baseUrl}/`, data);
     }
 
     async get(id: string): Promise<ApiResponse<LocationModel>> {
         return apiClient.get<LocationModel>(`${this.baseUrl}/${id}`);
     }
 
-    async update(id: string, data: Partial<Omit<LocationModel, '_id'>>): Promise<ApiResponse<LocationModel>> {
+    async update(id: string, data: Partial<Omit<LocationModel, 'id'>>): Promise<ApiResponse<LocationModel>> {
         return apiClient.put<LocationModel>(`${this.baseUrl}/${id}`, data);
     }
 

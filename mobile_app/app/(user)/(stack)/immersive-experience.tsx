@@ -117,6 +117,8 @@ export default function ImmersiveExperienceScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const placeId = params.placeId as string;
+    const panorama360Url = params.panorama360Url as string;
+    const placeName = params.placeName as string;
 
     const [currentViewpointIndex, setCurrentViewpointIndex] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -179,7 +181,9 @@ export default function ImmersiveExperienceScreen() {
             {/* <StatusBar barStyle="light-content" /> */}
 
             {/* Panorama Viewer - 360 Image */}
-            <PanoramaViewer imageSource={require('@/assets/360images/car.jpg')}>
+            <PanoramaViewer 
+                imageSource={panorama360Url ? { uri: panorama360Url } : require('@/assets/360images/car.jpg')}
+            >
                 {/* Navigation Hotspots */}
                 {!loading &&
                     currentViewpoint.hotspots.map((hotspot) => (

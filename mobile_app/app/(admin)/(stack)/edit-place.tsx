@@ -1,11 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Modal, ActivityIndicator, Image } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, MapPressEvent } from 'react-native-maps';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { locationService, LocationType } from '@/services/location.service';
 import { FilePicker } from '@/utils/file-picker';
 import { fileService } from '@/services/file.service';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 const DEFAULT_REGION = {
     latitude: 27.533,
@@ -23,10 +24,12 @@ const LOCATION_TYPES: { label: string; value: LocationType }[] = [
     { label: 'Other', value: 'other' },
 ];
 
-export default function AddPlaceScreen() {
+export default function EditPlaceScreen() {
     const router = useRouter();
+    const { id } = useLocalSearchParams<{ id: string }>();
     const mapRef = useRef<MapView>(null);
     const [loading, setLoading] = useState(false);
+    const [fetchLoading, setFetchLoading] = useState(true);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [showMapModal, setShowMapModal] = useState(false);
     const [selectedCoords, setSelectedCoords] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -52,197 +55,52 @@ export default function AddPlaceScreen() {
         metadata: {},
     });
 
-    const handleUploadImages = async () => {
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
+
+    // Fetch place data on mount
+    useEffect(() => {
+        if (id) {
+            fetchPlaceData();
+        } else {
+            Alert.alert('Error', 'No place ID provided', [
+                { text: 'OK', onPress: () => router.back() },
+            ]);
+        }
+    }, [id]);
+
+    const fetchPlaceData = async () => {
+        if (!id) return;
+        
+        setFetchLoading(true);
         try {
-            const images = await FilePicker.pickImage({ 
-                allowsMultipleSelection: true,
-                allowsEditing: false 
-            });
-            
-            if (images.length === 0) return;
-
-            setUploadingImage(true);
-            const uploadedUrls: string[] = [];
-
-            for (const image of images) {
-                try {
-                    const resp = await fileService.uploadFile({
-                        file: {
-                            uri: image.uri,
-                            type: image.type,
-                            name: image.name,
-                        } as any,
-                        fileName: image.name,
-                        fileType: 'image',
-                    });
-                    
-                    if (resp.success && resp.data) {
-                        const imageUrl = (resp.data as any).cdn_url || 
-                                       (resp.data as any).url || 
-                                       (resp.data as any).cdn_response?.cdnUrl ||
-                                       (resp.data as any).cdn_response?.viewUrl;
-                        
-                        if (imageUrl) {
-                            uploadedUrls.push(imageUrl);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Failed to upload image:', error);
-                }
+            const resp = await locationService.get(id);
+            if (resp.success && resp.data) {
+                const place = resp.data;
+                setFormData({
+                    name: place.name,
+                    description: place.description,
+                    short_description: place.short_description,
+                    latitude: String(place.position.x),
+                    longitude: String(place.position.y),
+                    type: place.type,
+                    metadata: place.metadata || {},
+                });
+            } else {
+                Alert.alert('Error', resp.message || 'Failed to fetch place data', [
+                    { text: 'OK', onPress: () => router.back() },
+                ]);
             }
-
-            if (uploadedUrls.length > 0) {
-                const currentImages = formData.metadata?.images || [];
-                const newImages = [...currentImages, ...uploadedUrls];
-                
-                setFormData(prev => ({
-                    ...prev,
-                    metadata: {
-                        ...prev.metadata,
-                        images: newImages,
-                    },
-                }));
-                
-                Alert.alert(
-                    'Success', 
-                    `Uploaded ${uploadedUrls.length} image(s).\n\nRemember to click Save to create the location!`,
-                    [{ text: 'OK' }]
-                );
-            }
-        } catch (error: any) {
-            Alert.alert('Error', error.message || 'Failed to upload images');
+        } catch (e: any) {
+            Alert.alert('Error', e.message || 'Failed to fetch place data', [
+                { text: 'OK', onPress: () => router.back() },
+            ]);
         } finally {
-            setUploadingImage(false);
+            setFetchLoading(false);
         }
-    };
-
-    const handleUpload360Image = async () => {
-        try {
-            const images = await FilePicker.pickImage({ 
-                allowsMultipleSelection: false,
-                allowsEditing: false 
-            });
-            
-            if (images.length === 0) return;
-            const image = images[0];
-
-            // Validate it's a JPG
-            if (!image.name.toLowerCase().endsWith('.jpg') && !image.name.toLowerCase().endsWith('.jpeg')) {
-                Alert.alert('Invalid Format', '360° images must be in JPG format');
-                return;
-            }
-
-            // Validate aspect ratio is 2:1
-            Image.getSize(
-                image.uri,
-                async (width, height) => {
-                    const aspectRatio = width / height;
-                    const target = 2.0;
-                    const tolerance = 0.1;
-                    
-                    if (Math.abs(aspectRatio - target) > tolerance) {
-                        Alert.alert(
-                            'Invalid Aspect Ratio', 
-                            `360° images must have a 2:1 aspect ratio.\nYour image is ${width}x${height} (${aspectRatio.toFixed(2)}:1)`
-                        );
-                        return;
-                    }
-
-                    setUploadingImage(true);
-                    try {
-                        const resp = await fileService.uploadFile({
-                            file: {
-                                uri: image.uri,
-                                type: image.type,
-                                name: image.name,
-                            } as any,
-                            fileName: image.name,
-                            fileType: 'image',
-                        });
-                        
-                        if (resp.success && resp.data) {
-                            const imageUrl = (resp.data as any).cdn_url || 
-                                           (resp.data as any).url || 
-                                           (resp.data as any).cdn_response?.cdnUrl ||
-                                           (resp.data as any).cdn_response?.viewUrl;
-                            
-                            if (imageUrl) {
-                                setFormData(prev => ({
-                                    ...prev,
-                                    metadata: {
-                                        ...prev.metadata,
-                                        panorama_360: imageUrl,
-                                    },
-                                }));
-                                
-                                Alert.alert(
-                                    'Success', 
-                                    '360° panorama uploaded successfully!\n\nRemember to click Save to create the location!',
-                                    [{ text: 'OK' }]
-                                );
-                            }
-                        }
-                    } catch (error: any) {
-                        Alert.alert('Error', error.message || 'Failed to upload 360° image');
-                    } finally {
-                        setUploadingImage(false);
-                    }
-                },
-                (error) => {
-                    Alert.alert('Error', 'Failed to read image dimensions');
-                }
-            );
-        } catch (error: any) {
-            Alert.alert('Error', error.message || 'Failed to upload 360° image');
-        }
-    };
-
-    const handleRemoveImage = (index: number) => {
-        Alert.alert(
-            'Remove Image',
-            'Are you sure you want to remove this image?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Remove',
-                    style: 'destructive',
-                    onPress: () => {
-                        const currentImages = formData.metadata?.images || [];
-                        const newImages = currentImages.filter((_: string, i: number) => i !== index);
-                        setFormData(prev => ({
-                            ...prev,
-                            metadata: {
-                                ...prev.metadata,
-                                images: newImages,
-                            },
-                        }));
-                    },
-                },
-            ]
-        );
-    };
-
-    const handleRemove360Image = () => {
-        Alert.alert(
-            'Remove 360° Image',
-            'Are you sure you want to remove the 360° panorama?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Remove',
-                    style: 'destructive',
-                    onPress: () => {
-                        setFormData(prev => ({
-                            ...prev,
-                            metadata: {
-                                ...prev.metadata,
-                                panorama_360: undefined,
-                            },
-                        }));
-                    },
-                },
-            ]
-        );
     };
 
     const handleSave = async () => {
@@ -258,9 +116,14 @@ export default function AddPlaceScreen() {
             return;
         }
 
+        if (!id) {
+            Alert.alert('Error', 'No place ID available');
+            return;
+        }
+
         setLoading(true);
         try {
-            const resp = await locationService.create({
+            const resp = await locationService.update(id, {
                 name: formData.name,
                 description: formData.description,
                 short_description: formData.short_description,
@@ -270,14 +133,14 @@ export default function AddPlaceScreen() {
             });
 
             if (resp.success) {
-                Alert.alert('Success', 'Place added successfully', [
+                Alert.alert('Success', 'Place updated successfully', [
                     { text: 'OK', onPress: () => router.back() },
                 ]);
             } else {
-                Alert.alert('Error', resp.message || 'Failed to add place');
+                Alert.alert('Error', resp.message || 'Failed to update place');
             }
         } catch (e: any) {
-            Alert.alert('Error', e.message || 'Failed to add place');
+            Alert.alert('Error', e.message || 'Failed to update place');
         } finally {
             setLoading(false);
         }
@@ -311,6 +174,229 @@ export default function AddPlaceScreen() {
         setShowMapModal(true);
     };
 
+    const handleUploadImages = async () => {
+        try {
+            const images = await FilePicker.pickImage({ 
+                allowsMultipleSelection: true,
+                allowsEditing: false 
+            });
+            
+            if (images.length === 0) return;
+
+            setUploadingImage(true);
+            const uploadedUrls: string[] = [];
+
+            for (const image of images) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', {
+                        uri: image.uri,
+                        type: image.type,
+                        name: image.name,
+                    } as any);
+
+                    const resp = await fileService.uploadFile({
+                        file: {
+                            uri: image.uri,
+                            type: image.type,
+                            name: image.name,
+                        } as any,
+                        fileName: image.name,
+                        fileType: 'image',
+                    });
+                    
+                    if (resp.success && resp.data) {
+                        // Try multiple possible URL fields
+                        const imageUrl = (resp.data as any).cdn_url || 
+                                       (resp.data as any).url || 
+                                       (resp.data as any).cdn_response?.cdnUrl ||
+                                       (resp.data as any).cdn_response?.viewUrl;
+                        
+                        console.log('📤 Upload response:', resp.data);
+                        console.log('📍 Extracted URL:', imageUrl);
+                        
+                        if (imageUrl) {
+                            uploadedUrls.push(imageUrl);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to upload image:', error);
+                }
+            }
+
+            if (uploadedUrls.length > 0) {
+                const currentImages = formData.metadata?.images || [];
+                const newImages = [...currentImages, ...uploadedUrls];
+                
+                console.log('📸 Current images:', currentImages);
+                console.log('📸 Uploaded URLs:', uploadedUrls);
+                console.log('📸 New images array:', newImages);
+                
+                setFormData(prev => ({
+                    ...prev,
+                    metadata: {
+                        ...prev.metadata,
+                        images: newImages,
+                    },
+                }));
+                
+                Alert.alert(
+                    'Success', 
+                    `Uploaded ${uploadedUrls.length} image(s).\n\nRemember to click Save to update the location!`,
+                    [{ text: 'OK' }]
+                );
+            }
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to upload images');
+        } finally {
+            setUploadingImage(false);
+        }
+    };
+
+    const handleUpload360Image = async () => {
+        try {
+            const images = await FilePicker.pickImage({ 
+                allowsMultipleSelection: false,
+                allowsEditing: false 
+            });
+            
+            if (images.length === 0) return;
+            
+            const image = images[0];
+            
+            // Validate JPG format
+            if (!image.name.toLowerCase().endsWith('.jpg') && !image.name.toLowerCase().endsWith('.jpeg')) {
+                Alert.alert('Invalid Format', '360° images must be in JPG format');
+                return;
+            }
+
+            // Validate 2:1 aspect ratio using Image.getSize
+            setUploadingImage(true);
+            
+            Image.getSize(image.uri, async (width, height) => {
+                const aspectRatio = width / height;
+                const expectedRatio = 2.0;
+                const tolerance = 0.1; // Allow 10% deviation
+                
+                if (Math.abs(aspectRatio - expectedRatio) > tolerance) {
+                    setUploadingImage(false);
+                    Alert.alert(
+                        'Invalid Aspect Ratio',
+                        `360° panorama images must have a 2:1 aspect ratio.\nYour image: ${width}x${height} (${aspectRatio.toFixed(2)}:1)`
+                    );
+                    return;
+                }
+
+                try {
+                    const resp = await fileService.uploadFile({
+                        file: {
+                            uri: image.uri,
+                            type: image.type,
+                            name: image.name,
+                        } as any,
+                        fileName: image.name,
+                        fileType: 'image',
+                    });
+                    
+                    if (resp.success && resp.data) {
+                        // Try multiple possible URL fields
+                        const imageUrl = (resp.data as any).cdn_url || 
+                                       (resp.data as any).url || 
+                                       (resp.data as any).cdn_response?.cdnUrl ||
+                                       (resp.data as any).cdn_response?.viewUrl;
+                        
+                        console.log('📤 360° Upload response:', resp.data);
+                        console.log('📍 360° Extracted URL:', imageUrl);
+                        
+                        if (imageUrl) {
+                            setFormData(prev => ({
+                                ...prev,
+                                metadata: {
+                                    ...prev.metadata,
+                                    panorama_360: imageUrl,
+                                },
+                            }));
+                            Alert.alert(
+                                'Success', 
+                                "360° panorama uploaded successfully.\n\nRemember to click Save to update the location!",
+                                [{ text: 'OK' }]
+                            );
+                        } else {
+                            Alert.alert('Error', 'No URL returned from upload');
+                        }
+                    } else {
+                        Alert.alert('Error', resp.message || 'Failed to upload 360° image');
+                    }
+                } catch (error) {
+                    Alert.alert('Error', 'Failed to upload 360° image');
+                } finally {
+                    setUploadingImage(false);
+                }
+            }, (error) => {
+                setUploadingImage(false);
+                Alert.alert('Error', 'Failed to validate image dimensions');
+            });
+        } catch (error: any) {
+            setUploadingImage(false);
+            Alert.alert('Error', error.message || 'Failed to select image');
+        }
+    };
+
+    const handleRemoveImage = (index: number) => {
+        Alert.alert(
+            'Remove Image',
+            'Are you sure you want to remove this image?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Remove',
+                    style: 'destructive',
+                    onPress: () => {
+                        const currentImages = formData.metadata?.images || [];
+                        const newImages = currentImages.filter((_: any, i: number) => i !== index);
+                        setFormData({
+                            ...formData,
+                            metadata: {
+                                ...formData.metadata,
+                                images: newImages,
+                            },
+                        });
+                    },
+                },
+            ]
+        );
+    };
+
+    const handleRemove360Image = () => {
+        Alert.alert(
+            'Remove 360° Image',
+            'Are you sure you want to remove the 360° panorama?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Remove',
+                    style: 'destructive',
+                    onPress: () => {
+                        const { panorama_360, ...restMetadata } = formData.metadata;
+                        setFormData({
+                            ...formData,
+                            metadata: restMetadata,
+                        });
+                    },
+                },
+            ]
+        );
+    };
+
+    if (fetchLoading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#0a7ea4" />
+                <Text style={styles.loadingText}>Loading place data...</Text>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             {/* Header */}
@@ -321,7 +407,7 @@ export default function AddPlaceScreen() {
                 >
                     <IconSymbol name="chevron.left" size={24} color="#11181C" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Add New Place</Text>
+                <Text style={styles.headerTitle}>Edit Place</Text>
                 <TouchableOpacity
                     style={[styles.saveButton, loading && styles.saveButtonDisabled]}
                     onPress={handleSave}
@@ -399,6 +485,93 @@ export default function AddPlaceScreen() {
                         </ScrollView>
                     </View>
 
+                    {/* Image Gallery Upload */}
+                    <View style={styles.field}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.label}>Photo Gallery</Text>
+                            <TouchableOpacity
+                                style={[styles.uploadButton, uploadingImage && styles.uploadButtonDisabled]}
+                                onPress={handleUploadImages}
+                                disabled={uploadingImage}
+                            >
+                                <IconSymbol name="photo.badge.plus" size={16} color="#fff" />
+                                <Text style={styles.uploadButtonText}>
+                                    {uploadingImage ? 'Uploading...' : 'Add Photos'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                        {formData.metadata?.images && formData.metadata.images.length > 0 ? (
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageGallery}>
+                                {(() => {
+                                    console.log('🖼️ Rendering gallery with images:', formData.metadata.images);
+                                    return formData.metadata.images.map((url: string, index: number) => (
+                                        <View key={index} style={styles.imagePreviewContainer}>
+                                            <Image source={{ uri: url }} style={styles.imagePreview} />
+                                            <TouchableOpacity
+                                                style={styles.removeImageButton}
+                                                onPress={() => handleRemoveImage(index)}
+                                            >
+                                                <IconSymbol name="xmark.circle.fill" size={24} color="#ef4444" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    ));
+                                })()}
+                            </ScrollView>
+                        ) : (
+                            <View style={styles.emptyGallery}>
+                                <IconSymbol name="photo.stack" size={40} color="#9ca3af" />
+                                <Text style={styles.emptyGalleryText}>No photos added yet</Text>
+                            </View>
+                        )}
+                    </View>
+
+                    {/* 360° Panorama Upload */}
+                    <View style={styles.field}>
+                        <View style={styles.sectionHeader}>
+                            <View>
+                                <Text style={styles.label}>360° Panorama</Text>
+                                <Text style={styles.fieldHint}>Must be 2:1 aspect ratio, JPG format</Text>
+                            </View>
+                            <TouchableOpacity
+                                style={[styles.uploadButton, uploadingImage && styles.uploadButtonDisabled]}
+                                onPress={handleUpload360Image}
+                                disabled={uploadingImage}
+                            >
+                                <IconSymbol name="rotate.3d" size={16} color="#fff" />
+                                <Text style={styles.uploadButtonText}>
+                                    {uploadingImage ? 'Uploading...' : 'Upload 360°'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                        {formData.metadata?.panorama_360 ? (
+                            <View style={styles.panoramaPreviewContainer}>
+                                <Image
+                                    source={{ uri: formData.metadata.panorama_360 }}
+                                    style={styles.panoramaPreview}
+                                    resizeMode="cover"
+                                />
+                                <TouchableOpacity
+                                    style={styles.removePanoramaButton}
+                                    onPress={handleRemove360Image}
+                                >
+                                    <IconSymbol name="xmark.circle.fill" size={24} color="#ef4444" />
+                                </TouchableOpacity>
+                                <View style={styles.panoramaBadge}>
+                                    <IconSymbol name="rotate.3d" size={16} color="#fff" />
+                                    <Text style={styles.panoramaBadgeText}>360°</Text>
+                                </View>
+                            </View>
+                        ) : (
+                            <View style={styles.emptyPanorama}>
+                                <IconSymbol name="rotate.3d" size={40} color="#9ca3af" />
+                                <Text style={styles.emptyPanoramaText}>No 360° panorama added</Text>
+                                <Text style={styles.emptyPanoramaHint}>
+                                    Add an equirectangular panorama for virtual tours
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+
                     {/* Coordinates */}
                     <View style={styles.field}>
                         <Text style={styles.label}>Location Coordinates *</Text>
@@ -427,79 +600,6 @@ export default function AddPlaceScreen() {
                         <TouchableOpacity style={styles.mapButton} onPress={openMapPicker}>
                             <IconSymbol name="map.fill" size={16} color="#0a7ea4" />
                             <Text style={styles.mapButtonText}>Pick from Map</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Gallery Images */}
-                    <View style={styles.field}>
-                        <Text style={styles.label}>Gallery Images</Text>
-                        <Text style={styles.helperText}>Upload multiple images to showcase this location</Text>
-                        
-                        {formData.metadata?.images && formData.metadata.images.length > 0 && (
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageGallery}>
-                                {formData.metadata.images.map((imageUrl: string, index: number) => (
-                                    <View key={index} style={styles.imagePreviewContainer}>
-                                        <Image source={{ uri: imageUrl }} style={styles.imagePreview} />
-                                        <TouchableOpacity 
-                                            style={styles.removeImageButton}
-                                            onPress={() => handleRemoveImage(index)}
-                                        >
-                                            <IconSymbol name="xmark.circle.fill" size={24} color="#ef4444" />
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
-                            </ScrollView>
-                        )}
-                        
-                        <TouchableOpacity 
-                            style={[styles.uploadButton, uploadingImage && styles.uploadButtonDisabled]}
-                            onPress={handleUploadImages}
-                            disabled={uploadingImage}
-                        >
-                            {uploadingImage ? (
-                                <ActivityIndicator size="small" color="#0a7ea4" />
-                            ) : (
-                                <IconSymbol name="photo.badge.plus" size={20} color="#0a7ea4" />
-                            )}
-                            <Text style={styles.uploadButtonText}>
-                                {uploadingImage ? 'Uploading...' : 'Upload Images'}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* 360° Panorama */}
-                    <View style={styles.field}>
-                        <Text style={styles.label}>360° Panorama</Text>
-                        <Text style={styles.helperText}>Upload a 360° image (2:1 aspect ratio, JPG format)</Text>
-                        
-                        {formData.metadata?.panorama_360 && (
-                            <View style={styles.panoramaPreviewContainer}>
-                                <Image 
-                                    source={{ uri: formData.metadata.panorama_360 }} 
-                                    style={styles.panoramaPreview} 
-                                />
-                                <TouchableOpacity 
-                                    style={styles.removePanoramaButton}
-                                    onPress={handleRemove360Image}
-                                >
-                                    <IconSymbol name="xmark.circle.fill" size={24} color="#ef4444" />
-                                </TouchableOpacity>
-                            </View>
-                        )}
-                        
-                        <TouchableOpacity 
-                            style={[styles.uploadButton, uploadingImage && styles.uploadButtonDisabled]}
-                            onPress={handleUpload360Image}
-                            disabled={uploadingImage}
-                        >
-                            {uploadingImage ? (
-                                <ActivityIndicator size="small" color="#0a7ea4" />
-                            ) : (
-                                <IconSymbol name="photo.on.rectangle" size={20} color="#0a7ea4" />
-                            )}
-                            <Text style={styles.uploadButtonText}>
-                                {uploadingImage ? 'Uploading...' : formData.metadata?.panorama_360 ? 'Replace 360° Image' : 'Upload 360° Image'}
-                            </Text>
                         </TouchableOpacity>
                     </View>
 
@@ -624,6 +724,18 @@ export default function AddPlaceScreen() {
 }
 
 const styles = StyleSheet.create({
+    loadingContainer: {
+        flex: 1,
+        backgroundColor: '#f9fafb',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 16,
+    },
+    loadingText: {
+        fontSize: 16,
+        color: '#687076',
+        fontWeight: '500',
+    },
     container: {
         flex: 1,
         backgroundColor: '#f9fafb',
@@ -896,33 +1008,36 @@ const styles = StyleSheet.create({
         backgroundColor: '#e5e7eb',
         marginHorizontal: 16,
     },
-    helperText: {
-        fontSize: 13,
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+    fieldHint: {
+        fontSize: 12,
         color: '#687076',
-        marginTop: -4,
+        marginTop: 2,
     },
     uploadButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        paddingVertical: 12,
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
         borderRadius: 8,
-        backgroundColor: '#e8f4f8',
-        borderWidth: 1,
-        borderColor: '#0a7ea4',
-        borderStyle: 'dashed',
+        backgroundColor: '#0a7ea4',
     },
     uploadButtonDisabled: {
-        opacity: 0.6,
+        backgroundColor: '#9ca3af',
     },
     uploadButtonText: {
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: '600',
-        color: '#0a7ea4',
+        color: '#fff',
     },
     imageGallery: {
-        marginVertical: 12,
+        marginTop: 8,
     },
     imagePreviewContainer: {
         position: 'relative',
@@ -941,21 +1056,70 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 12,
     },
+    emptyGallery: {
+        backgroundColor: '#f3f4f6',
+        borderRadius: 12,
+        padding: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    emptyGalleryText: {
+        fontSize: 14,
+        color: '#687076',
+        marginTop: 8,
+    },
     panoramaPreviewContainer: {
         position: 'relative',
-        marginVertical: 12,
+        marginTop: 8,
+        borderRadius: 12,
+        overflow: 'hidden',
     },
     panoramaPreview: {
         width: '100%',
         height: 150,
-        borderRadius: 8,
         backgroundColor: '#f3f4f6',
     },
     removePanoramaButton: {
         position: 'absolute',
-        top: -8,
-        right: -8,
+        top: 8,
+        right: 8,
         backgroundColor: '#fff',
         borderRadius: 12,
+    },
+    panoramaBadge: {
+        position: 'absolute',
+        bottom: 8,
+        left: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 6,
+    },
+    panoramaBadgeText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#fff',
+    },
+    emptyPanorama: {
+        backgroundColor: '#f3f4f6',
+        borderRadius: 12,
+        padding: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    emptyPanoramaText: {
+        fontSize: 14,
+        color: '#687076',
+        marginTop: 8,
+        fontWeight: '600',
+    },
+    emptyPanoramaHint: {
+        fontSize: 12,
+        color: '#9ca3af',
+        marginTop: 4,
+        textAlign: 'center',
     },
 });

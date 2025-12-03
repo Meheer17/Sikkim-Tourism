@@ -38,7 +38,7 @@ export class FileService {
                 formData.append('category', request.category);
             }
 
-            return await apiClient.uploadFile<FileUploadResponse>(`/upload/${request.fileType}`, formData);
+            return await apiClient.uploadFile<FileUploadResponse>(`/upload`, formData);
         } catch (error) {
             console.error('File upload error:', error);
             throw error;

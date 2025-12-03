@@ -28,7 +28,7 @@ export default function AddBusinessScreen() {
                 if (resp.success && resp.data) {
                     setLocations(resp.data);
                     if (resp.data.length > 0) {
-                        setFormData({ ...formData, l_id: resp.data[0]._id });
+                        setFormData({ ...formData, l_id: resp.data[0].id });
                     }
                 }
             } catch (e) {
@@ -173,17 +173,17 @@ export default function AddBusinessScreen() {
                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                             {locations.map((loc) => (
                                 <TouchableOpacity
-                                    key={loc._id}
+                                    key={loc.id}
                                     style={[
                                         styles.locationChip,
-                                        formData.l_id === loc._id && styles.locationChipActive,
+                                        formData.l_id === loc.id && styles.locationChipActive,
                                     ]}
-                                    onPress={() => setFormData({ ...formData, l_id: loc._id })}
+                                    onPress={() => setFormData({ ...formData, l_id: loc.id })}
                                 >
                                     <Text
                                         style={[
                                             styles.locationChipText,
-                                            formData.l_id === loc._id && styles.locationChipTextActive,
+                                            formData.l_id === loc.id && styles.locationChipTextActive,
                                         ]}
                                     >
                                         {loc.name}

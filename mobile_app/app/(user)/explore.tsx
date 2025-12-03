@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder, ActivityIndicator, Platform, Modal } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -8,6 +8,27 @@ import PlaceCard, { Place } from '@/components/explore/PlaceCard';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { locationService } from '@/services';
+
+type CategoryFilter = 'all' | 'tourism' | 'business' | 'emergency' | 'localhelp' | 'event' | 'other';
+type DistanceFilter = 'all' | '5' | '10' | '25' | '50';
+
+const CATEGORIES: { value: CategoryFilter; label: string; icon: string }[] = [
+  { value: 'all', label: 'All', icon: 'square.grid.2x2' },
+  { value: 'tourism', label: 'Tourism', icon: 'camera' },
+  { value: 'business', label: 'Business', icon: 'building.2' },
+  { value: 'emergency', label: 'Emergency', icon: 'cross.case' },
+  { value: 'localhelp', label: 'Local Help', icon: 'person.2' },
+  { value: 'event', label: 'Events', icon: 'calendar' },
+  { value: 'other', label: 'Other', icon: 'ellipsis.circle' },
+];
+
+const DISTANCES: { value: DistanceFilter; label: string }[] = [
+  { value: 'all', label: 'All Distances' },
+  { value: '5', label: 'Within 5 km' },
+  { value: '10', label: 'Within 10 km' },
+  { value: '25', label: 'Within 25 km' },
+  { value: '50', label: 'Within 50 km' },
+];
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_HEIGHT = SCREEN_HEIGHT * 0.4;
@@ -33,6 +54,7 @@ const MAP_BOUNDARIES = {
 };
 
 export default function ExploreScreen() {
+  const [allPlaces, setAllPlaces] = useState<Place[]>([]);
   const [nearbyPlaces, setNearbyPlaces] = useState<Place[]>([]);
   const [region, setRegion] = useState(SIKKIM_REGION);
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
@@ -48,6 +70,12 @@ export default function ExploreScreen() {
   const mapRef = useRef<MapView>(null);
   const router = useRouter();
   const { permissions, requestLocationPermission, getCurrentLocation } = usePermissions();
+
+  // Filter state
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
+  const [selectedDistance, setSelectedDistance] = useState<DistanceFilter>('all');
+  const [activeFiltersCount, setActiveFiltersCount] = useState(0);
 
   // Theming
   const screenBg = useThemeColor('background');
@@ -85,26 +113,56 @@ export default function ExploreScreen() {
     loadLocations();
   }, []);
 
+  // Apply filters whenever filter settings or location changes
+  useEffect(() => {
+    applyFilters();
+  }, [selectedCategory, selectedDistance, userLocation, allPlaces]);
+
+  // Update active filters count
+  useEffect(() => {
+    let count = 0;
+    if (selectedCategory !== 'all') count++;
+    if (selectedDistance !== 'all') count++;
+    setActiveFiltersCount(count);
+  }, [selectedCategory, selectedDistance]);
+
   const loadLocations = async () => {
     try {
       setLoading(true);
-      const response = await locationService.list();
+      // Fetch all locations (increase limit to get all 48+ locations)
+      const response = await locationService.list({ skip: 0, limit: 100 });
       const locations = response.data || [];
 
+      console.log('📍 Loaded locations:', locations.length);
+      if (locations.length > 0) {
+        console.log('📍 Sample location:', JSON.stringify(locations[0], null, 2));
+      }
+
       // Map backend locations to Place format
-      const mappedPlaces: Place[] = locations.map((loc: any) => ({
-        id: loc._id,
-        name: loc.name,
-        description: loc.description || loc.short_description || 'Explore this amazing location',
-        category: loc.type || 'Place',
-        rating: 4.5,
-        distance: '0 km',
-        modelPath: loc.name.toLowerCase().replace(/\s+/g, ''),
-        latitude: loc.position?.y || 27.3389,
-        longitude: loc.position?.x || 88.6065,
-      }));
+      const mappedPlaces: Place[] = locations.map((loc: any) => {
+        const images = loc.metadata?.images || [];
+        const firstImage = images[0];
+        console.log(`📸 ${loc.name}: ${images.length} images, first =`, firstImage || 'NO IMAGE');
+        
+        return {
+          id: loc.id,
+          name: loc.name,
+          description: loc.description || loc.short_description || 'Explore this amazing location',
+          category: loc.type || 'Place',
+          rating: 4.5,
+          distance: '0 km',
+          imageUrl: firstImage || undefined, // Use first image from metadata
+          images: images, // All images from metadata
+          modelPath: loc.metadata?.model_url || undefined, // Only set if admin uploaded a 3D model
+          has360Images: !!loc.metadata?.panorama_360, // Check if admin uploaded 360 panorama image
+          panorama360Url: loc.metadata?.panorama_360 || undefined, // URL to 360 panorama
+          latitude: loc.position?.x || 27.3389,  // position.x is latitude
+          longitude: loc.position?.y || 88.6065, // position.y is longitude
+        };
+      });
 
       setNearbyPlaces(mappedPlaces);
+      setAllPlaces(mappedPlaces);
       // Calculate initial distances from Gangtok
       const refLat = SIKKIM_REGION.latitude;
       const refLon = SIKKIM_REGION.longitude;
@@ -113,11 +171,40 @@ export default function ExploreScreen() {
         distance: `${calculateDistance(refLat, refLon, place.latitude || 0, place.longitude || 0)} km`,
       }));
       setNearbyPlaces(updatedPlaces);
+      setAllPlaces(updatedPlaces);
     } catch (error) {
       console.error('Failed to load locations:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Apply filters to places
+  const applyFilters = () => {
+    let filtered = [...allPlaces];
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(place => place.category === selectedCategory);
+    }
+
+    // Filter by distance (if user location available)
+    if (selectedDistance !== 'all' && userLocation) {
+      const maxDistance = parseFloat(selectedDistance);
+      filtered = filtered.filter(place => {
+        const distanceStr = place.distance.replace(' km', '');
+        const distance = parseFloat(distanceStr);
+        return !isNaN(distance) && distance <= maxDistance;
+      });
+    }
+
+    setNearbyPlaces(filtered);
+  };
+
+  // Reset all filters
+  const resetFilters = () => {
+    setSelectedCategory('all');
+    setSelectedDistance('all');
   };
 
   // Calculate distance between two coordinates using Haversine formula
@@ -139,7 +226,7 @@ export default function ExploreScreen() {
     const refLat = userLat || SIKKIM_REGION.latitude; // Default to Gangtok
     const refLon = userLon || SIKKIM_REGION.longitude;
 
-    const updatedPlaces = nearbyPlaces.map((place: Place) => {
+    const updatedPlaces = allPlaces.map((place: Place) => {
       if (place.latitude && place.longitude) {
         const dist = calculateDistance(refLat, refLon, place.latitude, place.longitude);
         const distanceText = isInSikkim
@@ -160,14 +247,14 @@ export default function ExploreScreen() {
       return distA - distB;
     });
 
-    setNearbyPlaces(updatedPlaces);
+    setAllPlaces(updatedPlaces);
   };
 
   useEffect(() => {
     // Update distances when component mounts or user location changes
     if (userLocation && isUserInSikkim) {
       updatePlaceDistances(userLocation.coords.latitude, userLocation.coords.longitude, true);
-    } else {
+    } else if (allPlaces.length > 0) {
       updatePlaceDistances(undefined, undefined, false); // Use Gangtok as reference
     }
   }, [userLocation, isUserInSikkim]);
@@ -219,7 +306,10 @@ export default function ExploreScreen() {
         rating: place.rating?.toString() || '',
         category: place.category,
         imageUrl: place.imageUrl || '',
+        images: JSON.stringify(place.images || []),
         modelPath: place.modelPath || '',
+        has360Images: (place.has360Images || false).toString(),
+        panorama360Url: place.panorama360Url || '',
       },
     });
   };
@@ -476,8 +566,16 @@ export default function ExploreScreen() {
                 {nearbyPlaces.length} places found
               </Text>
             </View>
-            <TouchableOpacity style={[styles.filterButton, { backgroundColor: soft }]}>
+            <TouchableOpacity 
+              style={[styles.filterButton, { backgroundColor: soft }]}
+              onPress={() => setShowFilterModal(true)}
+            >
               <IconSymbol name="slider.horizontal.3" size={20} color={tint} />
+              {activeFiltersCount > 0 && (
+                <View style={[styles.filterBadge, { backgroundColor: tint as string }]}>
+                  <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -513,6 +611,118 @@ export default function ExploreScreen() {
           )}
         </ScrollView>
       </Animated.View>
+
+      {/* Filter Modal */}
+      <Modal
+        visible={showFilterModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowFilterModal(false)}
+      >
+        <View style={styles.filterModalOverlay}>
+          <View style={[styles.filterModalContainer, { backgroundColor: cardBg }]}>
+            {/* Filter Header */}
+            <View style={styles.filterHeader}>
+              <Text style={[styles.filterTitle, { color: text }]}>Filter Places</Text>
+              <TouchableOpacity onPress={() => setShowFilterModal(false)}>
+                <IconSymbol name="xmark.circle.fill" size={28} color={muted as string} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.filterContent} showsVerticalScrollIndicator={false}>
+              {/* Category Filter */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterSectionTitle, { color: text }]}>Category</Text>
+                <View style={styles.filterChipsContainer}>
+                  {CATEGORIES.map((cat) => (
+                    <TouchableOpacity
+                      key={cat.value}
+                      style={[
+                        styles.filterChip,
+                        { borderColor: border },
+                        selectedCategory === cat.value && { 
+                          backgroundColor: tint as string, 
+                          borderColor: tint as string 
+                        }
+                      ]}
+                      onPress={() => setSelectedCategory(cat.value)}
+                    >
+                      <IconSymbol 
+                        name={cat.icon as any} 
+                        size={18} 
+                        color={selectedCategory === cat.value ? '#fff' : text as string} 
+                      />
+                      <Text style={[
+                        styles.filterChipText,
+                        { color: selectedCategory === cat.value ? '#fff' : text }
+                      ]}>
+                        {cat.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Distance Filter */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterSectionTitle, { color: text }]}>Distance</Text>
+                {!userLocation && (
+                  <Text style={[styles.filterHelper, { color: muted }]}>
+                    Enable location to filter by distance
+                  </Text>
+                )}
+                <View style={styles.filterListContainer}>
+                  {DISTANCES.map((dist) => (
+                    <TouchableOpacity
+                      key={dist.value}
+                      style={[
+                        styles.filterListItem,
+                        { borderBottomColor: border },
+                        !userLocation && dist.value !== 'all' && styles.filterListItemDisabled
+                      ]}
+                      onPress={() => {
+                        if (userLocation || dist.value === 'all') {
+                          setSelectedDistance(dist.value);
+                        }
+                      }}
+                      disabled={!userLocation && dist.value !== 'all'}
+                    >
+                      <Text style={[
+                        styles.filterListItemText,
+                        { color: text },
+                        !userLocation && dist.value !== 'all' && { color: muted }
+                      ]}>
+                        {dist.label}
+                      </Text>
+                      {selectedDistance === dist.value && (
+                        <IconSymbol name="checkmark.circle.fill" size={22} color={tint as string} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Filter Actions */}
+            <View style={[styles.filterActions, { borderTopColor: border }]}>
+              <TouchableOpacity
+                style={[styles.filterActionButton, styles.filterResetButton, { borderColor: border }]}
+                onPress={resetFilters}
+              >
+                <Text style={[styles.filterActionButtonText, { color: text }]}>Reset</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.filterActionButton, styles.filterApplyButton, { backgroundColor: tint as string }]}
+                onPress={() => setShowFilterModal(false)}
+              >
+                <Text style={[styles.filterActionButtonText, { color: '#fff' }]}>
+                  Apply Filters
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -617,6 +827,22 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filterBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
   },
   modalScroll: {
     flex: 1,
@@ -624,5 +850,105 @@ const styles = StyleSheet.create({
   modalContent: {
     paddingHorizontal: 20,
     paddingBottom: 100,
+  },
+  // Filter Modal Styles
+  filterModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  filterModalContainer: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: SCREEN_HEIGHT * 0.8,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+  },
+  filterHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  filterTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  filterContent: {
+    maxHeight: SCREEN_HEIGHT * 0.6,
+  },
+  filterSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  filterSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  filterHelper: {
+    fontSize: 13,
+    marginBottom: 12,
+    fontStyle: 'italic',
+  },
+  filterChipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  filterChipText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  filterListContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  filterListItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+  },
+  filterListItemDisabled: {
+    opacity: 0.5,
+  },
+  filterListItemText: {
+    fontSize: 15,
+  },
+  filterActions: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+  },
+  filterActionButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterResetButton: {
+    borderWidth: 1,
+  },
+  filterApplyButton: {
+    // backgroundColor set inline
+  },
+  filterActionButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

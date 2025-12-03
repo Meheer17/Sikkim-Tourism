@@ -1,5 +1,6 @@
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { Alert, Platform } from 'react-native';
 import { config } from '../config/api.config';
 import { fileService } from '../services/file.service';
@@ -48,15 +49,44 @@ export class FilePicker {
                 aspect: options.aspect ?? [4, 3],
                 quality: options.quality ?? 0.8,
                 allowsMultipleSelection: options.allowsMultipleSelection ?? false,
+                exif: false, // Don't include EXIF to avoid issues
             });
 
             if (!result.canceled) {
-                return result.assets.map(asset => ({
-                    uri: asset.uri,
-                    name: asset.fileName || `image_${Date.now()}.jpg`,
-                    type: asset.type || 'image/jpeg',
-                    size: asset.fileSize || 0,
-                }));
+                // Fix orientation for each image
+                const fixedAssets = await Promise.all(
+                    result.assets.map(async (asset) => {
+                        try {
+                            // Use ImageManipulator to fix orientation
+                            const manipResult = await ImageManipulator.manipulateAsync(
+                                asset.uri,
+                                [{ rotate: 0 }], // This forces proper orientation
+                                { 
+                                    compress: options.quality ?? 0.8,
+                                    format: ImageManipulator.SaveFormat.JPEG,
+                                }
+                            );
+                            
+                            return {
+                                uri: manipResult.uri,
+                                name: asset.fileName || `image_${Date.now()}.jpg`,
+                                type: 'image/jpeg',
+                                size: asset.fileSize || 0,
+                            };
+                        } catch (error) {
+                            console.error('Failed to fix image orientation:', error);
+                            // Return original if manipulation fails
+                            return {
+                                uri: asset.uri,
+                                name: asset.fileName || `image_${Date.now()}.jpg`,
+                                type: asset.type || 'image/jpeg',
+                                size: asset.fileSize || 0,
+                            };
+                        }
+                    })
+                );
+                
+                return fixedAssets;
             }
 
             return [];
@@ -89,16 +119,38 @@ export class FilePicker {
                 allowsEditing: options.allowsEditing ?? true,
                 aspect: options.aspect ?? [4, 3],
                 quality: options.quality ?? 0.8,
+                exif: false,
             });
 
             if (!result.canceled && result.assets[0]) {
                 const asset = result.assets[0];
-                return {
-                    uri: asset.uri,
-                    name: asset.fileName || `photo_${Date.now()}.jpg`,
-                    type: asset.type || 'image/jpeg',
-                    size: asset.fileSize || 0,
-                };
+                
+                try {
+                    // Fix orientation using ImageManipulator
+                    const manipResult = await ImageManipulator.manipulateAsync(
+                        asset.uri,
+                        [{ rotate: 0 }],
+                        { 
+                            compress: options.quality ?? 0.8,
+                            format: ImageManipulator.SaveFormat.JPEG,
+                        }
+                    );
+                    
+                    return {
+                        uri: manipResult.uri,
+                        name: asset.fileName || `photo_${Date.now()}.jpg`,
+                        type: 'image/jpeg',
+                        size: asset.fileSize || 0,
+                    };
+                } catch (error) {
+                    console.error('Failed to fix photo orientation:', error);
+                    return {
+                        uri: asset.uri,
+                        name: asset.fileName || `photo_${Date.now()}.jpg`,
+                        type: asset.type || 'image/jpeg',
+                        size: asset.fileSize || 0,
+                    };
+                }
             }
 
             return null;

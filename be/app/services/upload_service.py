@@ -23,6 +23,8 @@ class UploadService:
         self.cdn_url = "https://models.shrishesha.space/api/media/upload"
         self.cdn_model_url = "https://models.shrishesha.space/api/models/upload"
         self.cdn_api_key = "promatrs@25"
+        # Local IP for replacing localhost URLs (update this to your IP)
+        self.local_ip = os.environ.get("LOCAL_IP", "10.0.0.5")
 
     def _collection(self):
         db = get_database()
@@ -415,6 +417,34 @@ class UploadService:
         # Upload to CDN
         cdn_response = await self.upload_to_cdn(file)
         
+        # Extract CDN URL and convert to API proxy URL
+        cdn_url = cdn_response.get("url", "") or cdn_response.get("cdnUrl", "")
+        
+        # Convert CDN URL to API proxy URL
+        # From: http://localhost:3000/images/filename.jpg
+        # To: http://10.0.0.5:8000/api/v1/cdn/images/filename.jpg
+        if cdn_url:
+            # Extract filename from CDN URL
+            import re
+            filename_match = re.search(r'/images/([^/]+)$', cdn_url)
+            if filename_match:
+                filename = filename_match.group(1)
+                # Use local IP for the API server
+                cdn_url = f"http://{self.local_ip}:8000/api/v1/cdn/images/{filename}"
+        
+        # Also update nested cdn_response URLs
+        if cdn_response.get("cdnUrl"):
+            filename_match = re.search(r'/images/([^/]+)$', cdn_response["cdnUrl"])
+            if filename_match:
+                filename = filename_match.group(1)
+                cdn_response["cdnUrl"] = f"http://{self.local_ip}:8000/api/v1/cdn/images/{filename}"
+        
+        if cdn_response.get("viewUrl"):
+            filename_match = re.search(r'/images/([^/]+)$', cdn_response["viewUrl"])
+            if filename_match:
+                filename = filename_match.group(1)
+                cdn_response["viewUrl"] = f"http://{self.local_ip}:8000/api/v1/cdn/images/{filename}"
+        
         # Optionally save to database if location_id is provided
         if location_id and ObjectId.is_valid(location_id):
             file_data = {
@@ -433,14 +463,14 @@ class UploadService:
             
             return {
                 "file_id": str(result.inserted_id),
-                "cdn_url": cdn_response.get("url", ""),
+                "cdn_url": cdn_url,
                 "cdn_response": cdn_response,
                 "filename": file.filename
             }
         
         # Return CDN response without saving to DB
         return {
-            "cdn_url": cdn_response.get("url", ""),
+            "cdn_url": cdn_url,
             "cdn_response": cdn_response,
             "filename": file.filename
         }

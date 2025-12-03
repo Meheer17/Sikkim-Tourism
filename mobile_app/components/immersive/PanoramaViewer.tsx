@@ -13,7 +13,8 @@ import {
     Scene, 
     PerspectiveCamera, 
     SphereGeometry, 
-    MeshBasicMaterial, 
+    MeshBasicMaterial,
+    ShaderMaterial, 
     Mesh,
     DoubleSide,
 } from 'three';
@@ -114,12 +115,12 @@ export default function PanoramaViewer({
         }
         // Fix texture mapping for equirectangular panorama
         texture.flipY = true;
-        texture.encoding = 3001; // THREE.sRGBEncoding
+        texture.encoding = 3000; // THREE.LinearEncoding (prevent color washing)
         texture.wrapS = texture.wrapT = 1000; // THREE.ClampToEdgeWrapping
         texture.repeat.set(1, 1);
-        texture.generateMipmaps = false;
-        // texture.minFilter = 1006; // THREE.LinearFilter
-        // texture.magFilter = 1006; // THREE.LinearFilter
+        texture.generateMipmaps = true; // Enable mipmaps for better quality
+        texture.minFilter = 1008; // THREE.LinearMipmapLinearFilter
+        texture.magFilter = 1006; // THREE.LinearFilter
         texture.needsUpdate = true;
 
         // Log texture details for debugging
@@ -129,18 +130,50 @@ export default function PanoramaViewer({
             console.log('Texture image type:', typeof texture.image);
         }
 
-        // Create material with texture - MeshBasicMaterial is unlit
-        const material = new MeshBasicMaterial({
-            map: texture,
+        // Create custom shader material with contrast and saturation adjustments
+        const material = new ShaderMaterial({
+            uniforms: {
+                map: { value: texture },
+                contrast: { value: 1.2 }, // Increase contrast (1.0 = normal)
+                saturation: { value: 1.3 }, // Increase saturation (1.0 = normal)
+                brightness: { value: 1.05 }, // Slight brightness boost
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D map;
+                uniform float contrast;
+                uniform float saturation;
+                uniform float brightness;
+                varying vec2 vUv;
+                
+                void main() {
+                    vec4 color = texture2D(map, vUv);
+                    
+                    // Apply brightness
+                    color.rgb *= brightness;
+                    
+                    // Apply contrast
+                    color.rgb = (color.rgb - 0.5) * contrast + 0.5;
+                    
+                    // Apply saturation
+                    float grey = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+                    color.rgb = mix(vec3(grey), color.rgb, saturation);
+                    
+                    gl_FragColor = color;
+                }
+            `,
             side: DoubleSide,
-            transparent: false,
-            opacity: 1,
-            blending: 1, // THREE.NormalBlending
         });
-        console.log('Material created with map:', !!material.map);
+        console.log('Shader material created with enhanced colors');
         console.log('Material side:', material.side);
         console.log('Camera position:', camera.position);
-        console.log('Sphere radius: 500');
+        console.log('Sphere radius: 1000');
 
         // Create mesh and add to scene
         const sphere = new Mesh(geometry, material);
@@ -243,8 +276,8 @@ export default function PanoramaViewer({
                 // This is a simplified integration.
                 // A more robust solution would involve quaternions.
                 setOrientation((prev) => {
-                    // Adjust sensitivity with a multiplier
-                    const sensitivity = 0.5;
+                    // Adjust sensitivity with a multiplier (higher = more sensitive)
+                    const sensitivity = 0.75;
                     let newYaw = prev.yaw - y * sensitivity;
                     let newPitch = prev.pitch + x * sensitivity;
 

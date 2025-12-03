@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { locationService } from '@/services/location.service';
 import { useAuth } from '@/hooks/useAuth';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 interface LocationDetails {
     _id: string;
@@ -23,6 +25,7 @@ export default function LocationDetailsScreen() {
     const router = useRouter();
     const [location, setLocation] = useState<LocationDetails | null>(null);
     const [loading, setLoading] = useState(true);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const { user } = useAuth();
 
     const background = useThemeColor('background');
@@ -98,12 +101,54 @@ export default function LocationDetailsScreen() {
             </View>
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                {/* Hero Image Placeholder */}
-                <View style={styles.heroContainer}>
-                    <View style={[styles.heroPlaceholder, { backgroundColor: card }]}>
-                        <IconSymbol name="photo" size={64} color={muted} />
+                {/* Image Gallery */}
+                {location.metadata?.images && location.metadata.images.length > 0 ? (
+                    <View>
+                        <ScrollView
+                            horizontal
+                            pagingEnabled
+                            showsHorizontalScrollIndicator={false}
+                            style={styles.imageGallery}
+                            onScroll={(event) => {
+                                const slideIndex = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                                setCurrentImageIndex(slideIndex);
+                            }}
+                            scrollEventThrottle={16}
+                        >
+                            {location.metadata.images.map((imageUrl: string, index: number) => (
+                                <Image
+                                    key={index}
+                                    source={{ uri: imageUrl }}
+                                    style={styles.heroImage}
+                                    resizeMode="cover"
+                                />
+                            ))}
+                        </ScrollView>
+                        {/* Image Indicators */}
+                        {location.metadata.images.length > 1 && (
+                            <View style={styles.imageIndicators}>
+                                {location.metadata.images.map((_: string, index: number) => (
+                                    <View
+                                        key={index}
+                                        style={[
+                                            styles.indicator,
+                                            {
+                                                backgroundColor: index === currentImageIndex ? tint : muted + '40',
+                                                width: index === currentImageIndex ? 24 : 8,
+                                            }
+                                        ]}
+                                    />
+                                ))}
+                            </View>
+                        )}
                     </View>
-                </View>
+                ) : (
+                    <View style={styles.heroContainer}>
+                        <View style={[styles.heroPlaceholder, { backgroundColor: card }]}>
+                            <IconSymbol name="photo" size={64} color={muted} />
+                        </View>
+                    </View>
+                )}
 
                 {/* Info Section */}
                 <View style={[styles.infoCard, { backgroundColor: card }]}>
@@ -131,15 +176,21 @@ export default function LocationDetailsScreen() {
                     </View>
 
                     {/* Metadata */}
-                    {location.metadata && Object.keys(location.metadata).length > 0 && (
+                    {location.metadata && Object.keys(location.metadata).filter(k => k !== 'images').length > 0 && (
                         <View style={styles.section}>
                             <Text style={[styles.sectionTitle, { color: text }]}>Additional Info</Text>
-                            {Object.entries(location.metadata).map(([key, value]) => (
-                                <View key={key} style={styles.metadataRow}>
-                                    <Text style={[styles.metadataKey, { color: text }]}>{key}:</Text>
-                                    <Text style={[styles.metadataValue, { color: muted }]}>{String(value)}</Text>
-                                </View>
-                            ))}
+                            {Object.entries(location.metadata)
+                                .filter(([key]) => key !== 'images')
+                                .map(([key, value]) => (
+                                    <View key={key} style={styles.metadataRow}>
+                                        <Text style={[styles.metadataKey, { color: text }]}>
+                                            {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:
+                                        </Text>
+                                        <Text style={[styles.metadataValue, { color: muted }]}>
+                                            {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                        </Text>
+                                    </View>
+                                ))}
                         </View>
                     )}
                 </View>
@@ -206,6 +257,28 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    imageGallery: {
+        height: 250,
+    },
+    heroImage: {
+        width: SCREEN_WIDTH,
+        height: 250,
+    },
+    imageIndicators: {
+        position: 'absolute',
+        bottom: 16,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 6,
+    },
+    indicator: {
+        height: 8,
+        borderRadius: 4,
+        transition: 'all 0.3s',
     },
     infoCard: {
         margin: 16,
