@@ -1,6 +1,8 @@
-# 🏔️ Sikkim Tourism - Smart India Hackathon 2025
+# SIH25061 - Smart India Hackathon 2025
 
 <div align="center">
+
+# 🏔️ Digitize and Showcase Monasteries of Sikkim for Tourism and Cultural Preservation
 
 ![Sikkim Tourism](https://img.shields.io/badge/Smart%20India%20Hackathon-2025-orange?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
@@ -132,27 +134,59 @@ pip install -r requirements.txt
 Create a `.env` file in the `be` directory:
 
 ```env
-# MongoDB Configuration
-MONGODB_URL=mongodb://localhost:27017
-DATABASE_NAME=sikkim_tourism
+# Project
+PROJECT_NAME="MONA 360"
+VERSION="1.0.0"
+DESCRIPTION="Travel planning API for Sikkim Tourism"
 
-# JWT Configuration
-SECRET_KEY=your-super-secret-key-change-this-in-production
+# MongoDB
+MONGODB_URL=
+MONGODB_DB_NAME=mona360
+
+# JWT
+SECRET_KEY=ThisIsASecretKeyForJWTTokenGeneration242343NEEAARAAA
 ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=10080
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
 
-# Google Gemini AI
-GEMINI_API_KEY=your-gemini-api-key-here
 
-# Server Configuration
-HOST=0.0.0.0
-PORT=8000
-DEBUG=True
+# CORS (comma-separated or JSON array)
+ALLOWED_ORIGINS=["*"]
+GEMINI_API_KEY=
+```
+
+#### Configure Environment Variables
+
+Create a `.env` file in the `mobile_app` directory:
+
+```env
+NODE_ENV=development
+
+# API Configuration
+# Your machine's local IP for physical devices: 192.168.0.104
+# Android Emulator auto-uses: 10.0.2.2
+# iOS Simulator auto-uses: localhost
+# Uncomment below to override auto-detection:
+API_BASE_URL=http://192.168.0.104:8000/api/v1
+API_TIMEOUT=30000
+
+# Authentication
+JWT_SECRET_KEY=your-jwt-secret-key
+REFRESH_TOKEN_EXPIRY=7d
+ACCESS_TOKEN_EXPIRY=15m
 
 # File Upload
-MAX_UPLOAD_SIZE=10485760
-UPLOAD_DIR=./uploads
+MAX_FILE_SIZE=10485760
+ALLOWED_IMAGE_FORMATS=jpg,jpeg,png,gif,webp
+ALLOWED_DOCUMENT_FORMATS=pdf,doc,docx,txt
+
+# Features
+ENABLE_BIOMETRIC_AUTH=true
+ENABLE_PUSH_NOTIFICATIONS=true
+
+# Debug
+DEBUG_API_LOGS=true
 ```
+
 
 #### Start the Backend Server
 
@@ -193,7 +227,7 @@ export const API_CONFIG = {
 
 ```bash
 # Start Expo development server
-npx expo start
+npx expo start -c
 
 # Run on specific platform
 npx expo start --android   # Android
@@ -204,9 +238,9 @@ npx expo start --web       # Web
 #### Development Options
 
 After starting Expo:
+- Scan QR code with Expo Go app (on physical device)
 - Press `a` - Open in Android emulator
 - Press `i` - Open in iOS simulator
-- Scan QR code with Expo Go app (on physical device)
 
 ---
 
@@ -214,7 +248,7 @@ After starting Expo:
 
 ```
 mobile_app/
-├── app/                          # Expo Router screens
+├── app/                         # Expo Router screens
 │   ├── (admin)/                 # Admin portal screens
 │   │   ├── dashboard.tsx        # Admin dashboard
 │   │   ├── users.tsx            # User management
@@ -237,10 +271,10 @@ mobile_app/
 │       ├── community-chat.tsx   # Community features
 │       └── (stack)/             # Stack navigation screens
 │           ├── ai-planner.tsx   # AI trip planning
-│           ├── place-details.tsx # Place information
+│           ├── place-details.tsx# Place information
 │           ├── friends.tsx      # Location sharing
 │           └── language.tsx     # Language settings
-├── components/                   # Reusable components
+├── components/                  # Reusable components
 │   ├── auth/                    # Auth components
 │   ├── bookings/                # Booking components
 │   ├── common/                  # Shared components
@@ -248,21 +282,21 @@ mobile_app/
 │   ├── immersive/               # 360° viewer components
 │   ├── profile/                 # Profile components
 │   └── ui/                      # UI primitives
-├── contexts/                     # React contexts
+├── contexts/                    # React contexts
 │   ├── ThemeContext.tsx         # Dark/Light theme
 │   └── LanguageContext.tsx      # Multi-lingual support
-├── services/                     # API service layer
+├── services/                    # API service layer
 │   ├── api.client.ts            # Axios instance
 │   ├── auth.service.ts          # Authentication
 │   ├── business.service.ts      # Business operations
 │   ├── location.service.ts      # Location services
 │   ├── message.service.ts       # Messaging
 │   └── user.service.ts          # User operations
-├── constants/                    # App constants
+├── constants/                   # App constants
 │   ├── languages.ts             # Supported languages
 │   ├── translations.ts          # Translation strings
 │   └── theme.ts                 # Theme configuration
-└── hooks/                        # Custom React hooks
+└── hooks/                       # Custom React hooks
     ├── useAuth.ts               # Authentication hook
     ├── useApi.ts                # API request hook
     └── useThemeColor.ts         # Theme color hook
@@ -522,42 +556,15 @@ eas build --platform ios
 eas update --branch production
 ```
 
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Code Style Guidelines
-
-- **Backend**: Follow PEP 8 (Python)
-- **Frontend**: ESLint + Prettier configuration
-- **Commits**: Use conventional commits (feat, fix, docs, etc.)
-
----
-
-## 📝 License
-
-This project is developed for **Smart India Hackathon 2025**. All rights reserved.
-
----
-
 ## 👥 Team
 
-**Team Name**: [Your Team Name]
-
-- **Team Lead**: [Name] - [Role]
-- **Frontend Developer**: [Name]
-- **Backend Developer**: [Name]
-- **UI/UX Designer**: [Name]
-- **AI Integration**: [Name]
-- **Quality Assurance**: [Name]
+**Team Name**: Promatrs
+- **Team Lead**: Meheer J
+- **Team Member 1**: Nandakishore P
+- **Team Member 2**: Shrishesha Narmatesshvara
+- **Team Member 3**: Rishitha B
+- **Team Member 4**: Tanveer Muhammed S
+- **Team Member 5**: Shaik Mahummad 
 
 ---
 
@@ -565,7 +572,7 @@ This project is developed for **Smart India Hackathon 2025**. All rights reserve
 
 - **GitHub**: [github.com/Meheer17/Sikkim-Tourism](https://github.com/Meheer17/Sikkim-Tourism)
 - **Issues**: [Report Bug/Request Feature](https://github.com/Meheer17/Sikkim-Tourism/issues)
-- **Email**: [your-email@example.com]
+<!-- - **Email**: [your-email@example.com] -->
 
 ---
 
