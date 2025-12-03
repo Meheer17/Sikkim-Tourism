@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import BookingCard, { Booking } from '@/components/bookings/BookingCard';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import React, { useEffect, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const STATUS_FILTERS = [
     { key: 'all', label: 'All' },
@@ -12,6 +14,8 @@ const STATUS_FILTERS = [
 ];
 
 export default function MyBookingsScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
     const [selectedFilter, setSelectedFilter] = useState('all');
@@ -68,8 +72,8 @@ export default function MyBookingsScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: cardBg }]}>
                 <View>
-                    <Text style={[styles.headerTitle, { color: text }]}>My Bookings</Text>
-                    <Text style={[styles.headerSubtitle, { color: mutedText }]}>Track your reservations</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>{t.myBookings}</Text>
+                    <Text style={[styles.headerSubtitle, { color: mutedText }]}>{t.bookingHistory}</Text>
                 </View>
             </View>
 
@@ -150,11 +154,11 @@ export default function MyBookingsScreen() {
                 ) : (
                     <View style={styles.emptyState}>
                         <IconSymbol name="calendar.badge.exclamationmark" size={64} color={border as string} />
-                        <Text style={[styles.emptyTitle, { color: text }]}>No bookings found</Text>
+                        <Text style={[styles.emptyTitle, { color: text }]}>{t.noBookings}</Text>
                         <Text style={[styles.emptySubtitle, { color: mutedText }]}>
                             {selectedFilter === 'all'
-                                ? 'Start exploring and book your first service'
-                                : `You have no ${selectedFilter} bookings`}
+                                ? t.explore_places
+                                : t.noBookings}
                         </Text>
                         <TouchableOpacity style={[styles.exploreButton, { backgroundColor: tint }]}>
                             <Text style={styles.exploreButtonText}>Explore Services</Text>

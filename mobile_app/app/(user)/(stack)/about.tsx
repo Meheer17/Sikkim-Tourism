@@ -1,24 +1,29 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function AboutScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <View style={styles.header}>
                 <IconSymbol name="info.circle.fill" size={48} color="#0a7ea4" />
-                <Text style={styles.title}>About Tourist App</Text>
+                <Text style={styles.title}>{t.aboutUs}</Text>
             </View>
 
             <View style={styles.textContent}>
                 <Text style={styles.paragraph}>
-                    Tourist App is your ultimate travel companion for exploring Sikkim.
+                    {t.aboutDescription}
                 </Text>
-                <Text style={styles.sectionTitle}>Version</Text>
-                <Text style={styles.paragraph}>1.0.0</Text>
-                <Text style={styles.sectionTitle}>About</Text>
+                <Text style={styles.sectionTitle}>{t.version}</Text>
+                <Text style={styles.paragraph}>{t.versionNumber}</Text>
+                <Text style={styles.sectionTitle}>{t.about}</Text>
                 <Text style={styles.paragraph}>
-                    We help travelers discover amazing places, book services, and create unforgettable memories.
+                    {t.aboutDescription}
                 </Text>
             </View>
         </ScrollView>

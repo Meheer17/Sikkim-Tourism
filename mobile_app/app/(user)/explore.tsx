@@ -8,6 +8,8 @@ import PlaceCard, { Place } from '@/components/explore/PlaceCard';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { locationService } from '@/services';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 type CategoryFilter = 'all' | 'tourism' | 'business' | 'emergency' | 'localhelp' | 'event' | 'other';
 type DistanceFilter = 'all' | '5' | '10' | '25' | '50';

@@ -1,18 +1,23 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function VouchersScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <View style={styles.header}>
                 <IconSymbol name="ticket.fill" size={48} color="#10b981" />
-                <Text style={styles.title}>Vouchers & Offers</Text>
-                <Text style={styles.subtitle}>Your discount vouchers</Text>
+                <Text style={styles.title}>{t.vouchersMyCoupons}</Text>
+                <Text style={styles.subtitle}>{t.vouchersSubtitle}</Text>
             </View>
 
             <View style={styles.placeholder}>
-                <Text style={styles.placeholderText}>Vouchers coming soon...</Text>
+                <Text style={styles.placeholderText}>{t.vouchersComingSoon}</Text>
             </View>
         </ScrollView>
     );
