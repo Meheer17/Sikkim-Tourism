@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { businessService } from '@/services';
+import { servicesService, businessService } from '@/services';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
 
@@ -28,17 +28,17 @@ export default function HomeScreen() {
 
     const loadServices = async () => {
         try {
-            const response = await businessService.list();
-            const businesses = response.data || [];
+            const response = await servicesService.list({ skip: 0, limit: 4 });
+            const servicesList = response.data || [];
 
-            // Map businesses to Service format and limit to 4 for home screen
-            const mappedServices: Service[] = businesses.slice(0, 4).map((biz: any, index: number) => ({
-                id: biz._id || `service-${index}`,
-                name: biz.name,
-                description: biz.decription || biz.description || 'Quality service provider',
-                price: biz.price || Math.floor(Math.random() * 3000) + 500,
-                category: biz.type || 'Other',
-                icon: getCategoryIcon(biz.type),
+            // Map services to Service format for home screen
+            const mappedServices: Service[] = servicesList.map((svc: any) => ({
+                id: svc.id || '',
+                name: svc.name,
+                description: svc.short_description || svc.description || 'Quality service',
+                price: svc.price,
+                category: 'Service', // Generic category for home screen
+                icon: 'star.fill',
             }));
 
             setServices(mappedServices);
@@ -72,8 +72,7 @@ export default function HomeScreen() {
     };
 
     const handleServicePress = (service: Service) => {
-        // Navigate to service details
-        console.log('Service pressed:', service);
+        router.push(`/(user)/(stack)/service-details?id=${service.id}` as any);
     };
 
     const handleViewAllServices = () => {
