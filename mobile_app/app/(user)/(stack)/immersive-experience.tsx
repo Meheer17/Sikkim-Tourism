@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     },
     helpText: {
         position: 'absolute',
-        top: 200,
+        bottom: 230,
         left: 16,
         right: 16,
         flexDirection: 'row',

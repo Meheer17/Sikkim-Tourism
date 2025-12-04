@@ -58,13 +58,24 @@ const isDevelopment = __DEV__;
 
 // Get environment variables with fallbacks
 const getEnvVar = (key: string, fallback: string): string => {
-    return Constants.expoConfig?.extra?.[key] || process.env[key] || fallback;
+    const fromExtra = Constants.expoConfig?.extra?.[key];
+    const fromProcessEnv = process.env[key];
+    
+    console.log(`🔍 [api.config] Getting ${key}:`, {
+        fromExtra,
+        fromProcessEnv,
+        fallback,
+        willUse: fromExtra || fromProcessEnv || fallback
+    });
+    
+    return fromExtra || fromProcessEnv || fallback;
 };
 
 // Get the correct base URL for different platforms
 const getBaseURL = (): string => {
-    return "http://192.168.0.102:8000/api/v1"
-
+    const url = getEnvVar('API_BASE_URL', Platform.OS === 'android' ? 'http://10.0.2.2:8000/api/v1' : 'http://localhost:8000/api/v1');
+    console.log('🌐 [api.config] Final baseURL:', url);
+    return url;
 };
 
 export const config: AppConfig = {
@@ -122,6 +133,14 @@ export const platformConfig = {
     isWeb: Platform.OS === 'web',
     hasNotch: Platform.OS === 'ios' && (Platform as any).isPad === false,
 };
+
+// Debug: Log the final configuration
+console.log('📦 [api.config] Final API configuration loaded:', {
+    baseURL: config.api.baseURL,
+    timeout: config.api.timeout,
+    enableLogs: config.api.enableLogs,
+    platform: Platform.OS,
+});
 
 if (isDevelopment) {
     console.log('🌐 API Base URL:', config.api.baseURL);
