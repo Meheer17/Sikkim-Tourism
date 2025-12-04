@@ -11,6 +11,7 @@ from moviepy.editor import VideoFileClip
 
 from app.core.database import get_database
 from app.models.file import FileInDB
+from app.core.config import settings
 
 
 class UploadService:
@@ -20,11 +21,11 @@ class UploadService:
         # Lazy DB resolution to avoid import-time DB access
         self.db = None
         self.collection = None
-        self.cdn_url = "https://models.shrishesha.space/api/media/upload"
-        self.cdn_model_url = "https://models.shrishesha.space/api/models/upload"
-        self.cdn_api_key = "promatrs@25"
+        self.cdn_url = settings.CDN_URL
+        self.cdn_model_url = settings.CDN_MODEL_URL
+        self.cdn_api_key = settings.CDN_API_KEY
         # Local IP for replacing localhost URLs (update this to your IP)
-        self.local_ip = os.environ.get("LOCAL_IP", "10.0.0.5")
+        self.local_ip = settings.LOCAL_IP
 
     def _collection(self):
         db = get_database()

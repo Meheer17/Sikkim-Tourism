@@ -10,6 +10,7 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { locationService } from '@/services';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
+import { buildImageUrl } from '@/utils/image-url';
 
 type CategoryFilter = 'all' | 'tourism' | 'business' | 'emergency' | 'localhelp' | 'event' | 'other';
 type DistanceFilter = 'all' | '5' | '10' | '25' | '50';
@@ -144,10 +145,12 @@ export default function ExploreScreen() {
 
       // Map backend locations to Place format
       const mappedPlaces: Place[] = locations.map((loc: any) => {
-        const images = loc.metadata?.images || [];
+        const rawImages: string[] = loc.metadata?.images || [];
+        const images = rawImages.map((f: string) => buildImageUrl(f)).filter(Boolean) as string[];
+
         const firstImage = images[0];
-        console.log(`📸 ${loc.name}: ${images.length} images, first =`, firstImage || 'NO IMAGE');
-        
+        console.log(`📸 ${loc.name}: ${rawImages.length} images, first =`, rawImages[0] || 'NO IMAGE', '→', firstImage || 'NO URL');
+
         return {
           id: loc.id,
           name: loc.name,
@@ -155,11 +158,11 @@ export default function ExploreScreen() {
           category: loc.type || 'Place',
           rating: 4.5,
           distance: '0 km',
-          imageUrl: firstImage || undefined, // Use first image from metadata
-          images: images, // All images from metadata
+          imageUrl: firstImage || undefined, // Use first image from metadata (converted)
+          images: images, // All images from metadata (converted)
           modelPath: loc.metadata?.model_url || undefined, // Only set if admin uploaded a 3D model
           has360Images: !!loc.metadata?.panorama_360, // Check if admin uploaded 360 panorama image
-          panorama360Url: loc.metadata?.panorama_360 || undefined, // URL to 360 panorama
+          panorama360Url: buildImageUrl(loc.metadata?.panorama_360) || undefined, // URL to 360 panorama (converted if needed)
           latitude: loc.position?.y || 27.3389,  // position.y is latitude (CORRECT)
           longitude: loc.position?.x || 88.6065, // position.x is longitude (CORRECT)
         };

@@ -36,6 +36,16 @@ async def list_business(
     )
     return businesses
 
+@router.get("/types", response_model=List[businessType])
+async def get_business_types(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1),
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """Get all business types"""
+    business_types = await business_type_service.get_all(skip=skip, limit=limit)
+    return business_types
+
 
 @router.post("/", response_model=business, status_code=status.HTTP_201_CREATED)
 async def create_business(
@@ -143,4 +153,5 @@ async def approve_business(
     await business_service.update(b_id, update_data)
     
     return MessageResponse(message="business approved successfully")
+
 

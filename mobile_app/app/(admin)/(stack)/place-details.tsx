@@ -16,6 +16,7 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { locationService } from '@/services/location.service';
 import { ttsService } from '@/services/tts.service';
 import LanguageSelector from '@/components/immersive/LanguageSelector';
+import { buildImageUrl } from '@/utils/image-url';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -125,7 +126,7 @@ export default function AdminPlaceDetailsScreen() {
         );
     }
 
-    const images = location.metadata?.images || [];
+    const images = (location.metadata?.images || []).map((f: string) => buildImageUrl(f)).filter(Boolean) as string[];
 
     return (
         <View style={[styles.container, { backgroundColor: background }]}>

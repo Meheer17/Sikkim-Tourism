@@ -28,6 +28,12 @@ class Settings(BaseSettings):
     # Gemini API
     GEMINI_API_KEY: str = ""
     
+    # CDN Configuration
+    CDN_URL: str = "https://models.shrishesha.space/api/media/upload"
+    CDN_MODEL_URL: str = "https://models.shrishesha.space/api/models/upload"
+    CDN_API_KEY: str = "promatrs@25"
+    LOCAL_IP: str = "192.168.0.107"
+    
     class Config:
         env_file = ".env"
         case_sensitive = True

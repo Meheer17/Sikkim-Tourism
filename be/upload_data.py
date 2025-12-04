@@ -19,6 +19,9 @@ from dotenv import load_dotenv
 from datetime import datetime
 from typing import List, Dict, Optional
 import json
+import sys
+sys.path.append(str(Path(__file__).parent / "app"))
+from app.core.config import settings
 
 # Load environment variables
 load_dotenv()
@@ -27,8 +30,8 @@ MONGODB_URL = os.getenv("MONGODB_URL")
 MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME")
 
 # CDN Configuration
-CDN_URL = "https://models.shrishesha.space/api/media/upload"
-CDN_API_KEY = "promatrs@25"
+CDN_URL = settings.CDN_URL
+CDN_API_KEY = settings.CDN_API_KEY
 
 # Paths
 DATA_DIR = Path(__file__).parent.parent / "app-data"
@@ -109,17 +112,8 @@ class DataUploader:
                     if response.status_code == 200:
                         data = response.json()
                         # Get filename from response
-                        filename = data.get('filename')
-                        
-                        if filename:
-                            # Construct URL using FastAPI backend CDN endpoint
-                            url = f"http://10.0.0.5:8000/api/v1/cdn/images/{filename}"
-                        else:
-                            # Fallback: try to get URL from response
-                            url = data.get('cdnUrl') or data.get('url') or data.get('fileUrl')
-                            if url and 'localhost' in url:
-                                url = url.replace('localhost:3000', '10.0.0.5:8000/api/v1/cdn')
-                        
+                        filename = str(data.get('filename'))
+                        url = filename
                         print(f"✓ {url}")
                         return url
                     else:
