@@ -160,6 +160,46 @@ Endpoints (endpoint — short overview — params)
     - limit — query — integer — optional
     - (use business filters: `position_*`, `type_id`, `scheduled_at` range via query if needed)
 
+- Endpoint: GET /services
+  - Short overview: List services (pagination, filter by business)
+  - Params:
+    - skip — query — integer — optional
+    - limit — query — integer — optional
+    - bid — query — string — optional — filter by business._id
+
+- Endpoint: POST /services
+  - Short overview: Create a service for a business
+  - Params:
+    - name — body — string — required — service name (max 255)
+    - price — body — number — required — price (>= 0)
+    - bid — body — string — required — references business._id
+    - description — body — string — optional — service description
+    - features — body — array — optional — list of features
+    - short_description — body — string — optional — brief description (max 255)
+    - metadata — body — object — optional — additional data (e.g., externalid for tourist_entry, vehicle type for cab)
+
+- Endpoint: GET /services/{service_id}
+  - Short overview: Get service by id
+  - Params:
+    - service_id — path — string — required — service _id
+
+- Endpoint: PUT /services/{service_id}
+  - Short overview: Update service
+  - Params:
+    - service_id — path — string — required — service _id
+    - name — body — string — optional — service name
+    - price — body — number — optional — price (>= 0)
+    - bid — body — string — optional — references business._id
+    - description — body — string — optional
+    - features — body — array — optional
+    - short_description — body — string — optional
+    - metadata — body — object — optional
+
+- Endpoint: DELETE /services/{service_id}
+  - Short overview: Delete service
+  - Params:
+    - service_id — path — string — required — service _id
+
 - Endpoint: GET /communities
   - Short overview: List communities
   - Params:

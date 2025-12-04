@@ -1,34 +1,12 @@
-import React, { useRef, useState, useEffect } from 'react';
-import {
-    View,
-    StyleSheet,
-    Dimensions,
-    PanResponder,
-    TouchableOpacity,
-    Text,
-    PixelRatio,
-    Platform,
-} from 'react-native';
-import { GLView } from 'expo-gl';
-import { Renderer, loadTextureAsync } from 'expo-three';
-import { 
-    Scene, 
-    PerspectiveCamera, 
-    SphereGeometry, 
-    MeshBasicMaterial,
-    ShaderMaterial, 
-    Mesh,
-    DoubleSide,
-} from 'three';
-import { Asset } from 'expo-asset';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, StyleSheet, Platform } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { Gyroscope } from 'expo-sensors';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 interface PanoramaViewerProps {
-    imageSource: any; // Can be require() or { uri: string }
+    imageSource: any;
     onOrientationChange?: (orientation: { pitch: number; yaw: number }) => void;
-    children?: React.ReactNode; // For navigation hotspots
+    children?: React.ReactNode;
 }
 
 export default function PanoramaViewer({
@@ -36,329 +14,289 @@ export default function PanoramaViewer({
     onOrientationChange,
     children,
 }: PanoramaViewerProps) {
-    const [orientation, setOrientation] = useState({ pitch: 0, yaw: 0 });
-    const orientationRef = useRef({ pitch: 0, yaw: 0 });
-    const lastGesture = useRef({ dx: 0, dy: 0 });
-    const [fov, setFov] = useState(140); // Start with a wider FOV
-    const fovRef = useRef(140);
-    const lastPinchDistance = useRef<number | null>(null);
-    
-    // Three.js refs
-    const cameraRef = useRef<PerspectiveCamera | null>(null);
-    const rendererRef = useRef<Renderer | null>(null);
-    const sceneRef = useRef<Scene | null>(null);
-    const glRef = useRef<any>(null);
-    const renderFrameRef = useRef<number | null>(null);
+    const webViewRef = useRef<WebView>(null);
+    const [imageUri, setImageUri] = useState<string>('');
 
-    // Initialize Three.js scene
-    const onContextCreate = async (gl: any) => {
-        glRef.current = gl;
-        
-        // Create renderer
-        const renderer = new Renderer({ gl });
-        renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-        renderer.setPixelRatio(PixelRatio.get());
-        rendererRef.current = renderer;
-
-        // Create scene
-        const scene = new Scene();
-        sceneRef.current = scene;
-
-        // Create camera with wide FOV for immersive experience
-        const camera = new PerspectiveCamera(
-            fov, // FOV - adjustable for zoom
-            SCREEN_WIDTH / SCREEN_HEIGHT,
-            0.1,
-            1000
-        );
-        camera.position.set(0, 0, 0); // Camera at center of sphere
-        cameraRef.current = camera;
-
-        // Create sphere geometry (render from inside)
-        const geometry = new SphereGeometry(
-            1000, // Large radius for panorama
-            128,  // More segments for smoother appearance
-            128   // More segments for smoother appearance
-        );
-        geometry.scale(-1, 1, 1); // Flip for inside view
-        console.log('Sphere geometry:', geometry);
-
-        // Load texture from image source
-        let texture;
-        try {
-            let asset;
-            if (typeof imageSource === 'number') {
-                asset = Asset.fromModule(imageSource);
-                await asset.downloadAsync();
-            } else if (imageSource?.uri) {
-                // For URI, ensure we're getting the full resolution
-                const uri = imageSource.uri;
-                console.log('Loading panorama from URI:', uri.substring(0, 100) + '...');
-                
-                asset = Asset.fromURI(uri);
-                await asset.downloadAsync();
-                
-                console.log('Asset downloaded:', {
-                    width: asset.width,
-                    height: asset.height,
-                    uri: asset.uri
-                });
-            }
-
-            if (!asset) {
-                console.error('No asset for panorama image');
-                return;
-            }
-
-            // Load texture with full resolution
-            texture = await loadTextureAsync({ asset });
-            
-            console.log('Texture image:', texture.image && {
-                width: texture.image.width,
-                height: texture.image.height,
-            });
-        } catch (e) {
-            console.error('Error loading texture', e);
-            return;
-        }
-
-        if (!texture) {
-            console.error('Texture is null');
-            return;
-        }
-        // Fix texture mapping for equirectangular panorama
-        texture.flipY = Platform.OS === 'ios';
-        // Removed encoding/filter settings that were causing render errors
-        texture.generateMipmaps = true; // Enable mipmaps for better quality
-        texture.needsUpdate = true;
-
-        // Log texture details for debugging
-        console.log('Texture loaded:', texture);
-        if (texture.image) {
-            console.log('Texture image dimensions:', texture.image.width, texture.image.height);
-            console.log('Texture image type:', typeof texture.image);
-        }
-
-        // Create material. Use a ShaderMaterial on iOS, but fall back to a plain
-        // MeshBasicMaterial on Android to avoid shader compilation issues on
-        // certain Android GPUs/drivers. The fallback renders correctly and can
-        // help diagnose whether the custom shader is the cause of a black screen.
-        const useShader = Platform.OS === 'ios';
-        let material: any;
-        if (useShader) {
-            material = new ShaderMaterial({
-                uniforms: {
-                    map: { value: texture },
-                    contrast: { value: 1.2 },
-                    saturation: { value: 1.3 },
-                    brightness: { value: 1.05 },
-                },
-                vertexShader: `precision mediump float;\n varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                fragmentShader: `precision mediump float;\n uniform sampler2D map; uniform float contrast; uniform float saturation; uniform float brightness; varying vec2 vUv; void main() { vec4 color = texture2D(map, vUv); color.rgb *= brightness; color.rgb = (color.rgb - 0.5) * contrast + 0.5; float grey = dot(color.rgb, vec3(0.299, 0.587, 0.114)); color.rgb = mix(vec3(grey), color.rgb, saturation); gl_FragColor = color; }`,
-                side: DoubleSide,
-            });
-        } else {
-            console.log('Using MeshBasicMaterial fallback for Android (shader disabled)');
-            material = new MeshBasicMaterial({ map: texture, side: DoubleSide });
-        }
-        console.log('Shader material created with enhanced colors');
-        console.log('Material side:', material.side);
-        console.log('Camera position:', camera.position);
-        console.log('Sphere radius: 1000');
-
-        // Create mesh and add to scene
-        const sphere = new Mesh(geometry, material);
-        scene.add(sphere);
-
-        // Start render loop
-        startRenderLoop();
-    };
-    
-    // Render loop - separated so it can access latest orientation
-    const startRenderLoop = () => {
-        const render = () => {
-            renderFrameRef.current = requestAnimationFrame(render);
-            if (cameraRef.current && rendererRef.current && sceneRef.current && glRef.current) {
-                // Update FOV for zoom
-                cameraRef.current.fov = fovRef.current;
-                cameraRef.current.updateProjectionMatrix();
-                 // Convert orientation to radians (read from ref for latest values)
-                const pitch = (orientationRef.current.pitch * Math.PI) / 180;
-                const yaw = (orientationRef.current.yaw * Math.PI) / 180;
-                cameraRef.current.rotation.order = 'YXZ';
-                cameraRef.current.rotation.y = -yaw;
-                cameraRef.current.rotation.x = pitch;
-                rendererRef.current.render(sceneRef.current, cameraRef.current);
-                glRef.current.endFrameEXP();
-            }
-        };
-        render();
-    };
-
-    // Cleanup on unmount
     useEffect(() => {
-        return () => {
-            if (renderFrameRef.current) {
-                cancelAnimationFrame(renderFrameRef.current);
-            }
-        };
-    }, []);
+        if (typeof imageSource === 'object' && imageSource?.uri) {
+            setImageUri(imageSource.uri);
+        }
+    }, [imageSource]);
 
-    // Pan responder for touch gestures
-    const panResponder = useRef(
-        PanResponder.create({
-            onStartShouldSetPanResponder: () => true,
-            onMoveShouldSetPanResponder: () => true,
-            onPanResponderGrant: (evt, gestureState) => {
-                lastGesture.current = { dx: 0, dy: 0 };
-                lastPinchDistance.current = null;
-            },
-            onPanResponderMove: (evt, gestureState) => {
-                if (evt.nativeEvent.touches.length === 2) {
-                    // Pinch zoom
-                    const touch1 = evt.nativeEvent.touches[0];
-                    const touch2 = evt.nativeEvent.touches[1];
-                    const distance = Math.hypot(
-                        touch2.pageX - touch1.pageX,
-                        touch2.pageY - touch1.pageY
-                    );
-                    if (lastPinchDistance.current !== null) {
-                        const pinchDelta = distance - lastPinchDistance.current;
-                        setFov((prevFov) => {
-                            let nextFov = prevFov - pinchDelta * 0.1;
-                            nextFov = Math.max(30, Math.min(145, nextFov));
-                            fovRef.current = nextFov;
-                            console.log(`Current FOV: ${nextFov.toFixed(2)}`);
-                            return nextFov;
-                        });
-                    }
-                    lastPinchDistance.current = distance;
-                } else {
-                    // Single finger pan
-                    const deltaDx = gestureState.dx - lastGesture.current.dx;
-                    const deltaDy = gestureState.dy - lastGesture.current.dy;
-                    lastGesture.current = { dx: gestureState.dx, dy: gestureState.dy };
-                    setOrientation((prev) => {
-                        let newYaw = prev.yaw + deltaDx * 0.3;
-                        let newPitch = prev.pitch + deltaDy * 0.3;
-                        newYaw = ((newYaw % 360) + 360) % 360;
-                        newPitch = Math.max(-80, Math.min(80, newPitch));
-                        const newOrientation = { pitch: newPitch, yaw: newYaw };
-                        orientationRef.current = newOrientation;
-                        onOrientationChange?.(newOrientation);
-                        return newOrientation;
-                    });
-                }
-            },
-            onPanResponderRelease: () => {
-                lastGesture.current = { dx: 0, dy: 0 };
-                lastPinchDistance.current = null;
-            },
-        })
-    ).current;
-
-    // Device motion tracking effect
+    // Gyroscope for device orientation
     useEffect(() => {
         let subscription: any;
-
-        const startMotionTracking = async () => {
-            Gyroscope.setUpdateInterval(16); // 60 FPS
-            subscription = Gyroscope.addListener(({ x, y, z }) => {
-                // This is a simplified integration.
-                // A more robust solution would involve quaternions.
-                setOrientation((prev) => {
-                    // Adjust sensitivity with a multiplier (higher = more sensitive)
-                    const sensitivity = 0.75;
-                    let newYaw = prev.yaw - y * sensitivity;
-                    let newPitch = prev.pitch + x * sensitivity;
-
-                    newYaw = ((newYaw % 360) + 360) % 360;
-                    newPitch = Math.max(-80, Math.min(80, newPitch));
-
-                    const newOrientation = { pitch: newPitch, yaw: newYaw };
-                    orientationRef.current = newOrientation;
-                    onOrientationChange?.(newOrientation);
-                    return newOrientation;
+        const start = async () => {
+            try {
+                Gyroscope.setUpdateInterval(32);
+                subscription = Gyroscope.addListener(({ x, y }) => {
+                    if (webViewRef.current) {
+                        webViewRef.current.injectJavaScript(`
+                            if (window.updateGyro) {
+                                window.updateGyro(${x}, ${y});
+                            }
+                            true;
+                        `);
+                    }
                 });
-            });
-        };
-
-        const stopMotionTracking = () => {
-            if (subscription) {
-                subscription.remove();
-                subscription = null;
+            } catch (e) {
+                console.log('Gyroscope error:', e);
             }
         };
-
-        startMotionTracking();
-
-        return () => {
-            stopMotionTracking();
-        };
+        start();
+        return () => { subscription?.remove(); };
     }, []);
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #000; touch-action: none; }
+        #container { width: 100%; height: 100%; }
+        #loading { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: white; font-family: sans-serif; text-align: center;
+        }
+        .spinner {
+            width: 40px; height: 40px; margin: 0 auto 10px;
+            border: 3px solid rgba(255,255,255,0.3); border-top-color: white;
+            border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="loading"><div class="spinner"></div>Loading panorama...</div>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const IMAGE_URL = '${imageUri}';
+        
+        let camera, scene, renderer, sphere;
+        let isUserInteracting = false;
+        let onPointerDownMouseX = 0, onPointerDownMouseY = 0;
+        let lon = 0, onPointerDownLon = 0;
+        let lat = 0, onPointerDownLat = 0;
+        let targetLon = 0, targetLat = 0;
+        let phi = 0, theta = 0;
+        let fov = 130;
+        
+        function init() {
+            const container = document.getElementById('container');
+            
+            camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 1, 1100);
+            scene = new THREE.Scene();
+            
+            const geometry = new THREE.SphereGeometry(500, 60, 40);
+            geometry.scale(-1, 1, 1);
+            
+            const loader = new THREE.TextureLoader();
+            loader.crossOrigin = 'anonymous';
+            
+            if (IMAGE_URL && IMAGE_URL.length > 0) {
+                loader.load(
+                    IMAGE_URL,
+                    function(texture) {
+                        document.getElementById('loading').style.display = 'none';
+                        texture.minFilter = THREE.LinearFilter;
+                        texture.magFilter = THREE.LinearFilter;
+                        const material = new THREE.MeshBasicMaterial({ map: texture });
+                        sphere = new THREE.Mesh(geometry, material);
+                        scene.add(sphere);
+                        animate();
+                    },
+                    undefined,
+                    function(err) {
+                        console.error('Texture load error:', err);
+                        document.getElementById('loading').innerHTML = 'Failed to load image';
+                        // Create fallback gradient
+                        createFallbackSphere(geometry);
+                    }
+                );
+            } else {
+                createFallbackSphere(geometry);
+            }
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+            
+            // Touch events
+            container.addEventListener('touchstart', onTouchStart, { passive: false });
+            container.addEventListener('touchmove', onTouchMove, { passive: false });
+            container.addEventListener('touchend', onTouchEnd, { passive: false });
+            
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        function createFallbackSphere(geometry) {
+            document.getElementById('loading').style.display = 'none';
+            // Create gradient canvas texture
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            // Sky gradient
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.5);
+            skyGrad.addColorStop(0, '#87CEEB');
+            skyGrad.addColorStop(1, '#E0F0FF');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.5);
+            
+            // Ground gradient
+            const groundGrad = ctx.createLinearGradient(0, canvas.height * 0.5, 0, canvas.height);
+            groundGrad.addColorStop(0, '#90EE90');
+            groundGrad.addColorStop(1, '#228B22');
+            ctx.fillStyle = groundGrad;
+            ctx.fillRect(0, canvas.height * 0.5, canvas.width, canvas.height * 0.5);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.MeshBasicMaterial({ map: texture });
+            sphere = new THREE.Mesh(geometry, material);
+            scene.add(sphere);
+            animate();
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        let lastTouchX = 0, lastTouchY = 0;
+        let lastPinchDist = 0;
+        
+        function onTouchStart(event) {
+            event.preventDefault();
+            if (event.touches.length === 1) {
+                isUserInteracting = true;
+                lastTouchX = event.touches[0].clientX;
+                lastTouchY = event.touches[0].clientY;
+                onPointerDownLon = lon;
+                onPointerDownLat = lat;
+            } else if (event.touches.length === 2) {
+                lastPinchDist = getPinchDistance(event.touches);
+            }
+        }
+        
+        function onTouchMove(event) {
+            event.preventDefault();
+            if (event.touches.length === 1 && isUserInteracting) {
+                const dx = event.touches[0].clientX - lastTouchX;
+                const dy = event.touches[0].clientY - lastTouchY;
+                targetLon -= dx * 0.2;
+                targetLat += dy * 0.2;
+                targetLat = Math.max(-85, Math.min(85, targetLat));
+                lastTouchX = event.touches[0].clientX;
+                lastTouchY = event.touches[0].clientY;
+            } else if (event.touches.length === 2) {
+                const dist = getPinchDistance(event.touches);
+                const delta = lastPinchDist - dist;
+                fov = Math.max(50, Math.min(150, fov + delta * 0.1));
+                camera.fov = fov;
+                camera.updateProjectionMatrix();
+                lastPinchDist = dist;
+            }
+        }
+        
+        function onTouchEnd(event) {
+            isUserInteracting = false;
+        }
+        
+        function getPinchDistance(touches) {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+        
+        // Gyroscope input from React Native
+        window.updateGyro = function(x, y) {
+            if (!isUserInteracting) {
+                targetLon -= y * 2.0;
+                targetLat += x * 2.0;
+                targetLat = Math.max(-85, Math.min(85, targetLat));
+            }
+        };
+        
+        function lerp(start, end, factor) {
+            return start + (end - start) * factor;
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            update();
+        }
+        
+        function update() {
+            // Smooth interpolation with lerp
+            const lerpFactor = 0.1;
+            lon = lerp(lon, targetLon, lerpFactor);
+            lat = lerp(lat, targetLat, lerpFactor);
+            
+            phi = THREE.MathUtils.degToRad(90 - lat);
+            theta = THREE.MathUtils.degToRad(lon);
+            
+            const x = 500 * Math.sin(phi) * Math.cos(theta);
+            const y = 500 * Math.cos(phi);
+            const z = 500 * Math.sin(phi) * Math.sin(theta);
+            
+            camera.lookAt(x, y, z);
+            renderer.render(scene, camera);
+            
+            // Send orientation back to React Native
+            if (window.ReactNativeWebView) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'orientation',
+                    pitch: lat,
+                    yaw: lon
+                }));
+            }
+        }
+        
+        init();
+    </script>
+</body>
+</html>
+    `;
+
+    const handleMessage = (event: any) => {
+        try {
+            const data = JSON.parse(event.nativeEvent.data);
+            if (data.type === 'orientation' && onOrientationChange) {
+                onOrientationChange({ pitch: data.pitch, yaw: data.yaw });
+            }
+        } catch (e) {}
+    };
+
     return (
         <View style={styles.container}>
-            {/* <View style={styles.hotspotContainer} pointerEvents="box-none">
-                {children}
-            </View> */}
-            
-            {/* <View style={styles.compassContainer} pointerEvents="box-none">
-                <View style={styles.compass}>
-                    <View
-                        style={[
-                            styles.compassNeedle,
-                            {
-                                transform: [{ rotate: `${orientation.yaw}deg` }],
-                            },
-                        ]}
-                    />
-                </View>
-            </View> */}
-
-                <GLView
-                    style={{ flex: 1, width: '100%', height: '100%' }}
-                    onContextCreate={onContextCreate}
-                    {...panResponder.panHandlers}
-                />
+            <WebView
+                ref={webViewRef}
+                style={styles.webview}
+                source={{ html: htmlContent }}
+                originWhitelist={['*']}
+                javaScriptEnabled={true}
+                domStorageEnabled={true}
+                allowFileAccess={true}
+                allowUniversalAccessFromFileURLs={true}
+                mixedContentMode="always"
+                onMessage={handleMessage}
+                scrollEnabled={false}
+                bounces={false}
+                overScrollMode="never"
+            />
+            {children}
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        overflow: 'hidden',
-    },
-    glView: {
-        flex: 1,
-    },
-    hotspotContainer: {
-        ...StyleSheet.absoluteFillObject,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    compassContainer: {
-        position: 'absolute',
-        top: 60,
-        right: 20,
-        zIndex: 10,
-    },
-    compass: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 2,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-    },
-    compassNeedle: {
-        width: 2,
-        height: 20,
-        backgroundColor: '#ef4444',
-        position: 'absolute',
-        top: 8,
-    },
+    container: { flex: 1, backgroundColor: '#000' },
+    webview: { flex: 1, backgroundColor: '#000' },
 });

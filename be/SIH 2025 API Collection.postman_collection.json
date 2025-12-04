@@ -829,6 +829,33 @@
 						"description": "Upload video file; creates FILES record"
 					},
 					"response": []
+				},
+				{
+					"name": "New Request",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/cdn/models/:filename",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"cdn",
+								"models",
+								":filename"
+							],
+							"variable": [
+								{
+									"key": "filename",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -2273,14 +2300,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/bussiness/types",
+							"raw": "{{baseUrl}}/api/v1/business/types",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"v1",
-								"bussiness",
+								"business",
 								"types"
 							]
 						}
@@ -2502,7 +2529,64 @@
 						},
 						"description": "List communities with pagination"
 					},
-					"response": []
+					"response": [
+						{
+							"name": "List Communities",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/communities?skip=0&limit=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"communities"
+									],
+									"query": [
+										{
+											"key": "skip",
+											"value": "0"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Mon, 01 Dec 2025 04:49:19 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "225"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"name\": \"Travel Enthusiasts\",\n        \"decription\": \"Community for people who love to travel and explore new places\",\n        \"id\": \"692d1e4a4522e28f43b6ec11\",\n        \"created_at\": \"2025-12-01T04:49:14.552000\",\n        \"updated_at\": \"2025-12-01T04:49:14.552000\"\n    }\n]"
+						}
+					]
 				},
 				{
 					"name": "Create Community",
@@ -2535,7 +2619,62 @@
 						},
 						"description": "Create a new community"
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Create Community",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Travel Enthusiasts\",\n  \"decription\": \"Community for people who love to travel and explore new places\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/communities",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"communities"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Mon, 01 Dec 2025 04:49:13 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "223"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Travel Enthusiasts\",\n    \"decription\": \"Community for people who love to travel and explore new places\",\n    \"id\": \"692d1e4a4522e28f43b6ec11\",\n    \"created_at\": \"2025-12-01T04:49:14.552000\",\n    \"updated_at\": \"2025-12-01T04:49:14.552000\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Get Community by ID",
@@ -2567,7 +2706,61 @@
 						},
 						"description": "Get community by id"
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Get Community by ID",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/communities/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"communities",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "{{communityId}}"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Mon, 01 Dec 2025 04:49:37 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "223"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Travel Enthusiasts\",\n    \"decription\": \"Community for people who love to travel and explore new places\",\n    \"id\": \"692d1e4a4522e28f43b6ec11\",\n    \"created_at\": \"2025-12-01T04:49:14.552000\",\n    \"updated_at\": \"2025-12-01T04:49:14.552000\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Update Community",
@@ -2607,7 +2800,69 @@
 						},
 						"description": "Update community"
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Update Community",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Travel Enthusiasts - Updated\",\n  \"decription\": \"Updated community description\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/communities/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"communities",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "{{communityId}}"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Mon, 01 Dec 2025 05:05:39 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "193"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Travel Enthusiasts - Updated\",\n    \"decription\": \"Updated community description\",\n    \"id\": \"692d1e4a4522e28f43b6ec11\",\n    \"created_at\": \"2025-12-01T04:49:14.552000\",\n    \"updated_at\": \"2025-12-01T05:05:42\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Delete Community",
@@ -2639,7 +2894,61 @@
 						},
 						"description": "Delete community"
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Delete Community",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/communities/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"communities",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "{{communityId}}"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Mon, 01 Dec 2025 05:05:47 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "44"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Community deleted successfully\"\n}"
+						}
+					]
 				}
 			]
 		},
@@ -2662,7 +2971,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"uid\": \"{{userId}}\",\n  \"cid\": \"{{communityId}}\",\n  \"text\": \"Hello everyone! This is my first message in this community.\"\n}"
+							"raw": "{\n  \"cid\": \"{{communityId}}\",\n  \"text\": \"Hello everyone! This is my first message in this community.\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/message",
@@ -2677,7 +2986,62 @@
 						},
 						"description": "Create a new message"
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Create Message",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"cid\": \"{{communityId}}\",\n  \"text\": \"Hello everyone! This is my first message in this community.\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/message",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"message"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Mon, 01 Dec 2025 05:14:30 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "210"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"cid\": \"692d2230b8593872ca75a433\",\n    \"text\": \"Hello everyone! This is my first message in this community.\",\n    \"id\": \"692d2437c955d85d25570fe9\",\n    \"uid\": \"692aa164bf3fa63381708dde\",\n    \"created_at\": \"2025-12-01T05:14:31.823000\"\n}"
+						}
+					]
 				},
 				{
 					"name": "List Messages",
@@ -2690,7 +3054,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/message?skip=0&limit=10",
+							"raw": "{{baseUrl}}/api/v1/message?skip=0&limit=10&cid={{communityId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -2715,14 +3079,79 @@
 								},
 								{
 									"key": "cid",
-									"value": "{{communityId}}",
-									"disabled": true
+									"value": "{{communityId}}"
 								}
 							]
 						},
 						"description": "List messages with optional filters (uid, cid)"
 					},
-					"response": []
+					"response": [
+						{
+							"name": "List Messages",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/message?skip=0&limit=10&cid={{communityId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"message"
+									],
+									"query": [
+										{
+											"key": "skip",
+											"value": "0"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										},
+										{
+											"key": "uid",
+											"value": "{{userId}}",
+											"disabled": true
+										},
+										{
+											"key": "cid",
+											"value": "{{communityId}}"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "date",
+									"value": "Mon, 01 Dec 2025 05:14:52 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "423"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"cid\": \"692d2230b8593872ca75a433\",\n        \"text\": \"Hello everyone! This is my first message in this community.\",\n        \"id\": \"692d2413593651bb65b66b26\",\n        \"uid\": \"692aa164bf3fa63381708dde\",\n        \"created_at\": \"2025-12-01T05:13:55.591000\"\n    },\n    {\n        \"cid\": \"692d2230b8593872ca75a433\",\n        \"text\": \"Hello everyone! This is my first message in this community.\",\n        \"id\": \"692d2437c955d85d25570fe9\",\n        \"uid\": \"692aa164bf3fa63381708dde\",\n        \"created_at\": \"2025-12-01T05:14:31.823000\"\n    }\n]"
+						}
+					]
 				}
 			]
 		},
@@ -2861,6 +3290,508 @@
 							],
 							"cookie": [],
 							"body": "{\n    \"name\": \"EVENT Hotel\",\n    \"description\": \"Luxury hotel with premium amenities\",\n    \"short_description\": \"5-star luxury hotel\",\n    \"open_hours\": {\n        \"start\": \"00:00\",\n        \"end\": \"23:59\"\n    },\n    \"type_id\": \"6927dd74c83ad21b47926941\",\n    \"l_id\": \"692ab4edf647c23a65e53ca5\",\n    \"scheduled_at\": \"2025-12-01T10:00:00\",\n    \"approved\": false,\n    \"id\": \"692ab4edf647c23a65e53ca7\",\n    \"created_at\": \"2025-11-29T08:55:09.856000\",\n    \"updated_at\": \"2025-11-29T08:55:09.856000\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Business Services",
+			"item": [
+				{
+					"name": "services",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer YOUR_JWT_HERE"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/api/v1/services?skip=0&limit=20&bid={{businessId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"services"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "bid",
+									"value": "{{businessId}}"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Get",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer YOUR_JWT_HERE"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:8000/api/v1/services?skip=0&limit=20&bid=693157181f15f175dee33e7d",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"services"
+									],
+									"query": [
+										{
+											"key": "skip",
+											"value": "0"
+										},
+										{
+											"key": "limit",
+											"value": "20"
+										},
+										{
+											"key": "bid",
+											"value": "693157181f15f175dee33e7d"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 04 Dec 2025 11:41:55 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "289"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"name\": \"Guided Cave Tour\",\n        \"price\": 120,\n        \"bid\": \"693157181f15f175dee33e7d\",\n        \"description\": \"2-hour guided cave exploration\",\n        \"features\": [\n            \"helmet provided\",\n            \"snacks included\"\n        ],\n        \"short_description\": \"Cave tour\",\n        \"metadata\": {\n            \"externalid\": \"EXT-1234\",\n            \"vehicle\": \"n/a\"\n        },\n        \"id\": \"69317356934b05c3cca5943b\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer YOUR_JWT_HERE"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Guided Cave Tour\",\n    \"price\": 120.0,\n    \"bid\": \"{{businessId}}\",\n    \"description\": \"2-hour guided cave exploration\",\n    \"features\": [\"helmet provided\", \"snacks included\"],\n    \"short_description\": \"Cave tour\",\n    \"metadata\": {\"externalid\":\"EXT-1234\", \"vehicle\":\"n/a\"}\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/api/v1/services",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"services"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "New Request",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer YOUR_JWT_HERE"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Guided Cave Tour\",\n    \"price\": 120.0,\n    \"bid\": \"{{businessId}}\",\n    \"description\": \"2-hour guided cave exploration\",\n    \"features\": [\"helmet provided\", \"snacks included\"],\n    \"short_description\": \"Cave tour\",\n    \"metadata\": {\"externalid\":\"EXT-1234\", \"vehicle\":\"n/a\"}\n  }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8000/api/v1/services",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"services"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 04 Dec 2025 11:41:09 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "287"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Guided Cave Tour\",\n    \"price\": 120,\n    \"bid\": \"693157181f15f175dee33e7d\",\n    \"description\": \"2-hour guided cave exploration\",\n    \"features\": [\n        \"helmet provided\",\n        \"snacks included\"\n    ],\n    \"short_description\": \"Cave tour\",\n    \"metadata\": {\n        \"externalid\": \"EXT-1234\",\n        \"vehicle\": \"n/a\"\n    },\n    \"id\": \"69317356934b05c3cca5943b\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Single Service",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer YOUR_JWT_HERE"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/api/v1/services/:serviceId",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"services",
+								":serviceId"
+							],
+							"variable": [
+								{
+									"key": "serviceId",
+									"value": "69317356934b05c3cca5943b"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Single Service",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer YOUR_JWT_HERE"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:8000/api/v1/services/:serviceId",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"services",
+										":serviceId"
+									],
+									"variable": [
+										{
+											"key": "serviceId",
+											"value": "69317356934b05c3cca5943b"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 04 Dec 2025 11:42:08 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "287"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Guided Cave Tour\",\n    \"price\": 120,\n    \"bid\": \"693157181f15f175dee33e7d\",\n    \"description\": \"2-hour guided cave exploration\",\n    \"features\": [\n        \"helmet provided\",\n        \"snacks included\"\n    ],\n    \"short_description\": \"Cave tour\",\n    \"metadata\": {\n        \"externalid\": \"EXT-1234\",\n        \"vehicle\": \"n/a\"\n    },\n    \"id\": \"69317356934b05c3cca5943b\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Service",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer YOUR_JWT_HERE"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"price\": 140.0,\n    \"short_description\": \"Updated short description\"\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/api/v1/services/:serviceid",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"services",
+								":serviceid"
+							],
+							"variable": [
+								{
+									"key": "serviceid",
+									"value": "69317356934b05c3cca5943b"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "New Request",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer YOUR_JWT_HERE"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"price\": 140.0,\n    \"short_description\": \"Updated short description\"\n  }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8000/api/v1/services/:serviceid",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"services",
+										":serviceid"
+									],
+									"variable": [
+										{
+											"key": "serviceid",
+											"value": "69317356934b05c3cca5943b"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 04 Dec 2025 11:42:41 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "303"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Guided Cave Tour\",\n    \"price\": 140,\n    \"bid\": \"693157181f15f175dee33e7d\",\n    \"description\": \"2-hour guided cave exploration\",\n    \"features\": [\n        \"helmet provided\",\n        \"snacks included\"\n    ],\n    \"short_description\": \"Updated short description\",\n    \"metadata\": {\n        \"externalid\": \"EXT-1234\",\n        \"vehicle\": \"n/a\"\n    },\n    \"id\": \"69317356934b05c3cca5943b\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Delete a service",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer YOUR_JWT_HERE"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/api/v1/services/:serviceId",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"services",
+								":serviceId"
+							],
+							"variable": [
+								{
+									"key": "serviceId",
+									"value": "{{service_id}}"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Delete a service",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer YOUR_JWT_HERE"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:8000/api/v1/services/:serviceId",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"services",
+										":serviceId"
+									],
+									"variable": [
+										{
+											"key": "serviceId",
+											"value": "{{service_id}}"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "",
+							"header": [
+								{
+									"key": "date",
+									"value": "Thu, 04 Dec 2025 11:43:33 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "42"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Service deleted successfully\"\n}"
 						}
 					]
 				}
