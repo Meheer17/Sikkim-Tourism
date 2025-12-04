@@ -1,0 +1,801 @@
+{
+	"info": {
+		"_postman_id": "orders-bookings-collection-2025",
+		"name": "Orders & Bookings API Collection",
+		"description": "Complete API collection for Orders and Bookings system - Tourist Backend",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "43495295"
+	},
+	"item": [
+		{
+			"name": "Orders API",
+			"description": "Complete Orders CRUD operations - Create, read, update, delete orders",
+			"item": [
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"service_id\": \"6576f4a1b2c3d4e5f6g7h8i9\",\n  \"business_id\": \"6576f4a1b2c3d4e5f6g7h8i0\",\n  \"amount\": 500,\n  \"metadata\": {\n    \"from_time\": \"2025-12-05T10:00:00\",\n    \"to_time\": \"2025-12-05T12:00:00\",\n    \"quantity\": 1,\n    \"notes\": \"Special request for service\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orders/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orders",
+								""
+							]
+						},
+						"description": "Create a new order for a service. User ID is automatically set from JWT token."
+					}
+				},
+				{
+					"name": "List All Orders",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orders/?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orders",
+								""
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0",
+									"description": "Number of records to skip for pagination"
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Number of records to return"
+								},
+								{
+									"key": "service_id",
+									"value": "",
+									"description": "Filter by service ID (optional)",
+									"disabled": true
+								},
+								{
+									"key": "business_id",
+									"value": "",
+									"description": "Filter by business ID (optional)",
+									"disabled": true
+								},
+								{
+									"key": "user_id",
+									"value": "",
+									"description": "Filter by user ID (optional)",
+									"disabled": true
+								},
+								{
+									"key": "payment_status",
+									"value": "",
+									"description": "Filter by payment status: pending, completed, failed, refunded (optional)",
+									"disabled": true
+								},
+								{
+									"key": "order_status",
+									"value": "",
+									"description": "Filter by order status: created, confirmed, completed, cancelled (optional)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "List all orders with pagination and optional filters"
+					}
+				},
+				{
+					"name": "Get My Orders",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orders/me?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orders",
+								"me"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get all orders created by the authenticated user"
+					}
+				},
+				{
+					"name": "Get Order by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orders/{{order_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orders",
+								"{{order_id}}"
+							]
+						},
+						"description": "Get a specific order by its ID"
+					}
+				},
+				{
+					"name": "Update Order",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"payment_status\": \"completed\",\n  \"order_status\": \"confirmed\",\n  \"amount\": 550,\n  \"metadata\": {\n    \"from_time\": \"2025-12-05T10:00:00\",\n    \"to_time\": \"2025-12-05T13:00:00\",\n    \"quantity\": 2,\n    \"notes\": \"Updated request\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orders/{{order_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orders",
+								"{{order_id}}"
+							]
+						},
+						"description": "Update order details including payment status, order status, amount, and metadata"
+					}
+				},
+				{
+					"name": "Delete Order",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orders/{{order_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orders",
+								"{{order_id}}"
+							]
+						},
+						"description": "Delete an order"
+					}
+				},
+				{
+					"name": "Get Orders by Business",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/orders/business/{{business_id}}?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"orders",
+								"business",
+								"{{business_id}}"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get all orders for a specific business"
+					}
+				}
+			]
+		},
+		{
+			"name": "Bookings - User API",
+			"description": "User-focused booking endpoints - View and manage personal bookings",
+			"item": [
+				{
+					"name": "Get My Bookings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/user/my-bookings?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"user",
+								"my-bookings"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "order_status",
+									"value": "",
+									"description": "Filter by order status: created, confirmed, completed, cancelled (optional)",
+									"disabled": true
+								},
+								{
+									"key": "payment_status",
+									"value": "",
+									"description": "Filter by payment status: pending, completed, failed, refunded (optional)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all bookings for authenticated user with optional filters by status"
+					}
+				},
+				{
+					"name": "Get My Bookings Count",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/user/my-bookings/count",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"user",
+								"my-bookings",
+								"count"
+							]
+						},
+						"description": "Get count of user's bookings by status (created, confirmed, completed, cancelled)"
+					}
+				},
+				{
+					"name": "Get Upcoming Bookings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/user/my-bookings/upcoming?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"user",
+								"my-bookings",
+								"upcoming"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get upcoming bookings for authenticated user (orders not yet completed)"
+					}
+				},
+				{
+					"name": "Get Completed Bookings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/user/my-bookings/completed?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"user",
+								"my-bookings",
+								"completed"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get completed bookings for authenticated user"
+					}
+				}
+			]
+		},
+		{
+			"name": "Bookings - Business API (Multi-Store Dashboard)",
+			"description": "Multi-business dashboard endpoints - Automatically aggregates data across all user-owned businesses",
+			"item": [
+				{
+					"name": "Get Today's Bookings (All My Businesses)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/business/today",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"business",
+								"today"
+							]
+						},
+						"description": "Get today's bookings across all businesses owned by authenticated user"
+					}
+				},
+				{
+					"name": "Get Today's Bookings Count (All My Businesses)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/business/today/count",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"business",
+								"today",
+								"count"
+							]
+						},
+						"description": "Get count of today's bookings by status across all user-owned businesses"
+					}
+				},
+				{
+					"name": "Get Upcoming Bookings (All My Businesses)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/business/upcoming?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"business",
+								"upcoming"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get upcoming bookings across all businesses owned by authenticated user"
+					}
+				},
+				{
+					"name": "Get Pending Payment Bookings (All My Businesses)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/business/pending-payment?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"business",
+								"pending-payment"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get bookings with pending payment status across all user-owned businesses"
+					}
+				}
+			]
+		},
+		{
+			"name": "Bookings - Business API (Single Store Management)",
+			"description": "Single business management endpoints - Manage specific business bookings and operations",
+			"item": [
+				{
+					"name": "Get All Bookings for Business",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/business/{{business_id}}/bookings?skip=0&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"business",
+								"{{business_id}}",
+								"bookings"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "order_status",
+									"value": "",
+									"description": "Filter by order status (optional)",
+									"disabled": true
+								},
+								{
+									"key": "payment_status",
+									"value": "",
+									"description": "Filter by payment status (optional)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all bookings for a specific business (owner only). Requires business_id as path parameter."
+					}
+				},
+				{
+					"name": "Get Today's Bookings for Business",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/business/{{business_id}}/today",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"business",
+								"{{business_id}}",
+								"today"
+							]
+						},
+						"description": "Get today's bookings for a specific business (owner only)"
+					}
+				},
+				{
+					"name": "Get Bookings Count for Business",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/business/{{business_id}}/bookings/count",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"business",
+								"{{business_id}}",
+								"bookings",
+								"count"
+							]
+						},
+						"description": "Get count of bookings by status for a specific business (owner only)"
+					}
+				},
+				{
+					"name": "Confirm Booking",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/business/{{business_id}}/booking/{{order_id}}/confirm",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"business",
+								"{{business_id}}",
+								"booking",
+								"{{order_id}}",
+								"confirm"
+							]
+						},
+						"description": "Confirm a booking (business owner only). Changes order_status from 'created' to 'confirmed'."
+					}
+				},
+				{
+					"name": "Mark Booking Completed",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/business/{{business_id}}/booking/{{order_id}}/mark-completed",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"business",
+								"{{business_id}}",
+								"booking",
+								"{{order_id}}",
+								"mark-completed"
+							]
+						},
+						"description": "Mark a booking as completed (business owner only). Changes order_status to 'completed'."
+					}
+				},
+				{
+					"name": "Cancel Booking",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "JWT token from authentication"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/business/{{business_id}}/booking/{{order_id}}/cancel",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"business",
+								"{{business_id}}",
+								"booking",
+								"{{order_id}}",
+								"cancel"
+							]
+						},
+						"description": "Cancel a booking (business owner only). Changes order_status to 'cancelled'."
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8000",
+			"type": "string",
+			"description": "Base URL for the API - Update to your server URL"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string",
+			"description": "JWT access token from authentication - Set after signing in"
+		},
+		{
+			"key": "order_id",
+			"value": "",
+			"type": "string",
+			"description": "Order ID for individual order operations"
+		},
+		{
+			"key": "business_id",
+			"value": "",
+			"type": "string",
+			"description": "Business ID for business-specific operations"
+		}
+	]
+}

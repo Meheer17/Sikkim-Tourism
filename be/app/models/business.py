@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, BeforeValidator, ConfigDict
-from typing import Optional, Annotated
+from typing import Optional, Annotated, List
 from datetime import datetime
 from bson import ObjectId
 import re
@@ -124,5 +124,35 @@ class business(businessBase):
     id: str
     created_at: datetime
     updated_at: datetime
+
+    model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})
+
+
+# Nested models for dashboard/complete view
+class ServiceInBusiness(BaseModel):
+    id: str
+    name: str
+    price: float
+    description: Optional[str] = None
+    features: Optional[List[str]] = None
+    short_description: Optional[str] = None
+    metadata: Optional[dict] = None
+
+    model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})
+
+
+class BusinessWithServices(BaseModel):
+    id: str
+    name: str
+    description: str
+    short_description: str
+    open_hours: OpenHours
+    type_id: str
+    l_id: str
+    scheduled_at: datetime
+    approved: bool
+    created_at: datetime
+    updated_at: datetime
+    services: List[ServiceInBusiness] = []  # nested services
 
     model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})

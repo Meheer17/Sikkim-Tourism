@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status, Query, HTTPException
 from app.core.security import get_current_user_id, get_current_admin_user
 from app.services.business_service import business_service
 from app.services.business_type_service import business_type_service
-from app.models.business import business, businessCreate, businessUpdate, businessType
+from app.models.business import business, businessCreate, businessUpdate, businessType, BusinessWithServices
 from app.schemas.auth import MessageResponse
 
 router = APIRouter()
@@ -65,6 +65,15 @@ async def get_my_business(
 ):
     """Get businesses owned by authenticated user"""
     businesses = await business_service.get_by_owner(current_user_id, skip, limit)
+    return businesses
+
+
+@router.get("/me/complete", response_model=List[BusinessWithServices])
+async def get_my_business_with_services(
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """Get all businesses owned by authenticated user with all their services nested"""
+    businesses = await business_service.get_by_owner_with_services(current_user_id)
     return businesses
 
 
