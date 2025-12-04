@@ -543,6 +543,12 @@ export default function ExploreScreen() {
           <TouchableOpacity style={[styles.controlButton, { backgroundColor: controlBg }]} onPress={handleZoomOut}>
             <IconSymbol name="minus" size={24} color={text} />
           </TouchableOpacity>
+          <TouchableOpacity
+          style={[styles.controlButton, { backgroundColor: controlBg }]}
+          onPress={() => router.push('/(user)/(stack)/friends' as any)}
+          >
+          <IconSymbol name="person.2.fill" size={24} color={tint} />
+          </TouchableOpacity>
         </View>
       </View>
 

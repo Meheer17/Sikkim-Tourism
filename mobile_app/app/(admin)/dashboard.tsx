@@ -305,6 +305,14 @@ export default function AdminDashboardScreen() {
                             <IconSymbol name="person.badge.key.fill" size={32} color="#f59e0b" />
                             <Text style={[styles.actionText, { color: text }]}>Assign Roles</Text>
                         </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.actionCard, { backgroundColor: card }]}
+                            onPress={() => router.push('/(admin)/(stack)/chat-moderation' as any)}
+                        >
+                            <IconSymbol name="bubble.left.and.exclamationmark.bubble.right" size={32} color="#ef4444" />
+                            <Text style={[styles.actionText, { color: text }]}>{t.chatModeration || 'Chat Moderation'}</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
 

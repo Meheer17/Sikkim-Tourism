@@ -63,7 +63,7 @@ const getEnvVar = (key: string, fallback: string): string => {
 
 // Get the correct base URL for different platforms
 const getBaseURL = (): string => {
-    return "http://192.168.0.107:8000/api/v1"
+    return "http://192.168.0.102:8000/api/v1"
 
 };
 

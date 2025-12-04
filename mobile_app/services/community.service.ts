@@ -2,12 +2,18 @@ import { ApiResponse } from '../types/api.types';
 import { apiClient } from './api.client';
 
 export interface CommunityModel {
-  _id: string;
+  id?: string;   // API returns 'id' (string)
+  _id?: string;  // Some endpoints might return '_id'
   name: string;
   decription: string;
   created_at?: string;
   updated_at?: string;
 }
+
+// Helper to get the community ID regardless of field name
+export const getCommunityId = (community: CommunityModel): string => {
+  return community.id || community._id || '';
+};
 
 class CommunityService {
   private baseUrl = '/communities';
@@ -22,7 +28,8 @@ class CommunityService {
   }
 
   async create(data: { name: string; decription: string }): Promise<ApiResponse<CommunityModel>> {
-    return apiClient.post<CommunityModel>(this.baseUrl, data);
+    // Add trailing slash to avoid 307 redirect
+    return apiClient.post<CommunityModel>(`${this.baseUrl}/`, data);
   }
 
   async get(id: string): Promise<ApiResponse<CommunityModel>> {

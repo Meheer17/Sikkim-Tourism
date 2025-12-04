@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, status, Query, HTTPException
 from bson import ObjectId
 
@@ -16,11 +16,10 @@ router = APIRouter()
 async def list_communities(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1),
+    q: Optional[str] = Query(None, description="Search communities by name or description"),
     current_user_id: str = Depends(get_current_user_id),
 ):
     """List communities"""
-    # Optional search query via `q`
-    q: Optional[str] = Query(None, description="Search communities by name or description")
     communities = await community_service.get_all(skip, limit, q)
     return communities
 
