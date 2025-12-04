@@ -6,6 +6,8 @@ import {
     PanResponder,
     TouchableOpacity,
     Text,
+    PixelRatio,
+    Platform,
 } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Renderer, loadTextureAsync } from 'expo-three';
@@ -55,7 +57,7 @@ export default function PanoramaViewer({
         // Create renderer
         const renderer = new Renderer({ gl });
         renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-        renderer.setPixelRatio(window.devicePixelRatio || 1);
+        renderer.setPixelRatio(PixelRatio.get());
         rendererRef.current = renderer;
 
         // Create scene
@@ -125,7 +127,7 @@ export default function PanoramaViewer({
             return;
         }
         // Fix texture mapping for equirectangular panorama
-        texture.flipY = true;
+        texture.flipY = Platform.OS === 'ios';
         // Removed encoding/filter settings that were causing render errors
         texture.generateMipmaps = true; // Enable mipmaps for better quality
         texture.needsUpdate = true;
@@ -137,46 +139,28 @@ export default function PanoramaViewer({
             console.log('Texture image type:', typeof texture.image);
         }
 
-        // Create custom shader material with contrast and saturation adjustments
-        const material = new ShaderMaterial({
-            uniforms: {
-                map: { value: texture },
-                contrast: { value: 1.2 }, // Increase contrast (1.0 = normal)
-                saturation: { value: 1.3 }, // Increase saturation (1.0 = normal)
-                brightness: { value: 1.05 }, // Slight brightness boost
-            },
-            vertexShader: `
-                varying vec2 vUv;
-                void main() {
-                    vUv = uv;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            fragmentShader: `
-                uniform sampler2D map;
-                uniform float contrast;
-                uniform float saturation;
-                uniform float brightness;
-                varying vec2 vUv;
-                
-                void main() {
-                    vec4 color = texture2D(map, vUv);
-                    
-                    // Apply brightness
-                    color.rgb *= brightness;
-                    
-                    // Apply contrast
-                    color.rgb = (color.rgb - 0.5) * contrast + 0.5;
-                    
-                    // Apply saturation
-                    float grey = dot(color.rgb, vec3(0.299, 0.587, 0.114));
-                    color.rgb = mix(vec3(grey), color.rgb, saturation);
-                    
-                    gl_FragColor = color;
-                }
-            `,
-            side: DoubleSide,
-        });
+        // Create material. Use a ShaderMaterial on iOS, but fall back to a plain
+        // MeshBasicMaterial on Android to avoid shader compilation issues on
+        // certain Android GPUs/drivers. The fallback renders correctly and can
+        // help diagnose whether the custom shader is the cause of a black screen.
+        const useShader = Platform.OS === 'ios';
+        let material: any;
+        if (useShader) {
+            material = new ShaderMaterial({
+                uniforms: {
+                    map: { value: texture },
+                    contrast: { value: 1.2 },
+                    saturation: { value: 1.3 },
+                    brightness: { value: 1.05 },
+                },
+                vertexShader: `precision mediump float;\n varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                fragmentShader: `precision mediump float;\n uniform sampler2D map; uniform float contrast; uniform float saturation; uniform float brightness; varying vec2 vUv; void main() { vec4 color = texture2D(map, vUv); color.rgb *= brightness; color.rgb = (color.rgb - 0.5) * contrast + 0.5; float grey = dot(color.rgb, vec3(0.299, 0.587, 0.114)); color.rgb = mix(vec3(grey), color.rgb, saturation); gl_FragColor = color; }`,
+                side: DoubleSide,
+            });
+        } else {
+            console.log('Using MeshBasicMaterial fallback for Android (shader disabled)');
+            material = new MeshBasicMaterial({ map: texture, side: DoubleSide });
+        }
         console.log('Shader material created with enhanced colors');
         console.log('Material side:', material.side);
         console.log('Camera position:', camera.position);

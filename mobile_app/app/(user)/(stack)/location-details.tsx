@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import AudioNarration from '@/components/immersive/AudioNarration';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
+import { buildImageUrl } from '@/utils/image-url';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -62,12 +63,14 @@ export default function LocationDetailsScreen() {
 
     const handleOpen360View = () => {
         if (!location?.metadata?.panorama_360) return;
-        
+
+        const panoUrl = buildImageUrl(location.metadata.panorama_360);
+
         router.push({
             pathname: '/(user)/(stack)/immersive-experience',
             params: {
                 placeId: location.id,
-                panorama360Url: location.metadata.panorama_360,
+                panorama360Url: panoUrl,
                 placeName: location.name,
                 placeDescription: location.description,
                 shortDescription: location.short_description,
@@ -137,14 +140,17 @@ export default function LocationDetailsScreen() {
                             }}
                             scrollEventThrottle={16}
                         >
-                            {location.metadata.images.map((imageUrl: string, index: number) => (
-                                <Image
-                                    key={index}
-                                    source={{ uri: imageUrl }}
-                                    style={styles.heroImage}
-                                    resizeMode="cover"
-                                />
-                            ))}
+                            {location.metadata.images.map((raw: string, index: number) => {
+                                const imageUrl = buildImageUrl(raw);
+                                return (
+                                    <Image
+                                        key={index}
+                                        source={{ uri: imageUrl }}
+                                        style={styles.heroImage}
+                                        resizeMode="cover"
+                                    />
+                                );
+                            })}
                         </ScrollView>
                         {/* Image Indicators */}
                         {location.metadata.images.length > 1 && (

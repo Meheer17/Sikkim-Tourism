@@ -20,26 +20,29 @@ const MAPPING = {
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
   'chevron.left': 'chevron-left',
-
-  // Common actions
+  'chevron.down': 'expand-more',
   'magnifyingglass': 'search',
   'plus': 'add',
   'plus.circle.fill': 'add-circle',
   'minus': 'remove',
   'xmark': 'close',
   'ellipsis': 'more-horiz',
+  'sparkles': 'auto-awesome',
 
   // Profile & User
   'person.crop.circle.fill': 'account-circle',
   'person.circle.fill': 'account-circle',
   'person.fill': 'person',
   'person.2.fill': 'people',
+  'hand.raised.fill': 'pan-tool',
 
   // Location & Map
   'map.fill': 'map',
   'location.fill': 'location-on',
   'mappin.circle.fill': 'place',
   'mappin.and.ellipse': 'my-location',
+  'building.2': 'business',
+  'building.2.fill': 'business',
 
   // Favorites & Actions
   'heart.fill': 'favorite',
@@ -55,12 +58,16 @@ const MAPPING = {
   'message.fill': 'message',
   'envelope.fill': 'email',
   'bubble.left.and.bubble.right.fill': 'chat',
+  'phone.fill': 'phone',
+  'globe': 'language',
 
   // Time & Calendar
   'clock.fill': 'schedule',
   'clock': 'access-time',
   'calendar': 'event',
   'calendar.badge.clock': 'event-available',
+  'sun.max.fill': 'wb-sunny',
+  'moon.fill': 'brightness-2',
 
   // Shopping & Commerce
   'ticket.fill': 'confirmation-number',
@@ -68,6 +75,7 @@ const MAPPING = {
   'creditcard.fill': 'payment',
   'indianrupeesign': 'currency-rupee',
   'indianrupeesign.circle.fill': 'currency-rupee',
+  'tray.full.fill': 'inbox',
 
   // Settings & Info
   'gear': 'settings',
@@ -76,6 +84,7 @@ const MAPPING = {
   'info.circle.fill': 'info',
   'questionmark.circle.fill': 'help',
   'exclamationmark.triangle.fill': 'warning',
+  'paintbrush.fill': 'palette',
 
   // Security & Privacy
   'lock.fill': 'lock',
@@ -89,6 +98,7 @@ const MAPPING = {
   'folder.fill': 'folder',
   'photo.fill': 'photo',
   'camera.fill': 'camera-alt',
+  'trash.fill': 'delete',
 
   // Navigation & Direction
   'arrow.right': 'arrow-forward',
@@ -109,6 +119,8 @@ const MAPPING = {
   'checkmark': 'check',
   'xmark.circle.fill': 'cancel',
   'circle.fill': 'circle',
+  'checkmark.seal.fill': 'verified',
+  'checkmark.shield.fill': 'verified-user',
 
   // Content
   'text.alignleft': 'format-align-left',

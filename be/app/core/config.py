@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     CDN_URL: str = "https://models.shrishesha.space/api/media/upload"
     CDN_MODEL_URL: str = "https://models.shrishesha.space/api/models/upload"
     CDN_API_KEY: str = "promatrs@25"
-    LOCAL_IP: str = "10.0.0.5"
+    LOCAL_IP: str = "192.168.0.107"
     
     class Config:
         env_file = ".env"

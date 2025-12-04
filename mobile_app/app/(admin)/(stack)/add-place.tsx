@@ -6,6 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { locationService, LocationType } from '@/services/location.service';
 import { FilePicker } from '@/utils/file-picker';
 import { fileService } from '@/services/file.service';
+import { buildImageUrl } from '@/utils/image-url';
 
 const DEFAULT_REGION = {
     latitude: 27.533,
@@ -437,17 +438,20 @@ export default function AddPlaceScreen() {
                         
                         {formData.metadata?.images && formData.metadata.images.length > 0 && (
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageGallery}>
-                                {formData.metadata.images.map((imageUrl: string, index: number) => (
-                                    <View key={index} style={styles.imagePreviewContainer}>
-                                        <Image source={{ uri: imageUrl }} style={styles.imagePreview} />
-                                        <TouchableOpacity 
-                                            style={styles.removeImageButton}
-                                            onPress={() => handleRemoveImage(index)}
-                                        >
-                                            <IconSymbol name="xmark.circle.fill" size={24} color="#ef4444" />
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
+                                {formData.metadata.images.map((raw: string, index: number) => {
+                                    const imageUrl = buildImageUrl(raw);
+                                    return (
+                                        <View key={index} style={styles.imagePreviewContainer}>
+                                            <Image source={{ uri: imageUrl }} style={styles.imagePreview} />
+                                            <TouchableOpacity 
+                                                style={styles.removeImageButton}
+                                                onPress={() => handleRemoveImage(index)}
+                                            >
+                                                <IconSymbol name="xmark.circle.fill" size={24} color="#ef4444" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    );
+                                })}
                             </ScrollView>
                         )}
                         
@@ -475,7 +479,7 @@ export default function AddPlaceScreen() {
                         {formData.metadata?.panorama_360 && (
                             <View style={styles.panoramaPreviewContainer}>
                                 <Image 
-                                    source={{ uri: formData.metadata.panorama_360 }} 
+                                    source={{ uri: buildImageUrl(formData.metadata.panorama_360) }} 
                                     style={styles.panoramaPreview} 
                                 />
                                 <TouchableOpacity 

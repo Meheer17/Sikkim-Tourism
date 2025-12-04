@@ -112,17 +112,8 @@ class DataUploader:
                     if response.status_code == 200:
                         data = response.json()
                         # Get filename from response
-                        filename = data.get('filename')
-                        
-                        if filename:
-                            # Construct URL using FastAPI backend CDN endpoint
-                            url = f"http://10.0.0.5:8000/api/v1/cdn/images/{filename}"
-                        else:
-                            # Fallback: try to get URL from response
-                            url = data.get('cdnUrl') or data.get('url') or data.get('fileUrl')
-                            if url and 'localhost' in url:
-                                url = url.replace('localhost:3000', '10.0.0.5:8000/api/v1/cdn')
-                        
+                        filename = str(data.get('filename'))
+                        url = filename
                         print(f"✓ {url}")
                         return url
                     else:
