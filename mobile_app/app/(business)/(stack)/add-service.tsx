@@ -4,6 +4,9 @@ import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { businessService, BusinessType } from '@/services/business.service';
+import { servicesService } from '@/services';
+import { BUSINESS_TYPES } from '@/constants/businessTypes';
+import { TYPE_FIELD_CONFIG, FieldDescriptor } from '@/constants/serviceFieldConfig';
 import { locationService } from '@/services/location.service';
 import { Picker } from '@react-native-picker/picker';
 
@@ -24,11 +27,17 @@ export default function AddServiceScreen() {
     const [longitude, setLongitude] = useState('');
     const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
     const [selectedTypeId, setSelectedTypeId] = useState('');
+    const [price, setPrice] = useState('0');
+    const [userBusinesses, setUserBusinesses] = useState<any[]>([]);
+    const [selectedBusinessId, setSelectedBusinessId] = useState('');
+    const [metadataItems, setMetadataItems] = useState<Array<{ key: string; value: string }>>([]);
+    const [extraFieldValues, setExtraFieldValues] = useState<Record<string, string>>({});
     const [loadingTypes, setLoadingTypes] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         loadBusinessTypes();
+        loadUserBusinesses();
     }, []);
 
     const loadBusinessTypes = async () => {
@@ -36,9 +45,11 @@ export default function AddServiceScreen() {
             setLoadingTypes(true);
             const response = await businessService.getTypes();
             const types = response.data || [];
-            setBusinessTypes(types);
-            if (types.length > 0) {
-                setSelectedTypeId(types[0].id);
+            // Prefer server types, but fall back to hardcoded list when empty
+            const finalTypes = types.length > 0 ? types : BUSINESS_TYPES;
+            setBusinessTypes(finalTypes);
+            if (finalTypes.length > 0) {
+                setSelectedTypeId(finalTypes[0].id);
             }
         } catch (error) {
             console.error('Failed to load business types:', error);
@@ -48,23 +59,94 @@ export default function AddServiceScreen() {
         }
     };
 
+    const loadUserBusinesses = async () => {
+        try {
+            const resp = await businessService.mine({ skip: 0, limit: 50 });
+            const items = resp.data || [];
+            setUserBusinesses(items);
+            if (items.length > 0) {
+                setSelectedBusinessId(items[0].id);
+            }
+        } catch (error) {
+            console.error('Failed to load user businesses:', error);
+        }
+    };
+
     const handleSubmit = async () => {
         if (!name.trim() || !description.trim() || !shortDescription.trim() || !selectedTypeId) {
             Alert.alert('Error', 'Please fill in all required fields');
             return;
         }
 
+        if (!selectedBusinessId) {
+            Alert.alert('Error', 'Please select a business to attach this service to');
+            return;
+        }
+
+        const parsedPrice = Number(price);
+        if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+            Alert.alert('Error', 'Please enter a valid non-negative price');
+            return;
+        }
+
         setSubmitting(true);
         try {
-            const resp = await businessService.create({
+            // Build metadata array: include open_hours and position as objects, then extra fields and arbitrary metadata
+            const metaArray: Array<Record<string, any>> = [];
+            metaArray.push({ open_hours: { start: startTime, end: endTime } });
+            metaArray.push({ position: { x: latitude || undefined, y: longitude || undefined } });
+
+            // Add extra fields based on selected type, transforming values according to field type
+            const selectedType = businessTypes.find(t => t.id === selectedTypeId)?.type;
+            const extraFieldsConfig: FieldDescriptor[] = selectedType ? (TYPE_FIELD_CONFIG[selectedType] || []) : [];
+            Object.keys(extraFieldValues).forEach((k) => {
+                const v = extraFieldValues[k];
+                if (v === undefined || v === null || v === '') return;
+
+                const fd = extraFieldsConfig.find(x => x.key === k);
+                if (!fd) {
+                    metaArray.push({ [k]: v });
+                    return;
+                }
+
+                // Transform based on descriptor
+                if (fd.type === 'number') {
+                    const num = Number(v);
+                    if (!Number.isNaN(num)) metaArray.push({ [k]: num });
+                } else if (fd.type === 'tags') {
+                    const arr = String(v).split(',').map(s => s.trim()).filter(Boolean);
+                    metaArray.push({ [k]: arr });
+                } else if (fd.type === 'json') {
+                    try {
+                        const parsed = JSON.parse(v);
+                        metaArray.push({ [k]: parsed });
+                    } catch (e) {
+                        // Fallback to raw string if JSON invalid
+                        metaArray.push({ [k]: v });
+                    }
+                } else {
+                    metaArray.push({ [k]: v });
+                }
+            });
+
+            // Add arbitrary metadata key/value pairs
+            metadataItems.forEach((m) => {
+                if (m.key && m.value) {
+                    metaArray.push({ [m.key]: m.value });
+                }
+            });
+
+            const payload = {
                 name: name.trim(),
+                price: parsedPrice,
+                bid: selectedBusinessId,
                 description: description.trim(),
                 short_description: shortDescription.trim(),
-                open_hours: { start: startTime, end: endTime },
-                type_id: selectedTypeId,
-                l_id: undefined,
-                scheduled_at: new Date().toISOString(),
-            });
+                features: [],
+                metadata: metaArray,
+            };
+
+            const resp = await servicesService.create(payload as any);
 
             if (resp.success) {
                 Alert.alert('Success', 'Service created successfully and pending admin approval', [
@@ -114,11 +196,34 @@ export default function AddServiceScreen() {
                                 style={[styles.picker, { color: text }]}
                             >
                                 {businessTypes.map((type) => (
-                                    <Picker.Item key={type.id} label={type.category} value={type.id} />
+                                    <Picker.Item key={type.id} label={type.type} value={type.id} />
                                 ))}
                             </Picker>
                         </View>
                     )}
+
+                    <Text style={[styles.label, { color: text }]}>Attach To Business *</Text>
+                    <View style={[styles.pickerContainer, { backgroundColor: background, marginTop: 8 }]}> 
+                        <Picker
+                            selectedValue={selectedBusinessId}
+                            onValueChange={(v) => setSelectedBusinessId(v)}
+                            style={[styles.picker, { color: text }]}
+                        >
+                            {userBusinesses.map((b) => (
+                                <Picker.Item key={b.id} label={b.name} value={b.id} />
+                            ))}
+                        </Picker>
+                    </View>
+
+                    <Text style={[styles.label, { color: text }]}>Price *</Text>
+                    <TextInput
+                        style={[styles.input, { backgroundColor: background, color: text }]}
+                        placeholder="Enter price"
+                        placeholderTextColor={muted}
+                        value={price}
+                        onChangeText={setPrice}
+                        keyboardType="numeric"
+                    />
 
                     <Text style={[styles.label, { color: text }]}>Short Description *</Text>
                     <TextInput
@@ -185,6 +290,115 @@ export default function AddServiceScreen() {
                         onChangeText={setLongitude}
                         keyboardType="numeric"
                     />
+
+                    {/* Dynamic configured fields for the selected business type (optional) */}
+                    <Text style={[styles.sectionTitle, { color: text, marginTop: 20 }]}>Additional Details (optional)</Text>
+                    {(() => {
+                        const selectedType = businessTypes.find(t => t.id === selectedTypeId)?.type;
+                        const extraFields: FieldDescriptor[] = selectedType ? (TYPE_FIELD_CONFIG[selectedType] || []) : [];
+                        return (
+                            <View>
+                                {extraFields.map((f) => {
+                                    // Don't re-render common mandatory fields (they are top-level inputs)
+                                    if ([ 'name', 'price', 'bid', 'description', 'features', 'short_description' ].includes(f.key)) {
+                                        return null;
+                                    }
+
+                                    const value = extraFieldValues[f.key] || '';
+
+                                    return (
+                                        <View key={f.key} style={{ marginTop: 8 }}>
+                                            <Text style={[styles.label, { color: text }]}>{f.label}</Text>
+                                            {f.type === 'longtext' || f.type === 'json' ? (
+                                                <TextInput
+                                                    style={[styles.textArea, { backgroundColor: background, color: text }]}
+                                                    placeholder={f.placeholder}
+                                                    placeholderTextColor={muted}
+                                                    value={value}
+                                                    onChangeText={(v) => setExtraFieldValues(prev => ({ ...prev, [f.key]: v }))}
+                                                    multiline
+                                                    numberOfLines={4}
+                                                />
+                                            ) : f.type === 'number' ? (
+                                                <TextInput
+                                                    style={[styles.input, { backgroundColor: background, color: text }]}
+                                                    placeholder={f.placeholder}
+                                                    placeholderTextColor={muted}
+                                                    value={value}
+                                                    onChangeText={(v) => setExtraFieldValues(prev => ({ ...prev, [f.key]: v }))}
+                                                    keyboardType="numeric"
+                                                />
+                                            ) : f.type === 'tags' ? (
+                                                <TextInput
+                                                    style={[styles.input, { backgroundColor: background, color: text }]}
+                                                    placeholder={f.placeholder}
+                                                    placeholderTextColor={muted}
+                                                    value={value}
+                                                    onChangeText={(v) => setExtraFieldValues(prev => ({ ...prev, [f.key]: v }))}
+                                                />
+                                            ) : f.type === 'select' ? (
+                                                <View style={[styles.pickerContainer, { marginTop: 8 }]}> 
+                                                    <Picker
+                                                        selectedValue={value}
+                                                        onValueChange={(v) => setExtraFieldValues(prev => ({ ...prev, [f.key]: v }))}
+                                                        style={[styles.picker, { color: text }]}
+                                                    >
+                                                        {(f.options || []).map(opt => (
+                                                            <Picker.Item key={opt.value} label={opt.label} value={opt.value} />
+                                                        ))}
+                                                    </Picker>
+                                                </View>
+                                            ) : f.type === 'datetime' ? (
+                                                <TextInput
+                                                    style={[styles.input, { backgroundColor: background, color: text }]}
+                                                    placeholder={f.placeholder || 'YYYY-MM-DDTHH:MM:SSZ'}
+                                                    placeholderTextColor={muted}
+                                                    value={value}
+                                                    onChangeText={(v) => setExtraFieldValues(prev => ({ ...prev, [f.key]: v }))}
+                                                />
+                                            ) : (
+                                                <TextInput
+                                                    style={[styles.input, { backgroundColor: background, color: text }]}
+                                                    placeholder={f.placeholder}
+                                                    placeholderTextColor={muted}
+                                                    value={value}
+                                                    onChangeText={(v) => setExtraFieldValues(prev => ({ ...prev, [f.key]: v }))}
+                                                />
+                                            )}
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                        );
+                    })()}
+
+                    {/* Metadata array: arbitrary key/value pairs */}
+                    <Text style={[styles.sectionTitle, { color: text, marginTop: 20 }]}>Metadata</Text>
+                    {metadataItems.map((m, idx) => (
+                        <View key={`${m.key}-${idx}`} style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                            <TextInput
+                                style={[styles.input, { flex: 1, backgroundColor: background, color: text }]}
+                                placeholder="key"
+                                placeholderTextColor={muted}
+                                value={m.key}
+                                onChangeText={(v) => setMetadataItems(prev => prev.map((it, i) => i === idx ? { ...it, key: v } : it))}
+                            />
+                            <TextInput
+                                style={[styles.input, { flex: 1, backgroundColor: background, color: text }]}
+                                placeholder="value"
+                                placeholderTextColor={muted}
+                                value={m.value}
+                                onChangeText={(v) => setMetadataItems(prev => prev.map((it, i) => i === idx ? { ...it, value: v } : it))}
+                            />
+                            <TouchableOpacity onPress={() => setMetadataItems(prev => prev.filter((_, i) => i !== idx))} style={{ justifyContent: 'center' }}>
+                                <IconSymbol name="trash" size={20} color={tint} />
+                            </TouchableOpacity>
+                        </View>
+                    ))}
+
+                    <TouchableOpacity onPress={() => setMetadataItems(prev => [...prev, { key: '', value: '' }])} style={{ marginTop: 12 }}>
+                        <Text style={{ color: tint, fontWeight: '600' }}>+ Add metadata field</Text>
+                    </TouchableOpacity>
                 </View>
 
                 <TouchableOpacity
