@@ -4,6 +4,7 @@ export { BaseService } from './base.service';
 export { authService, AuthService } from './auth.service';
 export { fileService, FileService } from './file.service';
 export { businessService } from './business.service';
+export { servicesService } from './services.service';
 export { locationService } from './location.service';
 export { userService } from './user.service';
 export { communityService } from './community.service';

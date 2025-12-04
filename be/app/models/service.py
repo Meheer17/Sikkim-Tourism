@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, BeforeValidator, ConfigDict
-from typing import Optional, List, Annotated
+from typing import Optional, List, Annotated, Dict, Any
 from datetime import datetime
 from bson import ObjectId
 
@@ -20,7 +20,8 @@ class ServiceBase(BaseModel):
     description: Optional[str] = None
     features: Optional[List[str]] = None
     short_description: Optional[str] = None
-    metadata: Optional[dict] = None  # tourist_entry: add externalid; cab: add vehicle type
+    # Metadata is a dynamic array of JSON objects. Each entry can be any JSON object.
+    metadata: Optional[List[Dict[str, Any]]] = None  # tourist_entry: add externalid; cab: add vehicle type
 
     @field_validator("bid")
     @classmethod
@@ -41,7 +42,7 @@ class ServiceUpdate(BaseModel):
     description: Optional[str] = None
     features: Optional[List[str]] = None
     short_description: Optional[str] = None
-    metadata: Optional[dict] = None
+    metadata: Optional[List[Dict[str, Any]]] = None
 
     @field_validator("bid")
     @classmethod
