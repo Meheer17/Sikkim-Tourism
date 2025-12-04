@@ -7,6 +7,7 @@ import { servicesService, businessService } from '@/services';
 import { ServiceModel } from '@/services/services.service';
 import { useAuth } from '@/hooks/useAuth';
 import Toast from 'react-native-toast-message';
+import { platformConfig } from '@/config/api.config';
 
 export default function ServiceDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingTop: 60,
+        paddingTop: platformConfig.isAndroid ? 50 : 20,
         paddingBottom: 16,
         gap: 12,
     },

@@ -5,6 +5,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { aiPlannerService } from '@/services/ai-planner.service';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface Question {
     id: string;
@@ -22,6 +23,15 @@ export default function AIPlanner() {
     const router = useRouter();
     const { language } = useLanguage();
     const t = getLanguageTranslations(language);
+    
+    // Theme colors
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const mutedText = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
+    const border = useThemeColor('border');
+    
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<Answer[]>([]);
     const [progressAnimation] = useState(new Animated.Value(0));
@@ -50,17 +60,17 @@ export default function AIPlanner() {
     // Show loading state
     if (loading) {
         return (
-            <View style={styles.container}>
-                <View style={styles.header}>
+            <View style={[styles.container, { backgroundColor: background }]}>
+                <View style={[styles.header, { backgroundColor: card, borderBottomColor: border }]}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <IconSymbol name="chevron.left" size={24} color="#0a7ea4" />
+                        <IconSymbol name="chevron.left" size={24} color={text} />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>{t.aiTravelPlanner || 'AI Travel Planner'}</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>{t.aiTravelPlanner || 'AI Travel Planner'}</Text>
                     <View style={{ width: 24 }} />
                 </View>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#667eea" />
-                    <Text style={styles.loadingText}>{t.loadingQuestions || 'Loading questions...'}</Text>
+                    <ActivityIndicator size="large" color={tint} />
+                    <Text style={[styles.loadingText, { color: text }]}>{t.loadingQuestions || 'Loading questions...'}</Text>
                 </View>
             </View>
         );
@@ -69,21 +79,21 @@ export default function AIPlanner() {
     // Show error state
     if (error || questions.length === 0) {
         return (
-            <View style={styles.container}>
-                <View style={styles.header}>
+            <View style={[styles.container, { backgroundColor: background }]}>
+                <View style={[styles.header, { backgroundColor: card, borderBottomColor: border }]}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <IconSymbol name="chevron.left" size={24} color="#0a7ea4" />
+                        <IconSymbol name="chevron.left" size={24} color={text} />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>{t.aiTravelPlanner || 'AI Travel Planner'}</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>{t.aiTravelPlanner || 'AI Travel Planner'}</Text>
                     <View style={{ width: 24 }} />
                 </View>
                 <View style={styles.emptyContainer}>
-                    <IconSymbol name="exclamationmark.triangle" size={64} color="#ef4444" />
-                    <Text style={styles.emptyText}>{error || t.noQuestionsAvailable || 'No questions available'}</Text>
-                    <Text style={styles.emptySubtext}>{t.checkBackLater || 'Please check back later'}</Text>
-                    <TouchableOpacity style={styles.retryButton} onPress={loadQuestions}>
-                        <IconSymbol name="arrow.clockwise" size={20} color="#667eea" />
-                        <Text style={styles.retryButtonText}>{t.retry || 'Retry'}</Text>
+                    <IconSymbol name="exclamationmark.triangle" size={64} color={mutedText} />
+                    <Text style={[styles.emptyText, { color: text }]}>{error || t.noQuestionsAvailable || 'No questions available'}</Text>
+                    <Text style={[styles.emptySubtext, { color: mutedText }]}>{t.checkBackLater || 'Please check back later'}</Text>
+                    <TouchableOpacity style={[styles.retryButton, { backgroundColor: card, borderColor: border }]} onPress={loadQuestions}>
+                        <IconSymbol name="arrow.clockwise" size={20} color={tint} />
+                        <Text style={[styles.retryButtonText, { color: tint }]}>{t.retry || 'Retry'}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -198,29 +208,29 @@ export default function AIPlanner() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: card, borderBottomColor: border }]}>
                 <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-                    <IconSymbol name="chevron.left" size={24} color="#11181C" />
+                    <IconSymbol name="chevron.left" size={24} color={text} />
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
-                    <Text style={styles.headerTitle}>{t.aiTravelPlanner || 'AI Travel Planner'}</Text>
-                    <Text style={styles.headerSubtitle}>
+                    <Text style={[styles.headerTitle, { color: text }]}>{t.aiTravelPlanner || 'AI Travel Planner'}</Text>
+                    <Text style={[styles.headerSubtitle, { color: mutedText }]}>
                         {t.question || 'Question'} {currentQuestionIndex + 1} {t.of || 'of'} {questions.length}
                     </Text>
                 </View>
                 <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
-                    <IconSymbol name="xmark" size={24} color="#687076" />
+                    <IconSymbol name="xmark" size={24} color={mutedText} />
                 </TouchableOpacity>
             </View>
 
             {/* Progress Bar */}
-            <View style={styles.progressContainer}>
-                <View style={styles.progressBar}>
-                    <View style={[styles.progressFill, { width: `${progress}%` }]} />
+            <View style={[styles.progressContainer, { backgroundColor: card, borderBottomColor: border }]}>
+                <View style={[styles.progressBar, { backgroundColor: border }]}>
+                    <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: tint }]} />
                 </View>
-                <Text style={styles.progressText}>{Math.round(progress)}% {t.complete || 'Complete'}</Text>
+                <Text style={[styles.progressText, { color: tint }]}>{Math.round(progress)}% {t.complete || 'Complete'}</Text>
             </View>
 
             {/* Question Content */}
@@ -229,13 +239,13 @@ export default function AIPlanner() {
                 contentContainerStyle={styles.contentContainer}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={styles.questionCard}>
-                    <View style={styles.questionIconContainer}>
-                        <IconSymbol name="sparkles" size={32} color="#667eea" />
+                <View style={[styles.questionCard, { backgroundColor: card }]}>
+                    <View style={[styles.questionIconContainer, { backgroundColor: background }]}>
+                        <IconSymbol name="sparkles" size={32} color={tint} />
                     </View>
-                    <Text style={styles.questionText}>{currentQuestion.question}</Text>
+                    <Text style={[styles.questionText, { color: text }]}>{currentQuestion.question}</Text>
                     {currentQuestion.type === 'multiple' && (
-                        <Text style={styles.multipleHint}>{t.selectAllApply || 'Select all that apply'}</Text>
+                        <Text style={[styles.multipleHint, { color: tint }]}>{t.selectAllApply || 'Select all that apply'}</Text>
                     )}
                 </View>
 
@@ -246,7 +256,8 @@ export default function AIPlanner() {
                             key={index}
                             style={[
                                 styles.optionButton,
-                                isOptionSelected(option) && styles.optionButtonSelected,
+                                { backgroundColor: card, borderColor: border },
+                                isOptionSelected(option) && { borderColor: tint, backgroundColor: background },
                             ]}
                             onPress={() => handleOptionSelect(option)}
                             activeOpacity={0.7}
@@ -255,13 +266,14 @@ export default function AIPlanner() {
                                 <Text
                                     style={[
                                         styles.optionText,
-                                        isOptionSelected(option) && styles.optionTextSelected,
+                                        { color: text },
+                                        isOptionSelected(option) && { color: tint },
                                     ]}
                                 >
                                     {option}
                                 </Text>
                                 {isOptionSelected(option) && (
-                                    <View style={styles.checkmark}>
+                                    <View style={[styles.checkmark, { backgroundColor: tint }]}>
                                         <IconSymbol name="checkmark" size={16} color="#fff" />
                                     </View>
                                 )}
@@ -272,7 +284,7 @@ export default function AIPlanner() {
 
                 {/* Navigation Button */}
                 <TouchableOpacity
-                    style={[styles.nextButton, !canProceed() && styles.nextButtonDisabled]}
+                    style={[styles.nextButton, { backgroundColor: tint }, !canProceed() && styles.nextButtonDisabled]}
                     onPress={handleNext}
                     disabled={!canProceed()}
                 >
