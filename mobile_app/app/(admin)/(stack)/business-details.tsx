@@ -2,24 +2,31 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export default function BusinessDetailsScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
 
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
+
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
                 <TouchableOpacity
                     style={styles.backButton}
                     onPress={() => router.back()}
                 >
-                    <IconSymbol name="chevron.left" size={24} color="#11181C" />
+                    <IconSymbol name="chevron.left" size={24} color={text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Business Details</Text>
+                <Text style={[styles.headerTitle, { color: text }]}>Business Details</Text>
                 <TouchableOpacity style={styles.editButton}>
-                    <IconSymbol name="pencil" size={20} color="#0a7ea4" />
+                    <IconSymbol name="pencil" size={20} color={tint} />
                 </TouchableOpacity>
             </View>
 
@@ -29,12 +36,12 @@ export default function BusinessDetailsScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.placeholderContainer}>
-                    <IconSymbol name="building.2.fill" size={64} color="#0a7ea4" />
-                    <Text style={styles.placeholderTitle}>Business Details</Text>
-                    <Text style={styles.placeholderText}>
+                    <IconSymbol name="building.2.fill" size={64} color={tint} />
+                    <Text style={[styles.placeholderTitle, { color: text }]}>Business Details</Text>
+                    <Text style={[styles.placeholderText, { color: muted }]}>
                         Detailed view with business information, analytics, and management options
                     </Text>
-                    <Text style={styles.placeholderId}>Business ID: {params.id}</Text>
+                    <Text style={[styles.placeholderId, { color: muted }]}>Business ID: {params.id}</Text>
                 </View>
             </ScrollView>
         </View>
@@ -44,7 +51,6 @@ export default function BusinessDetailsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
     },
     header: {
         flexDirection: 'row',
@@ -53,9 +59,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingTop: 60,
         paddingBottom: 16,
-        backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
     },
     backButton: {
         width: 40,
@@ -66,7 +70,6 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#11181C',
     },
     editButton: {
         width: 40,
@@ -88,20 +91,17 @@ const styles = StyleSheet.create({
     placeholderTitle: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#11181C',
         marginTop: 20,
         marginBottom: 12,
     },
     placeholderText: {
         fontSize: 14,
-        color: '#687076',
         textAlign: 'center',
         marginBottom: 20,
         paddingHorizontal: 40,
     },
     placeholderId: {
         fontSize: 12,
-        color: '#9ca3af',
         fontFamily: 'monospace',
     },
 });

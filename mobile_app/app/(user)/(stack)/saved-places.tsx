@@ -1,18 +1,23 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function SavedPlacesScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <View style={styles.header}>
                 <IconSymbol name="bookmark.fill" size={48} color="#0a7ea4" />
-                <Text style={styles.title}>Saved Places</Text>
-                <Text style={styles.subtitle}>Places you want to visit</Text>
+                <Text style={styles.title}>{t.mySavedPlaces}</Text>
+                <Text style={styles.subtitle}>{t.savedPlacesSubtitle}</Text>
             </View>
 
             <View style={styles.placeholder}>
-                <Text style={styles.placeholderText}>Saved places coming soon...</Text>
+                <Text style={styles.placeholderText}>{t.savedPlacesComingSoon}</Text>
             </View>
         </ScrollView>
     );

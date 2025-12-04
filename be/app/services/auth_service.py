@@ -35,6 +35,16 @@ class AuthService:
     
     async def signin(self, login_data: LoginRequest) -> Token:
         """Login user and return access token (7 days)"""
+        # First check if user exists
+        user_exists = await user_service.get_by_email(login_data.email)
+        
+        if not user_exists:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not registered. Please sign up first.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
         user = await user_service.authenticate(login_data.email, login_data.password)
         
         if not user:

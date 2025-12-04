@@ -3,27 +3,35 @@ export { apiClient } from './api.client';
 export { BaseService } from './base.service';
 export { authService, AuthService } from './auth.service';
 export { fileService, FileService } from './file.service';
+export { businessService } from './business.service';
+export { locationService } from './location.service';
+export { userService } from './user.service';
+export { communityService } from './community.service';
+export { messageService } from './message.service';
+export { ttsService } from './tts.service';
+export { aiPlannerService } from './ai-planner.service';
+export { aiChatService } from './ai-chat.service';
 
 // Re-export types for convenience
 export type {
-    ApiResponse,
-    ApiError,
-    LoginRequest,
-    RegisterRequest,
-    AuthResponse,
-    User,
-    UserRole,
-    FileUploadRequest,
-    FileUploadResponse,
-    GetListRequest,
-    ListResponse,
-    CreateRequest,
-    UpdateRequest,
-    DeleteRequest,
-    PaginationMeta,
-    ValidationError,
-    RequestConfig,
-    ResponseConfig,
+  ApiResponse,
+  ApiError,
+  LoginRequest,
+  RegisterRequest,
+  AuthResponse,
+  User,
+  UserRole,
+  FileUploadRequest,
+  FileUploadResponse,
+  GetListRequest,
+  ListResponse,
+  CreateRequest,
+  UpdateRequest,
+  DeleteRequest,
+  PaginationMeta,
+  ValidationError,
+  RequestConfig,
+  ResponseConfig,
 } from '../types/api.types';
 
 // Import BaseService class to use in factory
@@ -32,12 +40,12 @@ import { BaseService as BaseServiceClass } from './base.service';
 // Service factory function for creating custom services
 // Note: BaseService is abstract, so you'll need to extend it in your own service class
 export function createService<T>(baseUrl: string) {
-    // Create an anonymous class that extends BaseService
-    return new (class extends BaseServiceClass<T> {
-        constructor() {
-            super(baseUrl);
-        }
-    })();
+  // Create an anonymous class that extends BaseService
+  return new (class extends BaseServiceClass<T> {
+    constructor() {
+      super(baseUrl);
+    }
+  })();
 }
 
 // Example of how to create specific services

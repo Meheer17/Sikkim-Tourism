@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { aiPlannerService } from '@/services/ai-planner.service';
+import type { TravelPlan as TravelPlanType, Answer } from '@/services/ai-planner.service';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 interface TravelPlan {
     id: string;
@@ -12,87 +16,87 @@ interface TravelPlan {
     highlights: string[];
     activities: string[];
     accommodation: string;
-    bestFor: string;
+    best_for: string;
     rating: number;
-    imageColor: string;
+    image_color: string;
 }
-
-// Mock travel plans based on answers
-const MOCK_TRAVEL_PLANS: TravelPlan[] = [
-    {
-        id: '1',
-        title: 'Himalayan Adventure Trek',
-        duration: '5 Days / 4 Nights',
-        budget: '₹25,000 - ₹30,000',
-        description: 'An exhilarating journey through the majestic Himalayan ranges with breathtaking views and cultural experiences.',
-        highlights: ['Tsomgo Lake Visit', 'Nathula Pass Trek', 'Rumtek Monastery', 'Local Village Stay'],
-        activities: ['Trekking', 'Photography', 'Cultural Tours', 'Local Cuisine'],
-        accommodation: 'Mid-range Hotels & Homestays',
-        bestFor: 'Adventure seekers and nature lovers',
-        rating: 4.8,
-        imageColor: '#10b981',
-    },
-    {
-        id: '2',
-        title: 'Cultural Heritage Experience',
-        duration: '4 Days / 3 Nights',
-        budget: '₹18,000 - ₹22,000',
-        description: 'Immerse yourself in the rich Buddhist culture and heritage of Sikkim with monastery visits and traditional experiences.',
-        highlights: ['Enchey Monastery', 'Rumtek Monastery', 'Namgyal Institute', 'Traditional Dance Show'],
-        activities: ['Monastery Tours', 'Cultural Workshops', 'Local Cuisine', 'Photography'],
-        accommodation: 'Boutique Hotels',
-        bestFor: 'Culture enthusiasts and spiritual seekers',
-        rating: 4.6,
-        imageColor: '#f59e0b',
-    },
-    {
-        id: '3',
-        title: 'Nature & Wellness Retreat',
-        duration: '3 Days / 2 Nights',
-        budget: '₹15,000 - ₹20,000',
-        description: 'Rejuvenate your mind and body with serene natural landscapes, peaceful environments, and wellness activities.',
-        highlights: ['Botanical Gardens', 'Ridge Park', 'Hanuman Tok', 'Spa & Wellness'],
-        activities: ['Nature Walks', 'Meditation', 'Spa Treatments', 'Photography'],
-        accommodation: 'Wellness Resorts',
-        bestFor: 'Relaxation seekers and solo travelers',
-        rating: 4.7,
-        imageColor: '#8b5cf6',
-    },
-    {
-        id: '4',
-        title: 'Family Fun Package',
-        duration: '6 Days / 5 Nights',
-        budget: '₹35,000 - ₹45,000',
-        description: 'Perfect family vacation with kid-friendly activities, comfortable stays, and memorable experiences for all ages.',
-        highlights: ['Cable Car Ride', 'Flower Show', 'Zoo Visit', 'MG Marg Shopping'],
-        activities: ['Sightseeing', 'Shopping', 'Family Activities', 'Local Cuisine'],
-        accommodation: 'Family-friendly Resorts',
-        bestFor: 'Families with children',
-        rating: 4.5,
-        imageColor: '#ef4444',
-    },
-    {
-        id: '5',
-        title: 'Luxury Mountain Escape',
-        duration: '7 Days / 6 Nights',
-        budget: '₹55,000 - ₹75,000',
-        description: 'Indulge in luxury with premium accommodations, private tours, fine dining, and exclusive experiences.',
-        highlights: ['Private Helicopter Tour', 'Luxury Resort Stay', 'Fine Dining', 'Spa & Wellness'],
-        activities: ['Private Tours', 'Gourmet Experiences', 'Spa Treatments', 'Photography'],
-        accommodation: 'Luxury 5-Star Resorts',
-        bestFor: 'Luxury travelers and honeymooners',
-        rating: 4.9,
-        imageColor: '#0ea5e9',
-    },
-];
 
 export default function AIPlannerResults() {
     const router = useRouter();
     const params = useLocalSearchParams();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+    const [travelPlans, setTravelPlans] = useState<TravelPlan[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // In real implementation, process answers to generate personalized plans
-    // const answers = params.answers ? JSON.parse(params.answers as string) : [];
+    useEffect(() => {
+        loadPlans();
+    }, []);
+
+    const loadPlans = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Check if plans are already provided (from chat flow)
+            if (params.plans) {
+                const plansData = JSON.parse(params.plans as string);
+                const plans: TravelPlan[] = plansData.map((plan: any) => ({
+                    id: plan.id,
+                    title: plan.title,
+                    duration: plan.duration,
+                    budget: plan.budget,
+                    description: plan.description,
+                    highlights: plan.highlights,
+                    activities: plan.activities,
+                    accommodation: plan.accommodation,
+                    best_for: plan.best_for,
+                    rating: plan.rating,
+                    image_color: plan.image_color,
+                }));
+                setTravelPlans(plans);
+                setLoading(false);
+                return;
+            }
+
+            // Otherwise, generate from answers (legacy flow)
+            const answersJson = params.answers as string;
+            if (!answersJson) {
+                setError('No plans or answers provided');
+                setLoading(false);
+                return;
+            }
+
+            const answers: Answer[] = JSON.parse(answersJson);
+            
+            // Call AI planner service
+            const response = await aiPlannerService.generateTravelPlans(answers);
+            
+            // Map to local format
+            const plans: TravelPlan[] = response.plans.map(plan => ({
+                id: plan.id,
+                title: plan.title,
+                duration: plan.duration,
+                budget: plan.budget,
+                description: plan.description,
+                highlights: plan.highlights,
+                activities: plan.activities,
+                accommodation: plan.accommodation,
+                best_for: plan.best_for,
+                rating: plan.rating,
+                image_color: plan.image_color,
+            }));
+
+            setTravelPlans(plans);
+        } catch (err) {
+            console.error('Error loading travel plans:', err);
+            setError('Failed to load travel plans. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handlePlanSelect = (planId: string) => {
         setSelectedPlan(planId);
@@ -112,32 +116,55 @@ export default function AIPlannerResults() {
                     <IconSymbol name="chevron.left" size={24} color="#11181C" />
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
-                    <Text style={styles.headerTitle}>Your Travel Plans</Text>
-                    <Text style={styles.headerSubtitle}>AI-powered recommendations</Text>
+                    <Text style={styles.headerTitle}>{t.yourTravelPlans || 'Your Travel Plans'}</Text>
+                    <Text style={styles.headerSubtitle}>{t.aiPoweredRecommendations || 'AI-powered recommendations'}</Text>
                 </View>
                 <View style={styles.aiIconBadge}>
                     <IconSymbol name="sparkles" size={20} color="#667eea" />
                 </View>
             </View>
 
-            {/* Results Info */}
-            <View style={styles.infoCard}>
-                <IconSymbol name="checkmark.circle.fill" size={32} color="#10b981" />
-                <View style={styles.infoText}>
-                    <Text style={styles.infoTitle}>Plans Ready!</Text>
-                    <Text style={styles.infoSubtitle}>
-                        We've created {MOCK_TRAVEL_PLANS.length} personalized travel plans based on your preferences
-                    </Text>
+            {loading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#667eea" />
+                    <Text style={styles.loadingText}>{t.generatingPlans || 'Generating your personalized travel plans...'}</Text>
+                    <Text style={styles.loadingSubtext}>{t.thisMayTakeMoment || 'This may take a moment'}</Text>
                 </View>
-            </View>
+            ) : error || travelPlans.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                    <IconSymbol name="exclamationmark.triangle" size={64} color="#ef4444" />
+                    <Text style={styles.emptyText}>{error || (t.noTravelPlansAvailable || 'No Travel Plans Available')}</Text>
+                    <Text style={styles.emptySubtext}>
+                        {error ? (t.pleaseTryAgain || 'Please try again.') : (t.couldntGeneratePlans || "We couldn't generate travel plans at this time.")}
+                    </Text>
+                    <TouchableOpacity
+                        style={styles.retryButton}
+                        onPress={() => router.back()}
+                    >
+                        <IconSymbol name="arrow.counterclockwise" size={20} color="#667eea" />
+                        <Text style={styles.retryButtonText}>{t.tryAgain || 'Try Again'}</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : (
+                <>
+                    {/* Results Info */}
+                    <View style={styles.infoCard}>
+                        <IconSymbol name="checkmark.circle.fill" size={32} color="#10b981" />
+                        <View style={styles.infoText}>
+                            <Text style={styles.infoTitle}>{t.plansReady || 'Plans Ready!'}</Text>
+                            <Text style={styles.infoSubtitle}>
+                                {t.createdPlansCount?.replace('{count}', travelPlans.length.toString()) || `We've created ${travelPlans.length} personalized travel plans based on your preferences`}
+                            </Text>
+                        </View>
+                    </View>
 
-            {/* Plans List */}
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                {MOCK_TRAVEL_PLANS.map((plan, index) => (
+                    {/* Plans List */}
+                    <ScrollView
+                        style={styles.scrollView}
+                        contentContainerStyle={styles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {travelPlans.map((plan, index) => (
                     <TouchableOpacity
                         key={plan.id}
                         style={[
@@ -148,10 +175,10 @@ export default function AIPlannerResults() {
                         activeOpacity={0.8}
                     >
                         {/* Plan Header */}
-                        <View style={[styles.planHeader, { backgroundColor: plan.imageColor }]}>
+                        <View style={[styles.planHeader, { backgroundColor: plan.image_color }]}>
                             <View style={styles.planHeaderContent}>
                                 <View style={styles.planBadge}>
-                                    <Text style={styles.planBadgeText}>Plan {index + 1}</Text>
+                                    <Text style={styles.planBadgeText}>{t.plan || 'Plan'} {index + 1}</Text>
                                 </View>
                                 <View style={styles.ratingContainer}>
                                     <IconSymbol name="star.fill" size={16} color="#fff" />
@@ -205,7 +232,7 @@ export default function AIPlannerResults() {
                             {/* Best For */}
                             <View style={styles.bestForContainer}>
                                 <IconSymbol name="person.2.fill" size={16} color="#667eea" />
-                                <Text style={styles.bestForText}>Best for: {plan.bestFor}</Text>
+                                <Text style={styles.bestForText}>Best for: {plan.best_for}</Text>
                             </View>
 
                             {/* Action Button */}
@@ -218,17 +245,19 @@ export default function AIPlannerResults() {
                             </TouchableOpacity>
                         </View>
                     </TouchableOpacity>
-                ))}
+                        ))}
 
-                {/* Retry Button */}
-                <TouchableOpacity
-                    style={styles.retryButton}
-                    onPress={() => router.back()}
-                >
-                    <IconSymbol name="arrow.counterclockwise" size={20} color="#667eea" />
-                    <Text style={styles.retryButtonText}>Answer Questions Again</Text>
-                </TouchableOpacity>
-            </ScrollView>
+                        {/* Retry Button */}
+                        <TouchableOpacity
+                            style={styles.retryButton}
+                            onPress={() => router.back()}
+                        >
+                            <IconSymbol name="arrow.counterclockwise" size={20} color="#667eea" />
+                            <Text style={styles.retryButtonText}>Answer Questions Again</Text>
+                        </TouchableOpacity>
+                    </ScrollView>
+                </>
+            )}
         </View>
     );
 }
@@ -464,6 +493,44 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '700',
         color: '#fff',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 40,
+    },
+    emptyText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#687076',
+        marginTop: 16,
+    },
+    emptySubtext: {
+        fontSize: 14,
+        color: '#9ca3af',
+        marginTop: 8,
+        textAlign: 'center',
+        marginBottom: 24,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 40,
+    },
+    loadingText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#667eea',
+        marginTop: 20,
+        textAlign: 'center',
+    },
+    loadingSubtext: {
+        fontSize: 14,
+        color: '#9ca3af',
+        marginTop: 8,
+        textAlign: 'center',
     },
     retryButton: {
         flexDirection: 'row',

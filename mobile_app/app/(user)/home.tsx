@@ -5,48 +5,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
 import { useThemeColor } from '@/hooks/use-theme-color';
-
-// Mock data - replace with actual API call
-const MOCK_SERVICES: Service[] = [
-    {
-        id: '1',
-        name: 'Mountain Trekking Guide',
-        description: 'Professional trekking guide for Himalayan trails',
-        price: 2500,
-        category: 'Adventure',
-        icon: 'mountain.2.fill',
-    },
-    {
-        id: '2',
-        name: 'Local Cab Service',
-        description: '24/7 available cab service for local travel',
-        price: 800,
-        category: 'Transport',
-        icon: 'car.fill',
-    },
-    {
-        id: '3',
-        name: 'Museum Entry Pass',
-        description: 'All-day access to heritage museums',
-        price: 150,
-        category: 'Culture',
-        icon: 'building.columns.fill',
-    },
-    {
-        id: '4',
-        name: 'River Rafting',
-        description: 'Thrilling river rafting experience',
-        price: 1500,
-        category: 'Adventure',
-        icon: 'water.waves',
-    },
-];
+import { businessService } from '@/services';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 export default function HomeScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [services, setServices] = useState<Service[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const background = useThemeColor('background');
     const card = useThemeColor('card');
     const text = useThemeColor('text');
@@ -58,12 +27,42 @@ export default function HomeScreen() {
     }, []);
 
     const loadServices = async () => {
-        // TODO: Replace with actual API call
-        // const response = await apiClient.get('/services');
-        // setServices(response.data.slice(0, 4));
+        try {
+            const response = await businessService.list();
+            const businesses = response.data || [];
 
-        // For now, use mock data
-        setServices(MOCK_SERVICES);
+            // Map businesses to Service format and limit to 4 for home screen
+            const mappedServices: Service[] = businesses.slice(0, 4).map((biz: any, index: number) => ({
+                id: biz._id || `service-${index}`,
+                name: biz.name,
+                description: biz.decription || biz.description || 'Quality service provider',
+                price: biz.price || Math.floor(Math.random() * 3000) + 500,
+                category: biz.type || 'Other',
+                icon: getCategoryIcon(biz.type),
+            }));
+
+            setServices(mappedServices);
+        } catch (error: any) {
+            console.error('Failed to load services:', error);
+            // Handle 403 Forbidden gracefully - user might not have access yet
+            if (error?.response?.status === 403) {
+                console.warn('Access forbidden on home screen - user may not be approved yet');
+                setServices([]); // Set empty services instead of crashing
+            } else {
+                setServices([]);
+            }
+        }
+    };
+
+    const getCategoryIcon = (type?: string): any => {
+        const iconMap: Record<string, string> = {
+            'Adventure': 'mountain.2.fill',
+            'Transport': 'car.fill',
+            'Culture': 'building.columns.fill',
+            'Food': 'fork.knife',
+            'Tour': 'map.fill',
+        };
+        return iconMap[type || 'Other'] || 'star.fill';
     };
 
     const onRefresh = async () => {
@@ -90,8 +89,8 @@ export default function HomeScreen() {
                     { paddingTop: Math.max(insets.top, 20) }
                 ]}
                 refreshControl={
-                    <RefreshControl 
-                        refreshing={refreshing} 
+                    <RefreshControl
+                        refreshing={refreshing}
                         onRefresh={onRefresh}
                         progressViewOffset={insets.top + 20}
                     />
@@ -100,10 +99,10 @@ export default function HomeScreen() {
                 {/* Header */}
                 <View style={styles.header}>
                     <View>
-                        <Text style={[styles.greeting, { color: text }]}>Welcome Back!</Text>
-                        <Text style={[styles.subtitle, { color: muted }]}>Explore amazing services</Text>
+                        <Text style={[styles.greeting, { color: text }]}>{t.welcomeBack || 'Welcome Back!'}</Text>
+                        <Text style={[styles.subtitle, { color: muted }]}>{t.explore_places || 'Explore amazing services'}</Text>
                     </View>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.profileButton, { backgroundColor: card }]}
                         onPress={() => router.push('/(user)/profile' as any)}
                     >
@@ -116,12 +115,12 @@ export default function HomeScreen() {
                     <View style={[styles.statCard, { backgroundColor: card }]}>
                         <IconSymbol name="ticket.fill" size={24} color={tint} />
                         <Text style={[styles.statValue, { color: text }]}>12</Text>
-                        <Text style={[styles.statLabel, { color: muted }]}>Bookings</Text>
+                        <Text style={[styles.statLabel, { color: muted }]}>{t.bookings || 'Bookings'}</Text>
                     </View>
                     <View style={[styles.statCard, { backgroundColor: card }]}>
                         <IconSymbol name="heart.fill" size={24} color="#ef4444" />
                         <Text style={[styles.statValue, { color: text }]}>8</Text>
-                        <Text style={[styles.statLabel, { color: muted }]}>Favorites</Text>
+                        <Text style={[styles.statLabel, { color: muted }]}>{t.myFavorites || 'Favorites'}</Text>
                     </View>
                     <View style={[styles.statCard, { backgroundColor: card }]}>
                         <IconSymbol name="mappin.circle.fill" size={24} color="#10b981" />
@@ -133,7 +132,7 @@ export default function HomeScreen() {
                 {/* AI Planner Banner */}
                 <TouchableOpacity
                     style={styles.aiPlannerBanner}
-                    onPress={() => router.push('/(user)/(stack)/ai-planner' as any)}
+                    onPress={() => router.push('/(user)/(stack)/ai-planner-chat' as any)}
                     activeOpacity={0.8}
                 >
                     <View style={styles.aiPlannerLeft}>
@@ -141,9 +140,9 @@ export default function HomeScreen() {
                             <IconSymbol name="sparkles" size={32} color="#fff" />
                         </View>
                         <View style={styles.aiPlannerText}>
-                            <Text style={styles.aiPlannerTitle}>Plan with AI</Text>
+                            <Text style={styles.aiPlannerTitle}>Chat with AI Planner</Text>
                             <Text style={styles.aiPlannerSubtitle}>
-                                Get personalized travel recommendations
+                                Natural conversation for personalized trips
                             </Text>
                         </View>
                     </View>
@@ -153,28 +152,29 @@ export default function HomeScreen() {
                 {/* Services Section */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={[styles.sectionTitle, { color: text }]}>Popular Services</Text>
+                        <Text style={[styles.sectionTitle, { color: text }]}>{t.popular_services || 'Popular Services'}</Text>
                         <TouchableOpacity onPress={handleViewAllServices}>
-                            <Text style={[styles.viewAllText, { color: tint }]}>View All</Text>
+                            <Text style={[styles.viewAllText, { color: tint }]}>{t.viewAll || 'View All'}</Text>
                         </TouchableOpacity>
                     </View>
 
                     {services.map((service) => (
-                        <ServiceCard
-                            key={service.id}
-                            service={service}
-                            onPress={handleServicePress}
-                        />
+                        <React.Fragment key={service.id}>
+                            <ServiceCard
+                                service={service}
+                                onPress={handleServicePress}
+                            />
+                        </React.Fragment>
                     ))}
                 </View>
 
                 {/* Featured Banner */}
-                <View style={[styles.banner, { backgroundColor: card }] }>
+                <View style={[styles.banner, { backgroundColor: card }]}>
                     <View style={styles.bannerContent}>
                         <IconSymbol name="sparkles" size={32} color="#fbbf24" />
                         <View style={styles.bannerText}>
-                            <Text style={[styles.bannerTitle, { color: text }]}>Special Offer!</Text>
-                            <Text style={[styles.bannerSubtitle, { color: muted }]}>Get 20% off on first booking</Text>
+                            <Text style={[styles.bannerTitle, { color: text }]}>{t.specialOffer || 'Special Offer!'}</Text>
+                            <Text style={[styles.bannerSubtitle, { color: muted }]}>{t.getDiscount || 'Get 20% off on first booking'}</Text>
                         </View>
                     </View>
                 </View>

@@ -123,8 +123,38 @@ class ApiClient {
         }
         // Handle 401 Unauthorized
         else if (error.response?.status === 401) {
-            errorMessage = respData?.detail || 'Authentication failed. Please check your credentials.';
-            errorTitle = 'Authentication Error';
+            const detail = respData?.detail || '';
+            // Check if it's a "user not found" or "not registered" error
+            if (detail.toLowerCase().includes('user not found') || 
+                detail.toLowerCase().includes('not registered') ||
+                detail.toLowerCase().includes('no user found') ||
+                detail.toLowerCase().includes('does not exist')) {
+                errorMessage = 'This account is not registered. Please sign up first.';
+                errorTitle = 'Account Not Found';
+            } else if (detail.toLowerCase().includes('incorrect') || 
+                       detail.toLowerCase().includes('invalid credentials') ||
+                       detail.toLowerCase().includes('wrong password')) {
+                errorMessage = 'Incorrect email or password. Please try again.';
+                errorTitle = 'Invalid Credentials';
+            } else {
+                errorMessage = detail || 'Authentication failed. Please check your credentials.';
+                errorTitle = 'Authentication Error';
+            }
+        }
+        // Handle 403 Forbidden
+        else if (error.response?.status === 403) {
+            // Check if it's an approval-related error
+            const detail = respData?.detail || '';
+            if (detail.toLowerCase().includes('approval') || detail.toLowerCase().includes('pending')) {
+                errorMessage = detail;
+                errorTitle = 'Account Pending Approval';
+            } else {
+                errorMessage = respData?.detail || 'You do not have permission to access this resource.';
+                errorTitle = 'Access Denied';
+            }
+            if (__DEV__ && appConfig.api.enableLogs) {
+                console.warn('⚠️ 403 Forbidden:', detail);
+            }
         }
         // Handle 404 Not Found
         else if (error.response?.status === 404) {
@@ -165,8 +195,11 @@ class ApiClient {
         if (__DEV__ && appConfig.api.enableLogs) {
             console.warn('❌ API Error:', {
                 status: error.response?.status,
+                statusText: error.response?.statusText,
                 message: errorMessage,
                 url: error.config?.url,
+                responseData: error.response?.data,
+                headers: error.response?.headers,
             });
         }
     }

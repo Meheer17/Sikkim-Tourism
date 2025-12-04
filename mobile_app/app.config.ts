@@ -18,6 +18,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ios: {
         supportsTablet: true,
         bundleIdentifier: 'com.yourdomain.tourist',
+        infoPlist: {
+            NSMotionUsageDescription: 'This app uses device motion to provide an immersive 360-degree experience.',
+        },
     },
     android: {
         icon: './assets/images/favicon.png',
@@ -55,7 +58,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     extra: {
         // Environment variables accessible in the app
-        API_BASE_URL: process.env.API_BASE_URL || 'https://api.yourdomain.com/v1',
+        API_BASE_URL: process.env.API_BASE_URL || 'https://10.0.0.10:8000/v1',
         API_TIMEOUT: process.env.API_TIMEOUT || '10000',
         DEBUG_API_LOGS: process.env.DEBUG_API_LOGS || 'false',
         MAX_FILE_SIZE: process.env.MAX_FILE_SIZE || '10485760',

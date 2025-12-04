@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { aiPlannerService } from '@/services/ai-planner.service';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 interface Question {
     id: string;
@@ -15,60 +18,80 @@ interface Answer {
     answer: string | string[];
 }
 
-// Mock questions from server
-const MOCK_QUESTIONS: Question[] = [
-    {
-        id: '1',
-        question: 'What type of traveler are you?',
-        type: 'single',
-        options: ['Adventure Seeker', 'Culture Enthusiast', 'Nature Lover', 'Relaxation Focused', 'Photography Buff'],
-    },
-    {
-        id: '2',
-        question: 'What is your preferred travel duration?',
-        type: 'single',
-        options: ['1-2 days', '3-5 days', '1 week', '2 weeks', 'Flexible'],
-    },
-    {
-        id: '3',
-        question: 'What is your budget range?',
-        type: 'single',
-        options: ['Budget (₹5k-15k)', 'Moderate (₹15k-30k)', 'Comfortable (₹30k-50k)', 'Luxury (₹50k+)'],
-    },
-    {
-        id: '4',
-        question: 'Which activities interest you? (Select multiple)',
-        type: 'multiple',
-        options: ['Trekking', 'Monastery Visits', 'River Rafting', 'Cable Car Rides', 'Local Cuisine', 'Shopping', 'Photography'],
-    },
-    {
-        id: '5',
-        question: 'What is your preferred accommodation?',
-        type: 'single',
-        options: ['Budget Hotels', 'Mid-range Hotels', 'Luxury Resorts', 'Homestays', 'No Preference'],
-    },
-    {
-        id: '6',
-        question: 'When do you plan to travel?',
-        type: 'single',
-        options: ['This Month', 'Next Month', 'Next 3 Months', 'Next 6 Months', 'Not Sure Yet'],
-    },
-    {
-        id: '7',
-        question: 'Who are you traveling with?',
-        type: 'single',
-        options: ['Solo', 'Partner/Spouse', 'Family', 'Friends', 'Group Tour'],
-    },
-];
-
 export default function AIPlanner() {
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<Answer[]>([]);
     const [progressAnimation] = useState(new Animated.Value(0));
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const currentQuestion = MOCK_QUESTIONS[currentQuestionIndex];
-    const progress = ((currentQuestionIndex + 1) / MOCK_QUESTIONS.length) * 100;
+    useEffect(() => {
+        loadQuestions();
+    }, []);
+
+    const loadQuestions = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const fetchedQuestions = await aiPlannerService.getQuestions();
+            setQuestions(fetchedQuestions);
+        } catch (err) {
+            console.error('Error loading questions:', err);
+            setError('Failed to load questions. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Show loading state
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <IconSymbol name="chevron.left" size={24} color="#0a7ea4" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>{t.aiTravelPlanner || 'AI Travel Planner'}</Text>
+                    <View style={{ width: 24 }} />
+                </View>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#667eea" />
+                    <Text style={styles.loadingText}>{t.loadingQuestions || 'Loading questions...'}</Text>
+                </View>
+            </View>
+        );
+    }
+
+    // Show error state
+    if (error || questions.length === 0) {
+        return (
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <IconSymbol name="chevron.left" size={24} color="#0a7ea4" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>{t.aiTravelPlanner || 'AI Travel Planner'}</Text>
+                    <View style={{ width: 24 }} />
+                </View>
+                <View style={styles.emptyContainer}>
+                    <IconSymbol name="exclamationmark.triangle" size={64} color="#ef4444" />
+                    <Text style={styles.emptyText}>{error || t.noQuestionsAvailable || 'No questions available'}</Text>
+                    <Text style={styles.emptySubtext}>{t.checkBackLater || 'Please check back later'}</Text>
+                    <TouchableOpacity style={styles.retryButton} onPress={loadQuestions}>
+                        <IconSymbol name="arrow.clockwise" size={20} color="#667eea" />
+                        <Text style={styles.retryButtonText}>{t.retry || 'Retry'}</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    }
+
+    const currentQuestion = questions[currentQuestionIndex];
+    const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
     const handleOptionSelect = (option: string) => {
         const existingAnswerIndex = answers.findIndex(a => a.questionId === currentQuestion.id);
@@ -140,18 +163,23 @@ export default function AIPlanner() {
     };
 
     const handleNext = () => {
-        if (currentQuestionIndex < MOCK_QUESTIONS.length - 1) {
+        if (currentQuestionIndex < questions.length - 1) {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
             Animated.timing(progressAnimation, {
-                toValue: ((currentQuestionIndex + 2) / MOCK_QUESTIONS.length) * 100,
+                toValue: ((currentQuestionIndex + 2) / questions.length) * 100,
                 duration: 300,
                 useNativeDriver: false,
             }).start();
         } else {
-            // Navigate to results
+            // Navigate to results with answers
+            const apiAnswers = answers.map(a => ({
+                question_id: a.questionId,
+                answer: a.answer
+            }));
+            
             router.push({
                 pathname: '/(user)/(stack)/ai-planner-results' as any,
-                params: { answers: JSON.stringify(answers) },
+                params: { answers: JSON.stringify(apiAnswers) },
             });
         }
     };
@@ -160,7 +188,7 @@ export default function AIPlanner() {
         if (currentQuestionIndex > 0) {
             setCurrentQuestionIndex(currentQuestionIndex - 1);
             Animated.timing(progressAnimation, {
-                toValue: (currentQuestionIndex / MOCK_QUESTIONS.length) * 100,
+                toValue: (currentQuestionIndex / questions.length) * 100,
                 duration: 300,
                 useNativeDriver: false,
             }).start();
@@ -177,9 +205,9 @@ export default function AIPlanner() {
                     <IconSymbol name="chevron.left" size={24} color="#11181C" />
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
-                    <Text style={styles.headerTitle}>AI Travel Planner</Text>
+                    <Text style={styles.headerTitle}>{t.aiTravelPlanner || 'AI Travel Planner'}</Text>
                     <Text style={styles.headerSubtitle}>
-                        Question {currentQuestionIndex + 1} of {MOCK_QUESTIONS.length}
+                        {t.question || 'Question'} {currentQuestionIndex + 1} {t.of || 'of'} {questions.length}
                     </Text>
                 </View>
                 <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
@@ -192,7 +220,7 @@ export default function AIPlanner() {
                 <View style={styles.progressBar}>
                     <View style={[styles.progressFill, { width: `${progress}%` }]} />
                 </View>
-                <Text style={styles.progressText}>{Math.round(progress)}% Complete</Text>
+                <Text style={styles.progressText}>{Math.round(progress)}% {t.complete || 'Complete'}</Text>
             </View>
 
             {/* Question Content */}
@@ -207,7 +235,7 @@ export default function AIPlanner() {
                     </View>
                     <Text style={styles.questionText}>{currentQuestion.question}</Text>
                     {currentQuestion.type === 'multiple' && (
-                        <Text style={styles.multipleHint}>Select all that apply</Text>
+                        <Text style={styles.multipleHint}>{t.selectAllApply || 'Select all that apply'}</Text>
                     )}
                 </View>
 
@@ -249,7 +277,7 @@ export default function AIPlanner() {
                     disabled={!canProceed()}
                 >
                     <Text style={styles.nextButtonText}>
-                        {currentQuestionIndex === MOCK_QUESTIONS.length - 1 ? 'Get Recommendations' : 'Next Question'}
+                        {currentQuestionIndex === questions.length - 1 ? (t.getRecommendations || 'Get Recommendations') : (t.nextQuestion || 'Next Question')}
                     </Text>
                     <IconSymbol name="arrow.right" size={20} color="#fff" />
                 </TouchableOpacity>
@@ -432,5 +460,48 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '700',
         color: '#fff',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    emptyText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#687076',
+        marginTop: 16,
+    },
+    emptySubtext: {
+        fontSize: 14,
+        color: '#9ca3af',
+        marginTop: 8,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    loadingText: {
+        fontSize: 16,
+        color: '#687076',
+        marginTop: 16,
+    },
+    retryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 20,
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        backgroundColor: '#f3f4f6',
+        borderRadius: 12,
+    },
+    retryButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#667eea',
     },
 });

@@ -8,30 +8,39 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Alert,
     Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { AuthUtils } from '@/utils/auth';
-import { TokenManager } from '@/utils/storage';
-import { UserRole } from '@/types/api.types';
 import Toast from 'react-native-toast-message';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
+import { SUPPORTED_LANGUAGES } from '@/constants/languages';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 export default function LoginScreen() {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
-    const [showRoleModal, setShowRoleModal] = React.useState(false);
+    const [showLanguageModal, setShowLanguageModal] = React.useState(false);
     const router = useRouter();
     const { login } = useAuth();
+    const { language, setLanguage } = useLanguage();
+    const t = getLanguageTranslations(language);
+
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
 
     const handleLogin = async () => {
         if (!email || !password) {
             Toast.show({
                 type: 'error',
-                text1: 'Missing Fields',
-                text2: 'Please enter email and password',
+                text1: t.missingFields || 'Missing Fields',
+                text2: t.enterEmailPassword || 'Please enter email and password',
             });
             return;
         }
@@ -45,93 +54,8 @@ export default function LoginScreen() {
         } catch (error: any) {
             Toast.show({
                 type: 'error',
-                text1: 'Login Failed',
-                text2: error.message || 'Please check your credentials',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleMockLogin = async () => {
-        if (Platform.OS === 'android') {
-            setShowRoleModal(true);
-        } else {
-            Alert.alert(
-                'Mock Login',
-                'Choose a role:',
-                [
-                    {
-                        text: 'User',
-                        onPress: () => injectMockAuth(UserRole.USER),
-                    },
-                    {
-                        text: 'Business',
-                        onPress: () => injectMockAuth(UserRole.BUSINESS),
-                    },
-                    {
-                        text: 'Organiser',
-                        onPress: () => injectMockAuth(UserRole.ORGANISER),
-                    },
-                    {
-                        text: 'Admin',
-                        onPress: () => injectMockAuth(UserRole.ADMIN),
-                    },
-                    {
-                        text: 'Cancel',
-                        style: 'cancel',
-                    },
-                ],
-                { cancelable: true }
-            );
-        }
-    };
-
-    const handleRoleSelect = (role: UserRole) => {
-        setShowRoleModal(false);
-        injectMockAuth(role);
-    };
-
-    const injectMockAuth = async (role: UserRole) => {
-        try {
-            setIsLoading(true);
-
-            // Create mock user
-            const mockUser = {
-                id: 'mock-user-123',
-                name: 'Test User',
-                address: '123 Mock Street, City',
-                gender: 'other',
-                email: 'test@example.com',
-                role,
-                approved: true,
-                last_synced_at: null,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-            };
-
-            // Create mock token
-            const mockAccessToken = 'mock-access-token-' + Date.now();
-
-            // Save mock data
-            await AuthUtils.saveUser(mockUser);
-            await TokenManager.saveToken(mockAccessToken);
-
-            Toast.show({
-                type: 'success',
-                text1: 'Mock Login Successful',
-                text2: `Logged in as ${role}`,
-            });
-
-            // Navigate to index which will route based on role
-            setTimeout(() => {
-                router.replace('/' as any);
-            }, 500);
-        } catch (error) {
-            Toast.show({
-                type: 'error',
-                text1: 'Mock Login Failed',
-                text2: 'Could not inject auth data',
+                text1: t.loginFailed || 'Login Failed',
+                text2: error.message || (t.checkCredentials || 'Please check your credentials'),
             });
         } finally {
             setIsLoading(false);
@@ -140,19 +64,32 @@ export default function LoginScreen() {
 
     return (
         <KeyboardAvoidingView
-            style={styles.container}
+            style={[styles.container, { backgroundColor: background }]}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.content}>
-                    <Text style={styles.title}>Welcome Back</Text>
-                    <Text style={styles.subtitle}>Sign in to continue</Text>
+                    {/* Language Selector Button */}
+                    <TouchableOpacity
+                        style={styles.languageButton}
+                        onPress={() => setShowLanguageModal(true)}
+                    >
+                        <IconSymbol name="globe" size={20} color={tint as string} />
+                        <Text style={[styles.languageButtonText, { color: tint }]}>
+                            {SUPPORTED_LANGUAGES.find(l => l.code === language)?.nativeName || 'English'}
+                        </Text>
+                        <IconSymbol name="chevron.down" size={16} color={muted as string} />
+                    </TouchableOpacity>
+
+                    <Text style={[styles.title, { color: text }]}>{t.welcomeBack || 'Welcome Back'}</Text>
+                    <Text style={[styles.subtitle, { color: muted }]}>{t.signInToContinue || 'Sign in to continue'}</Text>
 
                     <View style={styles.form}>
                         <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Email</Text>
+                            <Text style={[styles.label, { color: text }]}>{t.email || 'Email'}</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="Enter your email"
+                                style={[styles.input, { backgroundColor: card, borderColor: muted + '40', color: text }]}
+                                placeholder={t.enterEmail || 'Enter your email'}
+                                placeholderTextColor={muted}
                                 value={email}
                                 onChangeText={setEmail}
                                 keyboardType="email-address"
@@ -163,10 +100,11 @@ export default function LoginScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Password</Text>
+                            <Text style={[styles.label, { color: text }]}>{t.password || 'Password'}</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="Enter your password"
+                                style={[styles.input, { backgroundColor: card, borderColor: muted + '40', color: text }]}
+                                placeholder={t.enterPassword || 'Enter your password'}
+                                placeholderTextColor={muted}
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry
@@ -176,90 +114,67 @@ export default function LoginScreen() {
                         </View>
 
                         <TouchableOpacity
-                            style={[styles.button, isLoading && styles.buttonDisabled]}
+                            style={[styles.button, { backgroundColor: tint }, isLoading && styles.buttonDisabled]}
                             onPress={handleLogin}
                             disabled={isLoading}>
                             <Text style={styles.buttonText}>
-                                {isLoading ? 'Signing In...' : 'Sign In'}
-                            </Text>
-                        </TouchableOpacity>
-
-                        {/* Debug Mock Login Button */}
-                        <TouchableOpacity
-                            style={[styles.mockButton, isLoading && styles.buttonDisabled]}
-                            onPress={handleMockLogin}
-                            disabled={isLoading}>
-                            <Text style={styles.mockButtonText}>
-                                🔓 Mock Login (Debug)
+                                {isLoading ? (t.signingIn || 'Signing In...') : (t.signIn || 'Sign In')}
                             </Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             onPress={() => router.push('/register' as any)}
                             disabled={isLoading}>
-                            <Text style={styles.linkText}>
-                                Don't have an account? <Text style={styles.linkBold}>Sign Up</Text>
+                            <Text style={[styles.linkText, { color: muted }]}>
+                                {t.noAccount || "Don't have an account?"} <Text style={[styles.linkBold, { color: tint }]}>{t.signUp || 'Sign Up'}</Text>
                             </Text>
                         </TouchableOpacity>
                     </View>
                 </View>
-            </ScrollView>
 
-            {/* Role Selection Modal for Android */}
-            <Modal
-                visible={showRoleModal}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setShowRoleModal(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Choose Mock Login Role</Text>
-                        <Text style={styles.modalSubtitle}>Select a role for testing</Text>
-
-                        <ScrollView style={styles.roleScrollView}>
-                            <TouchableOpacity
-                                style={styles.roleButton}
-                                onPress={() => handleRoleSelect(UserRole.USER)}
-                            >
-                                <Text style={styles.roleButtonText}>👤 User</Text>
-                                <Text style={styles.roleButtonDesc}>Regular tourist user</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.roleButton}
-                                onPress={() => handleRoleSelect(UserRole.BUSINESS)}
-                            >
-                                <Text style={styles.roleButtonText}>💼 Business</Text>
-                                <Text style={styles.roleButtonDesc}>Service provider</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.roleButton}
-                                onPress={() => handleRoleSelect(UserRole.ORGANISER)}
-                            >
-                                <Text style={styles.roleButtonText}>🎯 Organiser</Text>
-                                <Text style={styles.roleButtonDesc}>Event organiser</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.roleButton}
-                                onPress={() => handleRoleSelect(UserRole.ADMIN)}
-                            >
-                                <Text style={styles.roleButtonText}>⚙️ Admin</Text>
-                                <Text style={styles.roleButtonDesc}>System administrator</Text>
-                            </TouchableOpacity>
-                        </ScrollView>
-
-                        <TouchableOpacity
-                            style={styles.modalCancelButton}
-                            onPress={() => setShowRoleModal(false)}
-                        >
-                            <Text style={styles.modalCancelText}>Cancel</Text>
-                        </TouchableOpacity>
+                {/* Language Selection Modal */}
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={showLanguageModal}
+                    onRequestClose={() => setShowLanguageModal(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={[styles.modalContent, { backgroundColor: card }]}>
+                            <View style={[styles.modalHeader, { borderBottomColor: muted + '40' }]}>
+                                <Text style={[styles.modalTitle, { color: text }]}>{t.selectLanguage || 'Select Language'}</Text>
+                                <TouchableOpacity onPress={() => setShowLanguageModal(false)}>
+                                    <IconSymbol name="xmark" size={24} color={muted as string} />
+                                </TouchableOpacity>
+                            </View>
+                            <ScrollView style={styles.languageList}>
+                                {SUPPORTED_LANGUAGES.map((lang) => (
+                                    <TouchableOpacity
+                                        key={lang.code}
+                                        style={[
+                                            styles.languageItem,
+                                            { borderBottomColor: muted + '20' },
+                                            language === lang.code && [styles.languageItemSelected, { backgroundColor: tint + '15' }]
+                                        ]}
+                                        onPress={() => {
+                                            setLanguage(lang.code);
+                                            setShowLanguageModal(false);
+                                        }}
+                                    >
+                                        <View>
+                                            <Text style={[styles.languageNativeName, { color: text }]}>{lang.nativeName}</Text>
+                                            <Text style={[styles.languageEnglishName, { color: muted }]}>{lang.name}</Text>
+                                        </View>
+                                        {language === lang.code && (
+                                            <IconSymbol name="checkmark" size={24} color={tint as string} />
+                                        )}
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
                     </View>
-                </View>
-            </Modal>
+                </Modal>
+            </ScrollView>
         </KeyboardAvoidingView>
     );
 }
@@ -267,7 +182,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     scrollContent: {
         flexGrow: 1,
@@ -280,12 +194,10 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: '#000',
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 16,
-        color: '#666',
         marginBottom: 40,
     },
     form: {
@@ -297,19 +209,15 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#000',
         marginBottom: 8,
     },
     input: {
-        backgroundColor: '#F5F5F5',
         borderRadius: 12,
         padding: 16,
         fontSize: 16,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
     },
     button: {
-        backgroundColor: '#007AFF',
         borderRadius: 12,
         padding: 16,
         alignItems: 'center',
@@ -323,92 +231,68 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
     },
-    mockButton: {
-        backgroundColor: '#FF9500',
-        borderRadius: 12,
-        padding: 16,
-        alignItems: 'center',
-        marginTop: 16,
-        borderWidth: 2,
-        borderColor: '#FF6B00',
-    },
-    mockButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-    },
     linkText: {
         textAlign: 'center',
-        color: '#666',
         marginTop: 24,
         fontSize: 14,
     },
     linkBold: {
-        color: '#007AFF',
         fontWeight: '600',
     },
-    // Modal styles for Android role selection
+    languageButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-end',
+        gap: 8,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        marginBottom: 20,
+    },
+    languageButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: '#fff',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        paddingTop: 20,
-        paddingBottom: 40,
-        maxHeight: '80%',
+        maxHeight: '70%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 20,
+        borderBottomWidth: 1,
     },
     modalTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#000',
-        textAlign: 'center',
-        marginBottom: 8,
-        paddingHorizontal: 20,
+        fontSize: 20,
+        fontWeight: '700',
     },
-    modalSubtitle: {
-        fontSize: 14,
-        color: '#666',
-        textAlign: 'center',
-        marginBottom: 20,
-        paddingHorizontal: 20,
-    },
-    roleScrollView: {
-        paddingHorizontal: 20,
+    languageList: {
         maxHeight: 400,
     },
-    roleButton: {
-        backgroundColor: '#F5F5F5',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-    },
-    roleButtonText: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#000',
-        marginBottom: 4,
-    },
-    roleButtonDesc: {
-        fontSize: 13,
-        color: '#666',
-    },
-    modalCancelButton: {
-        marginTop: 20,
-        marginHorizontal: 20,
-        backgroundColor: '#F5F5F5',
-        borderRadius: 12,
-        padding: 16,
+    languageItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
     },
-    modalCancelText: {
+    languageItemSelected: {
+        borderLeftWidth: 3,
+    },
+    languageNativeName: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#666',
+    },
+    languageEnglishName: {
+        fontSize: 13,
+        marginTop: 2,
     },
 });

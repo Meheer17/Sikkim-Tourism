@@ -12,8 +12,19 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import Toast from 'react-native-toast-message';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 export default function RegisterScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
+
     const [formData, setFormData] = React.useState({
         name: '',
         address: '',
@@ -32,8 +43,8 @@ export default function RegisterScreen() {
         if (!name || !address || !email || !password || !confirmPassword) {
             Toast.show({
                 type: 'error',
-                text1: 'Missing Fields',
-                text2: 'Please fill in all required fields',
+                text1: t.missingFields || 'Missing Fields',
+                text2: t.fillAllFields || 'Please fill in all required fields',
             });
             return;
         }
@@ -41,8 +52,8 @@ export default function RegisterScreen() {
         if (password !== confirmPassword) {
             Toast.show({
                 type: 'error',
-                text1: 'Password Mismatch',
-                text2: 'Passwords do not match',
+                text1: t.passwordMismatch || 'Password Mismatch',
+                text2: t.passwordsNotMatch || 'Passwords do not match',
             });
             return;
         }
@@ -56,8 +67,8 @@ export default function RegisterScreen() {
         } catch (error: any) {
             Toast.show({
                 type: 'error',
-                text1: 'Registration Failed',
-                text2: error.message || 'Please try again',
+                text1: t.registrationFailed || 'Registration Failed',
+                text2: error.message || (t.pleaseTryAgain || 'Please try again'),
             });
         } finally {
             setIsLoading(false);
@@ -70,19 +81,20 @@ export default function RegisterScreen() {
 
     return (
         <KeyboardAvoidingView
-            style={styles.container}
+            style={[styles.container, { backgroundColor: background }]}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.content}>
-                    <Text style={styles.title}>Create Account</Text>
-                    <Text style={styles.subtitle}>Sign up to get started</Text>
+                    <Text style={[styles.title, { color: text }]}>{t.createAccount || 'Create Account'}</Text>
+                    <Text style={[styles.subtitle, { color: muted }]}>{t.signUpToGetStarted || 'Sign up to get started'}</Text>
 
                     <View style={styles.form}>
                         <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Full Name*</Text>
+                            <Text style={[styles.label, { color: text }]}>{t.fullName || 'Full Name'}*</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="John Doe"
+                                style={[styles.input, { backgroundColor: card, borderColor: muted + '40', color: text }]}
+                                placeholder={t.fullNamePlaceholder || 'John Doe'}
+                                placeholderTextColor={muted}
                                 value={formData.name}
                                 onChangeText={(value) => updateField('name', value)}
                                 autoCapitalize="words"
@@ -91,10 +103,11 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Address*</Text>
+                            <Text style={[styles.label, { color: text }]}>{t.address || 'Address'}*</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="123 Main St, City, Country"
+                                style={[styles.input, { backgroundColor: card, borderColor: muted + '40', color: text }]}
+                                placeholder={t.addressPlaceholder || '123 Main St, City, Country'}
+                                placeholderTextColor={muted}
                                 value={formData.address}
                                 onChangeText={(value) => updateField('address', value)}
                                 autoCapitalize="sentences"
@@ -105,10 +118,11 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Gender (Optional)</Text>
+                            <Text style={[styles.label, { color: text }]}>{t.gender || 'Gender'} ({t.optional || 'Optional'})</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="male, female, or other"
+                                style={[styles.input, { backgroundColor: card, borderColor: muted + '40', color: text }]}
+                                placeholder={t.genderPlaceholder || 'male, female, or other'}
+                                placeholderTextColor={muted}
                                 value={formData.gender}
                                 onChangeText={(value) => updateField('gender', value)}
                                 autoCapitalize="none"
@@ -117,10 +131,11 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Email*</Text>
+                            <Text style={[styles.label, { color: text }]}>{t.email || 'Email'}*</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="john.doe@example.com"
+                                style={[styles.input, { backgroundColor: card, borderColor: muted + '40', color: text }]}
+                                placeholder={t.emailPlaceholder || 'john.doe@example.com'}
+                                placeholderTextColor={muted}
                                 value={formData.email}
                                 onChangeText={(value) => updateField('email', value)}
                                 keyboardType="email-address"
@@ -131,26 +146,28 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Password*</Text>
+                            <Text style={[styles.label, { color: text }]}>{t.password || 'Password'}*</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="Enter password"
+                                style={[styles.input, { backgroundColor: card, borderColor: muted + '40', color: text }]}
+                                placeholder={t.enterPassword || 'Enter password'}
+                                placeholderTextColor={muted}
                                 value={formData.password}
                                 onChangeText={(value) => updateField('password', value)}
                                 secureTextEntry
                                 autoCapitalize="none"
                                 editable={!isLoading}
                             />
-                            <Text style={styles.hint}>
-                                Minimum 8 characters required
+                            <Text style={[styles.hint, { color: muted }]}>
+                                {t.minimumPassword || 'Minimum 8 characters required'}
                             </Text>
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Confirm Password*</Text>
+                            <Text style={[styles.label, { color: text }]}>{t.confirmPassword || 'Confirm Password'}*</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="Re-enter password"
+                                style={[styles.input, { backgroundColor: card, borderColor: muted + '40', color: text }]}
+                                placeholder={t.reenterPassword || 'Re-enter password'}
+                                placeholderTextColor={muted}
                                 value={formData.confirmPassword}
                                 onChangeText={(value) => updateField('confirmPassword', value)}
                                 secureTextEntry
@@ -160,19 +177,19 @@ export default function RegisterScreen() {
                         </View>
 
                         <TouchableOpacity
-                            style={[styles.button, isLoading && styles.buttonDisabled]}
+                            style={[styles.button, { backgroundColor: tint }, isLoading && styles.buttonDisabled]}
                             onPress={handleRegister}
                             disabled={isLoading}>
                             <Text style={styles.buttonText}>
-                                {isLoading ? 'Creating Account...' : 'Sign Up'}
+                                {isLoading ? (t.creatingAccount || 'Creating Account...') : (t.signUp || 'Sign Up')}
                             </Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             onPress={() => router.back()}
                             disabled={isLoading}>
-                            <Text style={styles.linkText}>
-                                Already have an account? <Text style={styles.linkBold}>Sign In</Text>
+                            <Text style={[styles.linkText, { color: muted }]}>
+                                {t.haveAccount || 'Already have an account?'} <Text style={[styles.linkBold, { color: tint }]}>{t.signIn || 'Sign In'}</Text>
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -185,7 +202,6 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     scrollContent: {
         flexGrow: 1,
@@ -198,12 +214,10 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: '#000',
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 16,
-        color: '#666',
         marginBottom: 32,
     },
     form: {
@@ -222,24 +236,19 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#000',
         marginBottom: 8,
     },
     input: {
-        backgroundColor: '#F5F5F5',
         borderRadius: 12,
         padding: 16,
         fontSize: 16,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
     },
     hint: {
         fontSize: 12,
-        color: '#999',
         marginTop: 4,
     },
     button: {
-        backgroundColor: '#007AFF',
         borderRadius: 12,
         padding: 16,
         alignItems: 'center',
@@ -255,12 +264,10 @@ const styles = StyleSheet.create({
     },
     linkText: {
         textAlign: 'center',
-        color: '#666',
         marginTop: 24,
         fontSize: 14,
     },
     linkBold: {
-        color: '#007AFF',
         fontWeight: '600',
     },
 });

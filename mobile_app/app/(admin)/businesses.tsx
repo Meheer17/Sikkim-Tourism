@@ -1,117 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Business } from '@/types/admin.types';
 import { useApi } from '@/hooks/useApi';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { businessService, BusinessModel } from '@/services/business.service';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
-// Mock data - replace with actual API
-const MOCK_BUSINESSES: Business[] = [
-    {
-        id: '1',
-        name: 'Mountain Trekking Guide',
-        description: 'Professional trekking guide for Himalayan trails with 10 years experience',
-        category: 'Adventure',
-        price: 2500,
-        icon: 'mountain.2.fill',
-        ownerId: 'owner1',
-        ownerName: 'Rajesh Kumar',
-        ownerEmail: 'rajesh@example.com',
-        status: 'active',
-        rating: 4.8,
-        reviewCount: 124,
-        bookingCount: 567,
-        revenue: 1417500,
-        contactPhone: '+91 98765 43210',
-        createdAt: '2024-01-15T10:30:00Z',
-        updatedAt: '2024-11-20T15:45:00Z',
-    },
-    {
-        id: '2',
-        name: 'Local Cab Service',
-        description: '24/7 available cab service for local travel',
-        category: 'Transport',
-        price: 800,
-        icon: 'car.fill',
-        ownerId: 'owner2',
-        ownerName: 'Priya Sharma',
-        ownerEmail: 'priya@example.com',
-        status: 'active',
-        rating: 4.5,
-        reviewCount: 89,
-        bookingCount: 1234,
-        revenue: 987200,
-        contactPhone: '+91 87654 32109',
-        createdAt: '2024-02-20T08:15:00Z',
-        updatedAt: '2024-11-25T12:20:00Z',
-    },
-    {
-        id: '3',
-        name: 'Heritage Museum Tours',
-        description: 'Guided tours of heritage museums with cultural insights',
-        category: 'Culture',
-        price: 150,
-        icon: 'building.columns.fill',
-        ownerId: 'owner3',
-        ownerName: 'Sonam Lepcha',
-        ownerEmail: 'sonam@example.com',
-        status: 'pending',
-        rating: 0,
-        reviewCount: 0,
-        bookingCount: 0,
-        revenue: 0,
-        contactPhone: '+91 76543 21098',
-        createdAt: '2024-11-20T14:30:00Z',
-        updatedAt: '2024-11-20T14:30:00Z',
-    },
-    {
-        id: '4',
-        name: 'River Rafting Adventures',
-        description: 'Thrilling river rafting experience with safety equipment',
-        category: 'Adventure',
-        price: 1500,
-        icon: 'water.waves',
-        ownerId: 'owner4',
-        ownerName: 'Amit Singh',
-        ownerEmail: 'amit@example.com',
-        status: 'active',
-        rating: 4.9,
-        reviewCount: 156,
-        bookingCount: 432,
-        revenue: 648000,
-        contactPhone: '+91 65432 10987',
-        createdAt: '2024-03-10T11:00:00Z',
-        updatedAt: '2024-11-22T09:15:00Z',
-    },
-    {
-        id: '5',
-        name: 'Spa & Wellness Center',
-        description: 'Relaxation and wellness services with traditional therapies',
-        category: 'Wellness',
-        price: 2000,
-        icon: 'heart.text.square.fill',
-        ownerId: 'owner5',
-        ownerName: 'Maya Tamang',
-        ownerEmail: 'maya@example.com',
-        status: 'suspended',
-        rating: 4.3,
-        reviewCount: 67,
-        bookingCount: 234,
-        revenue: 468000,
-        contactPhone: '+91 54321 09876',
-        createdAt: '2024-04-05T13:45:00Z',
-        updatedAt: '2024-11-18T16:30:00Z',
-    },
-];
+// Removed static mock data. Data now loads exclusively from backend.
 
 const CATEGORIES = ['All', 'Adventure', 'Transport', 'Culture', 'Food', 'Wellness'];
 const STATUSES = ['All', 'Active', 'Pending', 'Suspended'];
 
 export default function AdminBusinessesScreen() {
     const router = useRouter();
-    const [businesses, setBusinesses] = useState<Business[]>(MOCK_BUSINESSES);
-    const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>(MOCK_BUSINESSES);
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+    const [businesses, setBusinesses] = useState<Business[]>([]);
+    const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [selectedStatus, setSelectedStatus] = useState('All');
@@ -153,6 +62,43 @@ export default function AdminBusinessesScreen() {
         filterBusinesses();
     }, [filterBusinesses]);
 
+    // Load businesses from backend
+    useEffect(() => {
+        const loadBusinesses = async () => {
+            setLoading(true);
+            try {
+                const resp = await businessService.list({ skip: 0, limit: 100 });
+                if (resp.success && resp.data) {
+                    const mapped: Business[] = resp.data.map((b: BusinessModel) => ({
+                        id: b.id,
+                        name: b.name,
+                        description: b.description,
+                        category: 'Adventure',
+                        price: 0,
+                        icon: 'star.fill',
+                        ownerId: '',
+                        ownerName: '',
+                        ownerEmail: '',
+                        status: 'active',
+                        rating: 0,
+                        reviewCount: 0,
+                        bookingCount: 0,
+                        revenue: 0,
+                        contactPhone: '',
+                        createdAt: b.created_at || '',
+                        updatedAt: b.updated_at || '',
+                    }));
+                    setBusinesses(mapped);
+                    setFilteredBusinesses(mapped);
+                }
+            } catch (e) {
+                console.warn('Failed to load businesses:', e);
+            }
+            setLoading(false);
+        };
+        loadBusinesses();
+    }, []);
+
     const handleBusinessPress = (business: Business) => {
         router.push(`/(admin)/(stack)/business-details?id=${business.id}` as any);
     };
@@ -167,10 +113,25 @@ export default function AdminBusinessesScreen() {
     };
 
     const handleDeleteBusiness = async (businessId: string) => {
-        const result = await deleteBusiness(`/admin/businesses/${businessId}`);
-        if (result) {
-            setBusinesses(prev => prev.filter(b => b.id !== businessId));
-        }
+        Alert.alert(
+            'Delete Business',
+            'Are you sure you want to delete this business?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await businessService.remove(businessId);
+                            setBusinesses(prev => prev.filter(b => b.id !== businessId));
+                        } catch (e) {
+                            Alert.alert('Error', 'Failed to delete business');
+                        }
+                    },
+                },
+            ]
+        );
     };
 
     const getStatusColor = (status: Business['status']) => {
@@ -208,9 +169,9 @@ export default function AdminBusinessesScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: card }]}>
                 <View>
-                    <Text style={[styles.headerTitle, { color: text }]}>Businesses</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>{t.businesses || 'Businesses'}</Text>
                     <Text style={[styles.headerSubtitle, { color: muted }]}>
-                        {filteredBusinesses.length} businesses found
+                        {filteredBusinesses.length} {t.businessesFound || 'businesses found'}
                     </Text>
                 </View>
                 <TouchableOpacity
@@ -222,12 +183,12 @@ export default function AdminBusinessesScreen() {
             </View>
 
             {/* Search and Filter */}
-            <View style={styles.searchContainer}>
-                <View style={[styles.searchBar, { backgroundColor: card }]}>
+            <View style={[styles.searchContainer, { backgroundColor: card }]}>
+                <View style={[styles.searchBar, { backgroundColor: background, borderColor: muted + '40' }]}>
                     <IconSymbol name="magnifyingglass" size={20} color={muted} />
                     <TextInput
                         style={[styles.searchInput, { color: text }]}
-                        placeholder="Search businesses..."
+                        placeholder={t.searchBusinesses || 'Search businesses...'}
                         placeholderTextColor={muted}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
@@ -239,7 +200,7 @@ export default function AdminBusinessesScreen() {
                     )}
                 </View>
                 <TouchableOpacity
-                    style={styles.filterButton}
+                    style={[styles.filterButton, { backgroundColor: tint + '15' }]}
                     onPress={() => setShowFilters(!showFilters)}
                 >
                     <IconSymbol name="slider.horizontal.3" size={20} color={tint} />
@@ -248,7 +209,7 @@ export default function AdminBusinessesScreen() {
 
             {/* Filters */}
             {showFilters && (
-                <View style={[styles.filtersContainer, { backgroundColor: card }]}>
+                <View style={[styles.filtersContainer, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
                     {/* Category Filter */}
                     <View style={styles.filterSection}>
                         <Text style={[styles.filterLabel, { color: text }]}>Category</Text>
@@ -262,14 +223,14 @@ export default function AdminBusinessesScreen() {
                                     key={category}
                                     style={[
                                         styles.filterChip,
-                                        selectedCategory === category && [styles.filterChipActive, { backgroundColor: tint }],
+                                        { backgroundColor: selectedCategory === category ? tint : background, borderColor: selectedCategory === category ? tint : muted + '40' },
                                     ]}
                                     onPress={() => setSelectedCategory(category)}
                                 >
                                     <Text
                                         style={[
                                             styles.filterChipText,
-                                            selectedCategory === category && styles.filterChipTextActive,
+                                            { color: selectedCategory === category ? '#fff' : muted },
                                         ]}
                                     >
                                         {category}
@@ -292,14 +253,14 @@ export default function AdminBusinessesScreen() {
                                     key={status}
                                     style={[
                                         styles.filterChip,
-                                        selectedStatus === status && [styles.filterChipActive, { backgroundColor: tint }],
+                                        { backgroundColor: selectedStatus === status ? tint : background, borderColor: selectedStatus === status ? tint : muted + '40' },
                                     ]}
                                     onPress={() => setSelectedStatus(status)}
                                 >
                                     <Text
                                         style={[
                                             styles.filterChipText,
-                                            selectedStatus === status && styles.filterChipTextActive,
+                                            { color: selectedStatus === status ? '#fff' : muted },
                                         ]}
                                     >
                                         {status}
@@ -317,16 +278,21 @@ export default function AdminBusinessesScreen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {filteredBusinesses.length > 0 ? (
+                {loading && (
+                    <View style={styles.emptyState}>
+                        <Text style={[styles.emptySubtitle, { color: muted }]}>Loading businesses...</Text>
+                    </View>
+                )}
+                {!loading && filteredBusinesses.length > 0 ? (
                     filteredBusinesses.map((business) => (
                         <TouchableOpacity
                             key={business.id}
-                            style={[styles.businessCard, { backgroundColor: card }]}
+                            style={[styles.businessCard, { backgroundColor: card, borderColor: muted + '20' }]}
                             onPress={() => handleBusinessPress(business)}
                             activeOpacity={0.7}
                         >
                             <View style={styles.businessHeader}>
-                                <View style={styles.businessIconContainer}>
+                                <View style={[styles.businessIconContainer, { backgroundColor: tint + '15' }]}>
                                     <IconSymbol
                                         name={(business.icon as any) || 'star.fill'}
                                         size={24}
@@ -368,8 +334,8 @@ export default function AdminBusinessesScreen() {
                                 </View>
                             </View>
 
-                            <View style={styles.businessFooter}>
-                                <Text style={[styles.businessPrice, { color: text }]}>₹{business.price}</Text>
+                            <View style={[styles.businessFooter, { borderTopColor: muted + '20' }]}>
+                                <Text style={[styles.businessPrice, { color: tint }]}>₹{business.price}</Text>
                                 <View style={styles.businessActions}>
                                     {business.status === 'pending' && (
                                         <>
@@ -413,7 +379,7 @@ export default function AdminBusinessesScreen() {
                             </View>
                         </TouchableOpacity>
                     ))
-                ) : (
+                ) : (!loading && (
                     <View style={styles.emptyState}>
                         <IconSymbol name="building.2.fill" size={64} color={muted} />
                         <Text style={[styles.emptyTitle, { color: text }]}>No businesses found</Text>
@@ -421,7 +387,7 @@ export default function AdminBusinessesScreen() {
                             Try adjusting your search or filters
                         </Text>
                     </View>
-                )}
+                ))}
             </ScrollView>
         </View>
     );
@@ -436,9 +402,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 20,
-        paddingTop: 60,
+        paddingTop: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
     },
     headerTitle: {
         fontSize: 28,
@@ -446,6 +411,7 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     headerSubtitle: {
+        fontSize: 14,
     },
     addButton: {
         width: 44,
@@ -459,14 +425,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         padding: 16,
         gap: 12,
-        backgroundColor: '#fff',
     },
     searchBar: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f3f4f6',
         borderRadius: 12,
+        borderWidth: 1,
         paddingHorizontal: 12,
         paddingVertical: 10,
         gap: 8,
@@ -474,22 +439,18 @@ const styles = StyleSheet.create({
     searchInput: {
         flex: 1,
         fontSize: 16,
-        color: '#11181C',
     },
     filterButton: {
         width: 44,
         height: 44,
         borderRadius: 12,
-        backgroundColor: '#e8f4f8',
         justifyContent: 'center',
         alignItems: 'center',
     },
     filtersContainer: {
-        backgroundColor: '#fff',
         paddingHorizontal: 16,
         paddingBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
     },
     filterSection: {
         marginBottom: 12,
@@ -497,7 +458,6 @@ const styles = StyleSheet.create({
     filterLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#11181C',
         marginBottom: 8,
     },
     filterChips: {
@@ -507,21 +467,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: '#f3f4f6',
         borderWidth: 1,
-        borderColor: '#e5e7eb',
-    },
-    filterChipActive: {
-        backgroundColor: '#0a7ea4',
-        borderColor: '#0a7ea4',
     },
     filterChipText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#687076',
-    },
-    filterChipTextActive: {
-        color: '#fff',
     },
     scrollView: {
         flex: 1,
@@ -532,6 +482,7 @@ const styles = StyleSheet.create({
     },
     businessCard: {
         borderRadius: 16,
+        borderWidth: 1,
         padding: 16,
         marginBottom: 12,
         elevation: 2,
@@ -549,7 +500,6 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#e8f4f8',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
@@ -598,12 +548,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingTop: 12,
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6',
     },
     businessPrice: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#0a7ea4',
     },
     businessActions: {
         flexDirection: 'row',

@@ -5,8 +5,6 @@ export default function AdminStackLayout() {
         <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="business-details" />
             <Stack.Screen name="add-business" />
-            <Stack.Screen name="edit-business" />
-            <Stack.Screen name="place-details" />
             <Stack.Screen name="add-place" />
             <Stack.Screen name="edit-place" />
             <Stack.Screen name="user-details" />

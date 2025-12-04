@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     View,
     Text,
@@ -8,167 +8,48 @@ import {
     TextInput,
     Alert,
     Dimensions,
+    Modal,
 } from 'react-native';
+import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Place } from '@/types/admin.types';
 import { useApi } from '@/hooks/useApi';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { locationService, LocationModel } from '@/services/location.service';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const MAP_HEIGHT = SCREEN_HEIGHT * 0.35;
+const MAP_HEIGHT = SCREEN_HEIGHT * 0.64;
 
-// Mock data - replace with actual API
-const MOCK_PLACES: Place[] = [
-    {
-        id: '1',
-        name: 'Rumtek Monastery',
-        description: 'Beautiful Buddhist monastery with stunning architecture and peaceful surroundings',
-        category: 'Religious Site',
-        location: {
-            latitude: 27.2897,
-            longitude: 88.5595,
-            address: 'Rumtek, East Sikkim',
-            city: 'Gangtok',
-            state: 'Sikkim',
-            country: 'India',
-        },
-        address: 'Rumtek, East Sikkim, Sikkim 737135',
-        rating: 4.8,
-        reviewCount: 234,
-        visitCount: 5678,
-        entryFee: 0,
-        openingHours: '6:00 AM - 6:00 PM',
-        bestTimeToVisit: 'March to June, September to December',
-        highlights: ['Beautiful Architecture', 'Peaceful Environment', 'Cultural Experience'],
-        facilities: ['Parking', 'Guided Tours', 'Restrooms'],
-        status: 'active',
-        createdBy: 'admin1',
-        createdAt: '2024-01-10T09:00:00Z',
-        updatedAt: '2024-11-20T14:30:00Z',
-    },
-    {
-        id: '2',
-        name: 'Tsomgo Lake',
-        description: 'Glacial lake at high altitude with scenic beauty and serene environment',
-        category: 'Natural Beauty',
-        location: {
-            latitude: 27.3542,
-            longitude: 88.7539,
-            address: 'East Sikkim',
-            city: 'Near Gangtok',
-            state: 'Sikkim',
-            country: 'India',
-        },
-        address: 'East Sikkim, Sikkim',
-        rating: 4.9,
-        reviewCount: 567,
-        visitCount: 12345,
-        entryFee: 50,
-        openingHours: '8:00 AM - 4:00 PM',
-        bestTimeToVisit: 'May to October',
-        highlights: ['Scenic Views', 'Photography', 'High Altitude Lake'],
-        facilities: ['Parking', 'Food Stalls', 'Yak Rides'],
-        status: 'active',
-        createdBy: 'admin1',
-        createdAt: '2024-01-15T10:30:00Z',
-        updatedAt: '2024-11-22T11:15:00Z',
-    },
-    {
-        id: '3',
-        name: 'MG Marg',
-        description: 'Popular shopping street and pedestrian zone with shops and restaurants',
-        category: 'Shopping',
-        location: {
-            latitude: 27.3314,
-            longitude: 88.6138,
-            address: 'Gangtok, Sikkim',
-            city: 'Gangtok',
-            state: 'Sikkim',
-            country: 'India',
-        },
-        address: 'MG Marg, Gangtok, Sikkim 737101',
-        rating: 4.5,
-        reviewCount: 432,
-        visitCount: 8765,
-        entryFee: 0,
-        openingHours: '10:00 AM - 9:00 PM',
-        bestTimeToVisit: 'Year Round',
-        highlights: ['Shopping', 'Dining', 'Street Performances'],
-        facilities: ['Cafes', 'Shops', 'Seating Areas'],
-        status: 'active',
-        createdBy: 'admin2',
-        createdAt: '2024-02-01T12:00:00Z',
-        updatedAt: '2024-11-25T09:45:00Z',
-    },
-    {
-        id: '4',
-        name: 'Khecheopalri Lake',
-        description: 'Sacred lake surrounded by dense forest, known for its pristine beauty',
-        category: 'Natural Beauty',
-        location: {
-            latitude: 27.4333,
-            longitude: 88.1833,
-            address: 'West Sikkim',
-            city: 'Pelling',
-            state: 'Sikkim',
-            country: 'India',
-        },
-        address: 'West Sikkim, Sikkim',
-        rating: 4.7,
-        reviewCount: 189,
-        visitCount: 3456,
-        entryFee: 20,
-        openingHours: '7:00 AM - 5:00 PM',
-        bestTimeToVisit: 'October to May',
-        highlights: ['Sacred Lake', 'Bird Watching', 'Trekking'],
-        facilities: ['Parking', 'Prayer Wheels', 'Restrooms'],
-        status: 'draft',
-        createdBy: 'admin3',
-        createdAt: '2024-11-20T15:00:00Z',
-        updatedAt: '2024-11-20T15:00:00Z',
-    },
-    {
-        id: '5',
-        name: 'Nathula Pass',
-        description: 'Mountain pass on the Indo-China border with historical significance',
-        category: 'Historical',
-        location: {
-            latitude: 27.3917,
-            longitude: 88.8458,
-            address: 'East Sikkim',
-            city: 'Near Gangtok',
-            state: 'Sikkim',
-            country: 'India',
-        },
-        address: 'East Sikkim, Sikkim',
-        rating: 4.6,
-        reviewCount: 321,
-        visitCount: 6543,
-        entryFee: 100,
-        openingHours: '9:00 AM - 3:00 PM (Permit Required)',
-        bestTimeToVisit: 'May to October',
-        highlights: ['Border Area', 'Historical Significance', 'Mountain Views'],
-        facilities: ['Checkpoints', 'Bunkers', 'Memorial'],
-        status: 'active',
-        createdBy: 'admin1',
-        createdAt: '2024-03-05T11:30:00Z',
-        updatedAt: '2024-11-18T16:20:00Z',
-    },
-];
+// Default center for Sikkim
+const DEFAULT_REGION = {
+    latitude: 27.533,
+    longitude: 88.5122,
+    latitudeDelta: 1.5,
+    longitudeDelta: 1.5,
+};
+
+// Removed static mock data; places now only from backend.
 
 const CATEGORIES = ['All', 'Religious Site', 'Natural Beauty', 'Shopping', 'Historical', 'Adventure'];
 const STATUSES = ['All', 'Active', 'Draft', 'Archived'];
 
 export default function AdminPlacesScreen() {
     const router = useRouter();
-    const [places, setPlaces] = useState<Place[]>(MOCK_PLACES);
-    const [filteredPlaces, setFilteredPlaces] = useState<Place[]>(MOCK_PLACES);
+    const mapRef = useRef<MapView>(null);
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+    const [places, setPlaces] = useState<Place[]>([]);
+    const [filteredPlaces, setFilteredPlaces] = useState<Place[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [selectedStatus, setSelectedStatus] = useState('All');
     const [showFilters, setShowFilters] = useState(false);
     const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+    const [showSearchModal, setShowSearchModal] = useState(false);
     const { get: getPlaces, put: updatePlace } = useApi<Place[]>();
     const background = useThemeColor('background');
     const card = useThemeColor('card');
@@ -205,12 +86,76 @@ export default function AdminPlacesScreen() {
         filterPlaces();
     }, [filterPlaces]);
 
+    // Load from backend /location
+    useEffect(() => {
+        const loadLocations = async () => {
+            try {
+                const resp = await locationService.list({ skip: 0, limit: 100 });
+                console.log('Raw location response:', JSON.stringify(resp.data?.[0], null, 2));
+                if (resp.success && resp.data) {
+                    const mapped: Place[] = resp.data.map((loc: any) => {
+                        return {
+                        id: loc.id,
+                        name: loc.name,
+                        description: loc.description,
+                        category: loc.type === 'tourism' ? 'Natural Beauty' : loc.type,
+                        location: {
+                            latitude: loc.position?.y ?? 0,  // position.y is latitude
+                            longitude: loc.position?.x ?? 0, // position.x is longitude
+                            address: '',
+                            city: '',
+                            state: '',
+                            country: '',
+                        },
+                        address: loc.short_description,
+                        rating: undefined as any,
+                        reviewCount: undefined as any,
+                        visitCount: undefined as any,
+                        entryFee: undefined as any,
+                        openingHours: '',
+                        bestTimeToVisit: '',
+                        highlights: [],
+                        facilities: [],
+                        status: 'active',
+                        createdBy: '',
+                        createdAt: loc.created_at || '',
+                        updatedAt: loc.updated_at || '',
+                    };
+                    });
+                    setPlaces(mapped);
+                    setFilteredPlaces(mapped);
+                }
+            } catch (e) {
+                console.warn('Failed to load locations:', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadLocations();
+    }, []);
+
     const handlePlacePress = (place: Place) => {
         setSelectedPlace(place);
-        // router.push(`/(admin)/(stack)/place-details?id=${place.id}` as any);
+        // Animate map to the selected place
+        if (mapRef.current && place.location.latitude && place.location.longitude) {
+            mapRef.current.animateToRegion({
+                latitude: place.location.latitude,
+                longitude: place.location.longitude,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+            }, 1000);
+        }
+        // Navigate to place details
+        router.push(`/(admin)/(stack)/place-details?id=${place.id}` as any);
     };
 
     const handleEditPlace = (place: Place) => {
+        if (!place.id) {
+            Alert.alert('Error', 'Place ID is missing');
+            console.error('Cannot edit place without ID:', place);
+            return;
+        }
+        console.log('Editing place with ID:', place.id);
         router.push(`/(admin)/(stack)/edit-place?id=${place.id}` as any);
     };
 
@@ -223,11 +168,15 @@ export default function AdminPlacesScreen() {
                 {
                     text: 'Delete',
                     style: 'destructive',
-                    onPress: () => {
-                        // TODO: API call to delete
-                        setPlaces(prev => prev.filter(p => p.id !== placeId));
-                        if (selectedPlace?.id === placeId) {
-                            setSelectedPlace(null);
+                    onPress: async () => {
+                        try {
+                            await locationService.remove(placeId);
+                            setPlaces(prev => prev.filter(p => p.id !== placeId));
+                            if (selectedPlace?.id === placeId) {
+                                setSelectedPlace(null);
+                            }
+                        } catch (e) {
+                            Alert.alert('Error', 'Failed to delete place');
                         }
                     },
                 },
@@ -268,14 +217,65 @@ export default function AdminPlacesScreen() {
         }
     };
 
+    const handleRecenter = () => {
+        if (mapRef.current) {
+            if (selectedPlace && selectedPlace.location.latitude && selectedPlace.location.longitude) {
+                mapRef.current.animateToRegion({
+                    latitude: selectedPlace.location.latitude,
+                    longitude: selectedPlace.location.longitude,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05,
+                }, 1000);
+            } else {
+                mapRef.current.animateToRegion(DEFAULT_REGION, 1000);
+            }
+        }
+    };
+
+    const handleZoomIn = () => {
+        if (mapRef.current) {
+            mapRef.current.getCamera().then(camera => {
+                if (camera.zoom) {
+                    camera.zoom += 1;
+                    mapRef.current?.animateCamera(camera, { duration: 300 });
+                }
+            });
+        }
+    };
+
+    const handleZoomOut = () => {
+        if (mapRef.current) {
+            mapRef.current.getCamera().then(camera => {
+                if (camera.zoom && camera.zoom > 1) {
+                    camera.zoom -= 1;
+                    mapRef.current?.animateCamera(camera, { duration: 300 });
+                }
+            });
+        }
+    };
+
+    const getMarkerColor = (place: Place) => {
+        if (selectedPlace?.id === place.id) return '#0a7ea4';
+        switch (place.status) {
+            case 'active':
+                return '#10b981';
+            case 'draft':
+                return '#f59e0b';
+            case 'archived':
+                return '#6b7280';
+            default:
+                return '#687076';
+        }
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: card }]}>
+            <View style={[styles.header, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
                 <View>
-                    <Text style={[styles.headerTitle, { color: text }]}>Places</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>{t.places || 'Places'}</Text>
                     <Text style={[styles.headerSubtitle, { color: muted }]}>
-                        {filteredPlaces.length} places found
+                        {filteredPlaces.length} {t.placesFound || 'places found'}
                     </Text>
                 </View>
                 <TouchableOpacity
@@ -288,141 +288,258 @@ export default function AdminPlacesScreen() {
 
             {/* Map View */}
             <View style={styles.mapContainer}>
-                <View style={styles.mapPlaceholder}>
-                    <IconSymbol name="map.fill" size={48} color={tint} />
-                    <Text style={styles.mapPlaceholderText}>Interactive Map</Text>
-                    <Text style={styles.mapSubtext}>
-                        {selectedPlace ? `Showing: ${selectedPlace.name}` : 'Select a place to view on map'}
-                    </Text>
-                </View>
+                <MapView
+                    ref={mapRef}
+                    style={styles.map}
+                    provider={PROVIDER_DEFAULT}
+                    initialRegion={DEFAULT_REGION}
+                    showsUserLocation={true}
+                    showsMyLocationButton={false}
+                    showsCompass={true}
+                    showsScale={true}
+                    loadingEnabled={true}
+                >
+                    {filteredPlaces.map((place, index) => {
+                        if (!place.location.latitude || !place.location.longitude) return null;
+                        
+                        return (
+                            <Marker
+                                key={`marker-${place.id}-${index}`}
+                                coordinate={{
+                                    latitude: place.location.latitude,
+                                    longitude: place.location.longitude,
+                                }}
+                                title={place.name}
+                                description={place.category}
+                                pinColor={getMarkerColor(place)}
+                                onPress={() => handlePlacePress(place)}
+                            />
+                        );
+                    })}
+                </MapView>
+
+                {/* Map Info Overlay */}
+                {selectedPlace && (
+                    <View style={[styles.mapInfoOverlay, { backgroundColor: card }]}>
+                        <View style={styles.mapInfoContent}>
+                            <Text style={[styles.mapInfoTitle, { color: text }]} numberOfLines={1}>
+                                {selectedPlace.name}
+                            </Text>
+                            <Text style={[styles.mapInfoSubtitle, { color: muted }]} numberOfLines={1}>
+                                {selectedPlace.category}
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            style={[styles.mapInfoClose, { backgroundColor: background }]}
+                            onPress={() => setSelectedPlace(null)}
+                        >
+                            <IconSymbol name="xmark" size={16} color={muted} />
+                        </TouchableOpacity>
+                    </View>
+                )}
 
                 {/* Map Controls */}
                 <View style={styles.mapControls}>
-                    <TouchableOpacity style={styles.controlButton}>
-                        <IconSymbol name="location.fill" size={20} color="#0a7ea4" />
+                    <TouchableOpacity style={[styles.controlButton, { backgroundColor: card }]} onPress={handleRecenter}>
+                        <IconSymbol name="location.fill" size={20} color={tint} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.controlButton}>
+                    <TouchableOpacity style={[styles.controlButton, { backgroundColor: card }]} onPress={handleZoomIn}>
                         <IconSymbol name="plus" size={20} color={text} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.controlButton}>
+                    <TouchableOpacity style={[styles.controlButton, { backgroundColor: card }]} onPress={handleZoomOut}>
                         <IconSymbol name="minus" size={20} color={text} />
                     </TouchableOpacity>
                 </View>
+
             </View>
 
-            {/* Search and Filter */}
-            <View style={styles.searchContainer}>
-                <View style={styles.searchBar}>
-                    <IconSymbol name="magnifyingglass" size={20} color={muted} />
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="Search places..."
-                        placeholderTextColor={muted}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                    />
-                    {searchQuery.length > 0 && (
-                        <TouchableOpacity onPress={() => setSearchQuery('')}>
-                            <IconSymbol name="xmark.circle.fill" size={20} color="#687076" />
-                        </TouchableOpacity>
-                    )}
-                </View>
+            {/* Search Bar */}
+            <View 
+                style={[styles.searchBarContainer, { backgroundColor: card, borderBottomColor: muted + '40' }]}
+                pointerEvents="auto"
+            >
                 <TouchableOpacity
-                    style={styles.filterButton}
-                    onPress={() => setShowFilters(!showFilters)}
+                    onPress={() => setShowSearchModal(true)}
+                    activeOpacity={0.7}
+                    style={{ flex: 1 }}
                 >
-                    <IconSymbol name="slider.horizontal.3" size={20} color={tint} />
+                    <View style={[styles.searchBarButton, { backgroundColor: background, borderColor: muted + '40' }]}>
+                        <IconSymbol name="magnifyingglass" size={20} color={muted} />
+                        <Text style={[styles.searchPlaceholder, { color: muted }]}>
+                            {searchQuery || selectedCategory !== 'All' || selectedStatus !== 'All'
+                                ? `${filteredPlaces.length} places found`
+                                : 'Search or View Places...'}
+                        </Text>
+                        {(searchQuery || selectedCategory !== 'All' || selectedStatus !== 'All') && (
+                            <View style={[styles.activeFilterBadge, { backgroundColor: tint }]}>
+                                <IconSymbol name="line.horizontal.3.decrease.circle.fill" size={20} color="#fff" />
+                            </View>
+                        )}
+                    </View>
                 </TouchableOpacity>
             </View>
 
-            {/* Filters */}
-            {showFilters && (
-                <View style={styles.filtersContainer}>
-                    {/* Category Filter */}
-                    <View style={styles.filterSection}>
-                        <Text style={styles.filterLabel}>Category</Text>
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.filterChips}
-                        >
-                            {CATEGORIES.map((category) => (
-                                <TouchableOpacity
-                                    key={category}
-                                    style={[
-                                        styles.filterChip,
-                                        selectedCategory === category && styles.filterChipActive,
-                                    ]}
-                                    onPress={() => setSelectedCategory(category)}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.filterChipText,
-                                            selectedCategory === category && styles.filterChipTextActive,
-                                        ]}
-                                    >
-                                        {category}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
+            {/* Empty placeholder for layout */}
+            <View style={{ flex: 1 }}>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    bounces={true}
+                >
+                    <View style={styles.emptyState}>
+                        <IconSymbol name="map.fill" size={64} color={muted} />
+                        <Text style={[styles.emptyTitle, { color: text }]}>Tap the search bar above</Text>
+                        <Text style={[styles.emptySubtitle, { color: muted }]}>
+                            Search and browse all places on the map
+                        </Text>
                     </View>
+                </ScrollView>
+            </View>
 
-                    {/* Status Filter */}
-                    <View style={styles.filterSection}>
-                        <Text style={styles.filterLabel}>Status</Text>
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.filterChips}
-                        >
-                            {STATUSES.map((status) => (
-                                <TouchableOpacity
-                                    key={status}
-                                    style={[
-                                        styles.filterChip,
-                                        selectedStatus === status && styles.filterChipActive,
-                                    ]}
-                                    onPress={() => setSelectedStatus(status)}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.filterChipText,
-                                            selectedStatus === status && styles.filterChipTextActive,
-                                        ]}
-                                    >
-                                        {status}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
-                    </View>
-                </View>
-            )}
-
-            {/* Places List */}
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
+            {/* Search Modal with Places List */}
+            <Modal
+                visible={showSearchModal}
+                animationType="slide"
+                presentationStyle="pageSheet"
+                onRequestClose={() => setShowSearchModal(false)}
             >
-                {filteredPlaces.length > 0 ? (
-                    filteredPlaces.map((place) => (
+                <View style={[styles.modalContainer, { backgroundColor: background }]}>
+                    {/* Modal Header */}
+                    <View style={[styles.modalHeader, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
+                        <Text style={[styles.modalTitle, { color: text }]}>Places</Text>
+                        <TouchableOpacity onPress={() => setShowSearchModal(false)}>
+                            <IconSymbol name="xmark.circle.fill" size={28} color={muted} />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Search Bar in Modal */}
+                    <View style={[styles.modalSearchContainer, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
+                        <View style={[styles.searchBar, { backgroundColor: background, borderColor: muted + '40' }]}>
+                            <IconSymbol name="magnifyingglass" size={20} color={muted} />
+                            <TextInput
+                                style={[styles.searchInput, { color: text }]}
+                                placeholder="Search places..."
+                                placeholderTextColor={muted}
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                                autoFocus={false}
+                            />
+                            {searchQuery.length > 0 && (
+                                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                                    <IconSymbol name="xmark.circle.fill" size={20} color={muted} />
+                                </TouchableOpacity>
+                            )}
+                        </View>
                         <TouchableOpacity
-                            key={place.id}
+                            style={[styles.filterToggleButton, { backgroundColor: showFilters ? tint : background, borderColor: showFilters ? tint : muted + '40' }]}
+                            onPress={() => setShowFilters(!showFilters)}
+                        >
+                            <IconSymbol name="line.horizontal.3.decrease.circle" size={20} color={showFilters ? '#fff' : muted} />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Filters */}
+                    {showFilters && (
+                        <View style={[styles.filtersContainer, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
+                            {/* Category Filter */}
+                            <View style={styles.filterSection}>
+                                <Text style={[styles.filterLabel, { color: text }]}>Category</Text>
+                                <View style={styles.filterChipsContainer}>
+                                    {CATEGORIES.map((category) => (
+                                        <TouchableOpacity
+                                            key={category}
+                                            style={[
+                                                styles.filterChip,
+                                                { backgroundColor: selectedCategory === category ? tint : background, borderColor: selectedCategory === category ? tint : muted + '40' },
+                                            ]}
+                                            onPress={() => setSelectedCategory(category)}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.filterChipText,
+                                                    { color: selectedCategory === category ? '#fff' : muted },
+                                                ]}
+                                            >
+                                                {category}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </View>
+
+                            {/* Status Filter */}
+                            <View style={styles.filterSection}>
+                                <Text style={[styles.filterLabel, { color: text }]}>Status</Text>
+                                <View style={styles.filterChipsContainer}>
+                                    {STATUSES.map((status) => (
+                                        <TouchableOpacity
+                                            key={status}
+                                            style={[
+                                                styles.filterChip,
+                                                { backgroundColor: selectedStatus === status ? tint : background, borderColor: selectedStatus === status ? tint : muted + '40' },
+                                            ]}
+                                            onPress={() => setSelectedStatus(status)}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.filterChipText,
+                                                    { color: selectedStatus === status ? '#fff' : muted },
+                                                ]}
+                                            >
+                                                {status}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </View>
+
+                            {/* Clear Filters */}
+                            {(searchQuery || selectedCategory !== 'All' || selectedStatus !== 'All') && (
+                                <TouchableOpacity
+                                    style={[styles.clearFiltersButton, { backgroundColor: background, borderColor: muted + '40' }]}
+                                    onPress={() => {
+                                        setSearchQuery('');
+                                        setSelectedCategory('All');
+                                        setSelectedStatus('All');
+                                    }}
+                                >
+                                    <IconSymbol name="xmark" size={16} color={muted} />
+                                    <Text style={[styles.clearFiltersText, { color: muted }]}>Clear All</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    )}
+
+                    {/* Places List in Modal */}
+                    <ScrollView
+                        style={styles.modalPlacesList}
+                        contentContainerStyle={styles.modalPlacesContent}
+                        showsVerticalScrollIndicator={true}
+                    >
+                        {loading && (
+                            <View style={styles.emptyState}>
+                                <Text style={[styles.emptySubtitle, { color: muted }]}>Loading places...</Text>
+                            </View>
+                        )}
+                        {!loading && filteredPlaces.length > 0 ? (
+                            filteredPlaces.map((place, index) => (
+                            <TouchableOpacity
+                                key={`place-${place.id || 'unknown'}-${index}`}
                             style={[
                                 styles.placeCard,
-                                selectedPlace?.id === place.id && styles.placeCardSelected,
+                                { backgroundColor: card, borderColor: muted + '30' },
+                                selectedPlace?.id === place.id && [styles.placeCardSelected, { borderColor: tint }],
                             ]}
                             onPress={() => handlePlacePress(place)}
                             activeOpacity={0.7}
                         >
                             <View style={styles.placeHeader}>
                                 <View style={styles.placeInfo}>
-                                    <Text style={styles.placeName} numberOfLines={1}>
+                                    <Text style={[styles.placeName, { color: text }]} numberOfLines={1}>
                                         {place.name}
                                     </Text>
-                                    <Text style={styles.placeCategory}>{place.category}</Text>
+                                    <Text style={[styles.placeCategory, { color: muted }]}>{place.category}</Text>
                                 </View>
                                 <View
                                     style={[
@@ -436,31 +553,31 @@ export default function AdminPlacesScreen() {
                                 </View>
                             </View>
 
-                            <Text style={styles.placeDescription} numberOfLines={2}>
+                            <Text style={[styles.placeDescription, { color: muted }]} numberOfLines={2}>
                                 {place.description}
                             </Text>
 
                             <View style={styles.placeMeta}>
                                 <View style={styles.metaItem}>
-                                    <IconSymbol name="location.fill" size={14} color="#687076" />
-                                    <Text style={styles.metaText} numberOfLines={1}>
+                                    <IconSymbol name="location.fill" size={14} color={muted} />
+                                    <Text style={[styles.metaText, { color: muted }]} numberOfLines={1}>
                                         {place.location.city}
                                     </Text>
                                 </View>
                                 <View style={styles.metaItem}>
                                     <IconSymbol name="star.fill" size={14} color="#fbbf24" />
-                                    <Text style={styles.metaText}>
+                                    <Text style={[styles.metaText, { color: muted }]}>
                                         {place.rating?.toFixed(1)} ({place.reviewCount})
                                     </Text>
                                 </View>
                                 <View style={styles.metaItem}>
-                                    <IconSymbol name="eye.fill" size={14} color="#687076" />
-                                    <Text style={styles.metaText}>{place.visitCount}</Text>
+                                    <IconSymbol name="eye.fill" size={14} color={muted} />
+                                    <Text style={[styles.metaText, { color: muted }]}>{place.visitCount}</Text>
                                 </View>
                             </View>
 
-                            <View style={styles.placeFooter}>
-                                <Text style={styles.placeFee}>
+                            <View style={[styles.placeFooter, { borderTopColor: muted + '20' }]}>
+                                <Text style={[styles.placeFee, { color: tint }]}>
                                     {place.entryFee ? `₹${place.entryFee}` : 'Free'}
                                 </Text>
                                 <View style={styles.placeActions}>
@@ -495,17 +612,19 @@ export default function AdminPlacesScreen() {
                                 </View>
                             </View>
                         </TouchableOpacity>
-                    ))
-                ) : (
-                    <View style={styles.emptyState}>
-                        <IconSymbol name="map.fill" size={64} color="#d1d5db" />
-                        <Text style={styles.emptyTitle}>No places found</Text>
-                        <Text style={styles.emptySubtitle}>
-                            Try adjusting your search or filters
-                        </Text>
-                    </View>
-                )}
-            </ScrollView>
+                            ))
+                        ) : (!loading && (
+                            <View style={styles.emptyState}>
+                                <IconSymbol name="map.fill" size={64} color={muted} />
+                                <Text style={[styles.emptyTitle, { color: text }]}>No places found</Text>
+                                <Text style={[styles.emptySubtitle, { color: muted }]}>
+                                    Try adjusting your search or filters
+                                </Text>
+                            </View>
+                        ))}
+                    </ScrollView>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -513,6 +632,7 @@ export default function AdminPlacesScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+
         // backgroundColor will be set inline
     },
     header: {
@@ -523,7 +643,6 @@ const styles = StyleSheet.create({
         paddingTop: 60,
         // backgroundColor will be set inline
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
     },
     headerTitle: {
         fontSize: 28,
@@ -548,6 +667,44 @@ const styles = StyleSheet.create({
         backgroundColor: '#e8f4f8',
         position: 'relative',
     },
+    map: {
+        width: '100%',
+        height: '100%',
+    },
+    mapInfoOverlay: {
+        position: 'absolute',
+        top: 12,
+        left: 12,
+        right: 60,
+        borderRadius: 12,
+        padding: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+    },
+    mapInfoContent: {
+        flex: 1,
+    },
+    mapInfoTitle: {
+        fontSize: 14,
+        fontWeight: '700',
+        marginBottom: 2,
+    },
+    mapInfoSubtitle: {
+        fontSize: 12,
+    },
+    mapInfoClose: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 8,
+    },
     mapPlaceholder: {
         flex: 1,
         justifyContent: 'center',
@@ -557,12 +714,10 @@ const styles = StyleSheet.create({
     mapPlaceholderText: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#11181C',
         marginTop: 12,
     },
     mapSubtext: {
         fontSize: 13,
-        color: '#687076',
         marginTop: 4,
         textAlign: 'center',
     },
@@ -585,85 +740,133 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 4,
     },
-    searchContainer: {
+    searchBarContainer: {
+        padding: 16,
+        zIndex: 10,
+        elevation: 5,
+        minHeight: 80,
+    },
+    searchBarButton: {
         flexDirection: 'row',
-        padding: 12,
-        gap: 8,
-        backgroundColor: '#fff',
+        alignItems: 'center',
+        borderRadius: 16,
+        borderWidth: 1,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        gap: 12,
+    },
+    searchPlaceholder: {
+        flex: 1,
+        fontSize: 16,
+    },
+    activeFilterBadge: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        flex: 1,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 20,
+        paddingTop: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
+    },
+    modalTitle: {
+        fontSize: 24,
+        fontWeight: '700',
+    },
+    modalSearchContainer: {
+        flexDirection: 'row',
+        padding: 16,
+        gap: 8,
+        borderBottomWidth: 1,
     },
     searchBar: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f3f4f6',
         borderRadius: 12,
+        borderWidth: 1,
         paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingVertical: 12,
+
         gap: 8,
     },
     searchInput: {
         flex: 1,
-        fontSize: 15,
-        color: '#11181C',
+        fontSize: 16,
     },
-    filterButton: {
-        width: 40,
-        height: 40,
+    filterToggleButton: {
+        width: 44,
+        height: 44,
         borderRadius: 12,
-        backgroundColor: '#e8f4f8',
+        borderWidth: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
     filtersContainer: {
-        backgroundColor: '#fff',
-        paddingHorizontal: 12,
-        paddingBottom: 12,
+        padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
     },
     filterSection: {
-        marginBottom: 8,
+        marginBottom: 16,
     },
     filterLabel: {
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: '600',
-        color: '#11181C',
-        marginBottom: 8,
+        marginBottom: 10,
     },
-    filterChips: {
-        gap: 6,
+    filterChipsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
     },
     filterChip: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 16,
-        backgroundColor: '#f3f4f6',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
-    },
-    filterChipActive: {
-        backgroundColor: '#0a7ea4',
-        borderColor: '#0a7ea4',
     },
     filterChipText: {
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: '600',
-        color: '#687076',
     },
-    filterChipTextActive: {
-        color: '#fff',
+    clearFiltersButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        padding: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginTop: 8,
+    },
+    clearFiltersText: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    modalPlacesList: {
+        flex: 1,
+    },
+    modalPlacesContent: {
+        padding: 12,
+        paddingBottom: 40,
     },
     scrollView: {
         flex: 1,
+        backgroundColor: 'transparent',
     },
     scrollContent: {
         padding: 12,
-        paddingBottom: 100,
+        paddingBottom: 120,
     },
     placeCard: {
-        backgroundColor: '#fff',
         borderRadius: 12,
         padding: 14,
         marginBottom: 10,
@@ -673,10 +876,8 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 8,
         borderWidth: 2,
-        borderColor: 'transparent',
     },
     placeCardSelected: {
-        borderColor: '#0a7ea4',
     },
     placeHeader: {
         flexDirection: 'row',
@@ -691,12 +892,10 @@ const styles = StyleSheet.create({
     placeName: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 2,
     },
     placeCategory: {
         fontSize: 12,
-        color: '#687076',
     },
     statusBadge: {
         paddingHorizontal: 8,
@@ -709,7 +908,6 @@ const styles = StyleSheet.create({
     },
     placeDescription: {
         fontSize: 13,
-        color: '#687076',
         lineHeight: 18,
         marginBottom: 10,
     },
@@ -726,7 +924,6 @@ const styles = StyleSheet.create({
     },
     metaText: {
         fontSize: 12,
-        color: '#687076',
         flex: 1,
     },
     placeFooter: {
@@ -735,12 +932,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingTop: 10,
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6',
     },
     placeFee: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#0a7ea4',
     },
     placeActions: {
         flexDirection: 'row',
@@ -773,13 +968,11 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#11181C',
         marginTop: 16,
         marginBottom: 8,
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#687076',
         textAlign: 'center',
     },
 });

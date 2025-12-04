@@ -46,8 +46,22 @@ export class AuthUtils {
      */
     static async isAuthenticated(): Promise<boolean> {
         try {
+            const token = await TokenManager.getAccessToken();
             const user = await this.getUser();
-            return !!user;
+            
+            // Must have both token and user data
+            if (!token || !user) {
+                return false;
+            }
+            
+            // Check if token is expired
+            if (this.isTokenExpired(token)) {
+                // Clear expired auth data
+                await this.clearAuthData();
+                return false;
+            }
+            
+            return true;
         } catch (error) {
             console.error('Error checking authentication:', error);
             return false;

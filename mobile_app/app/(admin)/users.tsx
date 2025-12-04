@@ -1,114 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { AdminUser, UserRole } from '@/types/admin.types';
 import { useApi } from '@/hooks/useApi';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { userService } from '@/services/user.service';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
-// Mock data - replace with actual API
-const MOCK_USERS: AdminUser[] = [
-    {
-        id: 'user1',
-        email: 'john.doe@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        phone: '+91 98765 43210',
-        role: UserRole.USER,
-        status: 'active',
-        isEmailVerified: true,
-        isPhoneVerified: true,
-        totalBookings: 12,
-        totalSpent: 45600,
-        joinedDate: '2024-01-15T10:30:00Z',
-        lastLoginDate: '2024-11-27T14:20:00Z',
-    },
-    {
-        id: 'user2',
-        email: 'sarah.wilson@example.com',
-        firstName: 'Sarah',
-        lastName: 'Wilson',
-        phone: '+91 87654 32109',
-        role: UserRole.BUSINESS,
-        status: 'active',
-        isEmailVerified: true,
-        isPhoneVerified: true,
-        totalBookings: 3,
-        totalSpent: 12000,
-        joinedDate: '2024-02-20T08:15:00Z',
-        lastLoginDate: '2024-11-26T09:45:00Z',
-        businessIds: ['1', '4'],
-    },
-    {
-        id: 'user3',
-        email: 'mike.chen@example.com',
-        firstName: 'Mike',
-        lastName: 'Chen',
-        phone: '+91 76543 21098',
-        role: UserRole.USER,
-        status: 'suspended',
-        isEmailVerified: true,
-        isPhoneVerified: false,
-        totalBookings: 5,
-        totalSpent: 18900,
-        joinedDate: '2024-03-10T12:45:00Z',
-        lastLoginDate: '2024-11-15T16:30:00Z',
-    },
-    {
-        id: 'user4',
-        email: 'priya.sharma@example.com',
-        firstName: 'Priya',
-        lastName: 'Sharma',
-        phone: '+91 65432 10987',
-        role: UserRole.ORGANIZATION,
-        status: 'active',
-        isEmailVerified: true,
-        isPhoneVerified: true,
-        totalBookings: 0,
-        totalSpent: 0,
-        joinedDate: '2024-04-05T14:20:00Z',
-        lastLoginDate: '2024-11-28T11:10:00Z',
-        organizationId: 'org1',
-    },
-    {
-        id: 'user5',
-        email: 'alex.kumar@example.com',
-        firstName: 'Alex',
-        lastName: 'Kumar',
-        phone: '+91 54321 09876',
-        role: UserRole.USER,
-        status: 'active',
-        isEmailVerified: false,
-        isPhoneVerified: true,
-        totalBookings: 8,
-        totalSpent: 32400,
-        joinedDate: '2024-05-12T09:00:00Z',
-        lastLoginDate: '2024-11-27T18:55:00Z',
-    },
-    {
-        id: 'user6',
-        email: 'admin@example.com',
-        firstName: 'Admin',
-        lastName: 'User',
-        phone: '+91 99999 88888',
-        role: UserRole.ADMIN,
-        status: 'active',
-        isEmailVerified: true,
-        isPhoneVerified: true,
-        totalBookings: 0,
-        totalSpent: 0,
-        joinedDate: '2024-01-01T00:00:00Z',
-        lastLoginDate: '2024-11-28T12:00:00Z',
-    },
-];
+// Removed static mock users. Data now sourced only from backend.
 
-const ROLES = ['All', 'User', 'Business', 'Organization', 'Admin'];
+const ROLES = ['All', 'User', 'Business', 'Admin'];
 const STATUSES = ['All', 'Active', 'Suspended'];
 
 export default function AdminUsersScreen() {
     const router = useRouter();
-    const [users, setUsers] = useState<AdminUser[]>(MOCK_USERS);
-    const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>(MOCK_USERS);
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+    const [users, setUsers] = useState<AdminUser[]>([]);
+    const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedRole, setSelectedRole] = useState('All');
     const [selectedStatus, setSelectedStatus] = useState('All');
@@ -149,6 +61,47 @@ export default function AdminUsersScreen() {
         filterUsers();
     }, [filterUsers]);
 
+    // Load users list via admin endpoint
+    useEffect(() => {
+        const loadUsers = async () => {
+            setLoading(true);
+            try {
+                const resp = await userService.list({ skip: 0, limit: 100 });
+                if (resp.success && resp.data) {
+                    const mapped = resp.data.map((u: any) => {
+                        const parts = (u.name || '').split(' ');
+                        const first = parts[0] || u.name || '';
+                        const last = parts.slice(1).join(' ');
+                        const roleMapped = u.role as UserRole;
+                        const adminUser: AdminUser = {
+                            id: u.id,
+                            email: u.email,
+                            firstName: first,
+                            lastName: last,
+                            phone: '',
+                            role: roleMapped,
+                            status: u.approved ? 'active' : 'pending',
+                            isEmailVerified: true,
+                            isPhoneVerified: false,
+                            totalBookings: 0,
+                            totalSpent: 0,
+                            joinedDate: u.created_at,
+                            lastLoginDate: u.updated_at,
+                        };
+                        return adminUser;
+                    });
+                    setUsers(mapped);
+                    setFilteredUsers(mapped);
+                }
+            } catch (e) {
+                console.warn('Failed to load users list:', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadUsers();
+    }, []);
+
     const handleUserPress = (user: AdminUser) => {
         router.push(`/(admin)/(stack)/user-details?id=${user.id}` as any);
     };
@@ -163,11 +116,13 @@ export default function AdminUsersScreen() {
     };
 
     const handleActivateUser = async (userId: string) => {
-        const result = await updateUser(`/admin/users/${userId}`, { status: 'active' });
-        if (result) {
+        try {
+            await userService.approve(userId);
             setUsers(prev =>
                 prev.map(u => (u.id === userId ? { ...u, status: 'active' } : u))
             );
+        } catch (e) {
+            Alert.alert('Error', 'Failed to activate user');
         }
     };
 
@@ -184,8 +139,6 @@ export default function AdminUsersScreen() {
                 return '#ef4444';
             case UserRole.BUSINESS:
                 return '#8b5cf6';
-            case UserRole.ORGANIZATION:
-                return '#3b82f6';
             case UserRole.USER:
                 return '#10b981';
             default:
@@ -199,8 +152,6 @@ export default function AdminUsersScreen() {
                 return '#fee2e2';
             case UserRole.BUSINESS:
                 return '#ede9fe';
-            case UserRole.ORGANIZATION:
-                return '#dbeafe';
             case UserRole.USER:
                 return '#d1fae5';
             default:
@@ -237,8 +188,8 @@ export default function AdminUsersScreen() {
             </View>
 
             {/* Search and Filter */}
-            <View style={styles.searchContainer}>
-                <View style={[styles.searchBar, { backgroundColor: card }]}>
+            <View style={[styles.searchContainer, { backgroundColor: card }]}>
+                <View style={[styles.searchBar, { backgroundColor: background, borderColor: muted + '40' }]}>
                     <IconSymbol name="magnifyingglass" size={20} color={muted} />
                     <TextInput
                         style={[styles.searchInput, { color: text }]}
@@ -254,7 +205,7 @@ export default function AdminUsersScreen() {
                     )}
                 </View>
                 <TouchableOpacity
-                    style={styles.filterButton}
+                    style={[styles.filterButton, { backgroundColor: tint + '15' }]}
                     onPress={() => setShowFilters(!showFilters)}
                 >
                     <IconSymbol name="slider.horizontal.3" size={20} color={tint} />
@@ -263,10 +214,10 @@ export default function AdminUsersScreen() {
 
             {/* Filters */}
             {showFilters && (
-                <View style={styles.filtersContainer}>
+                <View style={[styles.filtersContainer, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
                     {/* Role Filter */}
                     <View style={styles.filterSection}>
-                        <Text style={styles.filterLabel}>Role</Text>
+                        <Text style={[styles.filterLabel, { color: text }]}>Role</Text>
                         <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -277,14 +228,14 @@ export default function AdminUsersScreen() {
                                     key={role}
                                     style={[
                                         styles.filterChip,
-                                        selectedRole === role && styles.filterChipActive,
+                                        { backgroundColor: selectedRole === role ? tint : background, borderColor: selectedRole === role ? tint : muted + '40' },
                                     ]}
                                     onPress={() => setSelectedRole(role)}
                                 >
                                     <Text
                                         style={[
                                             styles.filterChipText,
-                                            selectedRole === role && styles.filterChipTextActive,
+                                            { color: selectedRole === role ? '#fff' : muted },
                                         ]}
                                     >
                                         {role}
@@ -296,7 +247,7 @@ export default function AdminUsersScreen() {
 
                     {/* Status Filter */}
                     <View style={styles.filterSection}>
-                        <Text style={styles.filterLabel}>Status</Text>
+                        <Text style={[styles.filterLabel, { color: text }]}>Status</Text>
                         <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -307,14 +258,14 @@ export default function AdminUsersScreen() {
                                     key={status}
                                     style={[
                                         styles.filterChip,
-                                        selectedStatus === status && styles.filterChipActive,
+                                        { backgroundColor: selectedStatus === status ? tint : background, borderColor: selectedStatus === status ? tint : muted + '40' },
                                     ]}
                                     onPress={() => setSelectedStatus(status)}
                                 >
                                     <Text
                                         style={[
                                             styles.filterChipText,
-                                            selectedStatus === status && styles.filterChipTextActive,
+                                            { color: selectedStatus === status ? '#fff' : muted },
                                         ]}
                                     >
                                         {status}
@@ -332,11 +283,17 @@ export default function AdminUsersScreen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {filteredUsers.length > 0 ? (
-                    filteredUsers.map((user) => (
-                        <TouchableOpacity
-                            key={user.id}
-                            style={styles.userCard}
+                {loading && (
+                    <View style={styles.emptyState}>
+                        <Text style={[styles.emptySubtitle, { color: muted }]}>Loading users...</Text>
+                    </View>
+                )}
+                {!loading && filteredUsers.length > 0 ? (
+                    <>
+                        {filteredUsers.map((user) => (
+                            <TouchableOpacity
+                                key={user.id}
+                            style={[styles.userCard, { backgroundColor: card, borderColor: muted + '20' }]}
                             onPress={() => handleUserPress(user)}
                             activeOpacity={0.7}
                         >
@@ -347,10 +304,10 @@ export default function AdminUsersScreen() {
                                     </Text>
                                 </View>
                                 <View style={styles.userInfo}>
-                                    <Text style={styles.userName}>
+                                    <Text style={[styles.userName, { color: text }]}>
                                         {user.firstName} {user.lastName}
                                     </Text>
-                                    <Text style={styles.userEmail}>{user.email}</Text>
+                                    <Text style={[styles.userEmail, { color: muted }]}>{user.email}</Text>
                                 </View>
                                 <View style={styles.badges}>
                                     <View
@@ -373,28 +330,28 @@ export default function AdminUsersScreen() {
                                         size={8}
                                         color={getStatusColor(user.status)}
                                     />
-                                    <Text style={styles.metaText}>
+                                    <Text style={[styles.metaText, { color: muted }]}>
                                         {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                                     </Text>
                                 </View>
                                 <View style={styles.metaItem}>
-                                    <IconSymbol name="calendar" size={14} color="#687076" />
-                                    <Text style={styles.metaText}>
+                                    <IconSymbol name="calendar" size={14} color={muted} />
+                                    <Text style={[styles.metaText, { color: muted }]}>
                                         Joined {formatDate(user.joinedDate)}
                                     </Text>
                                 </View>
                             </View>
 
-                            <View style={styles.userStats}>
+                            <View style={[styles.userStats, { borderColor: muted + '20' }]}>
                                 <View style={styles.statItem}>
-                                    <IconSymbol name="ticket.fill" size={16} color="#687076" />
-                                    <Text style={styles.statValue}>{user.totalBookings}</Text>
-                                    <Text style={styles.statLabel}>Bookings</Text>
+                                    <IconSymbol name="ticket.fill" size={16} color={muted} />
+                                    <Text style={[styles.statValue, { color: text }]}>{user.totalBookings}</Text>
+                                    <Text style={[styles.statLabel, { color: muted }]}>Bookings</Text>
                                 </View>
                                 <View style={styles.statItem}>
-                                    <IconSymbol name="indianrupeesign.circle.fill" size={16} color="#687076" />
-                                    <Text style={styles.statValue}>₹{(user.totalSpent || 1000 / 1000).toFixed(1)}k</Text>
-                                    <Text style={styles.statLabel}>Spent</Text>
+                                    <IconSymbol name="indianrupeesign.circle.fill" size={16} color={muted} />
+                                    <Text style={[styles.statValue, { color: text }]}>₹{(user.totalSpent || 1000 / 1000).toFixed(1)}k</Text>
+                                    <Text style={[styles.statLabel, { color: muted }]}>Spent</Text>
                                 </View>
                                 <View style={styles.statItem}>
                                     <IconSymbol
@@ -450,16 +407,17 @@ export default function AdminUsersScreen() {
                                 )}
                             </View>
                         </TouchableOpacity>
-                    ))
-                ) : (
+                    ))}
+                    </>
+                ) : (!loading && (
                     <View style={styles.emptyState}>
-                        <IconSymbol name="person.2.fill" size={64} color="#d1d5db" />
-                        <Text style={styles.emptyTitle}>No users found</Text>
-                        <Text style={styles.emptySubtitle}>
+                        <IconSymbol name="person.2.fill" size={64} color={muted} />
+                        <Text style={[styles.emptyTitle, { color: text }]}>No users found</Text>
+                        <Text style={[styles.emptySubtitle, { color: muted }]}>
                             Try adjusting your search or filters
                         </Text>
                     </View>
-                )}
+                ))}
             </ScrollView>
         </View>
     );
@@ -468,40 +426,34 @@ export default function AdminUsersScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 20,
-        paddingTop: 60,
-        backgroundColor: '#fff',
+        paddingTop: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
     },
     headerTitle: {
         fontSize: 28,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 4,
     },
     headerSubtitle: {
         fontSize: 14,
-        color: '#687076',
     },
     searchContainer: {
         flexDirection: 'row',
         padding: 16,
         gap: 12,
-        backgroundColor: '#fff',
     },
     searchBar: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f3f4f6',
         borderRadius: 12,
+        borderWidth: 1,
         paddingHorizontal: 12,
         paddingVertical: 10,
         gap: 8,
@@ -509,22 +461,18 @@ const styles = StyleSheet.create({
     searchInput: {
         flex: 1,
         fontSize: 16,
-        color: '#11181C',
     },
     filterButton: {
         width: 44,
         height: 44,
         borderRadius: 12,
-        backgroundColor: '#e8f4f8',
         justifyContent: 'center',
         alignItems: 'center',
     },
     filtersContainer: {
-        backgroundColor: '#fff',
         paddingHorizontal: 16,
         paddingBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
     },
     filterSection: {
         marginBottom: 12,
@@ -532,7 +480,6 @@ const styles = StyleSheet.create({
     filterLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#11181C',
         marginBottom: 8,
     },
     filterChips: {
@@ -542,21 +489,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: '#f3f4f6',
         borderWidth: 1,
-        borderColor: '#e5e7eb',
-    },
-    filterChipActive: {
-        backgroundColor: '#0a7ea4',
-        borderColor: '#0a7ea4',
     },
     filterChipText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#687076',
-    },
-    filterChipTextActive: {
-        color: '#fff',
     },
     scrollView: {
         flex: 1,
@@ -566,8 +503,8 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     },
     userCard: {
-        backgroundColor: '#fff',
         borderRadius: 16,
+        borderWidth: 1,
         padding: 16,
         marginBottom: 12,
         elevation: 2,
@@ -601,12 +538,10 @@ const styles = StyleSheet.create({
     userName: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#11181C',
         marginBottom: 2,
     },
     userEmail: {
         fontSize: 13,
-        color: '#687076',
     },
     badges: {
         gap: 4,
@@ -632,7 +567,6 @@ const styles = StyleSheet.create({
     },
     metaText: {
         fontSize: 13,
-        color: '#687076',
     },
     userStats: {
         flexDirection: 'row',
@@ -640,7 +574,6 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderTopWidth: 1,
         borderBottomWidth: 1,
-        borderColor: '#f3f4f6',
         marginBottom: 12,
     },
     statItem: {
@@ -650,11 +583,9 @@ const styles = StyleSheet.create({
     statValue: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#11181C',
     },
     statLabel: {
         fontSize: 11,
-        color: '#687076',
     },
     userActions: {
         flexDirection: 'row',
@@ -697,13 +628,11 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#11181C',
         marginTop: 16,
         marginBottom: 8,
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#687076',
         textAlign: 'center',
     },
 });

@@ -68,6 +68,17 @@ async def get_my_business(
     return businesses
 
 
+@router.get("/types", response_model=List[businessType])
+async def get_business_types(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1),
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """Get all business types"""
+    business_types = await business_type_service.get_all(skip=skip, limit=limit)
+    return business_types
+
+
 @router.get("/{b_id}", response_model=business)
 async def get_business(
     b_id: str,

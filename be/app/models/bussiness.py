@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field, field_validator, BeforeValidator, ConfigD
 from typing import Optional, Annotated
 from datetime import datetime
 from bson import ObjectId
-from enum import Enum
 import re
 
 from app.models.location import Position
@@ -15,21 +14,6 @@ def validate_object_id(v):
 
 
 PyObjectId = Annotated[ObjectId, BeforeValidator(validate_object_id)]
-
-
-class businessTypeEnum(str, Enum):
-    tourist_entry = "tourist_entry"
-    hotel = "hotel"
-    restaurant = "restaurant"
-    cab = "cab"
-    guide = "guide"
-    event = "event"
-
-
-class businessCategoryEnum(str, Enum):
-    event = "event"
-    book = "book"
-    buy = "buy"
 
 
 class OpenHours(BaseModel):
@@ -46,8 +30,8 @@ class OpenHours(BaseModel):
 
 # business_TYPE model
 class businessTypeBase(BaseModel):
-    type: businessTypeEnum
-    category: businessCategoryEnum
+    type: str = Field(..., max_length=100, description="Business type name")
+    category: str = Field(..., max_length=100, description="Business category")
 
 
 class businessTypeCreate(businessTypeBase):
@@ -55,8 +39,8 @@ class businessTypeCreate(businessTypeBase):
 
 
 class businessTypeUpdate(BaseModel):
-    type: Optional[businessTypeEnum] = None
-    category: Optional[businessCategoryEnum] = None
+    type: Optional[str] = Field(None, max_length=100)
+    category: Optional[str] = Field(None, max_length=100)
 
 
 class businessTypeInDB(businessTypeBase):

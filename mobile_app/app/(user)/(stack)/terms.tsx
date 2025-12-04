@@ -1,26 +1,31 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function TermsScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <View style={styles.header}>
                 <IconSymbol name="doc.text.fill" size={48} color="#0a7ea4" />
-                <Text style={styles.title}>Terms & Conditions</Text>
+                <Text style={styles.title}>{t.termsAndConditions}</Text>
             </View>
 
             <View style={styles.textContent}>
                 <Text style={styles.paragraph}>
-                    By using this application, you agree to our terms and conditions.
+                    {t.acceptAgreement}
                 </Text>
-                <Text style={styles.sectionTitle}>1. Acceptance of Terms</Text>
+                <Text style={styles.sectionTitle}>1. {t.acceptanceOfTerms}</Text>
                 <Text style={styles.paragraph}>
-                    By accessing and using this service, you accept and agree to be bound by the terms and provisions of this agreement.
+                    {t.acceptAgreement}
                 </Text>
-                <Text style={styles.sectionTitle}>2. Use License</Text>
+                <Text style={styles.sectionTitle}>2. {t.useLicense}</Text>
                 <Text style={styles.paragraph}>
-                    Permission is granted to temporarily use this application for personal, non-commercial transitory viewing only.
+                    {t.usePermission}
                 </Text>
             </View>
         </ScrollView>

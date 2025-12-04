@@ -1,26 +1,31 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function PrivacyScreen() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <View style={styles.header}>
                 <IconSymbol name="lock.fill" size={48} color="#10b981" />
-                <Text style={styles.title}>Privacy Policy</Text>
+                <Text style={styles.title}>{t.privacyPolicy}</Text>
             </View>
 
             <View style={styles.textContent}>
                 <Text style={styles.paragraph}>
-                    We value your privacy and are committed to protecting your personal information.
+                    {t.privacyDescription}
                 </Text>
-                <Text style={styles.sectionTitle}>Information We Collect</Text>
+                <Text style={styles.sectionTitle}>{t.infoWeCollect}</Text>
                 <Text style={styles.paragraph}>
-                    We collect information that you provide directly to us, such as when you create an account, make a booking, or contact us for support.
+                    {t.collectDescription}
                 </Text>
-                <Text style={styles.sectionTitle}>How We Use Your Information</Text>
+                <Text style={styles.sectionTitle}>{t.howWeUse}</Text>
                 <Text style={styles.paragraph}>
-                    We use the information we collect to provide, maintain, and improve our services, and to communicate with you.
+                    {t.useDescription}
                 </Text>
             </View>
         </ScrollView>

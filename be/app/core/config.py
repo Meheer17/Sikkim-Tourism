@@ -21,9 +21,18 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
-  
+    
     # Security
     PASSWORD_MIN_LENGTH: int = 8
+    
+    # Gemini API
+    GEMINI_API_KEY: str = ""
+    
+    # CDN Configuration
+    CDN_URL: str = "https://models.shrishesha.space/api/media/upload"
+    CDN_MODEL_URL: str = "https://models.shrishesha.space/api/models/upload"
+    CDN_API_KEY: str = "promatrs@25"
+    LOCAL_IP: str = "10.0.0.5"
     
     class Config:
         env_file = ".env"

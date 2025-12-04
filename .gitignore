@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 
+.github
+
 # Distribution / packaging
 .Python
 build/
@@ -141,6 +143,8 @@ celerybeat.pid
 mnesia/
 rabbitmq/
 rabbitmq-data/
+
+app-data/
 
 # ActiveMQ
 activemq-data/
@@ -360,3 +364,7 @@ vite.config.ts.timestamp-*
 
 # macOS
 .DS_Store
+
+# vscode
+.vscode/
+mobile_app/.env

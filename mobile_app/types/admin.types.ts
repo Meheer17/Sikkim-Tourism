@@ -120,7 +120,7 @@ export interface AdminUser {
     phone?: string;
     avatar?: string;
     role: UserRole;
-    status: 'active' | 'suspended' | 'deleted';
+    status: 'active' | 'suspended' | 'deleted' | 'pending';
     isEmailVerified: boolean;
     isPhoneVerified: boolean;
     totalBookings?: number;
@@ -128,14 +128,13 @@ export interface AdminUser {
     joinedDate: string;
     lastLoginDate?: string;
     businessIds?: string[];
-    organizationId?: string;
+
 }
 
 export enum UserRole {
     ADMIN = 'admin',
     USER = 'user',
     BUSINESS = 'business',
-    ORGANIZATION = 'organization',
 }
 
 // Role Assignment Types

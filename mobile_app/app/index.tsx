@@ -21,9 +21,6 @@ export default function Index() {
                 case UserRole.BUSINESS:
                     router.replace('/(business)' as any);
                     break;
-                case UserRole.ORGANIZER:
-                    router.replace('/(organization)' as any);
-                    break;
                 case UserRole.USER:
                 default:
                     router.replace('/(user)' as any);

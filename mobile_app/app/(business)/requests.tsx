@@ -1,9 +1,13 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useThemeColor } from '@/hooks/use-theme-color';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { getLanguageTranslations } from '@/constants/translations';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function BusinessRequests() {
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const requests = [
         { id: 'r1', type: 'service_approval', title: 'New Service Approval', detail: 'Approve "City Cab Premium"', time: '2h ago' },
         { id: 'r2', type: 'booking_refund', title: 'Refund Request', detail: 'Refund for booking #B1234', time: '1d ago' },
