@@ -240,7 +240,7 @@ class OrderService:
             payment_status=payment_status
         )
     
-    async def verify_business_ownership(self, business_id: str, user_id: str) -> bool:
+    async def verify_business_ownership(self, business_id: str,user_id: str) -> bool:
         """Verify if user owns the business"""
         db = get_database()
         if db is None:
@@ -248,8 +248,8 @@ class OrderService:
         
         user_business_collection = db.user_business
         user_biz = await user_business_collection.find_one({
-            "uid": user_id,
-            "bid": business_id,
+            "uid": ObjectId(user_id),
+            "bid": ObjectId(business_id),
             "role": "owner"
         })
         return user_biz is not None
@@ -347,14 +347,12 @@ class OrderService:
         # Get all businesses owned by this user
         user_business_collection = db.user_business
         business_ids = []
-        
-        cursor = user_business_collection.find({"uid": user_id, "role": "owner"})
+        cursor = user_business_collection.find({"uid": ObjectId(user_id), "role": "owner"})
         async for ub in cursor:
-            business_ids.append(ub["bid"])
-        
+            business_ids.append(str(ub["bid"]))
         if not business_ids:
             return []
-        
+
         # Get today's orders for these businesses
         today_start = datetime.combine(date.today(), datetime.min.time())
         today_end = datetime.combine(date.today(), datetime.max.time())
@@ -393,9 +391,9 @@ class OrderService:
         user_business_collection = db.user_business
         business_ids = []
         
-        cursor = user_business_collection.find({"uid": user_id, "role": "owner"})
+        cursor = user_business_collection.find({"uid": ObjectId(user_id), "role": "owner"})
         async for ub in cursor:
-            business_ids.append(ub["bid"])
+            business_ids.append(str(ub["bid"]))
         
         if not business_ids:
             return {
@@ -442,9 +440,9 @@ class OrderService:
         user_business_collection = db.user_business
         business_ids = []
         
-        cursor = user_business_collection.find({"uid": user_id, "role": "owner"})
+        cursor = user_business_collection.find({"uid": ObjectId(user_id), "role": "owner"})
         async for ub in cursor:
-            business_ids.append(ub["bid"])
+            business_ids.append(str(ub["bid"]))
         
         if not business_ids:
             return []
@@ -483,9 +481,9 @@ class OrderService:
         user_business_collection = db.user_business
         business_ids = []
         
-        cursor = user_business_collection.find({"uid": user_id, "role": "owner"})
+        cursor = user_business_collection.find({"uid": ObjectId(user_id), "role": "owner"})
         async for ub in cursor:
-            business_ids.append(ub["bid"])
+            business_ids.append(str(ub["bid"]))
         
         if not business_ids:
             return []

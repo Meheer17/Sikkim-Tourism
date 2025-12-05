@@ -1,8 +1,8 @@
 {
     "info": {
-        "_postman_id": "orders-bookings-collection-2025",
-        "name": "Orders & Bookings API Collection",
-        "description": "Complete API collection for Orders and Bookings system - Tourist Backend",
+        "_postman_id": "orders-bookings-services-collection-2025",
+        "name": "Orders, Bookings & Services API Collection",
+        "description": "Complete API collection for Orders, Bookings, and Services system - Tourist Backend",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
         "_exporter_id": "43495295"
     },
@@ -770,6 +770,176 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "Services API",
+            "description": "Complete Services CRUD operations - Create, read, update, delete services for businesses",
+            "item": [
+                {
+                    "name": "List Services",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "description": "JWT token from authentication"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/services/?skip=0&limit=10",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "services",
+                                ""
+                            ],
+                            "query": [
+                                {
+                                    "key": "skip",
+                                    "value": "0",
+                                    "description": "Number of records to skip for pagination"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10",
+                                    "description": "Number of records to return"
+                                },
+                                {
+                                    "key": "bid",
+                                    "value": "",
+                                    "description": "Filter by business ID (optional)",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "List all services with pagination and optional filter by business ID"
+                    }
+                },
+                {
+                    "name": "Create Service",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "description": "JWT token from authentication"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Premium Tour Package\",\n  \"price\": 5000,\n  \"bid\": \"6576f4a1b2c3d4e5f6g7h8i0\",\n  \"description\": \"A comprehensive tour package including guide and meals\",\n  \"short_description\": \"Full day tour with guide\",\n  \"features\": [\n    \"Professional guide\",\n    \"Meals included\",\n    \"Hotel pickup\",\n    \"Photos provided\"\n  ],\n  \"metadata\": [\n    {\n      \"type\": \"tourist_entry\",\n      \"external_id\": \"TOUR_EXT_001\"\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/services/",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "services",
+                                ""
+                            ]
+                        },
+                        "description": "Create a new service for a business"
+                    }
+                },
+                {
+                    "name": "Get Service by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "description": "JWT token from authentication"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/services/{{service_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "services",
+                                "{{service_id}}"
+                            ]
+                        },
+                        "description": "Get a specific service by its ID"
+                    }
+                },
+                {
+                    "name": "Update Service",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "description": "JWT token from authentication"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Premium Tour Package - Updated\",\n  \"price\": 5500,\n  \"description\": \"An enhanced comprehensive tour package\",\n  \"short_description\": \"Full day tour with professional guide\",\n  \"features\": [\n    \"Professional guide\",\n    \"Meals included\",\n    \"Hotel pickup\",\n    \"Photos provided\",\n    \"Insurance included\"\n  ],\n  \"metadata\": [\n    {\n      \"type\": \"tourist_entry\",\n      \"external_id\": \"TOUR_EXT_001_V2\"\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/services/{{service_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "services",
+                                "{{service_id}}"
+                            ]
+                        },
+                        "description": "Update service details"
+                    }
+                },
+                {
+                    "name": "Delete Service",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "description": "JWT token from authentication"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/services/{{service_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "services",
+                                "{{service_id}}"
+                            ]
+                        },
+                        "description": "Delete a service"
+                    }
+                }
+            ]
         }
     ],
     "variable": [
@@ -796,6 +966,12 @@
             "value": "",
             "type": "string",
             "description": "Business ID for business-specific operations"
+        },
+        {
+            "key": "service_id",
+            "value": "",
+            "type": "string",
+            "description": "Service ID for individual service operations"
         }
     ]
 }
