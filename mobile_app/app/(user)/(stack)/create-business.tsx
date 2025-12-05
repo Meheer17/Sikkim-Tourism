@@ -17,6 +17,9 @@ import * as Location from 'expo-location';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { businessService, BusinessType } from '@/services/business.service';
+import { FilePicker, PickedFile } from '@/utils/file-picker';
+import { fileService } from '@/services';
+import { locationService } from '@/services';
 import { Picker } from '@react-native-picker/picker';
 import Toast from 'react-native-toast-message';
 
@@ -43,6 +46,8 @@ export default function CreateBusinessScreen() {
         longitudeDelta: 0.5,
     });
     const [markerPosition, setMarkerPosition] = useState<{ latitude: number; longitude: number } | null>(null);
+    const [selectedImages, setSelectedImages] = useState<PickedFile[]>([]);
+    const [uploadingImages, setUploadingImages] = useState(false);
 
     const background = useThemeColor('background');
     const card = useThemeColor('card');
@@ -149,6 +154,21 @@ export default function CreateBusinessScreen() {
         }
     };
 
+    const handlePickImages = async () => {
+        try {
+            const picked = await FilePicker.pickFilesWithValidation('image', true);
+            if (picked && picked.length > 0) {
+                setSelectedImages((prev) => [...prev, ...picked]);
+            }
+        } catch (err) {
+            console.error('Error picking images', err);
+        }
+    };
+
+    const handleRemoveImage = (index: number) => {
+        setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+    };
+
     const handleSubmit = async () => {
         // Validation
         if (!name.trim()) {
@@ -170,6 +190,70 @@ export default function CreateBusinessScreen() {
 
         setSubmitting(true);
         try {
+            // 1) If images selected, upload them first and collect server-side file names
+            const imagesArray: string[] = [];
+            if (selectedImages && selectedImages.length > 0) {
+                setUploadingImages(true);
+
+                for (let i = 0; i < selectedImages.length; i++) {
+                    const picked = selectedImages[i];
+                    // Create a deterministic filename based on business name + timestamp + index
+                    const cleanName = name.trim().replace(/\s+/g, '_').toLowerCase() || 'business';
+                    const ext = picked.name.split('.').pop() || 'jpg';
+                    const generatedFileName = `${cleanName}_${Date.now()}_${i}.${ext}`;
+
+                    const fileLike = FilePicker.createFileFromPicked(picked);
+
+                    try {
+                        const resp = await fileService.uploadFile({
+                            file: fileLike as any,
+                            fileName: generatedFileName,
+                            fileType: picked.type || 'image/jpeg',
+                            category: 'image',
+                        });
+
+                        if (resp && resp.success && resp.data) {
+                            // Backends may return different shapes. Prefer explicit `filename`, then `fileName`/`originalName`,
+                            // or nested `cdn_response.filename`. Fall back to the generated name.
+                            const d: any = resp.data;
+                            let uploadedFilename = generatedFileName;
+
+                            if (typeof d === 'string') {
+                                uploadedFilename = d;
+                            } else if (d.filename) {
+                                uploadedFilename = d.filename;
+                            } else if (d.fileName) {
+                                uploadedFilename = d.fileName;
+                            } else if (d.originalName) {
+                                uploadedFilename = d.originalName;
+                            } else if (d.cdn_response && d.cdn_response.filename) {
+                                uploadedFilename = d.cdn_response.filename;
+                            } else if (d.data && d.data.filename) {
+                                uploadedFilename = d.data.filename;
+                            } else if (d.url) {
+                                // if only URL is returned, derive filename from URL
+                                try {
+                                    const parts = new URL(d.url).pathname.split('/');
+                                    const last = parts.pop();
+                                    if (last) uploadedFilename = decodeURIComponent(last);
+                                } catch (e) {
+                                    // ignore
+                                }
+                            }
+
+                            imagesArray.push(uploadedFilename);
+                        } else {
+                            console.warn('File upload returned unexpected response for', generatedFileName, resp);
+                        }
+                    } catch (err) {
+                        console.error('Failed to upload image', picked.name, err);
+                        Alert.alert('Upload Error', `Failed to upload image ${picked.name}.`);
+                    }
+                }
+
+                setUploadingImages(false);
+            }
+
             const businessData: any = {
                 name: name.trim(),
                 short_description: shortDescription.trim(),
@@ -189,6 +273,15 @@ export default function CreateBusinessScreen() {
 
             const resp = await businessService.create(businessData);
             if (resp.success) {
+                // 2) After creating business, update associated location metadata with images array if l_id exists
+                const l_id = resp.data?.l_id;
+                if (l_id && Array.isArray(selectedImages) && selectedImages.length > 0) {
+                    try {
+                        await locationService.update(l_id, { metadata: { images: imagesArray } });
+                    } catch (err) {
+                        console.error('Failed to update location metadata with images:', err);
+                    }
+                }
                 Toast.show({
                     type: 'success',
                     text1: 'Success',
@@ -386,6 +479,30 @@ export default function CreateBusinessScreen() {
                                 placeholderTextColor={muted}
                             />
                         </View>
+                    </View>
+
+                    <Text style={[styles.label, { color: text }]}>Images</Text>
+                    <View style={{ marginBottom: 12 }}>
+                        <TouchableOpacity
+                            style={[styles.mapToggleButton, { backgroundColor: background, borderColor: tint }]}
+                            onPress={handlePickImages}
+                        >
+                            <IconSymbol name="image" size={18} color={tint} />
+                            <Text style={[styles.mapToggleText, { color: tint }]}>Pick Images</Text>
+                        </TouchableOpacity>
+
+                        {selectedImages.length > 0 && (
+                            <View style={{ marginTop: 8 }}>
+                                {selectedImages.map((img, idx) => (
+                                    <View key={`${img.name}_${idx}`} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 }}>
+                                        <Text style={{ color: text, flex: 1 }}>{img.name}</Text>
+                                        <TouchableOpacity onPress={() => handleRemoveImage(idx)} style={{ paddingHorizontal: 8 }}>
+                                            <Text style={{ color: tint }}>Remove</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
                     </View>
 
                     <TouchableOpacity
