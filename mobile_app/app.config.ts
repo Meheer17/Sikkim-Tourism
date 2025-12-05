@@ -1,4 +1,13 @@
 import { ExpoConfig, ConfigContext } from 'expo/config';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Load environment variables from root .env file
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+// Debug: Log the loaded API_BASE_URL
+console.log('🔧 [app.config.ts] Loading configuration...');
+console.log('📍 API_BASE_URL from .env:', process.env.API_BASE_URL);
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
     ...config,
@@ -58,9 +67,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     extra: {
         // Environment variables accessible in the app
-        API_BASE_URL: process.env.API_BASE_URL || 'https://10.0.0.10:8000/v1',
-        API_TIMEOUT: process.env.API_TIMEOUT || '10000',
-        DEBUG_API_LOGS: process.env.DEBUG_API_LOGS || 'false',
+        API_BASE_URL: process.env.API_BASE_URL || 'http://10.0.0.5:8000/api/v1',
+        API_TIMEOUT: process.env.API_TIMEOUT || '30000',
+        DEBUG_API_LOGS: process.env.DEBUG_API_LOGS || 'true',
         MAX_FILE_SIZE: process.env.MAX_FILE_SIZE || '10485760',
         ALLOWED_IMAGE_FORMATS: process.env.ALLOWED_IMAGE_FORMATS || 'jpg,jpeg,png,gif,webp',
         ALLOWED_DOCUMENT_FORMATS: process.env.ALLOWED_DOCUMENT_FORMATS || 'pdf,doc,docx,txt',

@@ -1,6 +1,12 @@
 from pydantic_settings import BaseSettings
 from typing import List
 from functools import lru_cache
+import os
+from pathlib import Path
+
+# Load from root .env file
+ROOT_DIR = Path(__file__).parent.parent.parent.parent
+ENV_FILE = ROOT_DIR / ".env"
 
 
 class Settings(BaseSettings):
@@ -26,17 +32,18 @@ class Settings(BaseSettings):
     PASSWORD_MIN_LENGTH: int = 8
     
     # Gemini API
-    GEMINI_API_KEY: str = ""
+    GEMINI_API_KEY: str
     
-    # CDN Configuration
-    CDN_URL: str = "https://models.shrishesha.space/api/media/upload"
-    CDN_MODEL_URL: str = "https://models.shrishesha.space/api/models/upload"
-    CDN_API_KEY: str = "promatrs@25"
-    LOCAL_IP: str = "192.168.0.107"
+    # CDN Configuration (for uploading media files and 3D models)
+    CDN_URL: str
+    CDN_MODEL_URL: str
+    CDN_API_KEY: str
+    LOCAL_IP: str
     
     class Config:
-        env_file = ".env"
+        env_file = str(ENV_FILE)
         case_sensitive = True
+        extra = "ignore"  # Ignore extra fields from .env (for frontend variables)
 
 
 @lru_cache()

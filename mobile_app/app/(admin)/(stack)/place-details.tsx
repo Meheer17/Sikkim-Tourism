@@ -9,6 +9,7 @@ import {
     Image,
     Dimensions,
     Alert,
+    Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -342,6 +343,7 @@ export default function AdminPlaceDetailsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        paddingBottom: Platform.OS === 'android' ? 50 : 0,
     },
     centered: {
         justifyContent: 'center',
@@ -352,7 +354,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingTop: 20,
+        paddingTop: Platform.OS === 'android' ? 50 : 20,
         paddingBottom: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#e5e7eb',

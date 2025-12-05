@@ -16,9 +16,9 @@
 
 ---
 
-## **Completion Status: 61%**
+## **Completion Status: 66%**
 
-## ✅ **Completed Features (13/21)**
+## ✅ **Completed Features (14/21)**
 
 - ✅ 360° panoramic views
 - ✅ Multi-language narrated walkthroughs (6 languages with TTS)
@@ -33,11 +33,11 @@
 - ✅ Media compression for optimized delivery
 - ✅ Location-based audio guides (GPS)
 - ✅ Tourism analytics dashboard
+- ✅ Community chat & messaging
 
-## 📝 **To-Do Features (9/21)**
+## 📝 **To-Do Features (8/21)**
 
 - ⬜ Booking system for events
-- ⬜ Community chat & messaging
 - ⬜ Travel routes & nearby attractions on map
 - ⬜ Local transport integration
 - ⬜ Participatory archiving (user contributions)

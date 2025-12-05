@@ -6,6 +6,7 @@ import { aiPlannerService } from '@/services/ai-planner.service';
 import type { TravelPlan as TravelPlanType, Answer } from '@/services/ai-planner.service';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface TravelPlan {
     id: string;
@@ -26,6 +27,15 @@ export default function AIPlannerResults() {
     const params = useLocalSearchParams();
     const { language } = useLanguage();
     const t = getLanguageTranslations(language);
+    
+    // Theme colors
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const mutedText = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
+    const border = useThemeColor('border');
+    
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
     const [travelPlans, setTravelPlans] = useState<TravelPlan[]>([]);
     const [loading, setLoading] = useState(true);
@@ -109,50 +119,50 @@ export default function AIPlannerResults() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: card, borderBottomColor: border }]}>
                 <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                    <IconSymbol name="chevron.left" size={24} color="#11181C" />
+                    <IconSymbol name="chevron.left" size={24} color={text} />
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
-                    <Text style={styles.headerTitle}>{t.yourTravelPlans || 'Your Travel Plans'}</Text>
-                    <Text style={styles.headerSubtitle}>{t.aiPoweredRecommendations || 'AI-powered recommendations'}</Text>
+                    <Text style={[styles.headerTitle, { color: text }]}>{t.yourTravelPlans || 'Your Travel Plans'}</Text>
+                    <Text style={[styles.headerSubtitle, { color: mutedText }]}>{t.aiPoweredRecommendations || 'AI-powered recommendations'}</Text>
                 </View>
-                <View style={styles.aiIconBadge}>
-                    <IconSymbol name="sparkles" size={20} color="#667eea" />
+                <View style={[styles.aiIconBadge, { backgroundColor: background }]}>
+                    <IconSymbol name="sparkles" size={20} color={tint} />
                 </View>
             </View>
 
             {loading ? (
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#667eea" />
-                    <Text style={styles.loadingText}>{t.generatingPlans || 'Generating your personalized travel plans...'}</Text>
-                    <Text style={styles.loadingSubtext}>{t.thisMayTakeMoment || 'This may take a moment'}</Text>
+                    <ActivityIndicator size="large" color={tint} />
+                    <Text style={[styles.loadingText, { color: tint }]}>{t.generatingPlans || 'Generating your personalized travel plans...'}</Text>
+                    <Text style={[styles.loadingSubtext, { color: mutedText }]}>{t.thisMayTakeMoment || 'This may take a moment'}</Text>
                 </View>
             ) : error || travelPlans.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                    <IconSymbol name="exclamationmark.triangle" size={64} color="#ef4444" />
-                    <Text style={styles.emptyText}>{error || (t.noTravelPlansAvailable || 'No Travel Plans Available')}</Text>
-                    <Text style={styles.emptySubtext}>
+                    <IconSymbol name="exclamationmark.triangle" size={64} color={mutedText} />
+                    <Text style={[styles.emptyText, { color: text }]}>{error || (t.noTravelPlansAvailable || 'No Travel Plans Available')}</Text>
+                    <Text style={[styles.emptySubtext, { color: mutedText }]}>
                         {error ? (t.pleaseTryAgain || 'Please try again.') : (t.couldntGeneratePlans || "We couldn't generate travel plans at this time.")}
                     </Text>
                     <TouchableOpacity
-                        style={styles.retryButton}
+                        style={[styles.retryButton, { backgroundColor: card, borderColor: tint }]}
                         onPress={() => router.back()}
                     >
-                        <IconSymbol name="arrow.counterclockwise" size={20} color="#667eea" />
-                        <Text style={styles.retryButtonText}>{t.tryAgain || 'Try Again'}</Text>
+                        <IconSymbol name="arrow.counterclockwise" size={20} color={tint} />
+                        <Text style={[styles.retryButtonText, { color: tint }]}>{t.tryAgain || 'Try Again'}</Text>
                     </TouchableOpacity>
                 </View>
             ) : (
                 <>
                     {/* Results Info */}
-                    <View style={styles.infoCard}>
-                        <IconSymbol name="checkmark.circle.fill" size={32} color="#10b981" />
+                    <View style={[styles.infoCard, { backgroundColor: card }]}>
+                        <IconSymbol name="checkmark.circle.fill" size={32} color={tint} />
                         <View style={styles.infoText}>
-                            <Text style={styles.infoTitle}>{t.plansReady || 'Plans Ready!'}</Text>
-                            <Text style={styles.infoSubtitle}>
+                            <Text style={[styles.infoTitle, { color: text }]}>{t.plansReady || 'Plans Ready!'}</Text>
+                            <Text style={[styles.infoSubtitle, { color: mutedText }]}>
                                 {t.createdPlansCount?.replace('{count}', travelPlans.length.toString()) || `We've created ${travelPlans.length} personalized travel plans based on your preferences`}
                             </Text>
                         </View>
@@ -169,7 +179,8 @@ export default function AIPlannerResults() {
                         key={plan.id}
                         style={[
                             styles.planCard,
-                            selectedPlan === plan.id && styles.planCardSelected,
+                            { backgroundColor: card },
+                            selectedPlan === plan.id && { borderWidth: 3, borderColor: tint },
                         ]}
                         onPress={() => handlePlanSelect(plan.id)}
                         activeOpacity={0.8}
@@ -189,28 +200,28 @@ export default function AIPlannerResults() {
 
                         {/* Plan Content */}
                         <View style={styles.planContent}>
-                            <Text style={styles.planTitle}>{plan.title}</Text>
-                            <Text style={styles.planDescription}>{plan.description}</Text>
+                            <Text style={[styles.planTitle, { color: text }]}>{plan.title}</Text>
+                            <Text style={[styles.planDescription, { color: mutedText }]}>{plan.description}</Text>
 
                             {/* Details Grid */}
                             <View style={styles.detailsGrid}>
-                                <View style={styles.detailItem}>
-                                    <IconSymbol name="clock.fill" size={16} color="#667eea" />
-                                    <Text style={styles.detailText}>{plan.duration}</Text>
+                                <View style={[styles.detailItem, { backgroundColor: background }]}>
+                                    <IconSymbol name="clock.fill" size={16} color={tint} />
+                                    <Text style={[styles.detailText, { color: text }]}>{plan.duration}</Text>
                                 </View>
-                                <View style={styles.detailItem}>
-                                    <IconSymbol name="indianrupeesign.circle.fill" size={16} color="#667eea" />
-                                    <Text style={styles.detailText}>{plan.budget}</Text>
+                                <View style={[styles.detailItem, { backgroundColor: background }]}>
+                                    <IconSymbol name="indianrupeesign.circle.fill" size={16} color={tint} />
+                                    <Text style={[styles.detailText, { color: text }]}>{plan.budget}</Text>
                                 </View>
                             </View>
 
                             {/* Highlights */}
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>Highlights</Text>
+                                <Text style={[styles.sectionTitle, { color: text }]}>Highlights</Text>
                                 <View style={styles.tagContainer}>
                                     {plan.highlights.map((highlight, idx) => (
-                                        <View key={idx} style={styles.tag}>
-                                            <Text style={styles.tagText}>{highlight}</Text>
+                                        <View key={idx} style={[styles.tag, { backgroundColor: background }]}>
+                                            <Text style={[styles.tagText, { color: tint }]}>{highlight}</Text>
                                         </View>
                                     ))}
                                 </View>
@@ -218,26 +229,26 @@ export default function AIPlannerResults() {
 
                             {/* Activities */}
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>Activities</Text>
+                                <Text style={[styles.sectionTitle, { color: text }]}>Activities</Text>
                                 <View style={styles.activityList}>
                                     {plan.activities.map((activity, idx) => (
                                         <View key={idx} style={styles.activityItem}>
-                                            <IconSymbol name="checkmark.circle.fill" size={16} color="#10b981" />
-                                            <Text style={styles.activityText}>{activity}</Text>
+                                            <IconSymbol name="checkmark.circle.fill" size={16} color={tint} />
+                                            <Text style={[styles.activityText, { color: text }]}>{activity}</Text>
                                         </View>
                                     ))}
                                 </View>
                             </View>
 
                             {/* Best For */}
-                            <View style={styles.bestForContainer}>
-                                <IconSymbol name="person.2.fill" size={16} color="#667eea" />
-                                <Text style={styles.bestForText}>Best for: {plan.best_for}</Text>
+                            <View style={[styles.bestForContainer, { backgroundColor: background }]}>
+                                <IconSymbol name="person.2.fill" size={16} color={tint} />
+                                <Text style={[styles.bestForText, { color: tint }]}>Best for: {plan.best_for}</Text>
                             </View>
 
                             {/* Action Button */}
                             <TouchableOpacity
-                                style={styles.bookButton}
+                                style={[styles.bookButton, { backgroundColor: tint }]}
                                 onPress={() => handleBookPlan(plan)}
                             >
                                 <Text style={styles.bookButtonText}>View Details & Book</Text>
@@ -249,11 +260,11 @@ export default function AIPlannerResults() {
 
                         {/* Retry Button */}
                         <TouchableOpacity
-                            style={styles.retryButton}
+                            style={[styles.retryButton, { backgroundColor: card, borderColor: tint }]}
                             onPress={() => router.back()}
                         >
-                            <IconSymbol name="arrow.counterclockwise" size={20} color="#667eea" />
-                            <Text style={styles.retryButtonText}>Answer Questions Again</Text>
+                            <IconSymbol name="arrow.counterclockwise" size={20} color={tint} />
+                            <Text style={[styles.retryButtonText, { color: tint }]}>Answer Questions Again</Text>
                         </TouchableOpacity>
                     </ScrollView>
                 </>

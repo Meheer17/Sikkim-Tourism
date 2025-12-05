@@ -63,6 +63,11 @@ export default function StackLayout() {
         options={{ title: 'Vouchers', headerShown: false }}
       />
       <Stack.Screen
+        name="service-details"
+        options={{ title: 'Service Details', headerShown: false }}
+      />
+
+      <Stack.Screen
         name="friends"
         options={{
           title: 'Friends & Location',
