@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { businessService } from '@/services';
+import { servicesService, businessService } from '@/services';
+import { ServiceModel } from '@/services/services.service';
 import { BusinessType } from '@/services/business.service';
 import { useRouter } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -40,15 +41,12 @@ export default function ServicesScreen() {
     const loadData = async () => {
         try {
             setLoading(true);
-            // Load business types first
+            // Load business types first - MUST complete before loading services
             await loadBusinessTypes();
-            // Then load services
-            await loadServices();
         } catch (error) {
             console.error('Failed to load data:', error);
-        } finally {
-            setLoading(false);
         }
+        // Don't set loading to false here - wait for services to load
     };
 
     const loadBusinessTypes = async () => {
@@ -62,39 +60,52 @@ export default function ServicesScreen() {
             const typeNames = types.map((type: BusinessType) => type.type);
             console.log('Categories built:', ['All', ...typeNames, 'Other']);
             setCategories(['All', ...typeNames, 'Other']);
+            
+            // NOW load services after business types are ready
+            await loadServices(types);
         } catch (error) {
             console.error('Failed to load business types:', error);
+            // Even if business types fail, try to load services
+            await loadServices([]);
         }
     };
 
-    const loadServices = async () => {
+    const loadServices = async (types: BusinessType[]) => {
         try {
-            const response = await businessService.list();
-            const businesses = response.data || [];
+            const response = await servicesService.list({ skip: 0, limit: 1000 });
+            const servicesList = response.data || [];
             console.log('=== SERVICES LOADING DEBUG ===');
-            console.log('Total businesses from API:', businesses);
-            console.log('Business types available:', businessTypes.map(t => `${t.id}: ${t.type}`).join(', '));
+            console.log('Total services from API:', servicesList.length);
+            console.log('Business types available:', types.map(t => `${t.id}: ${t.type}`).join(', '));
 
-            // Map businesses to Service format
-            const mappedServices: Service[] = businesses
-                .filter((biz: any) => biz.approved) // Only show approved businesses
-                .map((biz: any) => {
-                    // Find the business type name by matching type_id with business type id
-                    const bizType = businessTypes.find(t => t.id === biz.type_id);
-                    const categoryName = bizType ? bizType.type : 'Other';
-
-                    console.log(`Business "${biz.name}": type_id="${biz.type_id}" -> category="${categoryName}"`);
+            // Map services to Service format for the UI
+            const mappedServices: Service[] = await Promise.all(
+                servicesList.map(async (svc: ServiceModel) => {
+                    // Get business details to find the category
+                    let categoryName = 'Other';
+                    try {
+                        const businessResponse = await businessService.get(svc.bid);
+                        if (businessResponse.success && businessResponse.data) {
+                            const business = businessResponse.data;
+                            // Find the business type name by matching type_id
+                            const bizType = types.find(t => t.id === business.type_id);
+                            categoryName = bizType ? bizType.type : 'Other';
+                            console.log(`Service "${svc.name}": business="${business.name}", type_id="${business.type_id}" -> category="${categoryName}"`);
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to load business for service ${svc.id}:`, error);
+                    }
 
                     return {
-                        id: biz.id,
-                        name: biz.name,
-                        description: biz.short_description || biz.description || 'Quality service provider',
-                        price: biz.price || Math.floor(Math.random() * 3000) + 500,
+                        id: svc.id || '',
+                        name: svc.name,
+                        description: svc.short_description || svc.description || 'Quality service',
+                        price: svc.price,
                         category: categoryName,
                         icon: getCategoryIcon(categoryName),
                     };
                 })
-                .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically by name
+            );
 
             console.log('Final mapped services:', mappedServices.length);
             console.log('Services by category:', mappedServices.reduce((acc: any, s) => {
@@ -102,18 +113,18 @@ export default function ServicesScreen() {
                 return acc;
             }, {}));
 
-            setServices(mappedServices);
+            setServices(mappedServices.sort((a, b) => a.name.localeCompare(b.name)));
         } catch (error: any) {
             console.error('Failed to load services:', error);
-            // Handle 403 Forbidden - user might not have access yet
             if (error?.response?.status === 403) {
                 console.warn('Access forbidden - user may not be approved yet');
-                setServices([]); // Set empty services instead of crashing
+                setServices([]);
             } else {
-                // Log other errors but don't crash
                 console.error('Unexpected error loading services:', error);
                 setServices([]);
             }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -155,7 +166,7 @@ export default function ServicesScreen() {
     };
 
     const handleServicePress = (service: Service) => {
-        router.push(`/(user)/(stack)/business-details?id=${service.id}` as any);
+        router.push(`/(user)/(stack)/service-details?id=${service.id}` as any);
     };
 
     return (

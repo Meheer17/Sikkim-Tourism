@@ -18,6 +18,7 @@ import { aiChatService, ChatMessage, ChatResponse } from '@/services/ai-chat.ser
 import { platformConfig } from '@/config/api.config';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export default function AIPlannerChatScreen() {
   const router = useRouter();
@@ -25,6 +26,14 @@ export default function AIPlannerChatScreen() {
   const insets = useSafeAreaInsets();
   const { language } = useLanguage();
   const t = getLanguageTranslations(language);
+
+  // Theme colors
+  const background = useThemeColor('background');
+  const card = useThemeColor('card');
+  const text = useThemeColor('text');
+  const mutedText = useThemeColor('mutedText');
+  const tint = useThemeColor('tint');
+  const border = useThemeColor('border');
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -176,9 +185,9 @@ export default function AIPlannerChatScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: tint }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
@@ -205,13 +214,13 @@ export default function AIPlannerChatScreen() {
             key={index}
             style={[
               styles.messageBubble,
-              msg.role === 'user' ? styles.userBubble : styles.assistantBubble,
+              msg.role === 'user' ? [styles.userBubble, { backgroundColor: tint }] : [styles.assistantBubble, { backgroundColor: card, borderColor: border }],
             ]}
           >
             <Text
               style={[
                 styles.messageText,
-                msg.role === 'user' ? styles.userText : styles.assistantText,
+                msg.role === 'user' ? styles.userText : { color: text },
               ]}
             >
               {msg.content}
@@ -220,22 +229,22 @@ export default function AIPlannerChatScreen() {
         ))}
 
         {isTyping && (
-          <View style={[styles.messageBubble, styles.assistantBubble]}>
-            <Text style={styles.typingText}>{t.aiTyping || 'AI is typing...'}</Text>
+          <View style={[styles.messageBubble, styles.assistantBubble, { backgroundColor: card, borderColor: border }]}>
+            <Text style={[styles.typingText, { color: mutedText }]}>{t.aiTyping || 'AI is typing...'}</Text>
           </View>
         )}
 
         {/* Preferences Summary (when ready) */}
         {isReadyToGenerate && (
-          <View style={styles.preferencesSummary}>
-            <Text style={styles.preferencesTitle}>{t.readyToGenerate || '✅ Ready to generate plans!'}</Text>
-            <Text style={styles.preferencesText}>
+          <View style={[styles.preferencesSummary, { backgroundColor: card, borderColor: tint }]}>
+            <Text style={[styles.preferencesTitle, { color: tint }]}>{t.readyToGenerate || '✅ Ready to generate plans!'}</Text>
+            <Text style={[styles.preferencesText, { color: text }]}>
               {t.basedOnPreferences || 'Based on your preferences:'}
             </Text>
             {Object.entries(extractedPreferences).map(([key, value]) => {
               if (value && value !== null && (!Array.isArray(value) || value.length > 0)) {
                 return (
-                  <Text key={key} style={styles.preferenceItem}>
+                  <Text key={key} style={[styles.preferenceItem, { color: mutedText }]}>
                     • {key.replace(/_/g, ' ')}: {Array.isArray(value) ? value.join(', ') : String(value)}
                   </Text>
                 );
@@ -247,10 +256,10 @@ export default function AIPlannerChatScreen() {
       </ScrollView>
 
       {/* Input Area */}
-      <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+      <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 10), backgroundColor: card, borderTopColor: border }]}>
         {isReadyToGenerate ? (
           <TouchableOpacity
-            style={[styles.generateButton, isLoading && styles.buttonDisabled]}
+            style={[styles.generateButton, { backgroundColor: tint }, isLoading && styles.buttonDisabled]}
             onPress={generatePlans}
             disabled={isLoading}
           >
@@ -266,9 +275,9 @@ export default function AIPlannerChatScreen() {
         ) : (
           <>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: background, color: text }]}
               placeholder="Type your message..."
-              placeholderTextColor="#999"
+              placeholderTextColor={mutedText}
               value={inputMessage}
               onChangeText={setInputMessage}
               multiline
@@ -278,7 +287,7 @@ export default function AIPlannerChatScreen() {
               blurOnSubmit={false}
             />
             <TouchableOpacity
-              style={[styles.sendButton, (!inputMessage.trim() || isLoading) && styles.buttonDisabled]}
+              style={[styles.sendButton, { backgroundColor: tint }, (!inputMessage.trim() || isLoading) && styles.buttonDisabled]}
               onPress={sendMessage}
               disabled={!inputMessage.trim() || isLoading}
             >
