@@ -11,8 +11,8 @@ ENV_FILE = ROOT_DIR / ".env"
 
 class Settings(BaseSettings):
     # Project
-    PROJECT_NAME: str = "FastAPI Production App"
-    VERSION: str = "1.0.0"
+    PROJECT_NAME: str
+    VERSION: str 
     DESCRIPTION: str = "Production-level FastAPI application"
     API_V1_STR: str = "/api/v1"
     

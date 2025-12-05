@@ -73,6 +73,7 @@ const getEnvVar = (key: string, fallback: string): string => {
 
 // Get the correct base URL for different platforms
 const getBaseURL = (): string => {
+    return "http://10.95.130.103:8000/api/v1"
     const url = getEnvVar('API_BASE_URL', Platform.OS === 'android' ? 'http://10.0.2.2:8000/api/v1' : 'http://localhost:8000/api/v1');
     console.log('🌐 [api.config] Final baseURL:', url);
     return url;

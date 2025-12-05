@@ -83,10 +83,17 @@ export default function ImmersiveExperienceScreen() {
             {/* <StatusBar barStyle="light-content" /> */}
 
             {/* Panorama Viewer - 360 Image */}
-            <PanoramaViewer 
-                imageSource={panorama360Url ? { uri: panorama360Url } : require('@/assets/360images/car.jpg')}
-            >
-            </PanoramaViewer>
+            {panorama360Url && (
+                <PanoramaViewer 
+                    imageSource={{ uri: panorama360Url }}
+                >
+                </PanoramaViewer>
+            )}
+            {!panorama360Url && (
+                <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                    <Text style={styles.loadingText}>No panorama image available</Text>
+                </View>
+            )}
 
             {loading && (
                 <View style={styles.loadingOverlay} pointerEvents="box-none">
