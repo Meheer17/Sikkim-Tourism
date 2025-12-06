@@ -77,6 +77,45 @@ export class FileService {
     }
 
     /**
+     * Upload scanned document from file path (for document scanner)
+     */
+    async uploadDocument(
+        filePath: string,
+        category: string = 'document',
+        businessId?: string
+    ): Promise<ApiResponse<FileUploadResponse>> {
+        try {
+            // Extract filename from path
+            const fileName = filePath.split('/').pop() || `document_${Date.now()}.jpg`;
+            
+            // Create file object from URI
+            const response = await fetch(filePath);
+            const blob = await response.blob();
+            
+            // Determine file type
+            const fileType = blob.type || 'image/jpeg';
+            
+            const formData = new FormData();
+            formData.append('file', {
+                uri: filePath,
+                type: fileType,
+                name: fileName,
+            } as any);
+            formData.append('fileName', fileName);
+            formData.append('fileType', fileType);
+            formData.append('category', category);
+            if (businessId) {
+                formData.append('business_id', businessId);
+            }
+
+            return await apiClient.uploadFile<FileUploadResponse>(`/upload/document`, formData);
+        } catch (error) {
+            console.error('Document upload error:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Get file by ID
      */
     async getFile(fileId: string): Promise<ApiResponse<FileUploadResponse>> {
@@ -223,6 +262,47 @@ export class FileService {
     isDocumentFile(fileName: string): boolean {
         const extension = this.getFileExtension(fileName).toLowerCase();
         return config.upload.allowedDocumentFormats.includes(extension);
+    }
+
+    /**
+     * Get heritage documents by category
+     */
+    async getHeritageDocuments(params?: {
+        category?: string;
+        businessId?: string;
+    }): Promise<ApiResponse<{ documents: any[] }>> {
+        try {
+            const queryParams = new URLSearchParams();
+            if (params?.category) queryParams.append('category', params.category);
+            if (params?.businessId) queryParams.append('business_id', params.businessId);
+
+            const url = `/upload/documents?${queryParams.toString()}`;
+            console.log('[FileService] Fetching documents:', url);
+            
+            const response = await apiClient.get<{ documents: any[] }>(url);
+            console.log('[FileService] Documents response:', response);
+            
+            return response;
+        } catch (error) {
+            console.error('Get documents error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete a heritage document
+     */
+    async deleteHeritageDocument(fileId: string): Promise<ApiResponse<{ message: string }>> {
+        try {
+            console.log('[FileService] Deleting document:', fileId);
+            const response = await apiClient.delete<{ message: string }>(`/upload/documents/${fileId}`);
+            console.log('[FileService] Delete response:', response);
+            
+            return response;
+        } catch (error) {
+            console.error('Delete document error:', error);
+            throw error;
+        }
     }
 }
 

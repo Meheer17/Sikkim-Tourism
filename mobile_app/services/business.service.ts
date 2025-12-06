@@ -19,6 +19,8 @@ export interface BusinessModel {
   l_id?: string; // optional - can reference location or use position
   scheduled_at: string; // ISO 8601
   approved?: boolean;
+  banner_image?: string;
+  images?: string[];
   created_at?: string;
   updated_at?: string;
 }
