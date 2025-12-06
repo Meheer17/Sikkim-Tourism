@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder, ActivityIndicator, Platform, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder, ActivityIndicator, Platform, Modal, Alert } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -115,12 +115,20 @@ export default function ExploreScreen() {
   useEffect(() => {
     // Request location permission on mount
     requestLocationPermission();
-    loadLocations();
+    // initial load
+    fetchAndLoadLocations();
   }, []);
 
   // Apply filters whenever filter settings or location changes
   useEffect(() => {
-    applyFilters();
+    // When filters change, either fetch nearby locations from server (if distance filter and user location available)
+    // or apply client-side filters on already loaded places.
+    if (selectedDistance !== 'all' && userLocation) {
+      // fetch using radius from server
+      fetchAndLoadLocations();
+    } else {
+      applyFilters();
+    }
   }, [selectedCategory, selectedDistance, userLocation, allPlaces]);
 
   // Update active filters count
@@ -131,17 +139,38 @@ export default function ExploreScreen() {
     setActiveFiltersCount(count);
   }, [selectedCategory, selectedDistance]);
 
-  const loadLocations = async () => {
+  const getRadiusMeters = (distanceFilter: DistanceFilter) => {
+    switch (distanceFilter) {
+      case '5':
+        return 5000;
+      case '10':
+        return 10000;
+      case '25':
+        return 25000;
+      case '50':
+        return 50000;
+      default:
+        return undefined;
+    }
+  };
+
+  const fetchAndLoadLocations = async () => {
     try {
       setLoading(true);
-      // Fetch all locations (increase limit to get all 48+ locations)
-      const response = await locationService.list({ skip: 0, limit: 100 });
+
+      const params: any = { skip: 0, limit: 100 };
+      const radiusMeters = getRadiusMeters(selectedDistance);
+      if (radiusMeters !== undefined && userLocation) {
+        params.position_lat = userLocation.coords.latitude;
+        params.position_lng = userLocation.coords.longitude;
+        params.radius_m = radiusMeters;
+      }
+
+      // Fetch locations (server can optionally filter by radius if params provided)
+      const response = await locationService.list(params);
       const locations = response.data || [];
 
-      console.log('📍 Loaded locations:', locations.length);
-      if (locations.length > 0) {
-        console.log('📍 Sample location:', JSON.stringify(locations[0], null, 2));
-      }
+      console.log('📍 Loaded locations:', locations.length, 'using params', params);
 
       // Map backend locations to Place format
       const mappedPlaces: Place[] = locations.map((loc: any) => {
@@ -149,7 +178,6 @@ export default function ExploreScreen() {
         const images = rawImages.map((f: string) => buildImageUrl(f)).filter(Boolean) as string[];
 
         const firstImage = images[0];
-        console.log(`📸 ${loc.name}: ${rawImages.length} images, first =`, rawImages[0] || 'NO IMAGE', '→', firstImage || 'NO URL');
 
         return {
           id: loc.id,
@@ -158,27 +186,41 @@ export default function ExploreScreen() {
           category: loc.type || 'Place',
           rating: 4.5,
           distance: '0 km',
-          imageUrl: firstImage || undefined, // Use first image from metadata (converted)
-          images: images, // All images from metadata (converted)
-          modelPath: loc.metadata?.model_url || undefined, // Only set if admin uploaded a 3D model
-          has360Images: !!loc.metadata?.panorama_360, // Check if admin uploaded 360 panorama image
-          panorama360Url: buildImageUrl(loc.metadata?.panorama_360) || undefined, // URL to 360 panorama (converted if needed)
-          latitude: loc.position?.y || 27.3389,  // position.y is latitude (CORRECT)
-          longitude: loc.position?.x || 88.6065, // position.x is longitude (CORRECT)
+          imageUrl: firstImage || undefined,
+          images: images,
+          modelPath: loc.metadata?.model_url || undefined,
+          has360Images: !!loc.metadata?.panorama_360,
+          panorama360Url: buildImageUrl(loc.metadata?.panorama_360) || undefined,
+          latitude: loc.position?.y || 27.3389,
+          longitude: loc.position?.x || 88.6065,
         };
       });
 
-      setNearbyPlaces(mappedPlaces);
-      setAllPlaces(mappedPlaces);
-      // Calculate initial distances from Gangtok
-      const refLat = SIKKIM_REGION.latitude;
-      const refLon = SIKKIM_REGION.longitude;
-      const updatedPlaces = mappedPlaces.map(place => ({
-        ...place,
-        distance: `${calculateDistance(refLat, refLon, place.latitude || 0, place.longitude || 0)} km`,
-      }));
-      setNearbyPlaces(updatedPlaces);
+      // Calculate distances immediately using the freshly fetched places
+      const refLat = userLocation ? userLocation.coords.latitude : SIKKIM_REGION.latitude;
+      const refLon = userLocation ? userLocation.coords.longitude : SIKKIM_REGION.longitude;
+
+      const updatedPlaces = mappedPlaces.map(place => {
+        if (place.latitude && place.longitude) {
+          const dist = calculateDistance(refLat, refLon, place.latitude, place.longitude);
+          const distanceText = (userLocation && isUserInSikkim) ? `${dist} km` : `${dist} km`;
+          return { ...place, distance: distanceText };
+        }
+        return place;
+      });
+
+      // Sort by distance
+      updatedPlaces.sort((a: Place, b: Place) => {
+        const distA = parseFloat(String(a.distance).replace(/[^0-9.]/g, '')) || 0;
+        const distB = parseFloat(String(b.distance).replace(/[^0-9.]/g, '')) || 0;
+        return distA - distB;
+      });
+
       setAllPlaces(updatedPlaces);
+
+      // Apply client-side filters (category & distance) after fetch
+      applyFilters();
+
     } catch (error) {
       console.error('Failed to load locations:', error);
     } finally {
@@ -690,15 +732,22 @@ export default function ExploreScreen() {
                       key={dist.value}
                       style={[
                         styles.filterListItem,
-                        { borderBottomColor: border },
-                        !userLocation && dist.value !== 'all' && styles.filterListItemDisabled
+                        { borderBottomColor: border }
                       ]}
                       onPress={() => {
-                        if (userLocation || dist.value === 'all') {
-                          setSelectedDistance(dist.value);
+                        // Allow selection even when location is not yet available.
+                        // If location is missing and user selects a radius, prompt them to enable location.
+                        setSelectedDistance(dist.value);
+                        if (!userLocation && dist.value !== 'all') {
+                          Alert.alert(
+                            'Enable Location',
+                            'To filter by distance, please enable location permissions. The selected radius will apply once location is available.',
+                            [
+                              { text: 'OK' }
+                            ]
+                          );
                         }
                       }}
-                      disabled={!userLocation && dist.value !== 'all'}
                     >
                       <Text style={[
                         styles.filterListItemText,

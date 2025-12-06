@@ -38,9 +38,48 @@ export class FileService {
                 formData.append('category', request.category);
             }
 
-            return await apiClient.uploadFile<FileUploadResponse>(`/upload`, formData);
+            // Debug logs: print file information and endpoint before uploading
+            try {
+                console.log('📤 [FileService] Uploading file:', {
+                    fileName: request.fileName,
+                    fileType: request.fileType,
+                    fileSize: (request.file as any)?.size,
+                    fileObj: request.file,
+                    uploadEndpoint: `/upload`,
+                    allowedImageFormats: config.upload.allowedImageFormats,
+                });
+
+                // Inspect FormData entries where possible (React Native FormData isn't iterable in all environments)
+                if ((formData as any)._parts) {
+                    // React Native FormData exposes `_parts` array
+                    console.log('📤 [FileService] FormData _parts:', (formData as any)._parts.map((p: any) => ({ key: p[0], value: p[1] })));
+                }
+            } catch (logErr) {
+                console.warn('📤 [FileService] Failed to log formData details', logErr);
+            }
+
+            const resp = await apiClient.uploadFile<FileUploadResponse>(`/upload`, formData);
+
+            // Debug: log server response
+            try {
+                console.log('📥 [FileService] Upload response:', resp);
+            } catch (logErr) {
+                console.warn('📥 [FileService] Failed to log upload response', logErr);
+            }
+
+            return resp;
         } catch (error) {
             console.error('File upload error:', error);
+            // Provide more context in the log for debugging
+            try {
+                console.error('File upload debug:', {
+                    fileName: (error as any)?.fileName || (error as any)?.request?.fileName || null,
+                    message: (error as any)?.message || error,
+                    stack: (error as any)?.stack,
+                });
+            } catch (e) {
+                // ignore
+            }
             throw error;
         }
     }
