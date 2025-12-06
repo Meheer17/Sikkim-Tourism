@@ -72,6 +72,14 @@ class AIPlannerService {
         });
         return response.data!;
     }
+
+    /**
+     * Send trigger event (standing|walking|driving) to backend
+     */
+    async triggerEvent(payload: { type: 'standing' | 'walking' | 'driving'; time: string; position: { x: number; y: number } }) {
+        const response = await apiClient.post('/ai-planner/trigger', payload);
+        return response.data;
+    }
 }
 
 export const aiPlannerService = new AIPlannerService();

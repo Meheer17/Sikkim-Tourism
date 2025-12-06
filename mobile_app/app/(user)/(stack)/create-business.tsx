@@ -271,26 +271,36 @@ export default function CreateBusinessScreen() {
                 };
             }
 
-            const resp = await businessService.create(businessData);
-            if (resp.success) {
-                // 2) After creating business, update associated location metadata with images array if l_id exists
-                const l_id = resp.data?.l_id;
-                if (l_id && Array.isArray(selectedImages) && selectedImages.length > 0) {
-                    try {
-                        await locationService.update(l_id, { metadata: { images: imagesArray } });
-                    } catch (err) {
-                        console.error('Failed to update location metadata with images:', err);
-                    }
+                const resp = await businessService.create(businessData);
+                console.log('Create business response raw:', JSON.stringify(resp, null, 2));
+
+                if (!resp) {
+                    console.error('Create business: no response received from API');
+                    Alert.alert('Error', 'No response from server when creating business');
+                    return;
                 }
-                Toast.show({
-                    type: 'success',
-                    text1: 'Success',
-                    text2: 'Business created successfully! Awaiting approval.',
-                });
-                router.back();
-            } else {
-                Alert.alert('Error', resp.message || 'Failed to create business');
-            }
+
+                if (resp.success) {
+                    // 2) After creating business, update associated location metadata with images array if l_id exists
+                    const l_id = resp.data && (resp.data as any).l_id;
+                    console.log('Created business id/l_id:', { id: resp.data?.id, l_id });
+
+                    if (l_id && Array.isArray(selectedImages) && selectedImages.length > 0) {
+                        try {
+                            await locationService.update(l_id, { metadata: { images: imagesArray } });
+                        } catch (err) {
+                            console.error('Failed to update location metadata with images:', err);
+                        }
+                    }
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Success',
+                        text2: 'Business created successfully! Awaiting approval.',
+                    });
+                    router.back();
+                } else {
+                    Alert.alert('Error', resp.message || 'Failed to create business');
+                }
         } catch (error: any) {
             console.error('Create business error:', error);
             Alert.alert('Error', error.message || 'Failed to create business');
