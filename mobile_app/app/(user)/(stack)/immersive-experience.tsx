@@ -84,7 +84,7 @@ export default function ImmersiveExperienceScreen() {
 
             {/* Panorama Viewer - 360 Image */}
             <PanoramaViewer 
-                imageSource={panorama360Url ? { uri: panorama360Url } : require('@/assets/360images/car.jpg')}
+                imageSource={panorama360Url ? { uri: panorama360Url } : { uri: panorama360Url }}
             >
             </PanoramaViewer>
 

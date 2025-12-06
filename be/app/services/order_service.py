@@ -402,7 +402,9 @@ class OrderService:
                 "confirmed": 0,
                 "in_progress": 0,
                 "completed": 0,
-                "cancelled": 0
+                "cancelled": 0,
+                "revenue": 0,
+                "completed_revenue": 0
             }
         
         today_start = datetime.combine(date.today(), datetime.min.time())
@@ -421,13 +423,42 @@ class OrderService:
         completed = await collection.count_documents({**base_query, "order_status": OrderStatus.completed})
         cancelled = await collection.count_documents({**base_query, "order_status": OrderStatus.cancelled})
         
+        # Calculate revenue from confirmed and in_progress orders (payment received)
+        revenue_query = {
+            **base_query,
+            "order_status": {"$in": [OrderStatus.confirmed, OrderStatus.in_progress, OrderStatus.completed]},
+            "payment_status": "completed"
+        }
+        revenue_cursor = collection.aggregate([
+            {"$match": revenue_query},
+            {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+        ])
+        
+        revenue_result = await revenue_cursor.to_list(1)
+        revenue = revenue_result[0]["total"] if revenue_result else 0
+        
+        # Calculate revenue from completed orders
+        completed_revenue_query = {
+            **base_query,
+            "order_status": OrderStatus.completed
+        }
+        completed_revenue_cursor = collection.aggregate([
+            {"$match": completed_revenue_query},
+            {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+        ])
+        
+        completed_revenue_result = await completed_revenue_cursor.to_list(1)
+        completed_revenue = completed_revenue_result[0]["total"] if completed_revenue_result else 0
+        
         return {
             "total": total,
             "pending": pending,
             "confirmed": confirmed,
             "in_progress": in_progress,
             "completed": completed,
-            "cancelled": cancelled
+            "cancelled": cancelled,
+            "revenue": revenue,
+            "completed_revenue": completed_revenue
         }
     
     async def get_upcoming_bookings_for_user_businesses(self, user_id: str, skip: int = 0, limit: int = 10) -> List[Order]:

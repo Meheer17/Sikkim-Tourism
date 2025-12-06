@@ -10,7 +10,7 @@ export interface OrderModel {
     business_id: string;
     user_id: string;
     payment_status: 'pending' | 'completed' | 'failed' | 'refunded';
-    order_status: 'created' | 'confirmed' | 'completed' | 'cancelled';
+    order_status: 'created' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
     amount: number;
     metadata?: Record<string, any>;
     created_at: string;
@@ -32,7 +32,7 @@ export interface CreateOrderRequest {
 
 export interface UpdateOrderRequest {
     payment_status?: 'pending' | 'completed' | 'failed' | 'refunded';
-    order_status?: 'created' | 'confirmed' | 'completed' | 'cancelled';
+    order_status?: 'created' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
     amount?: number;
     metadata?: Record<string, any>;
 }

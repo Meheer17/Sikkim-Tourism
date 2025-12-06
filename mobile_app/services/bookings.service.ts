@@ -8,6 +8,7 @@ import { apiClient } from './api.client';
 export interface BookingsCountResponse {
     created?: number;
     confirmed?: number;
+    in_progress?: number;
     completed?: number;
     cancelled?: number;
     pending?: number;
@@ -43,7 +44,14 @@ class BookingsService {
         if (params?.order_status) qs.append('order_status', params.order_status);
         if (params?.payment_status) qs.append('payment_status', params.payment_status);
 
-        return apiClient.get<OrderModel[]>(`${this.baseUrl}/user/my-bookings?${qs.toString()}`);
+        const response = await apiClient.get<OrderModel[]>(`${this.baseUrl}/user/my-bookings?${qs.toString()}`);
+
+        // Reverse the data to show newest first
+        if (response.success && response.data && Array.isArray(response.data)) {
+            response.data = response.data.reverse();
+        }
+
+        return response;
     }
 
     /**
@@ -150,7 +158,14 @@ class BookingsService {
         if (params?.order_status) qs.append('order_status', params.order_status);
         if (params?.payment_status) qs.append('payment_status', params.payment_status);
 
-        return apiClient.get<OrderModel[]>(`${this.baseUrl}/business/${businessId}/bookings?${qs.toString()}`);
+        const response = await apiClient.get<OrderModel[]>(`${this.baseUrl}/business/${businessId}/bookings?${qs.toString()}`);
+
+        // Reverse the data to show newest first
+        if (response.success && response.data && Array.isArray(response.data)) {
+            response.data = response.data.reverse();
+        }
+
+        return response;
     }
 
     /**
@@ -199,6 +214,18 @@ class BookingsService {
      */
     async cancelBooking(businessId: string, orderId: string): Promise<ApiResponse<OrderModel>> {
         return apiClient.put<OrderModel>(`${this.baseUrl}/business/${businessId}/booking/${orderId}/cancel`);
+    }
+
+    /**
+     * Mark payment as completed for a booking (updates payment_status to completed and order_status to in_progress)
+     * @param orderId - Order ID (booking)
+     * @returns Promise<ApiResponse<OrderModel>> - Updated booking
+     */
+    async markPaymentCompleted(orderId: string): Promise<ApiResponse<OrderModel>> {
+        return apiClient.put<OrderModel>(`/orders/${orderId}`, {
+            payment_status: 'completed',
+            order_status: 'in_progress'
+        });
     }
 }
 
