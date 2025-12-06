@@ -30,23 +30,6 @@ export default function ServiceCard({ service, onPress }: ServiceCardProps) {
             onPress={() => onPress?.(service)}
             activeOpacity={0.7}
         >
-            <View style={styles.imageContainer}>
-                {service.imageUrl ? (
-                    <Image
-                        source={{ uri: service.imageUrl }}
-                        style={styles.image}
-                        resizeMode="cover"
-                    />
-                ) : (
-                    <View style={[styles.placeholderImage, { backgroundColor: soft }] }>
-                        <IconSymbol
-                            name={(service.icon as any) || 'star.fill'}
-                            size={32}
-                            color={tint}
-                        />
-                    </View>
-                )}
-            </View>
 
             <View style={styles.content}>
                 <Text style={[styles.category, { color: muted }]}>{service.category}</Text>

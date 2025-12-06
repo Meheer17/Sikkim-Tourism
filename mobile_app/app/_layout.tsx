@@ -1,6 +1,9 @@
 import { Colors } from '@/constants/theme';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
+import { useEffect } from 'react';
+import { movementService } from '@/services/movement.service';
+import GeminiPopup from '@/components/GeminiPopup';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -30,10 +33,27 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
+  // Mount movement tracker once for the whole app
+  function MovementTrackerMount() {
+    useEffect(() => {
+      // Start movement tracker when app mounts
+      movementService.start();
+
+      return () => {
+        // Stop when unmounting
+        movementService.stop();
+      };
+    }, []);
+
+    return null;
+  }
+
   return (
     <LanguageProvider>
       <ThemeProvider>
+        <MovementTrackerMount />
         <RootNavigator />
+        <GeminiPopup />
       </ThemeProvider>
     </LanguageProvider>
   );
