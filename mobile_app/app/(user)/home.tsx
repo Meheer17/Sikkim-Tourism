@@ -79,6 +79,10 @@ export default function HomeScreen() {
         router.push('/(user)/services' as any);
     };
 
+    const handleViewUpcomingBookings = () => {
+        router.push('/(user)/(stack)/schedule' as any);
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: background }]}>
             <ScrollView
@@ -146,6 +150,24 @@ export default function HomeScreen() {
                         </View>
                     </View>
                     <IconSymbol name="chevron.right" size={24} color="#fff" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.scheduleButton, { backgroundColor: card }]}
+                    activeOpacity={0.85}
+                    onPress={handleViewUpcomingBookings}
+                >
+                    <View style={styles.scheduleButtonLeft}>
+                        <View style={[styles.scheduleIcon, { backgroundColor: `${tint}15` }]}
+                        >
+                            <IconSymbol name="calendar" size={20} color={tint} />
+                        </View>
+                        <View>
+                            <Text style={[styles.scheduleTitle, { color: text }]}>View Upcoming Events</Text>
+                            <Text style={[styles.scheduleSubtitle, { color: muted }]}>See what's happening around</Text>
+                        </View>
+                    </View>
+                    <IconSymbol name="chevron.right" size={18} color={tint} />
                 </TouchableOpacity>
 
                 {/* Services Section */}
@@ -330,5 +352,39 @@ const styles = StyleSheet.create({
     },
     bannerSubtitle: {
         fontSize: 14,
+    },
+    scheduleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 16,
+        borderRadius: 16,
+        marginBottom: 24,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+    },
+    scheduleButtonLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        flex: 1,
+    },
+    scheduleIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    scheduleTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        marginBottom: 2,
+    },
+    scheduleSubtitle: {
+        fontSize: 13,
     },
 });
