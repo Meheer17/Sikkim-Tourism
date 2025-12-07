@@ -39,13 +39,8 @@ export default function BusinessDashboard() {
                         </View>
                     ))}
                 </View>
-
                 <Text style={[styles.sectionTitle, { color: textColor }]}>{t.quickActions || 'Quick Actions'}</Text>
                 <View style={styles.quickActions}>
-                    <TouchableOpacity style={[styles.actionCard, { backgroundColor: card }]} onPress={() => router.push('/(business)/(stack)/add-place' as any)}>
-                        <IconSymbol name="map.fill" size={32} color="#10b981" />
-                        <Text style={[styles.actionText, { color: textColor }]}>{t.addPlace || 'Add Place'}</Text>
-                    </TouchableOpacity>
                     <TouchableOpacity style={[styles.actionCard, { backgroundColor: card }]} onPress={() => router.push('/(business)/(stack)/add-service' as any)}>
                         <IconSymbol name="plus.circle.fill" size={32} color={tint} />
                         <Text style={[styles.actionText, { color: textColor }]}>{t.addService || 'Add Service'}</Text>
@@ -53,10 +48,6 @@ export default function BusinessDashboard() {
                     <TouchableOpacity style={[styles.actionCard, { backgroundColor: card }]} onPress={() => router.push('/(business)/(stack)/add-event' as any)}>
                         <IconSymbol name="calendar.badge.plus" size={32} color="#f59e0b" />
                         <Text style={[styles.actionText, { color: textColor }]}>{t.addEvent || 'Add Event'}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.actionCard, { backgroundColor: card }]} onPress={() => router.push('/(business)/bookings' as any)}>
-                        <IconSymbol name="ticket.fill" size={32} color="#ef4444" />
-                        <Text style={[styles.actionText, { color: textColor }]}>{t.bookings || 'Bookings'}</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>

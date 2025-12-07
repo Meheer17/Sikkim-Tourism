@@ -75,8 +75,17 @@ class LocationService:
 
             query["position.x"] = {"$gte": min_lng, "$lte": max_lng}
             query["position.y"] = {"$gte": min_lat, "$lte": max_lat}
-
-        cursor = self.collection.find(query).skip(0)
+        
+        # For nearby searches, we need to fetch all candidates first because:
+        # 1. The bounding box is an approximation
+        # 2. We need to calculate precise haversine distances
+        # 3. We need to filter by actual radius and sort by distance
+        # 4. Only then can we apply skip/limit correctly
+        # For non-nearby searches, we can apply skip/limit at the database level
+        if use_nearby:
+            cursor = self.collection.find(query)
+        else:
+            cursor = self.collection.find(query).skip(skip).limit(limit)
 
         candidates = []
         async for location in cursor:
@@ -85,7 +94,6 @@ class LocationService:
         results: List[tuple[float, Location]] = []
 
         def haversine_m(lat1, lon1, lat2, lon2):
-            # returns distance in meters
             R = 6371000.0
             phi1 = math.radians(lat1)
             phi2 = math.radians(lat2)
@@ -96,6 +104,7 @@ class LocationService:
             return R * c
 
         for location in candidates:
+            print(location)
             try:
                 loc_db = LocationInDB(**location)
             except Exception:
@@ -146,8 +155,11 @@ class LocationService:
         # sort by distance (if nearby), otherwise by created order as in original (we have 0.0 for all)
         results.sort(key=lambda x: x[0])
 
-        # apply skip/limit
-        sliced = results[skip: skip + limit]
+        # apply skip/limit only for nearby searches (non-nearby already applied at DB level)
+        if use_nearby:
+            sliced = results[skip: skip + limit]
+        else:
+            sliced = results
 
         return [item[1] for item in sliced]
     
