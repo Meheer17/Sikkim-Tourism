@@ -84,7 +84,7 @@ export default function ImmersiveExperienceScreen() {
 
             {/* Panorama Viewer - 360 Image */}
             <PanoramaViewer 
-                imageSource={panorama360Url ? { uri: panorama360Url } : { uri: panorama360Url }}
+                imageSource={panorama360Url}
             >
             </PanoramaViewer>
 

@@ -4,11 +4,15 @@ import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { businessService } from '@/services/business.service';
 import { locationService, LocationModel } from '@/services/location.service';
+import { FilePicker, PickedFile } from '@/utils/file-picker';
+import { fileService } from '@/services/file.service';
 
 export default function AddBusinessScreen() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [locations, setLocations] = useState<LocationModel[]>([]);
+    const [pickedFiles, setPickedFiles] = useState<PickedFile[]>([]);
+    const [pickingImage, setPickingImage] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -56,6 +60,42 @@ export default function AddBusinessScreen() {
 
         setLoading(true);
         try {
+            // Step 1: Upload picked files first (if any)
+            let uploadedIdentifiers: string[] = [];
+            if (pickedFiles && pickedFiles.length > 0) {
+                try {
+                    console.log('📁 pickedFiles before upload (admin):', pickedFiles);
+                    for (const image of pickedFiles) {
+                        const ext = FilePicker.getFileExtension(image.name) || 'jpg';
+                        const newFileName = `img_${Date.now()}_${Math.floor(Math.random() * 1000)}.${ext}`;
+
+                        const uploadResp = await fileService.uploadFile({
+                            file: {
+                                uri: image.uri,
+                                type: image.type,
+                                name: newFileName,
+                            } as any,
+                            fileName: newFileName,
+                            fileType: 'image',
+                        });
+
+                        console.log('📤 admin uploadResp for', image.name, ':', uploadResp);
+
+                        if (uploadResp.success && uploadResp.data) {
+                            const idOrName = (uploadResp.data as any).fileName || (uploadResp.data as any).url || (uploadResp.data as any).id;
+                            if (idOrName) uploadedIdentifiers.push(idOrName);
+                            console.log('🆔 admin Collected identifier:', idOrName);
+                        }
+                    }
+                } catch (uploadErr: any) {
+                    console.error('Image upload failed:', uploadErr);
+                    Alert.alert('Upload Error', uploadErr?.message || 'Failed to upload image(s). Aborting creation.');
+                    setLoading(false);
+                    return;
+                }
+            }
+
+            // Step 2: Create the business
             const resp = await businessService.create({
                 name: formData.name,
                 description: formData.description,
@@ -65,8 +105,31 @@ export default function AddBusinessScreen() {
                 l_id: formData.l_id,
                 scheduled_at: formData.scheduled_at,
             });
+            console.log('🏗️ admin business create response:', resp);
 
             if (resp.success) {
+                // Step 3: Update location metadata with uploadedIdentifiers (overwrite images array)
+                try {
+                    const l_id = (resp.data as any)?.l_id || formData.l_id || (resp.data as any)?.id;
+                    console.log('🔎 admin l_id to update:', l_id, 'uploadedIdentifiers:', uploadedIdentifiers);
+                    if (l_id && uploadedIdentifiers.length > 0) {
+                        const before = await locationService.get(String(l_id));
+                        console.log('📥 admin location before update:', before);
+
+                        const updateResp = await locationService.update(String(l_id), {
+                            metadata: {
+                                images: uploadedIdentifiers,
+                            },
+                        });
+                        console.log('✅ admin location update response:', updateResp);
+
+                        const after = await locationService.get(String(l_id));
+                        console.log('📤 admin location after update:', after);
+                    }
+                } catch (metaErr: any) {
+                    console.error('Failed to update location metadata:', metaErr);
+                }
+
                 Alert.alert('Success', 'Business added successfully', [
                     { text: 'OK', onPress: () => router.back() },
                 ]);
@@ -203,6 +266,40 @@ export default function AddBusinessScreen() {
                             onChangeText={(text) => setFormData({ ...formData, scheduled_at: text })}
                         />
                     </View>
+
+                    {/* Image picker */}
+                    <View style={styles.field}>
+                        <Text style={styles.label}>Business Photo</Text>
+                        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                            <TouchableOpacity
+                                style={[styles.pickButton, { flex: 1 }]}
+                                onPress={async () => {
+                                    try {
+                                        setPickingImage(true);
+                                        const images = await FilePicker.pickImageWithSource({ allowsMultipleSelection: false, allowsEditing: false });
+                                        if (images && images.length > 0) {
+                                            setPickedFiles(images);
+                                        }
+                                    } catch (err: any) {
+                                        Alert.alert('Error', err?.message || 'Failed to pick image');
+                                    } finally {
+                                        setPickingImage(false);
+                                    }
+                                }}
+                            >
+                                <Text style={styles.pickButtonText}>{pickingImage ? 'Picking...' : (pickedFiles.length > 0 ? 'Change Photo' : 'Pick Photo')}</Text>
+                            </TouchableOpacity>
+
+                            {pickedFiles.length > 0 && (
+                                <TouchableOpacity
+                                    style={styles.removeButtonSmall}
+                                    onPress={() => setPickedFiles([])}
+                                >
+                                    <Text style={styles.removeButtonTextSmall}>Remove</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    </View>
                 </View>
             </ScrollView>
         </View>
@@ -313,5 +410,31 @@ const styles = StyleSheet.create({
     },
     locationChipTextActive: {
         color: '#fff',
+    },
+    pickButton: {
+        backgroundColor: '#0a7ea4',
+        borderRadius: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    pickButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    removeButtonSmall: {
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 8,
+        backgroundColor: '#ef4444',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    removeButtonTextSmall: {
+        color: '#fff',
+        fontSize: 13,
+        fontWeight: '600',
     },
 });

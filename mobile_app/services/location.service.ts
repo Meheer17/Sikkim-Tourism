@@ -23,10 +23,13 @@ export interface LocationListResponse {
 class LocationService {
     private baseUrl = '/location';
 
-    async list(params?: { skip?: number; limit?: number }): Promise<ApiResponse<LocationModel[]>> {
+    async list(params?: { skip?: number; limit?: number; position_lat?: number; position_lng?: number; radius_m?: number }): Promise<ApiResponse<LocationModel[]>> {
         const qs = new URLSearchParams();
         if (params?.skip !== undefined) qs.append('skip', String(params.skip));
         if (params?.limit !== undefined) qs.append('limit', String(params.limit));
+        if (params?.position_lat !== undefined) qs.append('position_lat', String(params.position_lat));
+        if (params?.position_lng !== undefined) qs.append('position_lng', String(params.position_lng));
+        if (params?.radius_m !== undefined) qs.append('radius_m', String(params.radius_m));
         // Add trailing slash to avoid 307 redirect
         const url = `${this.baseUrl}/${qs.toString() ? `?${qs.toString()}` : ''}`;
         const resp = await apiClient.get<LocationModel[]>(url);
