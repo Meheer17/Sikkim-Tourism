@@ -72,7 +72,10 @@ export default function HomeScreen() {
     };
 
     const handleServicePress = (service: Service) => {
-        router.push(`/(user)/(stack)/service-details?id=${service.id}` as any);
+        router.push({
+            pathname: '/(user)/(stack)/service-details',
+            params: { id: service.id }
+        });
     };
 
     const handleViewAllServices = () => {

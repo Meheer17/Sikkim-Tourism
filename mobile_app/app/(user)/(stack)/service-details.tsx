@@ -1,20 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { servicesService, businessService } from '@/services';
+import { servicesService, businessService, ordersService } from '@/services';
 import { ServiceModel } from '@/services/services.service';
+import BookingModal, { BookingData } from '@/components/services/BookingModal';
 import { useAuth } from '@/hooks/useAuth';
 import Toast from 'react-native-toast-message';
 import { platformConfig } from '@/config/api.config';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
 
 export default function ServiceDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
     const [service, setService] = useState<ServiceModel | null>(null);
     const [businessName, setBusinessName] = useState<string>('');
     const [loading, setLoading] = useState(true);
+    const [bookingModalVisible, setBookingModalVisible] = useState(false);
+    const [bookingLoading, setBookingLoading] = useState(false);
     const { user } = useAuth();
 
     const background = useThemeColor('background');
@@ -58,8 +65,47 @@ export default function ServiceDetailsScreen() {
     };
 
     const handleBookNow = () => {
-        // Navigate to booking screen or show booking modal
-        Toast.show({ type: 'info', text1: 'Booking feature coming soon!' });
+        setBookingModalVisible(true);
+    };
+
+    const handleBookingConfirm = async (bookingData: BookingData) => {
+        try {
+            setBookingLoading(true);
+            console.log('Creating order with data:', bookingData);
+
+            const response = await ordersService.create(bookingData);
+
+            if (response.success && response.data) {
+                Alert.alert(
+                    t.success || 'Success',
+                    t.booking_confirmed || 'Your booking has been confirmed!',
+                    [
+                        {
+                            text: t.view_booking || 'View Booking',
+                            onPress: () => {
+                                setBookingModalVisible(false);
+                                // Navigate to my-bookings tab
+                                router.push('/(user)/my-bookings' as any);
+                            },
+                        },
+                        {
+                            text: t.continue_shopping || 'Continue Shopping',
+                            onPress: () => setBookingModalVisible(false),
+                        },
+                    ]
+                );
+            } else {
+                Alert.alert(t.error || 'Error', t.booking_failed || 'Booking failed');
+            }
+        } catch (error: any) {
+            console.error('Booking error:', error);
+            Alert.alert(
+                t.error || 'Error',
+                error?.message || t.something_went_wrong || 'Something went wrong. Please try again.'
+            );
+        } finally {
+            setBookingLoading(false);
+        }
     };
 
     if (loading) {
@@ -175,19 +221,33 @@ export default function ServiceDetailsScreen() {
                         )}
                     </View>
                 )}
-
+                {/* Book Now Button */}
+                <View style={[styles.footer, { backgroundColor: card, borderTopColor: border }]}>
+                    <TouchableOpacity
+                        style={[styles.bookButton, { backgroundColor: tint }]}
+                        onPress={handleBookNow}
+                        disabled={bookingLoading}
+                    >
+                        <Text style={styles.bookButtonText}>
+                            {bookingLoading ? 'Processing...' : `${t.book_now || 'Book Now'} - ₹${service.price}`}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
                 <View style={styles.bottomPadding} />
             </ScrollView>
 
-            {/* Book Now Button */}
-            <View style={[styles.footer, { backgroundColor: card, borderTopColor: border }]}>
-                <TouchableOpacity
-                    style={[styles.bookButton, { backgroundColor: tint }]}
-                    onPress={handleBookNow}
-                >
-                    <Text style={styles.bookButtonText}>Book Now - ₹{service.price}</Text>
-                </TouchableOpacity>
-            </View>
+
+
+            {/* Booking Modal */}
+            <BookingModal
+                visible={bookingModalVisible}
+                onClose={() => setBookingModalVisible(false)}
+                onConfirm={handleBookingConfirm}
+                serviceId={service.id || ''}
+                serviceName={service.name}
+                servicePrice={service.price}
+                businessId={service.bid}
+            />
         </View>
     );
 }
