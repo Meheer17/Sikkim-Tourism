@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, TextInput, Alert, Image, FlatList, Dimensions, ActivityIndicator, Linking, Animated, SafeAreaView } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, TextInput, Alert, Image, FlatList, Dimensions, ActivityIndicator, Linking, Animated } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { geminiNotifier, GeminiPayload } from '@/utils/gemini-notifier';
 import { businessService, locationService } from '@/services';
 import { buildImageUrl } from '@/utils/image-url';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { platformConfig } from '@/config/api.config';
 
 export default function GeminiPopup() {
   const [visible, setVisible] = useState(false);
@@ -85,6 +87,11 @@ export default function GeminiPopup() {
   }, [visible, showTimePicker, showResultsModal]);
 
   const onPositive = () => {
+    if (!payload) {
+      console.warn('GeminiPopup: positive action called with null payload');
+      hideBar();
+      return;
+    }
     const action = payload.positiveAction;
     const businessType = (payload as any).businessType as string | undefined;
     const position = (payload as any).position as { x: number; y: number } | undefined;
@@ -384,13 +391,14 @@ const styles = StyleSheet.create({
   gradientBar: {
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
+    minHeight: platformConfig.isIOS ? 50 : 60,
   },
   topBarInner: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 60 : 24,
-    paddingBottom: 36,
+    paddingTop: Platform.OS === 'android' ? 100 : 20,
+    paddingBottom: Platform.OS === 'android' ? 100 : 0,
   },
   iconCircle: {
     width: 56,
@@ -419,6 +427,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.95)',
     lineHeight: 24,
+    textAlign: 'left', // Ensure left alignment
+    alignSelf: 'flex-start', // Make sure text starts at the left
+    width: '100%', // Take full width of container
   },
   topBarButtons: {
     flexDirection: 'row',
@@ -460,6 +471,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
+    ...(Platform.OS === 'ios' && { minHeight: 480 }),
   },
   title: {
     fontSize: 18,
@@ -488,21 +500,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   resultCard: {
-    width: Math.min(320, Dimensions.get('window').width - 80),
+    width: Math.min(340, Dimensions.get('window').width - 60),
     marginRight: 12,
     borderRadius: 10,
-    padding: 8,
+    padding: 12,
     alignItems: 'center',
   },
   resultImage: {
     width: '100%',
-    height: 140,
+    height: 200,
     borderRadius: 8,
     backgroundColor: '#ddd',
   },
   resultPlaceholder: {
     width: '100%',
-    height: 140,
+    height: 200,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
