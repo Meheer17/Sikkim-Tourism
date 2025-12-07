@@ -12,8 +12,9 @@ export { messageService } from './message.service';
 export { ttsService } from './tts.service';
 export { aiPlannerService } from './ai-planner.service';
 export { aiChatService } from './ai-chat.service';
-export { eventService, EventService } from './event.service';
-export type { Event, EventOpenHours, EventListParams, EventCreateData } from './event.service';
+export { ordersService } from './orders.service';
+export { bookingsService } from './bookings.service';
+export { FriendsAPI } from './friends.service';
 
 // Re-export types for convenience
 export type {

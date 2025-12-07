@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, BeforeValidator, ConfigDict
-from typing import Optional, Annotated
+from typing import Optional, Annotated, List
 from datetime import datetime
 from bson import ObjectId
 import re
@@ -64,7 +64,9 @@ class businessBase(BaseModel):
     type_id: str  
     l_id: str     
     scheduled_at: datetime  
-    approved: bool = False  
+    approved: bool = False
+    banner_image: Optional[str] = None  # CDN URL for banner image
+    images: Optional[list[str]] = Field(default_factory=list)  # List of CDN URLs for gallery images  
 
     @field_validator("type_id", "l_id")
     @classmethod
@@ -101,6 +103,8 @@ class businessUpdate(BaseModel):
     l_id: Optional[str] = None
     scheduled_at: Optional[datetime] = None
     approved: Optional[bool] = None
+    banner_image: Optional[str] = None
+    images: Optional[list[str]] = None
 
     @field_validator("type_id", "l_id")
     @classmethod
@@ -124,5 +128,35 @@ class business(businessBase):
     id: str
     created_at: datetime
     updated_at: datetime
+
+    model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})
+
+
+# Nested models for dashboard/complete view
+class ServiceInBusiness(BaseModel):
+    id: str
+    name: str
+    price: float
+    description: Optional[str] = None
+    features: Optional[List[str]] = None
+    short_description: Optional[str] = None
+    metadata: Optional[dict] = None
+
+    model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})
+
+
+class BusinessWithServices(BaseModel):
+    id: str
+    name: str
+    description: str
+    short_description: str
+    open_hours: OpenHours
+    type_id: str
+    l_id: str
+    scheduled_at: datetime
+    approved: bool
+    created_at: datetime
+    updated_at: datetime
+    services: List[ServiceInBusiness] = []  # nested services
 
     model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})

@@ -62,6 +62,54 @@ async def upload_file(
     return result
 
 
+@router.post("/document", status_code=status.HTTP_201_CREATED)
+async def upload_document(
+    file: UploadFile = File(..., description="Document to upload (scanned images, PDFs)"),
+    category: Optional[str] = Form("document", description="Document category (e.g., business_license, verification)"),
+    business_id: Optional[str] = Form(None, description="Optional business ID to associate with document"),
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """
+    Upload a scanned document (from document scanner or file picker).
+    
+    - **file**: Document file (jpg, png, pdf)
+    - **category**: Document category for organization
+    - Returns the CDN URL and upload details
+    
+    Supported formats:
+    - Images: jpg, png (from document scanner)
+    - Documents: pdf
+    
+    Common categories:
+    - business_license
+    - business_registration
+    - admin_verification
+    - admin_id_verification
+    - tax_document
+    - permit
+    - heritage_manuscript (ancient manuscripts and texts)
+    - heritage_scripture (religious scriptures)
+    - heritage_artifact (cultural artifacts and relics)
+    """
+    content_type = file.content_type or ""
+    filename = file.filename or "document"
+    
+    # Accept images and PDFs
+    if content_type.startswith('image/') or content_type == 'application/pdf':
+        result = await upload_service.upload_document(
+            file=file,
+            category=category,
+            user_id=current_user_id,
+            business_id=business_id
+        )
+        return result
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported document type: {content_type}. Supported: images (jpg, png), PDF"
+        )
+
+
 @router.post("/from-url", status_code=status.HTTP_201_CREATED)
 async def upload_from_url(
     request: UploadFromUrlRequest,
@@ -101,3 +149,39 @@ async def upload_from_url(
         )
     
     return result
+
+
+@router.get("/documents", status_code=status.HTTP_200_OK)
+async def get_documents(
+    category: Optional[str] = None,
+    business_id: Optional[str] = None,
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """
+    Get uploaded documents, optionally filtered by category and business ID.
+    
+    - **category**: Filter by document category (e.g., heritage_manuscript)
+    - **business_id**: Filter by associated business
+    - Returns list of documents with metadata
+    """
+    documents = await upload_service.get_documents(
+        category=category,
+        business_id=business_id,
+        user_id=current_user_id
+    )
+    return {"documents": documents}
+
+
+@router.delete("/documents/{file_id}", status_code=status.HTTP_200_OK)
+async def delete_document(
+    file_id: str,
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """
+    Delete a document by its file ID.
+    
+    - **file_id**: ID of the document to delete
+    - Returns success message
+    """
+    await upload_service.delete_document(file_id, current_user_id)
+    return {"message": "Document deleted successfully"}

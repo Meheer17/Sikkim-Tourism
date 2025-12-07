@@ -11,6 +11,7 @@ from app.schemas.ai_planner import (
     ChatMessageRequest,
     ChatResponse
 )
+from app.schemas.ai_planner import TriggerRequest, TriggerResponse
 
 router = APIRouter()
 
@@ -92,6 +93,36 @@ async def generate_plans_from_chat(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate plans: {str(e)}"
+        )
+
+
+
+@router.post('/trigger', response_model=TriggerResponse)
+async def trigger_event(
+    trigger: TriggerRequest,
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """
+    Receive a movement trigger from client devices.
+
+    Request JSON:
+    {
+      "type": "standing|walking|driving",
+      "time": "ISO datetime (optional)",
+      "position": { "x": <float>, "y": <float> }
+    }
+
+    For now this endpoint passes the trigger to the AI planner service which returns a stub response.
+    """
+    try:
+        response = await ai_planner_service.trigger_event(current_user_id, trigger)
+        return response
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process trigger: {str(e)}"
         )
 
 

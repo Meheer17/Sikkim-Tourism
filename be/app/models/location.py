@@ -20,6 +20,7 @@ class LocationType(str, Enum):
     business = "business"
     event = "event"
     tourism = "tourism"
+    monastery = "monastery"
     other = "other"
 
 

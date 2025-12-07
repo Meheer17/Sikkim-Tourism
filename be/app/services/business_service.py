@@ -1,5 +1,6 @@
 from typing import Optional, List
 from datetime import datetime
+import math
 from bson import ObjectId
 from fastapi import HTTPException, status
 
@@ -268,6 +269,70 @@ class businessService:
         await user_business_collection.delete_many({"bid": business_id})
         
         return result.deleted_count > 0
+    
+    async def get_by_owner_with_services(self, user_id: str) -> List:
+        """Get all businesses owned by user with their services"""
+        from app.models.business import BusinessWithServices, ServiceInBusiness
+        
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
+        
+        business_collection = db.business
+        user_business_collection = db.user_business
+        services_collection = db.services
+        
+        # Get all business IDs owned by user
+        business_ids = []
+        cursor = user_business_collection.find({
+            "uid": user_id,
+            "role": "owner"
+        })
+        async for ub in cursor:
+            business_ids.append(ub["bid"])
+        
+        if not business_ids:
+            return []
+        
+        # Get businesses
+        businesses_with_services = []
+        cursor = business_collection.find({"_id": {"$in": [ObjectId(bid) for bid in business_ids]}}).sort([("created_at", -1)])
+        
+        async for doc in cursor:
+            bus_db = businessInDB(**doc)
+            
+            # Get services for this business
+            services = []
+            services_cursor = services_collection.find({"bid": str(bus_db.id)})
+            async for service_doc in services_cursor:
+                services.append(ServiceInBusiness(
+                    id=str(service_doc.get("_id")),
+                    name=service_doc.get("name"),
+                    price=service_doc.get("price"),
+                    description=service_doc.get("description"),
+                    features=service_doc.get("features"),
+                    short_description=service_doc.get("short_description"),
+                    metadata=service_doc.get("metadata")
+                ))
+            
+            # Create BusinessWithServices object
+            biz_with_services = BusinessWithServices(
+                id=str(bus_db.id),
+                name=bus_db.name,
+                description=bus_db.description,
+                short_description=bus_db.short_description,
+                open_hours=bus_db.open_hours,
+                type_id=str(bus_db.type_id),
+                l_id=str(bus_db.l_id),
+                scheduled_at=bus_db.scheduled_at,
+                approved=bus_db.approved,
+                created_at=bus_db.created_at,
+                updated_at=bus_db.updated_at,
+                services=services
+            )
+            businesses_with_services.append(biz_with_services)
+        
+        return businesses_with_services
 
 
 business_service = businessService()

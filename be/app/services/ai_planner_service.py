@@ -2,6 +2,7 @@ import google.generativeai as genai
 from typing import List, Dict, Any, Optional
 import json
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import random
 import uuid
 from fastapi import HTTPException, status
@@ -19,6 +20,9 @@ from app.schemas.ai_planner import (
     ChatMessage,
     ChatResponse
 )
+
+from app.schemas.ai_planner import TriggerRequest, TriggerResponse
+from app.core.database import get_database
 
 
 # In-memory storage for chat sessions (in production, use Redis or database)
@@ -237,20 +241,6 @@ class AIPlannerService:
         response_prompt = f"""
 {conversation_text}
 
-ASSISTANT INSTRUCTIONS:
-You are a helpful Sikkim travel planning assistant. Based on the conversation so far:
-
-1. Respond naturally to the user's latest message
-2. If critical information is missing, ask ONE follow-up question about the most important missing detail
-3. Critical details needed:
-   - Travel duration (how many days)
-   - Budget range
-   - Type of experience (adventure, culture, nature, relaxation, etc.)
-   - Travel companions (solo, couple, family, friends)
-   - Specific interests or must-see places
-
-Current preferences collected: {json.dumps(current_preferences or {}, indent=2)}
-
 RESPOND IN THIS JSON FORMAT:
 {{
     "message": "Your friendly response to the user with a question if needed",
@@ -346,7 +336,247 @@ Your job:
 3. Ask follow-up questions to collect: duration, budget, interests, companions
 4. When you have enough information, indicate you're ready to generate personalized plans
 5. ONLY reference locations from the Sikkim database provided above
-6. Be enthusiastic about Sikkim's natural beauty, culture, and attractions"""
+6. Be enthusiastic about Sikkim's natural beauty, culture, and attractions
+
+
+IMPORTANT: ONLY GIVE CONSISE INFO"""
+
+    async def trigger_event(self, user_id: str, trigger: TriggerRequest) -> TriggerResponse:
+        """Handle a movement trigger (standing|walking|driving).
+
+        For now this is a pass-through stub that logs the trigger and returns a success response.
+        Later this should construct a Gemini prompt and invoke the model.
+        """
+        try:
+            print(f"🔔 Trigger received from user={user_id}: type={trigger.type}, time={trigger.time}, position={trigger.position}")
+
+            # Normalize incoming trigger time to IST and log the incoming trigger to DB so future fetches include this event
+            # Treat timezone-naive times as already in IST (frontend should send IST)
+            try:
+                if trigger.time:
+                    if trigger.time.tzinfo is None:
+                        trigger_time_ist = trigger.time.replace(tzinfo=ZoneInfo("Asia/Kolkata"))
+                    else:
+                        trigger_time_ist = trigger.time.astimezone(ZoneInfo("Asia/Kolkata"))
+                else:
+                    trigger_time_ist = datetime.now(tz=ZoneInfo("Asia/Kolkata"))
+            except Exception:
+                trigger_time_ist = datetime.now(tz=ZoneInfo("Asia/Kolkata"))
+
+            # Log the incoming trigger to DB so future fetches include this event
+            try:
+                db = get_database()
+                if db is not None:
+                    doc = {
+                        "uid": user_id,
+                        "user_id": user_id,
+                        "type": trigger.type,
+                        # store action as the same as type by default so action-based lookups work
+                        "action": trigger.type,
+                        "position": {"x": trigger.position.x, "y": trigger.position.y} if getattr(trigger, "position", None) else None,
+                        # createdAt is the canonical timestamp field used elsewhere (store in IST)
+                        "createdAt": trigger_time_ist,
+                        # store full raw payload for debugging/audit
+                        "raw": trigger.dict()
+                    }
+                    try:
+                        insert_result = await db.triggers.insert_one(doc)
+                        print(f"Logged trigger to DB for user={user_id}, id={insert_result.inserted_id}")
+                    except Exception as ie:
+                        print(f"Failed to insert trigger document: {ie}")
+            except Exception as e:
+                print(f"Could not log trigger to DB: {e}")
+
+            # Build a contextual Gemini prompt based on trigger inputs (type/time/position)
+            # The model should return a JSON object describing the suggested action for the client UI
+            # Keep the JSON format small and stable so the mobile app can parse it directly.
+            # Use IST-normalized time for prompt and hour calculation
+            try:
+                trigger_time_iso = trigger_time_ist.isoformat()
+                hour = trigger_time_ist.hour
+            except Exception:
+                trigger_time_iso = None
+                hour = None
+
+            # Small set of service types (helpful for the assistant). We include them inline so Gemini can pick appropriate suggestions.
+            service_types = [
+                {"type": "hotel", "category": "buy", "id": "6927dd74c83ad21b4792693d"},
+                {"type": "restaurant", "category": "buy", "id": "6927dd74c83ad21b4792693e"},
+                {"type": "cab", "category": "buy", "id": "6927dd74c83ad21b4792693f"},
+                {"type": "guide", "category": "book", "id": "6927dd74c83ad21b47926940"},
+                {"type": "event", "category": "event", "id": "6927dd74c83ad21b47926941"},
+                {"type": "tourist_entry", "category": "tourist_entry", "id": "69330a6098cade204f63d80f"}
+            ]
+
+            # Fetch recent triggers from DB (if available) to avoid repeating actions too frequently
+            recent_actions_map = {}
+            try:
+                db = get_database()
+                if db is not None:
+                    # Look for documents that may be stored under either 'uid' or 'user_id'
+                    query = {"$or": [{"uid": user_id}, {"user_id": user_id}]}
+                    cursor = db.triggers.find(query, {"uid": 1, "type": 1, "action": 1, "createdAt": 1}).sort("createdAt", -1).limit(200)
+                    docs = await cursor.to_list(length=200)
+                    for d in docs:
+                        action = d.get("action") or d.get("type") or None
+                        created = d.get("createdAt") or d.get("created_at") or d.get("time")
+                        if not action or not created:
+                            continue
+                        # Ensure ISO string representation for the prompt
+                        try:
+                            # If created is a datetime-like object
+                            created_iso = created.isoformat()
+                        except Exception:
+                            created_iso = str(created)
+
+                        # only keep the latest (cursor is sorted desc so first occurrence is latest)
+                        if action not in recent_actions_map:
+                            recent_actions_map[action] = created_iso
+
+                    if recent_actions_map:
+                        print(f"Found recent actions for user {user_id}: {recent_actions_map}")
+            except Exception as e:
+                # DB may be unavailable in some environments; log and continue with fallback
+                print(f"Could not fetch recent triggers from DB: {e}")
+
+            recent_actions_json = json.dumps(recent_actions_map)
+
+            prompt = f"""
+You are a concise assistant that suggests an immediate contextual action when a mobile client reports movement triggers.
+
+Input:
+- trigger.type: {trigger.type}
+- trigger.time: {trigger_time_iso}
+- trigger.hour: {hour}
+- trigger.position: {{"x": {trigger.position.x}, "y": {trigger.position.y}}}
+- available service types (JSON): {service_types}
+- recent_actions (last seen timestamps by action, JSON): {recent_actions_json}
+
+COOLDOWN RULES (use these to avoid repeating suggestions too frequently):
+- Minimum cooldowns (minutes): {{"restaurant": 160, "cab": 105, "hotel":160, "guide": 120, "event": 160, "tourist_entry": 160}}
+- The `recent_actions` JSON shows when each action was last suggested/triggered for this user.
+- If the best suggested action would violate the cooldown (i.e., last seen within the cooldown window), DO NOT suggest it again immediately.
+- In such cases, return a JSON response with `type` set to the literal string `"no_action"` (no extra text), and set `agent_message` to a short friendly sentence offering to remind later.
+- Example `no_action` buttons: positive `{{"text": "Remind me", "action": "remind"}}` and negative `{{"text": "Dismiss", "action": "return"}}`.
+
+Goal:
+Return a single JSON object (no extra text) in this exact shape:
+{{
+  "type": "<one of service types (e.g. restaurant)>",
+  "agent_message": "Friendly short prompt to the user (1-2 sentences)",
+  "buttons": {{
+    "positive": {{"text": "<short text>", "action": "search|book|navigate|remind|return"}},
+    "negative": {{"text": "<short text>", "action": "return"}}
+  }}
+}}
+
+Hints:
+- If the user is driving and the time looks like a common meal time (e.g., 11-14 lunchtime, 18-20 dinner), suggest a "restaurant" action and ask a friendly question like "It's around lunchtime — would you like me to find nearby places to eat?".
+- If the user is standing near a point of interest, suggest "tourist_entry" or "event" where appropriate.
+- Keep the agent_message friendly and concise. Buttons should be short words like "Yes", "No", "Show me".
+- Do not include any explanatory text outside the JSON.
+
+Remember
+- Always respond with ONLY the JSON object as specified above.
+- Always keep the messages and button texts concise and user-friendly.
+"""
+
+            gemini_result = None
+            try:
+                if not self.model:
+                    raise Exception("Gemini model not configured")
+
+                response = self.model.generate_content(prompt)
+                if not response.candidates or not response.candidates[0].content.parts:
+                    raise Exception("Empty Gemini response or blocked by safety filter")
+
+                gemini_json = self._parse_json_response(response.text)
+                gemini_result = gemini_json
+                # Attach a default nearby places query so the mobile client can call the locations API
+                try:
+                    lat = float(trigger.position.y)
+                    lng = float(trigger.position.x)
+                    radius = 1000  # default radius in meters (maps default-ish)
+                    nearby_url = f"/api/v1/location?position_lat={lat}&position_lng={lng}&radius_m={radius}&skip=0&limit=50"
+                    gemini_result.setdefault('nearby_url', nearby_url)
+                except Exception:
+                    # if position missing or malformed, skip adding nearby_url
+                    pass
+                # If model suggests no_action, suppress popups on the client by removing message/buttons and setting a flag
+                try:
+                    if isinstance(gemini_result, dict) and gemini_result.get('type') == 'no_action':
+                        gemini_result.pop('agent_message', None)
+                        gemini_result.pop('buttons', None)
+                        gemini_result['no_popup'] = True
+                except Exception as e:
+                    print(f"Error applying no_action suppression to gemini result: {e}")
+            except Exception as e:
+                # Fallback: use simple rule-based suggestion so client still receives a usable action
+                print(f"⚠️ Gemini trigger suggestion failed, falling back to rule-based: {e}")
+
+                suggested_type = "restaurant"
+                agent_message = "Would you like me to find nearby places to eat?"
+                positive = {"text": "Yes", "action": "search"}
+                negative = {"text": "No", "action": "return"}
+
+                # If we can inspect hour, make message more contextual
+                try:
+                    if trigger.type == 'driving' and hour is not None:
+                        if 11 <= hour <= 14:
+                            agent_message = "It's around lunchtime — need nearby places to eat?"
+                        elif 18 <= hour <= 20:
+                            agent_message = "It's dinner time — would you like dinner suggestions nearby?"
+                        else:
+                            agent_message = "Need recommendations while you're on the move? I can find food, cabs, or places to stop."
+                    elif trigger.type == 'walking':
+                        agent_message = "Looking for something nearby? I can find cafes, events, or attractions."
+                    elif trigger.type == 'standing':
+                        agent_message = "You're nearby — would you like recommendations for nearby attractions or services?"
+                except Exception:
+                    pass
+
+                gemini_result = {
+                    "type": suggested_type,
+                    "agent_message": agent_message,
+                    "buttons": {"positive": positive, "negative": negative}
+                }
+
+                # Add default nearby places query URL for the mobile client
+                try:
+                    lat = float(trigger.position.y)
+                    lng = float(trigger.position.x)
+                    radius = 1000
+                    gemini_result["nearby_url"] = f"/api/v1/location?position_lat={lat}&position_lng={lng}&radius_m={radius}&skip=0&limit=50"
+                except Exception:
+                    pass
+
+                # If fallback or rule-based result indicates no_action, ensure no popups
+                try:
+                    if isinstance(gemini_result, dict) and gemini_result.get('type') == 'no_action':
+                        gemini_result.pop('agent_message', None)
+                        gemini_result.pop('buttons', None)
+                        gemini_result['no_popup'] = True
+                except Exception as e:
+                    print(f"Error applying no_action suppression to fallback gemini result: {e}")
+
+            result = {
+                "status": "ok",
+                "message": "Trigger processed",
+                "data": {
+                    "type": trigger.type,
+                    "time": trigger_time_iso,
+                    "position": {"x": trigger.position.x, "y": trigger.position.y}
+                },
+                "gemini": gemini_result
+            }
+
+            return TriggerResponse(**result)
+        except Exception as e:
+            print(f"Error handling trigger_event: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to handle trigger: {str(e)}"
+            )
     
     def _parse_json_response(self, response_text: str) -> Dict[str, Any]:
         """Parse JSON from Gemini response, handling markdown code blocks"""
@@ -962,3 +1192,4 @@ Return ONLY the JSON response, nothing else."""
 
 
 ai_planner_service = AIPlannerService()
+

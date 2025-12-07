@@ -27,6 +27,25 @@ class ChatResponse(BaseModel):
     extracted_preferences: Optional[dict] = None
 
 
+# Trigger API schema
+class Position(BaseModel):
+    x: float
+    y: float
+
+
+class TriggerRequest(BaseModel):
+    type: Literal["standing", "walking", "driving"] = Field(default="driving")
+    time: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    position: Position
+
+
+class TriggerResponse(BaseModel):
+    status: str
+    message: str
+    data: Optional[dict] = None
+    gemini: Optional[dict] = None
+
+
 # Legacy question-based schemas (keeping for compatibility)
 class QuestionOption(BaseModel):
     id: str

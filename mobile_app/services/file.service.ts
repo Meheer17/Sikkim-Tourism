@@ -38,9 +38,48 @@ export class FileService {
                 formData.append('category', request.category);
             }
 
-            return await apiClient.uploadFile<FileUploadResponse>(`/upload`, formData);
+            // Debug logs: print file information and endpoint before uploading
+            try {
+                console.log('📤 [FileService] Uploading file:', {
+                    fileName: request.fileName,
+                    fileType: request.fileType,
+                    fileSize: (request.file as any)?.size,
+                    fileObj: request.file,
+                    uploadEndpoint: `/upload`,
+                    allowedImageFormats: config.upload.allowedImageFormats,
+                });
+
+                // Inspect FormData entries where possible (React Native FormData isn't iterable in all environments)
+                if ((formData as any)._parts) {
+                    // React Native FormData exposes `_parts` array
+                    console.log('📤 [FileService] FormData _parts:', (formData as any)._parts.map((p: any) => ({ key: p[0], value: p[1] })));
+                }
+            } catch (logErr) {
+                console.warn('📤 [FileService] Failed to log formData details', logErr);
+            }
+
+            const resp = await apiClient.uploadFile<FileUploadResponse>(`/upload`, formData);
+
+            // Debug: log server response
+            try {
+                console.log('📥 [FileService] Upload response:', resp);
+            } catch (logErr) {
+                console.warn('📥 [FileService] Failed to log upload response', logErr);
+            }
+
+            return resp;
         } catch (error) {
             console.error('File upload error:', error);
+            // Provide more context in the log for debugging
+            try {
+                console.error('File upload debug:', {
+                    fileName: (error as any)?.fileName || (error as any)?.request?.fileName || null,
+                    message: (error as any)?.message || error,
+                    stack: (error as any)?.stack,
+                });
+            } catch (e) {
+                // ignore
+            }
             throw error;
         }
     }
@@ -72,6 +111,45 @@ export class FileService {
             return await apiClient.uploadFile<FileUploadResponse[]>(config.routes.files.uploadMultiple, formData);
         } catch (error) {
             console.error('Multiple files upload error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Upload scanned document from file path (for document scanner)
+     */
+    async uploadDocument(
+        filePath: string,
+        category: string = 'document',
+        businessId?: string
+    ): Promise<ApiResponse<FileUploadResponse>> {
+        try {
+            // Extract filename from path
+            const fileName = filePath.split('/').pop() || `document_${Date.now()}.jpg`;
+            
+            // Create file object from URI
+            const response = await fetch(filePath);
+            const blob = await response.blob();
+            
+            // Determine file type
+            const fileType = blob.type || 'image/jpeg';
+            
+            const formData = new FormData();
+            formData.append('file', {
+                uri: filePath,
+                type: fileType,
+                name: fileName,
+            } as any);
+            formData.append('fileName', fileName);
+            formData.append('fileType', fileType);
+            formData.append('category', category);
+            if (businessId) {
+                formData.append('business_id', businessId);
+            }
+
+            return await apiClient.uploadFile<FileUploadResponse>(`/upload/document`, formData);
+        } catch (error) {
+            console.error('Document upload error:', error);
             throw error;
         }
     }
@@ -223,6 +301,47 @@ export class FileService {
     isDocumentFile(fileName: string): boolean {
         const extension = this.getFileExtension(fileName).toLowerCase();
         return config.upload.allowedDocumentFormats.includes(extension);
+    }
+
+    /**
+     * Get heritage documents by category
+     */
+    async getHeritageDocuments(params?: {
+        category?: string;
+        businessId?: string;
+    }): Promise<ApiResponse<{ documents: any[] }>> {
+        try {
+            const queryParams = new URLSearchParams();
+            if (params?.category) queryParams.append('category', params.category);
+            if (params?.businessId) queryParams.append('business_id', params.businessId);
+
+            const url = `/upload/documents?${queryParams.toString()}`;
+            console.log('[FileService] Fetching documents:', url);
+            
+            const response = await apiClient.get<{ documents: any[] }>(url);
+            console.log('[FileService] Documents response:', response);
+            
+            return response;
+        } catch (error) {
+            console.error('Get documents error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete a heritage document
+     */
+    async deleteHeritageDocument(fileId: string): Promise<ApiResponse<{ message: string }>> {
+        try {
+            console.log('[FileService] Deleting document:', fileId);
+            const response = await apiClient.delete<{ message: string }>(`/upload/documents/${fileId}`);
+            console.log('[FileService] Delete response:', response);
+            
+            return response;
+        } catch (error) {
+            console.error('Delete document error:', error);
+            throw error;
+        }
     }
 }
 

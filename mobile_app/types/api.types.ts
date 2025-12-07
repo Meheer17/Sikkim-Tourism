@@ -82,6 +82,7 @@ export interface FileUploadResponse {
     mimeType: string;
     size: number;
     url: string;
+    cdn_url?: string;
     thumbnailUrl?: string;
     category: string;
     uploadedAt: string;
