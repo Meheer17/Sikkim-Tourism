@@ -7,6 +7,11 @@ export interface EventOpenHours {
   end: string;
 }
 
+export interface Position {
+  x: string;
+  y: string;
+}
+
 export interface Event {
   _id: string;
   name: string;
@@ -28,6 +33,16 @@ export interface EventListParams {
   filters?: {
     approved?: boolean;
   };
+}
+
+export interface EventCreateData {
+  name: string;
+  description: string;
+  short_description: string;
+  open_hours: EventOpenHours;
+  type_id: string;
+  position: Position;
+  scheduled_at: string;
 }
 
 class EventService extends BaseService<Event> {
@@ -85,6 +100,22 @@ class EventService extends BaseService<Event> {
       return response;
     } catch (error) {
       console.error('Error fetching events:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new event
+   */
+  async createEvent(data: EventCreateData): Promise<ApiResponse<Event>> {
+    try {
+      console.log('EventService - Creating event with data:', JSON.stringify(data, null, 2));
+      const response = await apiClient.post<Event>(this.baseUrl, data);
+      return response;
+    } catch (error: any) {
+      console.error('Error creating event:', error);
+      console.error('Error response:', error?.response?.data);
+      console.error('Error status:', error?.response?.status);
       throw error;
     }
   }

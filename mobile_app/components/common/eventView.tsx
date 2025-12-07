@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -57,6 +57,7 @@ export default function EventView({ events, refreshing, onRefresh, onEventPress 
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
     const [selectedDateKey, setSelectedDateKey] = useState<string>(formatDateKey(new Date()));
+    const [showMonthPicker, setShowMonthPicker] = useState(false);
 
     const eventsByDate = useMemo(() => {
         const map: Record<string, Event[]> = {};
@@ -91,6 +92,96 @@ export default function EventView({ events, refreshing, onRefresh, onEventPress 
 
     const changeMonth = (delta: number) => {
         setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
+    };
+
+    const renderMonthYearPicker = () => {
+        const selectedYear = currentMonth.getFullYear();
+        const maxYear = new Date().getFullYear() + 1;
+        const minYear = selectedYear - 25;
+        const endYear = Math.max(maxYear, selectedYear + 1);
+        const years = Array.from({ length: endYear - minYear + 1 }, (_, i) => minYear + i);
+        const months = Array.from({ length: 12 }, (_, i) => i);
+
+        return (
+            <Modal
+                visible={showMonthPicker}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowMonthPicker(false)}
+            >
+                <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+                    <View style={[styles.modalContent, { backgroundColor: card }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={[styles.modalTitle, { color: text }]}>Select Month & Year</Text>
+                            <TouchableOpacity onPress={() => setShowMonthPicker(false)}>
+                                <IconSymbol name="xmark" size={24} color={text as string} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.pickerContainer}>
+                            {/* Years - Left Side */}
+                            <View style={styles.pickerColumn}>
+                                <Text style={[styles.pickerLabel, { color: muted }]}>Year</Text>
+                                <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={true}>
+                                    {years.map((y) => (
+                                        <TouchableOpacity
+                                            key={y}
+                                            style={[
+                                                styles.pickerItem,
+                                                currentMonth.getFullYear() === y && { backgroundColor: `${tint}30` },
+                                            ]}
+                                            onPress={() =>
+                                                setCurrentMonth(new Date(y, currentMonth.getMonth(), 1))
+                                            }
+                                        >
+                                            <Text style={[
+                                                styles.pickerItemText,
+                                                { color: currentMonth.getFullYear() === y ? tint : text }
+                                            ]}>
+                                                {y}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+
+                            {/* Months - Right Side */}
+                            <View style={styles.pickerColumn}>
+                                <Text style={[styles.pickerLabel, { color: muted }]}>Month</Text>
+                                <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={true}>
+                                    {months.map((m) => (
+                                        <TouchableOpacity
+                                            key={m}
+                                            style={[
+                                                styles.pickerItem,
+                                                currentMonth.getMonth() === m && { backgroundColor: `${tint}30` },
+                                            ]}
+                                            onPress={() =>
+                                                setCurrentMonth(new Date(currentMonth.getFullYear(), m, 1))
+                                            }
+                                        >
+                                            <Text style={[
+                                                styles.pickerItemText,
+                                                { color: currentMonth.getMonth() === m ? tint : text }
+                                            ]}>
+                                                {MONTH_NAMES[m]}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        </View>
+
+                        <TouchableOpacity
+                            style={[styles.modalButton, { backgroundColor: tint }]}
+                            onPress={() => setShowMonthPicker(false)}
+                        >
+                            <Text style={styles.modalButtonText}>Done</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+        );
     };
 
     const EventCard = ({ event }: { event: Event }) => {
@@ -150,9 +241,11 @@ export default function EventView({ events, refreshing, onRefresh, onEventPress 
             showsVerticalScrollIndicator={false}
         >
             {events.length > 0 ? (
-                events.map((event) => (
-                    <EventCard key={event._id} event={event} />
-                ))
+                <React.Fragment>
+                    {events.map((event) => (
+                        <EventCard key={event._id} event={event} />
+                    ))}
+                </React.Fragment>
             ) : (
                 <View style={styles.emptyState}>
                     <IconSymbol name="calendar.badge.clock" size={56} color={muted as string} />
@@ -177,9 +270,15 @@ export default function EventView({ events, refreshing, onRefresh, onEventPress 
                     >
                         <IconSymbol name="chevron.left" size={18} color={text as string} />
                     </TouchableOpacity>
-                    <Text style={[styles.monthLabel, { color: text }]}>
-                        {MONTH_NAMES[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                    </Text>
+                    <TouchableOpacity
+                        style={styles.monthLabelContainer}
+                        onPress={() => setShowMonthPicker(true)}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={[styles.monthLabel, { color: text }]}>
+                            {MONTH_NAMES[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                        </Text>
+                    </TouchableOpacity>
                     <TouchableOpacity 
                         style={[styles.monthButton, { borderColor: border }]}
                         onPress={() => changeMonth(1)}
@@ -275,6 +374,7 @@ export default function EventView({ events, refreshing, onRefresh, onEventPress 
 
     return (
         <View style={[styles.container, { backgroundColor: background }]}>
+            {renderMonthYearPicker()}
             {/* Toggle Bar */}
             <View style={[styles.toggleBar, { backgroundColor: card, borderColor: border }]}>
                 <TouchableOpacity
@@ -517,6 +617,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 4,
         borderRadius: 12,
         padding: 12,
+        paddingBottom: 75,
     },
     daySummaryHeader: {
         flexDirection: 'row',
@@ -543,5 +644,68 @@ const styles = StyleSheet.create({
     emptyDay: {
         paddingVertical: 16,
         alignItems: 'center',
+    },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        width: '85%',
+        borderRadius: 16,
+        padding: 20,
+        maxHeight: '80%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+    },
+    pickerContainer: {
+        flexDirection: 'row',
+        gap: 16,
+        marginBottom: 20,
+    },
+    pickerColumn: {
+        flex: 1,
+        maxHeight: 300,
+    },
+    pickerLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 8,
+    },
+    pickerScroll: {
+        maxHeight: 280,
+    },
+    pickerItem: {
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginBottom: 4,
+    },
+    pickerItemText: {
+        fontSize: 15,
+        fontWeight: '500',
+    },
+    modalButton: {
+        paddingVertical: 14,
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    modalButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    monthLabelContainer: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 8,
     },
 });

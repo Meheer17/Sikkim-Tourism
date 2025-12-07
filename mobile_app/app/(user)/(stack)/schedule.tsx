@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import EventView from '@/components/common/eventView';
 import { Event, eventService } from '@/services';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -10,6 +11,7 @@ import { getLanguageTranslations } from '@/constants/translations';
 import Toast from 'react-native-toast-message';
 
 export default function ScheduleScreen() {
+    const router = useRouter();
     const { language } = useLanguage();
     const t = getLanguageTranslations(language);
     const background = useThemeColor('background');
@@ -69,7 +71,7 @@ export default function ScheduleScreen() {
     }, []);
 
     return (
-        <View style={[styles.container, { backgroundColor: background, paddingTop: Math.max(insets.top, 20) }]}>
+        <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
             <View style={[styles.header, { paddingHorizontal: 20 }]}>
                 <View style={styles.headerTop}>
@@ -82,6 +84,12 @@ export default function ScheduleScreen() {
                             Scroll to view all events
                         </Text>
                     </View>
+                    <TouchableOpacity
+                        style={[styles.createButton, { backgroundColor: tint }]}
+                        onPress={() => router.push('/(user)/(stack)/create-event' as any)}
+                    >
+                        <IconSymbol name="plus" size={20} color="#fff" />
+                    </TouchableOpacity>
                 </View>
             </View>
 
@@ -119,14 +127,21 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     headerIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
+        width: 36,
+        height: 36,
+        borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
     },
     headerTextBlock: {
         flex: 1,
+    },
+    createButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     title: {
         fontSize: 24,
