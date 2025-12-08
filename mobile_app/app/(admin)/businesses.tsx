@@ -203,7 +203,7 @@ export default function AdminBusinessesScreen() {
                     style={[styles.filterButton, { backgroundColor: tint + '15' }]}
                     onPress={() => setShowFilters(!showFilters)}
                 >
-                    <IconSymbol name="slider.horizontal.3" size={20} color={tint} />
+                    <IconSymbol name="slider.horizontal.3" size={24} color={tint} />
                 </TouchableOpacity>
             </View>
 
@@ -434,6 +434,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         paddingHorizontal: 12,
         paddingVertical: 10,
+        minHeight: 44,
         gap: 8,
     },
     searchInput: {
@@ -441,8 +442,10 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     filterButton: {
-        width: 44,
-        height: 44,
+        // Match search bar height and vertical padding so button visually aligns
+        minHeight: 44,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
@@ -465,7 +468,7 @@ const styles = StyleSheet.create({
     },
     filterChip: {
         paddingHorizontal: 16,
-        paddingVertical: 8,
+        paddingVertical: 10,
         borderRadius: 20,
         borderWidth: 1,
     },

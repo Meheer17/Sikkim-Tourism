@@ -57,7 +57,7 @@ export interface EventUpdateData {
 
 class EventService extends BaseService<Event> {
   constructor() {
-    super('/event');
+    super('/event/');
   }
 
   /**
@@ -120,6 +120,7 @@ class EventService extends BaseService<Event> {
   async createEvent(data: EventCreateData): Promise<ApiResponse<Event>> {
     try {
       console.log('EventService - Creating event with data:', JSON.stringify(data, null, 2));
+      console.log('EventService - POST URL:', this.baseUrl);
       const response = await apiClient.post<Event>(this.baseUrl, data);
       return response;
     } catch (error: any) {

@@ -801,7 +801,8 @@ class UploadService:
         file: UploadFile, 
         category: str = "document", 
         user_id: Optional[str] = None,
-        business_id: Optional[str] = None
+        business_id: Optional[str] = None,
+        location_id: Optional[str] = None
     ):
         """
         Upload scanned document (from document scanner) to CDN and save metadata to database
@@ -894,7 +895,8 @@ class UploadService:
             "file_path": cdn_url,
             "file_type": "document",
             "category": category,
-            "business_id": ObjectId(business_id) if business_id and ObjectId.is_valid(business_id) else None,
+            "b_id": ObjectId(business_id) if business_id and ObjectId.is_valid(business_id) else None,
+            "l_id": ObjectId(location_id) if location_id and ObjectId.is_valid(location_id) else None,
             "uploaded_by": ObjectId(user_id) if user_id and ObjectId.is_valid(user_id) else None,
             "cdn_response": cdn_response,
             "created_at": datetime.utcnow(),
@@ -920,6 +922,7 @@ class UploadService:
         self,
         category: Optional[str] = None,
         business_id: Optional[str] = None,
+        location_id: Optional[str] = None,
         user_id: Optional[str] = None
     ):
         """
@@ -928,6 +931,7 @@ class UploadService:
         Args:
             category: Document category filter
             business_id: Business ID filter
+            location_id: Location ID filter
             user_id: User ID (for permission checking)
             
         Returns:
@@ -939,7 +943,10 @@ class UploadService:
             query["category"] = category
         
         if business_id and ObjectId.is_valid(business_id):
-            query["business_id"] = ObjectId(business_id)
+            query["b_id"] = ObjectId(business_id)
+        
+        if location_id and ObjectId.is_valid(location_id):
+            query["l_id"] = ObjectId(location_id)
         
         print(f"[DEBUG] Querying documents with: {query}")
         
