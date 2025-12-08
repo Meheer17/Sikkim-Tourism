@@ -1,9 +1,12 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, users, profile, location, business, event, community, message, compression, upload, friends, cdn, admin, ai_planner, services, orders, bookings, comments
+from app.api.v1.endpoints import auth, users, profile, location, business, event, community, message, compression, upload, friends, cdn, admin, ai_planner, services, orders, bookings, comments, websocket
 
 
 api_router = APIRouter()
+
+# WebSocket routes (mounted directly, not under /api/v1 prefix in main.py)
+websocket_router = websocket.router
 
 api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 api_router.include_router(users.router, prefix="/users", tags=["Users"])

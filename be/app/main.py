@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
-from app.api.v1.router import api_router
+from app.api.v1.router import api_router, websocket_router
 from fastapi import Request
 
 import json
@@ -46,7 +46,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include REST API routes
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Include WebSocket routes (needs to be at same level as API for proper WS routing)
+app.include_router(websocket_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")

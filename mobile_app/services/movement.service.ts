@@ -9,11 +9,11 @@ interface Position { x: number; y: number }
 class MovementService {
   private lastPosition: Position | null = null;
   private intervalId: number | null = null;
-  private readonly intervalMs = 15 * 1000; // 1 minute
+  private readonly intervalMs = 5 * 60 * 1000; // 5 minutes to avoid API quota exhaustion
 
-  // thresholds in meters per minute
-  private readonly standingThreshold = 10; // <= 10m -> standing
-  private readonly walkingThreshold = 100; // <=100m -> walking
+  // thresholds in meters per 5 minutes
+  private readonly standingThreshold = 50; // <= 50m -> standing
+  private readonly walkingThreshold = 500; // <=500m -> walking
 
   constructor() {}
 

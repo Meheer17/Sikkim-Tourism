@@ -78,33 +78,37 @@ export default function ServicesScreen() {
             console.log('Total services from API:', servicesList.length);
             console.log('Business types available:', types.map(t => `${t.id}: ${t.type}`).join(', '));
 
-            const mappedServices: Service[] = await Promise.all(
-                servicesList.map(async (svc: ServiceModel) => {
-                    // Get business details to find the category
-                    let categoryName = 'Other';
-                    try {
-                        const businessResponse = await businessService.get(svc.bid);
-                        if (businessResponse.success && businessResponse.data) {
-                            const business = businessResponse.data;
-                            // Find the business type name by matching type_id
-                            const bizType = types.find(t => t.id === business.type_id);
-                            categoryName = bizType ? bizType.type : 'Other';
-                            console.log(`Service "${svc.name}": business="${business.name}", type_id="${business.type_id}" -> category="${categoryName}"`);
-                        }
-                    } catch (error) {
-                        console.warn(`Failed to load business for service ${svc.id}:`, error);
-                    }
+            // Fetch ALL businesses once instead of one-by-one
+            const businessesResponse = await businessService.list({ skip: 0, limit: 1000 });
+            const allBusinesses = businessesResponse.data || [];
+            
+            // Create a lookup map: business_id -> business
+            const businessMap = new Map(allBusinesses.map(b => [b.id, b]));
+            console.log(`Loaded ${allBusinesses.length} businesses for lookup`);
 
-                    return {
-                        id: svc.id || '',
-                        name: svc.name,
-                        description: svc.short_description || svc.description || 'Quality service',
-                        price: svc.price,
-                        category: categoryName,
-                        icon: getCategoryIcon(categoryName),
-                    };
-                })
-            );
+            // Map services using the business lookup (no more individual API calls)
+            const mappedServices: Service[] = servicesList.map((svc: ServiceModel) => {
+                let categoryName = 'Other';
+                
+                const business = businessMap.get(svc.bid);
+                if (business) {
+                    // Find the business type name by matching type_id
+                    const bizType = types.find(t => t.id === business.type_id);
+                    categoryName = bizType ? bizType.type : 'Other';
+                    console.log(`Service "${svc.name}": business="${business.name}", type_id="${business.type_id}" -> category="${categoryName}"`);
+                } else {
+                    console.log(`Service "${svc.name}" references non-existent business ${svc.bid} - using 'Other' category`);
+                }
+
+                return {
+                    id: svc.id || '',
+                    name: svc.name,
+                    description: svc.short_description || svc.description || 'Quality service',
+                    price: svc.price,
+                    category: categoryName,
+                    icon: getCategoryIcon(categoryName),
+                };
+            });
 
             console.log('Final mapped services:', mappedServices.length);
             console.log('Services by category:', mappedServices.reduce((acc: any, s) => {

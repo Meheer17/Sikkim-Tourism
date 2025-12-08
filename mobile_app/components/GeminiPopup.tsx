@@ -31,16 +31,16 @@ export default function GeminiPopup() {
 
   useEffect(() => {
     const unsub = geminiNotifier.subscribe((p: any) => {
-<<<<<<< HEAD
       // Only show popup on home and explore pages
       const allowedRoutes = ['/(user)/home', '/(user)/explore'];
       if (!allowedRoutes.includes(pathname)) {
         console.log('GeminiPopup: suppressing popup, not on home/explore page. Current:', pathname);
-=======
+        return;
+      }
+
       const now = Date.now();
       if (cooldownUntil.current && now < cooldownUntil.current.getTime()) {
         console.log('GeminiPopup suppressed due to cooldown until', cooldownUntil.current.toISOString());
->>>>>>> 9b25bfd58abe9653597af64277c15cecb9396457
         return;
       }
 

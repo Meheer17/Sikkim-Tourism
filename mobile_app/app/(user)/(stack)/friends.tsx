@@ -263,14 +263,14 @@ export default function FriendsScreen() {
             // Get accurate location in background (don't await)
             updateMyLocationOnce();
 
-            // Then schedule intervals
+            // Then schedule intervals - reduced frequency to save API quota
             locationIntervalRef.current = setInterval(() => {
                 updateMyLocationOnce();
-            }, 15000);
+            }, 30000); // 30 seconds
 
             fetchIntervalRef.current = setInterval(() => {
                 fetchMembersOnce();
-            }, 15000);
+            }, 30000); // 30 seconds
         };
 
         if (group && shareMyLocation) {

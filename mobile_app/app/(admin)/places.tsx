@@ -50,6 +50,9 @@ export default function AdminPlacesScreen() {
     const [showFilters, setShowFilters] = useState(false);
     const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
     const [showSearchModal, setShowSearchModal] = useState(false);
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const { get: getPlaces, put: updatePlace } = useApi<Place[]>();
     const background = useThemeColor('background');
     const card = useThemeColor('card');
@@ -88,9 +91,16 @@ export default function AdminPlacesScreen() {
 
     // Load from backend /location
     useEffect(() => {
-        const loadLocations = async () => {
+        const loadLocations = async (loadMore = false) => {
             try {
-                const resp = await locationService.list({ skip: 0, limit: 100 });
+                if (loadMore) {
+                    setLoadingMore(true);
+                } else {
+                    setLoading(true);
+                    setPage(0);
+                }
+                const currentPage = loadMore ? page + 1 : 0;
+                const resp = await locationService.list({ skip: currentPage * 20, limit: 20 });
                 console.log('Raw location response:', JSON.stringify(resp.data?.[0], null, 2));
                 if (resp.success && resp.data) {
                     const mapped: Place[] = resp.data.map((loc: any) => {
@@ -122,17 +132,31 @@ export default function AdminPlacesScreen() {
                         updatedAt: loc.updated_at || '',
                     };
                     });
-                    setPlaces(mapped);
-                    setFilteredPlaces(mapped);
+                    if (loadMore) {
+                        setPlaces(prev => [...prev, ...mapped]);
+                        setPage(currentPage);
+                        setHasMore(mapped.length === 20);
+                    } else {
+                        setPlaces(mapped);
+                        setHasMore(mapped.length === 20);
+                    }
+                    // Don't update filtered places here - let filterPlaces() handle it
                 }
             } catch (e) {
                 console.warn('Failed to load locations:', e);
             } finally {
-                setLoading(false);
+                if (loadMore) {
+                    setLoadingMore(false);
+                } else {
+                    setLoading(false);
+                }
             }
         };
         loadLocations();
-    }, []);
+        
+        // Expose loadLocations function for pagination
+        (window as any).loadMorePlaces = () => loadLocations(true);
+    }, [page]);
 
     const handlePlacePress = (place: Place) => {
         setSelectedPlace(place);
@@ -516,6 +540,15 @@ export default function AdminPlacesScreen() {
                         style={styles.modalPlacesList}
                         contentContainerStyle={styles.modalPlacesContent}
                         showsVerticalScrollIndicator={true}
+                        scrollEventThrottle={16}
+                        onScroll={(e) => {
+                            const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+                            const paddingToBottom = 100;
+                            const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+                            if (isCloseToBottom && !loadingMore && hasMore && !loading) {
+                                (window as any).loadMorePlaces?.();
+                            }
+                        }}
                     >
                         {loading && (
                             <View style={styles.emptyState}>
@@ -622,6 +655,13 @@ export default function AdminPlacesScreen() {
                                 </Text>
                             </View>
                         ))}
+                        {loadingMore && (
+                            <View style={styles.loadingMore}>
+                                <Text style={[styles.loadingMoreText, { color: muted }]}>
+                                    Loading more places...
+                                </Text>
+                            </View>
+                        )}
                     </ScrollView>
                 </View>
             </Modal>
@@ -974,5 +1014,13 @@ const styles = StyleSheet.create({
     emptySubtitle: {
         fontSize: 13,
         textAlign: 'center',
+    },
+    loadingMore: {
+        padding: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    loadingMoreText: {
+        fontSize: 14,
     },
 });
