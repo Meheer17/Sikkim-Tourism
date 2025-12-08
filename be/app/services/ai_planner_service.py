@@ -1,8 +1,10 @@
 from bson import ObjectId
 import google.generativeai as genai
 from typing import List, Dict, Any, Optional
+import asyncio
+import time
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 import random
 import uuid
@@ -24,6 +26,7 @@ from app.schemas.ai_planner import (
 
 from app.schemas.ai_planner import TriggerRequest, TriggerResponse
 from app.core.database import get_database
+from app.services.user_service import user_service
 
 
 # In-memory storage for chat sessions (in production, use Redis or database)
@@ -56,6 +59,35 @@ class AIPlannerService:
             self.model = genai.GenerativeModel('gemini-flash-latest', safety_settings=safety_settings)
         else:
             self.model = None
+
+        # Prepare IST timezone resiliently: prefer zoneinfo but fall back to fixed offset
+        try:
+            self.ist_zone = ZoneInfo("Asia/Kolkata")
+        except Exception:
+            # Fallback to fixed +5:30 offset if tzdata is not available on the host
+            self.ist_zone = timezone(timedelta(hours=5, minutes=30))
+
+    async def _call_model_generate(self, prompt: str, retries: int = 3, backoff: float = 1.0):
+        """Call Gemini model.generate_content in a thread with retries/backoff to handle transient network errors."""
+        if not self.model:
+            raise Exception("Gemini model not configured")
+
+        last_exc = None
+        for attempt in range(1, retries + 1):
+            try:
+                # Run the blocking SDK call in a thread
+                resp = await asyncio.to_thread(self.model.generate_content, prompt)
+                return resp
+            except Exception as e:
+                last_exc = e
+                print(f"Attempt {attempt} failed calling Gemini: {e}")
+                if attempt < retries:
+                    sleep_for = backoff * (2 ** (attempt - 1))
+                    print(f"Retrying Gemini call in {sleep_for}s (attempt {attempt + 1}/{retries})")
+                    await asyncio.sleep(sleep_for)
+                else:
+                    print("Gemini call failed after retries; raising last exception")
+                    raise
     
     # Chat-based travel planning methods
     
@@ -261,7 +293,7 @@ Only set is_ready to true when you have at least: duration, budget, and traveler
         
         try:
             print(f"Calling Gemini API with prompt length: {len(response_prompt)}")
-            response = self.model.generate_content(response_prompt)
+            response = await self._call_model_generate(response_prompt)
             
             # Check if response was blocked by safety filters
             if not response.candidates or not response.candidates[0].content.parts:
@@ -351,20 +383,35 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
         try:
             print(f"🔔 Trigger received from user={user_id}: type={trigger.type}, time={trigger.time}, position={trigger.position}")
 
-            # Normalize incoming trigger time to IST and log the incoming trigger to DB so future fetches include this event
-            # Treat timezone-naive times as already in IST (frontend should send IST)
+            # Admin check: skip AI suggestions for admin users
+            try:
+                usr = await user_service.get_by_id(user_id)
+                if usr and getattr(usr, 'role', None) == 'admin':
+                    print(f"[AIPlannerService] Admin user {user_id} - skipping AI suggestions")
+                    return TriggerResponse(
+                        status="ok",
+                        message="AI suggestions disabled for admin accounts",
+                        data={"type": trigger.type, "position": {"x": trigger.position.x, "y": trigger.position.y}},
+                        gemini={"type": "no_action", "no_popup": True}
+                    )
+            except Exception as e:
+                print(f"[AIPlannerService] Warning: failed to check user role for {user_id}: {e}")
+
+            # Normalize incoming trigger time to IST (Asia/Kolkata), using self.ist_zone which has a safe fallback
             try:
                 if trigger.time:
                     if trigger.time.tzinfo is None:
-                        trigger_time_ist = trigger.time.replace(tzinfo=ZoneInfo("Asia/Kolkata"))
+                        trigger_time_ist = trigger.time.replace(tzinfo=self.ist_zone)
                     else:
-                        trigger_time_ist = trigger.time.astimezone(ZoneInfo("Asia/Kolkata"))
+                        trigger_time_ist = trigger.time.astimezone(self.ist_zone)
                 else:
-                    trigger_time_ist = datetime.now(tz=ZoneInfo("Asia/Kolkata"))
-            except Exception:
-                trigger_time_ist = datetime.now(tz=ZoneInfo("Asia/Kolkata"))
+                    trigger_time_ist = datetime.now(tz=self.ist_zone)
+            except Exception as e:
+                print(f"[AIPlannerService] Failed to normalize trigger time, falling back to UTC: {e}")
+                trigger_time_ist = datetime.utcnow()
 
-            recent_actions_map = {}
+            # Fetch recent actions for cooldown enforcement
+            recent_actions_map: Dict[str, str] = {}
             try:
                 db = get_database()
                 if db is not None:
@@ -380,19 +427,14 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
                             created_iso = created.isoformat()
                         except Exception:
                             created_iso = str(created)
-
                         if action not in recent_actions_map:
                             recent_actions_map[action] = created_iso
-
                     if recent_actions_map:
                         print(f"Found recent actions for user {user_id}: {recent_actions_map}")
             except Exception as e:
                 print(f"Could not fetch recent triggers from DB: {e}")
 
-            # Build a contextual Gemini prompt based on trigger inputs (type/time/position)
-            # The model should return a JSON object describing the suggested action for the client UI
-            # Keep the JSON format small and stable so the mobile app can parse it directly.
-            # Use IST-normalized time for prompt and hour calculation
+            # Prepare prompt context values
             try:
                 trigger_time_iso = trigger_time_ist.isoformat()
                 hour = trigger_time_ist.hour
@@ -400,7 +442,6 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
                 trigger_time_iso = None
                 hour = None
 
-            # Small set of service types (helpful for the assistant). We include them inline so Gemini can pick appropriate suggestions.
             service_types = [
                 {"type": "hotel", "category": "buy", "id": "6927dd74c83ad21b4792693d"},
                 {"type": "restaurant", "category": "buy", "id": "6927dd74c83ad21b4792693e"},
@@ -409,8 +450,6 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
                 {"type": "event", "category": "event", "id": "6927dd74c83ad21b47926941"},
                 {"type": "tourist_entry", "category": "tourist_entry", "id": "69330a6098cade204f63d80f"}
             ]
-
-            # recent_actions_map already fetched earlier
 
             recent_actions_json = json.dumps(recent_actions_map)
 
@@ -429,8 +468,8 @@ COOLDOWN RULES (use these to avoid repeating suggestions too frequently):
 - Minimum cooldowns (minutes): {{"restaurant": 160, "cab": 105, "hotel":160, "guide": 120, "event": 160, "tourist_entry": 160}}
 - The `recent_actions` JSON shows when each action was last suggested/triggered for this user.
 - If the best suggested action would violate the cooldown (i.e., last seen within the cooldown window), DO NOT suggest it again immediately.
-- In such cases, return a JSON response with `type` set to the literal string `"no_action"` (no extra text), and set `agent_message` to a short friendly sentence offering to remind later.
-- Example `no_action` buttons: positive `{{"text": "Remind me", "action": "remind"}}` and negative `{{"text": "Dismiss", "action": "return"}}`.
+- In such cases, return a JSON response with `type` set to the literal string "no_action" (no extra text), and set `agent_message` to a short friendly sentence offering to remind later.
+- Example `no_action` buttons: positive {{"text": "Remind me", "action": "remind"}} and negative {{"text": "Dismiss", "action": "return"}}.
 
 Goal:
 Return a single JSON object (no extra text) in this exact shape:
@@ -459,7 +498,7 @@ Remember
                 if not self.model:
                     raise Exception("Gemini model not configured")
 
-                response = self.model.generate_content(prompt)
+                response = await self._call_model_generate(prompt)
                 if not response.candidates or not response.candidates[0].content.parts:
                     raise Exception("Empty Gemini response or blocked by safety filter")
 
@@ -473,8 +512,8 @@ Remember
                     nearby_url = f"/api/v1/location?position_lat={lat}&position_lng={lng}&radius_m={radius}&skip=0&limit=50"
                     gemini_result.setdefault('nearby_url', nearby_url)
                 except Exception:
-                    # if position missing or malformed, skip adding nearby_url
                     pass
+
                 # If model suggests no_action, suppress popups on the client by removing message/buttons and setting a flag
                 try:
                     if isinstance(gemini_result, dict) and gemini_result.get('type') == 'no_action':
@@ -483,8 +522,8 @@ Remember
                         gemini_result['no_popup'] = True
                 except Exception as e:
                     print(f"Error applying no_action suppression to gemini result: {e}")
-                # Server-side cooldown enforcement: if the AI suggested action was suggested
-                # recently for this user (within cooldown window), force a no_action response
+
+                # Server-side cooldown enforcement
                 try:
                     cooldowns = {"restaurant": 160, "cab": 105, "hotel": 160, "guide": 120, "event": 160, "tourist_entry": 160}
                     if isinstance(gemini_result, dict):
@@ -495,7 +534,6 @@ Remember
                                 last_seen_dt = datetime.fromisoformat(last_seen_iso)
                             except Exception:
                                 try:
-                                    # try without timezone Z
                                     last_seen_dt = datetime.fromisoformat(last_seen_iso.replace('Z', '+00:00'))
                                 except Exception:
                                     last_seen_dt = None
@@ -504,7 +542,6 @@ Remember
                                 elapsed_minutes = (trigger_time_ist - last_seen_dt).total_seconds() / 60.0
                                 cd = cooldowns.get(suggested, 0)
                                 if elapsed_minutes < cd:
-                                    # Enforce no_action
                                     gemini_result = {
                                         "type": "no_action",
                                         "agent_message": "I'll remind you later.",
@@ -515,7 +552,7 @@ Remember
                 except Exception as e:
                     print(f"Error enforcing cooldowns: {e}")
             except Exception as e:
-                # Fallback: use simple rule-based suggestion so client still receives a usable action
+                # Fallback: rule-based suggestion
                 print(f"⚠️ Gemini trigger suggestion failed, falling back to rule-based: {e}")
 
                 suggested_type = "restaurant"
@@ -523,7 +560,6 @@ Remember
                 positive = {"text": "Yes", "action": "search"}
                 negative = {"text": "No", "action": "return"}
 
-                # If we can inspect hour, make message more contextual
                 try:
                     if trigger.type == 'driving' and hour is not None:
                         if 11 <= hour <= 14:
@@ -545,7 +581,6 @@ Remember
                     "buttons": {"positive": positive, "negative": negative}
                 }
 
-                # Add default nearby places query URL for the mobile client
                 try:
                     lat = float(trigger.position.y)
                     lng = float(trigger.position.x)
@@ -554,7 +589,6 @@ Remember
                 except Exception:
                     pass
 
-                # If fallback or rule-based result indicates no_action, ensure no popups
                 try:
                     if isinstance(gemini_result, dict) and gemini_result.get('type') == 'no_action':
                         gemini_result.pop('agent_message', None)
@@ -563,6 +597,7 @@ Remember
                 except Exception as e:
                     print(f"Error applying no_action suppression to fallback gemini result: {e}")
 
+            # Persist trigger and AI result
             try:
                 db = get_database()
                 if db is not None:
@@ -603,6 +638,8 @@ Remember
             return TriggerResponse(**result)
         except Exception as e:
             print(f"Error handling trigger_event: {e}")
+            import traceback
+            traceback.print_exc()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to handle trigger: {str(e)}"

@@ -10,6 +10,7 @@ import { servicesService, businessService } from '@/services';
 import { locationService } from '@/services/location.service';
 import { buildImageUrl } from '@/utils/image-url';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
 import { getLanguageTranslations } from '@/constants/translations';
 
 export default function HomeScreen() {
@@ -25,6 +26,8 @@ export default function HomeScreen() {
     const [results, setResults] = useState<any[]>([]);
     const { language } = useLanguage();
     const t = getLanguageTranslations(language);
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
     const background = useThemeColor('background');
     const card = useThemeColor('card');
     const text = useThemeColor('text');
@@ -336,25 +339,27 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {/* AI Planner Banner */}
-                <TouchableOpacity
-                    style={styles.aiPlannerBanner}
-                    onPress={() => router.push('/(user)/(stack)/ai-planner-chat' as any)}
-                    activeOpacity={0.8}
-                >
-                    <View style={styles.aiPlannerLeft}>
-                        <View style={styles.aiIconContainer}>
-                            <IconSymbol name="sparkles" size={32} color="#fff" />
+                {/* AI Planner Banner - hidden for admin users */}
+                {!isAdmin && (
+                    <TouchableOpacity
+                        style={styles.aiPlannerBanner}
+                        onPress={() => router.push('/(user)/(stack)/ai-planner-chat' as any)}
+                        activeOpacity={0.8}
+                    >
+                        <View style={styles.aiPlannerLeft}>
+                            <View style={styles.aiIconContainer}>
+                                <IconSymbol name="sparkles" size={32} color="#fff" />
+                            </View>
+                            <View style={styles.aiPlannerText}>
+                                <Text style={styles.aiPlannerTitle}>Chat with AI Planner</Text>
+                                <Text style={styles.aiPlannerSubtitle}>
+                                    Natural conversation for personalized trips
+                                </Text>
+                            </View>
                         </View>
-                        <View style={styles.aiPlannerText}>
-                            <Text style={styles.aiPlannerTitle}>Chat with AI Planner</Text>
-                            <Text style={styles.aiPlannerSubtitle}>
-                                Natural conversation for personalized trips
-                            </Text>
-                        </View>
-                    </View>
-                    <IconSymbol name="chevron.right" size={24} color="#fff" />
-                </TouchableOpacity>
+                        <IconSymbol name="chevron.right" size={24} color="#fff" />
+                    </TouchableOpacity>
+                )}
 
                 <TouchableOpacity
                     style={[styles.scheduleButton, { backgroundColor: card }]}
