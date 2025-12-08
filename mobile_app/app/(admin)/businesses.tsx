@@ -434,6 +434,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         paddingHorizontal: 12,
         paddingVertical: 10,
+        minHeight: 44,
         gap: 8,
     },
     searchInput: {
@@ -465,7 +466,7 @@ const styles = StyleSheet.create({
     },
     filterChip: {
         paddingHorizontal: 16,
-        paddingVertical: 8,
+        paddingVertical: 10,
         borderRadius: 20,
         borderWidth: 1,
     },

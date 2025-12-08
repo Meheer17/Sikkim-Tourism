@@ -41,7 +41,7 @@ export default function AdminLayout() {
         return routePage === currentPage || pathname === route;
     };
 
-    const shouldShowTabBar = !pathname.includes('/(admin)/(stack)');
+    const shouldShowTabBar = !pathname.includes('/(admin)/(stack)') && !pathname.includes('/profile');
 
     return (
         <View style={styles.container}>

@@ -24,6 +24,8 @@ export default function CommunityChatScreen() {
     const [inputMessage, setInputMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
+    const [inputFocused, setInputFocused] = useState(false);
+    const [showCursor, setShowCursor] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [onlineCount, setOnlineCount] = useState(0);
     const [communityId, setCommunityId] = useState<string | null>(null);
@@ -172,6 +174,17 @@ export default function CommunityChatScreen() {
             clearInterval(onlineInterval);
         };
     }, [communityId, loadMessages, loadOnlineCount]);
+
+    // Blinking cursor timer when input is empty
+    useEffect(() => {
+        let timer: any = null;
+        if (!inputMessage) {
+            timer = setInterval(() => setShowCursor(s => !s), 500);
+        } else {
+            setShowCursor(true);
+        }
+        return () => clearInterval(timer);
+    }, [inputMessage]);
 
     const handleSendMessage = async () => {
         if (!inputMessage.trim() || !communityId || sending) return;
@@ -417,21 +430,31 @@ export default function CommunityChatScreen() {
                 style={[styles.keyboardAvoid, { backgroundColor: cardBg }]}
             >
                 <View style={[styles.inputContainer, { backgroundColor: cardBg, borderTopColor: border }]}>
-                    <TextInput
-                        style={[styles.input, { color: text, backgroundColor: screenBg }]}
-                        placeholder={t.typeMessage || 'Type a message...'}
-                        placeholderTextColor={mutedText as string}
-                        value={inputMessage}
-                        onChangeText={setInputMessage}
-                        multiline
-                        maxLength={500}
-                        editable={!sending}
-                        onFocus={() => {
-                            setTimeout(() => {
-                                scrollViewRef.current?.scrollToEnd({ animated: true });
-                            }, 100);
-                        }}
-                    />
+                    <View style={{ flex: 1, position: 'relative' }}>
+                        {/* Blinking caret when input is empty to indicate placeholder focus */}
+                        {(!inputMessage) && (
+                            <View pointerEvents="none" style={{ position: 'absolute', left: 18, top: 12 }}>
+                                <View style={{ width: 2, height: 20, backgroundColor: tint, opacity: showCursor ? 1 : 0 }} />
+                            </View>
+                        )}
+                        <TextInput
+                            style={[styles.input, { color: text, backgroundColor: screenBg }]}
+                            placeholder={t.typeMessage || 'Type a message...'}
+                            placeholderTextColor={mutedText as string}
+                            value={inputMessage}
+                            onChangeText={setInputMessage}
+                            multiline
+                            maxLength={500}
+                            editable={!sending}
+                            onFocus={() => {
+                                setInputFocused(true);
+                                setTimeout(() => {
+                                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                                }, 100);
+                            }}
+                            onBlur={() => setInputFocused(false)}
+                        />
+                    </View>
                     <TouchableOpacity
                         style={[styles.sendButton, (inputMessage.trim() && !sending) && styles.sendButtonActive]}
                         onPress={handleSendMessage}
