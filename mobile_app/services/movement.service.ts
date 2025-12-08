@@ -15,7 +15,7 @@ class MovementService {
   private readonly standingThreshold = 10; // <= 10m -> standing
   private readonly walkingThreshold = 100; // <=100m -> walking
 
-  constructor() {}
+  constructor() { }
 
   private haversineDistance(a: Position, b: Position): number {
     // returns distance in meters
@@ -131,7 +131,12 @@ class MovementService {
           console.warn('[MovementService] failed to parse gemini from response', e);
         }
       } catch (err) {
-        console.warn('[MovementService] trigger call failed', err);
+        // Silently log trigger failures - this is a non-critical feature
+        // and should not break registration or other flows
+        const errorMsg = (err as any)?.message || String(err);
+        if (__DEV__) {
+          console.log('[MovementService] trigger call failed (non-critical):', errorMsg);
+        }
       }
 
       // update lastPosition

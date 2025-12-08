@@ -15,6 +15,7 @@ export { aiChatService } from './ai-chat.service';
 export { ordersService } from './orders.service';
 export { bookingsService } from './bookings.service';
 export { FriendsAPI } from './friends.service';
+export { monasteryService } from './monastery.service';
 
 // Re-export types for convenience
 export type {

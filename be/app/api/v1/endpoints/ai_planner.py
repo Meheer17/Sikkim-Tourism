@@ -1,7 +1,7 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, status, HTTPException
 
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id, get_current_user_id_optional
 from app.services.ai_planner_service import ai_planner_service
 from app.schemas.ai_planner import (
     Question, 
@@ -100,7 +100,7 @@ async def generate_plans_from_chat(
 @router.post('/trigger', response_model=TriggerResponse)
 async def trigger_event(
     trigger: TriggerRequest,
-    current_user_id: str = Depends(get_current_user_id)
+    current_user_id: Optional[str] = Depends(get_current_user_id_optional)
 ):
     """
     Receive a movement trigger from client devices.
@@ -113,8 +113,17 @@ async def trigger_event(
     }
 
     For now this endpoint passes the trigger to the AI planner service which returns a stub response.
+    Authentication is optional for this endpoint (unauthenticated requests allowed).
     """
     try:
+        # If no user is authenticated, return a default response
+        if not current_user_id:
+            return TriggerResponse(
+                message="Trigger received (unauthenticated)",
+                gemini=None,
+                data={"position": trigger.position}
+            )
+        
         response = await ai_planner_service.trigger_event(current_user_id, trigger)
         return response
     except HTTPException:

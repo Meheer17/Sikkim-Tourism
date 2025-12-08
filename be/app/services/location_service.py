@@ -166,6 +166,17 @@ class LocationService:
     async def create(self, location_create: LocationCreate) -> Location:
         """Create a new location"""
         location_dict = location_create.model_dump()
+        
+        # Convert Position object to dict if needed
+        if "position" in location_dict:
+            pos = location_dict["position"]
+            if hasattr(pos, "dict"):
+                location_dict["position"] = pos.dict()
+            elif isinstance(pos, dict):
+                location_dict["position"] = pos
+            else:
+                location_dict["position"] = {"x": pos.x, "y": pos.y}
+        
         location_dict["created_at"] = datetime.utcnow()
         location_dict["updated_at"] = datetime.utcnow()
         
