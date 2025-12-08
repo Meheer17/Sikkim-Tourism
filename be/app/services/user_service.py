@@ -7,7 +7,7 @@ import secrets
 from app.core.database import get_database
 from app.core.security import get_password_hash, verify_password
 from app.models.user import UserCreate, UserUpdate, UserInDB, User
-from app.utils.encryption import encrypt_text, decrypt_text
+from pydantic import ValidationError
 
 
 class UserService:
@@ -22,16 +22,15 @@ class UserService:
         if db is None:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
         collection = db.users
-        # Since emails are encrypted, we need to check all users
-        # This is inefficient but necessary with encrypted data
-        cursor = collection.find({})
-        async for user_doc in cursor:
-            user_id = str(user_doc["_id"])
-            encrypted_email = user_doc.get("email", "")
-            decrypted_email = await decrypt_text(user_id, encrypted_email)
-            if decrypted_email.lower() == email.lower():
-                # Return user without modifying encrypted data
-                return UserInDB(**user_doc)
+        user = await collection.find_one({"email": email})
+        if user:
+            try:
+                return UserInDB(**user)
+            except ValidationError as ve:
+                # Log and return None so callers can handle missing/invalid user data
+                # This prevents a malformed user record (e.g., email contains token) from causing a 500 error
+                print(f"[UserService] validation error while parsing user by email {email}: {ve}")
+                return None
         return None
     
     async def get_by_id(self, user_id: str) -> Optional[UserInDB]:
@@ -45,8 +44,12 @@ class UserService:
         
         user = await collection.find_one({"_id": ObjectId(user_id)})
         if user:
-            # Return user with encrypted fields as-is
-            return UserInDB(**user)
+            try:
+                return UserInDB(**user)
+            except ValidationError as ve:
+                # Log and return None so callers can handle missing/invalid user data
+                print(f"[UserService] validation error while parsing user by id {user_id}: {ve}")
+                return None
         return None
     
     async def create(self, user_create: UserCreate) -> User:

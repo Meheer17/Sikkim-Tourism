@@ -25,7 +25,7 @@ async def create_event(
         position=business_data.position,
         scheduled_at=business_data.scheduled_at
     )
-    event = await business_service.create(event_data, current_user_id)
+    event = await business_service.create(event_data, current_user_id, True)
     return event
 
 

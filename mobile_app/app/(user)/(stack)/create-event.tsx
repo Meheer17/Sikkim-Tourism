@@ -158,7 +158,7 @@ export default function CreateEventScreen() {
                 position: 'bottom',
             });
 
-            router.back();
+            router.replace('/(user)/(stack)/schedule' as any);
         } catch (error: any) {
             console.error('Error creating event:', error);
             Toast.show({

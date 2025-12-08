@@ -4,11 +4,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import EventView from '@/components/common/eventView';
 import { Event, eventService } from '@/services';
+import { apiClient } from '@/services/api.client';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
 import Toast from 'react-native-toast-message';
+
+const EVENT_TYPE_ID = '6927dd74c83ad21b47926941';
 
 export default function ScheduleScreen() {
     const router = useRouter();
@@ -22,11 +25,15 @@ export default function ScheduleScreen() {
     const insets = useSafeAreaInsets();
 
     const [events, setEvents] = useState<Event[]>([]);
+    const [myEvents, setMyEvents] = useState<Event[]>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [navigatingEventId, setNavigatingEventId] = useState<string | null>(null);
+    const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         loadEvents();
+        loadMyEvents();
     }, []);
 
     const loadEvents = async () => {
@@ -54,20 +61,71 @@ export default function ScheduleScreen() {
         }
     };
 
+    const loadMyEvents = async () => {
+        try {
+            const response = await apiClient.get<Event[]>(`/business/me?skip=0&limit=100&type_id=${EVENT_TYPE_ID}`);
+            
+            if (response.data) {
+                const eventsList = Array.isArray(response.data) ? response.data : [];
+                setMyEvents(eventsList);
+            } else {
+                setMyEvents([]);
+            }
+        } catch (error: any) {
+            console.error('Failed to load my events:', error);
+            setMyEvents([]);
+        }
+    };
+
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
-        await loadEvents();
+        await Promise.all([loadEvents(), loadMyEvents()]);
         setRefreshing(false);
     }, []);
 
     const handleEventPress = useCallback((event: Event) => {
-        console.log('Event pressed', event._id);
-        Toast.show({
-            type: 'info',
-            text1: event.name,
-            text2: event.short_description,
-            position: 'bottom',
-        });
+        const eventId = (event as any).id || event._id;
+
+        if (!eventId) {
+            console.error('Event ID not found:', event);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Event ID not found',
+                position: 'bottom',
+            });
+            return;
+        }
+
+        // Show loading overlay and delay navigation slightly so the user sees feedback and can cancel.
+        setNavigatingEventId(eventId);
+
+        if (navigationTimeoutRef.current) {
+            clearTimeout(navigationTimeoutRef.current);
+        }
+
+        navigationTimeoutRef.current = setTimeout(() => {
+            router.push({
+                pathname: '/(user)/(stack)/event-details' as any,
+                params: { eventId }
+            });
+        }, 120);
+    }, [router]);
+
+    const handleCancelNavigation = useCallback(() => {
+        if (navigationTimeoutRef.current) {
+            clearTimeout(navigationTimeoutRef.current);
+            navigationTimeoutRef.current = null;
+        }
+        setNavigatingEventId(null);
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (navigationTimeoutRef.current) {
+                clearTimeout(navigationTimeoutRef.current);
+            }
+        };
     }, []);
 
     return (
@@ -103,9 +161,12 @@ export default function ScheduleScreen() {
                 ) : (
                     <EventView
                         events={events}
+                        myEvents={myEvents}
                         refreshing={refreshing}
                         onRefresh={handleRefresh}
                         onEventPress={handleEventPress}
+                        navigatingEventId={navigatingEventId}
+                        onCancelNavigation={handleCancelNavigation}
                     />
                 )}
             </View>

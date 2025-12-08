@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import MenuSection, { MenuItem } from '@/components/profile/MenuSection';
 import { useAuth } from '@/hooks/useAuth';
@@ -112,6 +113,37 @@ export default function ProfileScreen() {
     const { user, logout } = useAuth();
     const { language } = useLanguage();
     const t = getLanguageTranslations(language);
+    const [favoritesCount, setFavoritesCount] = useState(0);
+    const [bookingsCount, setBookingsCount] = useState(0);
+    const [reviewsCount, setReviewsCount] = useState(0);
+    const [vouchersCount, setVouchersCount] = useState(0);
+
+    useEffect(() => {
+        loadCounts();
+    }, []);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            loadCounts();
+        }, [])
+    );
+
+    const loadCounts = async () => {
+        try {
+            const favoritesData = await AsyncStorage.getItem('favorites');
+            const favorites = favoritesData ? JSON.parse(favoritesData) : [];
+            setFavoritesCount(favorites.length);
+            setBookingsCount(0);
+            setReviewsCount(0);
+            setVouchersCount(0);
+        } catch (error) {
+            console.error('Error loading counts:', error);
+            setFavoritesCount(0);
+            setBookingsCount(0);
+            setReviewsCount(0);
+            setVouchersCount(0);
+        }
+    };
 
     // Create translated menu items
     const ACCOUNT_MENU_ITEMS_TRANSLATED: MenuItem[] = [
@@ -161,6 +193,12 @@ export default function ProfileScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: screenBg }]}>
+            {/* Back Button Header */}
+            <View style={styles.headerTop}>
+                <TouchableOpacity onPress={() => router.back()}>
+                    <IconSymbol name="chevron.left" size={24} color={text} />
+                </TouchableOpacity>
+            </View>
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
@@ -174,9 +212,6 @@ export default function ProfileScreen() {
                                 {user?.name ? user.name.split(' ').map(p => p.charAt(0)).slice(0, 2).join('') : 'U'}
                             </Text>
                         </View>
-                        <TouchableOpacity style={[styles.editAvatarButton, { backgroundColor: tint, borderColor: cardBg }]}>
-                            <IconSymbol name="camera.fill" size={16} color="#fff" />
-                        </TouchableOpacity>
                     </View>
                     <Text style={[styles.userName, { color: text }]}>{user?.name}</Text>
                     <Text style={[styles.userEmail, { color: mutedText }]}>{user?.email}</Text>
@@ -203,18 +238,18 @@ export default function ProfileScreen() {
                                 <IconSymbol name="heart.fill" size={24} color="#ef4444" />
                             </View>
                             <Text style={[styles.quickAccessLabel, { color: mutedText }]}>{t.myFavorites || 'Favorites'}</Text>
-                            <Text style={[styles.quickAccessCount, { color: text }]}>12</Text>
+                            <Text style={[styles.quickAccessCount, { color: text }]}>{favoritesCount}</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             style={styles.quickAccessItem}
-                            onPress={() => router.push('/(user)/(stack)/saved-places' as any)}
+                            onPress={() => router.push('/(user)/(stack)/schedule' as any)}
                         >
-                            <View style={[styles.quickAccessIcon, { backgroundColor: '#dbeafe' }]}>
-                                <IconSymbol name="mappin.circle.fill" size={24} color="#3b82f6" />
+                            <View style={[styles.quickAccessIcon, { backgroundColor: '#8baedcff' }]}>
+                                <IconSymbol name="ticket.fill" size={24} color="#114b72ff" />
                             </View>
-                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>{t.saved || 'Saved'}</Text>
-                            <Text style={[styles.quickAccessCount, { color: text }]}>8</Text>
+                            <Text style={[styles.quickAccessLabel, { color: mutedText }]}>{t.bookings || 'Bookings'}</Text>
+                            <Text style={[styles.quickAccessCount, { color: text }]}>{bookingsCount}</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -225,7 +260,7 @@ export default function ProfileScreen() {
                                 <IconSymbol name="star.fill" size={24} color="#f59e0b" />
                             </View>
                             <Text style={[styles.quickAccessLabel, { color: mutedText }]}>{t.reviews || 'Reviews'}</Text>
-                            <Text style={[styles.quickAccessCount, { color: text }]}>5</Text>
+                            <Text style={[styles.quickAccessCount, { color: text }]}>{reviewsCount}</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -236,7 +271,7 @@ export default function ProfileScreen() {
                                 <IconSymbol name="ticket.fill" size={24} color="#10b981" />
                             </View>
                             <Text style={[styles.quickAccessLabel, { color: mutedText }]}>{t.vouchers || 'Vouchers'}</Text>
-                            <Text style={[styles.quickAccessCount, { color: text }]}>3</Text>
+                            <Text style={[styles.quickAccessCount, { color: text }]}>{vouchersCount}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -290,6 +325,11 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    headerTop: {
+        paddingHorizontal: 20,
+        paddingTop: 12,
+        paddingBottom: 8,
     },
     scrollView: {
         flex: 1,

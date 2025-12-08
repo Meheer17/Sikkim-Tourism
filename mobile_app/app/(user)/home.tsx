@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, FlatList } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -9,6 +10,7 @@ import { servicesService, businessService } from '@/services';
 import { locationService } from '@/services/location.service';
 import { buildImageUrl } from '@/utils/image-url';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
 import { getLanguageTranslations } from '@/constants/translations';
 
 export default function HomeScreen() {
@@ -16,12 +18,16 @@ export default function HomeScreen() {
     const insets = useSafeAreaInsets();
     const [services, setServices] = useState<Service[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [bookingsCount, setBookingsCount] = useState(0);
+    const [favoritesCount, setFavoritesCount] = useState(0);
     // --- Search Bar State ---
     const [searchQuery, setSearchQuery] = useState('');
     const [searching, setSearching] = useState(false);
     const [results, setResults] = useState<any[]>([]);
     const { language } = useLanguage();
     const t = getLanguageTranslations(language);
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
     const background = useThemeColor('background');
     const card = useThemeColor('card');
     const text = useThemeColor('text');
@@ -30,7 +36,26 @@ export default function HomeScreen() {
 
     useEffect(() => {
         loadServices();
+        loadCounts();
     }, []);
+
+    // Load favorites count whenever screen is focused
+    useFocusEffect(
+        React.useCallback(() => {
+            loadCounts();
+        }, [])
+    );
+
+    const loadCounts = async () => {
+        try {
+            const favoritesData = await AsyncStorage.getItem('favorites');
+            const favorites = favoritesData ? JSON.parse(favoritesData) : [];
+            setFavoritesCount(favorites.length);
+        } catch (error) {
+            console.error('Error loading counts:', error);
+            setFavoritesCount(0);
+        }
+    };
 
     // Debounced search effect
     useEffect(() => {
@@ -304,40 +329,37 @@ export default function HomeScreen() {
                 <View style={styles.statsContainer}>
                     <View style={[styles.statCard, { backgroundColor: card }]}>
                         <IconSymbol name="ticket.fill" size={24} color={tint} />
-                        <Text style={[styles.statValue, { color: text }]}>12</Text>
+                        <Text style={[styles.statValue, { color: text }]}>{bookingsCount}</Text>
                         <Text style={[styles.statLabel, { color: muted }]}>{t.bookings || 'Bookings'}</Text>
                     </View>
-                    <View style={[styles.statCard, { backgroundColor: card }]}>
+                    <TouchableOpacity style={[styles.statCard, { backgroundColor: card }]} onPress={() => router.push('/(user)/(stack)/favorites' as any)}>
                         <IconSymbol name="heart.fill" size={24} color="#ef4444" />
-                        <Text style={[styles.statValue, { color: text }]}>8</Text>
+                        <Text style={[styles.statValue, { color: text }]}>{favoritesCount}</Text>
                         <Text style={[styles.statLabel, { color: muted }]}>{t.myFavorites || 'Favorites'}</Text>
-                    </View>
-                    <View style={[styles.statCard, { backgroundColor: card }]}>
-                        <IconSymbol name="mappin.circle.fill" size={24} color="#10b981" />
-                        <Text style={[styles.statValue, { color: text }]}>5</Text>
-                        <Text style={[styles.statLabel, { color: muted }]}>Visited</Text>
-                    </View>
+                    </TouchableOpacity>
                 </View>
 
-                {/* AI Planner Banner */}
-                <TouchableOpacity
-                    style={styles.aiPlannerBanner}
-                    onPress={() => router.push('/(user)/(stack)/ai-planner-chat' as any)}
-                    activeOpacity={0.8}
-                >
-                    <View style={styles.aiPlannerLeft}>
-                        <View style={styles.aiIconContainer}>
-                            <IconSymbol name="sparkles" size={32} color="#fff" />
+                {/* AI Planner Banner - hidden for admin users */}
+                {!isAdmin && (
+                    <TouchableOpacity
+                        style={styles.aiPlannerBanner}
+                        onPress={() => router.push('/(user)/(stack)/ai-planner-chat' as any)}
+                        activeOpacity={0.8}
+                    >
+                        <View style={styles.aiPlannerLeft}>
+                            <View style={styles.aiIconContainer}>
+                                <IconSymbol name="sparkles" size={32} color="#fff" />
+                            </View>
+                            <View style={styles.aiPlannerText}>
+                                <Text style={styles.aiPlannerTitle}>Chat with AI Planner</Text>
+                                <Text style={styles.aiPlannerSubtitle}>
+                                    Natural conversation for personalized trips
+                                </Text>
+                            </View>
                         </View>
-                        <View style={styles.aiPlannerText}>
-                            <Text style={styles.aiPlannerTitle}>Chat with AI Planner</Text>
-                            <Text style={styles.aiPlannerSubtitle}>
-                                Natural conversation for personalized trips
-                            </Text>
-                        </View>
-                    </View>
-                    <IconSymbol name="chevron.right" size={24} color="#fff" />
-                </TouchableOpacity>
+                        <IconSymbol name="chevron.right" size={24} color="#fff" />
+                    </TouchableOpacity>
+                )}
 
                 <TouchableOpacity
                     style={[styles.scheduleButton, { backgroundColor: card }]}

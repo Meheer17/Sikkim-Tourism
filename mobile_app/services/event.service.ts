@@ -14,6 +14,7 @@ export interface Position {
 
 export interface Event {
   _id: string;
+  id?: string;
   name: string;
   description: string;
   short_description: string;
@@ -24,6 +25,7 @@ export interface Event {
   approved: boolean;
   created_at: string;
   updated_at: string;
+  uid?: string; // Owner user ID
 }
 
 export interface EventListParams {
@@ -43,6 +45,14 @@ export interface EventCreateData {
   type_id: string;
   position: Position;
   scheduled_at: string;
+}
+
+export interface EventUpdateData {
+  name?: string;
+  description?: string;
+  short_description?: string;
+  open_hours?: EventOpenHours;
+  scheduled_at?: string;
 }
 
 class EventService extends BaseService<Event> {
@@ -115,6 +125,22 @@ class EventService extends BaseService<Event> {
       return response;
     } catch (error: any) {
       console.error('Error creating event:', error);
+      console.error('Error response:', error?.response?.data);
+      console.error('Error status:', error?.response?.status);
+      throw error;
+    }
+  }
+
+  /**
+   * Update an event
+   */
+  async updateEvent(eventId: string, data: EventUpdateData): Promise<ApiResponse<Event>> {
+    try {
+      console.log('EventService - Updating event with data:', JSON.stringify(data, null, 2));
+      const response = await apiClient.put<Event>(`${this.baseUrl}/${eventId}`, data);
+      return response;
+    } catch (error: any) {
+      console.error('Error updating event:', error);
       console.error('Error response:', error?.response?.data);
       console.error('Error status:', error?.response?.status);
       throw error;

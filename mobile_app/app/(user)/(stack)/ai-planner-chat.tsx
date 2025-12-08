@@ -19,6 +19,8 @@ import { platformConfig } from '@/config/api.config';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useAuth } from '@/hooks/useAuth';
+import Toast from 'react-native-toast-message';
 
 export default function AIPlannerChatScreen() {
   const router = useRouter();
@@ -26,6 +28,19 @@ export default function AIPlannerChatScreen() {
   const insets = useSafeAreaInsets();
   const { language } = useLanguage();
   const t = getLanguageTranslations(language);
+
+  const { user } = useAuth();
+
+  // If the logged in user is an admin, block access to AI planner
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      // Notify and navigate back — keep behavior minimal and non-destructive
+      Toast.show({ type: 'info', text1: t.error || 'Notice', text2: t.aiDisabledForAdmin || 'AI suggestions are disabled for admin accounts.' });
+      setTimeout(() => {
+        router.back();
+      }, 300);
+    }
+  }, [user]);
 
   // Theme colors
   const background = useThemeColor('background');

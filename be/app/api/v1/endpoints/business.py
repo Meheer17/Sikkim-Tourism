@@ -61,10 +61,11 @@ async def create_business(
 async def get_my_business(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1),
+    type_id: Optional[str] = Query(None, description="business_TYPE._id filter"),
     current_user_id: str = Depends(get_current_user_id)
 ):
     """Get businesses owned by authenticated user"""
-    businesses = await business_service.get_by_owner(current_user_id, skip, limit)
+    businesses = await business_service.get_by_owner(current_user_id, skip, limit, type_id=type_id)
     return businesses
 
 
@@ -75,17 +76,6 @@ async def get_my_business_with_services(
     """Get all businesses owned by authenticated user with all their services nested"""
     businesses = await business_service.get_by_owner_with_services(current_user_id)
     return businesses
-
-
-@router.get("/types", response_model=List[businessType])
-async def get_business_types(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1),
-    current_user_id: str = Depends(get_current_user_id)
-):
-    """Get all business types"""
-    business_types = await business_type_service.get_all(skip=skip, limit=limit)
-    return business_types
 
 
 @router.get("/{b_id}", response_model=business)

@@ -17,6 +17,20 @@ class businessService:
     def __init__(self):
         pass
     
+    async def _get_owner_uid(self, business_id: str) -> Optional[str]:
+        """Helper method to get owner uid for a business"""
+        db = get_database()
+        if db is None:
+            return None
+        user_business_collection = db.user_business
+        user_business = await user_business_collection.find_one({
+            "bid": business_id,
+            "role": "owner"
+        })
+        if user_business:
+            return str(user_business.get("uid"))
+        return None
+    
     async def get_by_id(self, business_id: str) -> Optional[businessInDB]:
         """Get business by ID"""
         db = get_database()
@@ -98,8 +112,18 @@ class businessService:
 
         cursor = collection.find(query).sort(sort_criteria).skip(skip).limit(limit)
         businesses = []
+        user_business_collection = db.user_business
         async for doc in cursor:
             bus_db = businessInDB(**doc)
+            # Get owner uid from user_business collection
+            owner_uid = None
+            user_business = await user_business_collection.find_one({
+                "bid": str(bus_db.id),
+                "role": "owner"
+            })
+            if user_business:
+                owner_uid = str(user_business.get("uid"))
+            
             businesses.append(business(
                 id=str(bus_db.id),
                 name=bus_db.name,
@@ -111,11 +135,12 @@ class businessService:
                 scheduled_at=bus_db.scheduled_at,
                 approved=bus_db.approved,
                 created_at=bus_db.created_at,
-                updated_at=bus_db.updated_at
+                updated_at=bus_db.updated_at,
+                uid=owner_uid
             ))
         return businesses
     
-    async def get_by_owner(self, user_id: str, skip: int = 0, limit: int = 10) -> List[business]:
+    async def get_by_owner(self, user_id: str, skip: int = 0, limit: int = 10, type_id: Optional[str] = None) -> List[business]:
         """Get businesses owned by a user"""
         db = get_database()
         if db is None:
@@ -134,11 +159,25 @@ class businessService:
         if not business_ids:
             return []
         
+        # Build query
+        query = {"_id": {"$in": business_ids}}
+        if type_id:
+            query["type_id"] = ObjectId(type_id)
+        
         # Get the businesses
-        cursor = collection.find({"_id": {"$in": business_ids}}).sort([("created_at", -1)]).skip(skip).limit(limit)
+        cursor = collection.find(query).sort([("created_at", -1)]).skip(skip).limit(limit)
         businesses = []
         async for doc in cursor:
             bus_db = businessInDB(**doc)
+            # Get owner uid from user_business collection
+            owner_uid = None
+            user_business = await user_business_collection.find_one({
+                "bid": str(bus_db.id),
+                "role": "owner"
+            })
+            if user_business:
+                owner_uid = str(user_business.get("uid"))
+            
             businesses.append(business(
                 id=str(bus_db.id),
                 name=bus_db.name,
@@ -150,11 +189,12 @@ class businessService:
                 scheduled_at=bus_db.scheduled_at,
                 approved=bus_db.approved,
                 created_at=bus_db.created_at,
-                updated_at=bus_db.updated_at
+                updated_at=bus_db.updated_at,
+                uid=owner_uid
             ))
         return businesses
     
-    async def create(self, business_create: businessCreate, user_id: str) -> business:
+    async def create(self, business_create: businessCreate, user_id: str, event=False) -> business:
         """Create a new business"""
         db = get_database()
         if db is None:
@@ -195,12 +235,13 @@ class businessService:
         }
         user_business_in_db = UserBusinessInDB(**user_business_data)
         await user_business_collection.insert_one(user_business_in_db.model_dump(exclude={"id"}))
-        user_doc = await users_collection.find_one({"_id": ObjectId(user_id)})
-        if user_doc and user_doc.get("role") != "admin":
-            await users_collection.update_one(
-                {"_id": ObjectId(user_id)},
-                {"$set": {"role": "business", "updated_at": datetime.utcnow()}}
-            )
+        if (not event):
+            user_doc = await users_collection.find_one({"_id": ObjectId(user_id)})
+            if user_doc and user_doc.get("role") != "admin":
+                await users_collection.update_one(
+                    {"_id": ObjectId(user_id)},
+                    {"$set": {"role": "business", "updated_at": datetime.utcnow()}}
+                )
         
         return business(
             id=str(created_business.id),
@@ -213,7 +254,8 @@ class businessService:
             scheduled_at=created_business.scheduled_at,
             approved=created_business.approved,
             created_at=created_business.created_at,
-            updated_at=created_business.updated_at
+            updated_at=created_business.updated_at,
+            uid=user_id
         )
     
     async def update(self, business_id: str, business_update: businessUpdate) -> business:
@@ -238,6 +280,7 @@ class businessService:
         )
         
         updated_business = await self.get_by_id(business_id)
+        owner_uid = await self._get_owner_uid(business_id)
         
         return business(
             id=str(updated_business.id),
@@ -250,7 +293,8 @@ class businessService:
             scheduled_at=updated_business.scheduled_at,
             approved=updated_business.approved,
             created_at=updated_business.created_at,
-            updated_at=updated_business.updated_at
+            updated_at=updated_business.updated_at,
+            uid=owner_uid
         )
     
     async def delete(self, business_id: str) -> bool:

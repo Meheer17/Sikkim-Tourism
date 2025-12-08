@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, RefreshControl, Alert, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -24,10 +24,13 @@ export default function CommunityChatScreen() {
     const [inputMessage, setInputMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
+    const [inputFocused, setInputFocused] = useState(false);
+    const [showCursor, setShowCursor] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [onlineCount, setOnlineCount] = useState(0);
     const [communityId, setCommunityId] = useState<string | null>(null);
     const [community, setCommunity] = useState<CommunityModel | null>(null);
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
     
     const scrollViewRef = useRef<ScrollView>(null);
 
@@ -173,6 +176,41 @@ export default function CommunityChatScreen() {
         };
     }, [communityId, loadMessages, loadOnlineCount]);
 
+    // Blinking cursor timer when input is empty
+    useEffect(() => {
+        let timer: any = null;
+        if (!inputMessage) {
+            timer = setInterval(() => setShowCursor(s => !s), 500);
+        } else {
+            setShowCursor(true);
+        }
+        return () => clearInterval(timer);
+    }, [inputMessage]);
+
+    // Listen for keyboard show/hide to adjust layout so input is never covered
+    useEffect(() => {
+        const show = Keyboard.addListener('keyboardDidShow', (e) => {
+            const h = e.endCoordinates?.height || 250;
+            setKeyboardHeight(h);
+            // scroll to bottom when keyboard opens
+            setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 120);
+        });
+        const hide = Keyboard.addListener('keyboardDidHide', () => {
+            setKeyboardHeight(0);
+        });
+        return () => {
+            show.remove();
+            hide.remove();
+        };
+    }, []);
+
+    // Dev-only console log to help verify updated bundle in Expo Go
+    useEffect(() => {
+        if (__DEV__) {
+            console.log('DEBUG: bundle updated - community-chat');
+        }
+    }, []);
+
     const handleSendMessage = async () => {
         if (!inputMessage.trim() || !communityId || sending) return;
         
@@ -293,6 +331,12 @@ export default function CommunityChatScreen() {
                 >
                     <Text style={styles.loginButtonText}>{t.login || 'Login'}</Text>
                 </TouchableOpacity>
+                {/* Dev-only visible banner to confirm bundle update in Expo Go */}
+                {__DEV__ && (
+                    <View style={{ backgroundColor: '#ffefef', paddingVertical: 6, alignItems: 'center' }}>
+                        <Text style={{ color: '#b91c1c', fontWeight: '700' }}>DEBUG: bundle updated — community-chat</Text>
+                    </View>
+                )}
             </View>
         );
     }
@@ -331,8 +375,10 @@ export default function CommunityChatScreen() {
                 <ScrollView
                     ref={scrollViewRef}
                     style={styles.messagesContainer}
-                    contentContainerStyle={styles.messagesContent}
+                    contentContainerStyle={[styles.messagesContent, { paddingBottom: keyboardHeight + 90 }]}
                     showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="interactive"
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={tint as string} />
                     }
@@ -412,38 +458,59 @@ export default function CommunityChatScreen() {
 
             {/* Input Area */}
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-                style={[styles.keyboardAvoid, { backgroundColor: cardBg }]}
+                behavior={'padding'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 80}
+                style={[styles.keyboardAvoid, { backgroundColor: 'transparent' }]}
             >
                 <View style={[styles.inputContainer, { backgroundColor: cardBg, borderTopColor: border }]}>
-                    <TextInput
-                        style={[styles.input, { color: text, backgroundColor: screenBg }]}
-                        placeholder={t.typeMessage || 'Type a message...'}
-                        placeholderTextColor={mutedText as string}
-                        value={inputMessage}
-                        onChangeText={setInputMessage}
-                        multiline
-                        maxLength={500}
-                        editable={!sending}
-                        onFocus={() => {
-                            setTimeout(() => {
-                                scrollViewRef.current?.scrollToEnd({ animated: true });
-                            }, 100);
-                        }}
-                    />
+                    <View style={{ flex: 1, position: 'relative' }}>
+                        {/* Blinking caret when input is empty to indicate placeholder focus */}
+                        {(!inputMessage) && (
+                            <View pointerEvents="none" style={{ position: 'absolute', left: 18, top: 12 }}>
+                                <View style={{ width: 2, height: 20, backgroundColor: tint, opacity: showCursor ? 1 : 0 }} />
+                            </View>
+                        )}
+                        <TextInput
+                            style={[styles.input, { color: text, backgroundColor: screenBg }]}
+                            placeholder={t.typeMessage || 'Type a message...'}
+                            placeholderTextColor={mutedText as string}
+                            value={inputMessage}
+                            onChangeText={setInputMessage}
+                            multiline
+                            blurOnSubmit={true}
+                            returnKeyType="send"
+                            onSubmitEditing={() => {
+                                if (inputMessage.trim() && !sending) handleSendMessage();
+                            }}
+                            maxLength={500}
+                            editable={!sending}
+                            onFocus={() => {
+                                setInputFocused(true);
+                                setTimeout(() => {
+                                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                                }, 100);
+                            }}
+                            onBlur={() => setInputFocused(false)}
+                        />
+                    </View>
                     <TouchableOpacity
-                        style={[styles.sendButton, (inputMessage.trim() && !sending) && styles.sendButtonActive]}
+                        style={[
+                            styles.sendButton,
+                            inputMessage.trim() && !sending ? [styles.sendButtonActive, { backgroundColor: tint }] : styles.sendButtonInactive,
+                        ]}
                         onPress={handleSendMessage}
                         disabled={!inputMessage.trim() || sending}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        accessibilityLabel="Send message"
+                        accessibilityState={{ disabled: !inputMessage.trim() || sending }}
                     >
                         {sending ? (
-                            <ActivityIndicator size="small" color={tint as string} />
+                            <ActivityIndicator size="small" color="#fff" />
                         ) : (
                             <IconSymbol
-                                name="arrow.up.circle.fill"
-                                size={32}
-                                color={(inputMessage.trim() && !sending) ? (tint as string) : (border as string)}
+                                name="paperplane.fill"
+                                size={20}
+                                color={inputMessage.trim() && !sending ? '#fff' : (border as string)}
                             />
                         )}
                     </TouchableOpacity>
@@ -599,12 +666,14 @@ const styles = StyleSheet.create({
         fontSize: 11,
     },
     keyboardAvoid: {
+        // Keep relative positioning so KeyboardAvoidingView can adjust naturally
+        width: '100%',
     },
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'flex-end',
         padding: 12,
-        paddingBottom: 32,
+        paddingBottom: 12,
         borderTopWidth: 1,
         gap: 8,
     },
@@ -617,12 +686,23 @@ const styles = StyleSheet.create({
         maxHeight: 100,
     },
     sendButton: {
-        width: 40,
-        height: 40,
+        width: 44,
+        height: 44,
         justifyContent: 'center',
         alignItems: 'center',
+        borderRadius: 22,
     },
     sendButtonActive: {
-        // Active state styling handled by icon color
+        // Active state: filled tint background
+        backgroundColor: '#64D2FF',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.12,
+        shadowRadius: 2,
+    },
+    sendButtonInactive: {
+        backgroundColor: 'transparent',
+        borderWidth: 0,
     },
 });

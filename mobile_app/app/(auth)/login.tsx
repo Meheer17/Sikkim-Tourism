@@ -142,6 +142,9 @@ export default function LoginScreen() {
                     <View style={styles.modalOverlay}>
                         <View style={[styles.modalContent, { backgroundColor: card }]}>
                             <View style={[styles.modalHeader, { borderBottomColor: muted + '40' }]}>
+                                <TouchableOpacity onPress={() => setShowLanguageModal(false)} style={{ marginRight: 12 }}>
+                                    <IconSymbol name="chevron.left" size={24} color={muted as string} />
+                                </TouchableOpacity>
                                 <Text style={[styles.modalTitle, { color: text }]}>{t.selectLanguage || 'Select Language'}</Text>
                                 <TouchableOpacity onPress={() => setShowLanguageModal(false)}>
                                     <IconSymbol name="xmark" size={24} color={muted as string} />
