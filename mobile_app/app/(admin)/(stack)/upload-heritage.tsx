@@ -14,10 +14,13 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { DocumentScannerButton, ScannedDocumentPreview } from '@/components/common/DocumentScanner';
 import { fileService } from '@/services';
+import { PdfPicker } from '@/utils/pdf-picker';
+import { PdfViewer } from '@/components/common/PdfViewer';
 
 interface HeritageDocument {
     uri: string;
     fileName: string;
+    isPdf?: boolean;
 }
 
 interface UploadedDocument {
@@ -26,6 +29,7 @@ interface UploadedDocument {
     file_path: string;
     category: string;
     created_at: string;
+    mime_type?: string;
 }
 
 export default function UploadHeritageScreen() {
@@ -35,6 +39,9 @@ export default function UploadHeritageScreen() {
     const [artifacts, setArtifacts] = useState<HeritageDocument[]>([]);
     const [uploading, setUploading] = useState(false);
     const [loading, setLoading] = useState(true);
+    
+    // PDF viewer state
+    const [viewingPdf, setViewingPdf] = useState<{ url: string; name: string } | null>(null);
     
     // Uploaded documents from backend
     const [uploadedManuscripts, setUploadedManuscripts] = useState<UploadedDocument[]>([]);
@@ -130,6 +137,39 @@ export default function UploadHeritageScreen() {
 
     const removeArtifact = (index: number) => {
         setArtifacts(artifacts.filter((_, i) => i !== index));
+    };
+
+    const handlePickManuscriptPdf = async () => {
+        try {
+            const pdf = await PdfPicker.pickPdf();
+            if (pdf) {
+                setManuscripts([...manuscripts, { uri: pdf.uri, fileName: pdf.name, isPdf: true }]);
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Failed to pick PDF');
+        }
+    };
+
+    const handlePickScripturePdf = async () => {
+        try {
+            const pdf = await PdfPicker.pickPdf();
+            if (pdf) {
+                setScriptures([...scriptures, { uri: pdf.uri, fileName: pdf.name, isPdf: true }]);
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Failed to pick PDF');
+        }
+    };
+
+    const handlePickArtifactPdf = async () => {
+        try {
+            const pdf = await PdfPicker.pickPdf();
+            if (pdf) {
+                setArtifacts([...artifacts, { uri: pdf.uri, fileName: pdf.name, isPdf: true }]);
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Failed to pick PDF');
+        }
     };
 
     const handleUpload = async () => {
@@ -261,16 +301,29 @@ export default function UploadHeritageScreen() {
                         Scan historical manuscripts, ancient texts, and handwritten documents
                     </Text>
 
-                    <DocumentScannerButton 
-                        onDocumentsScanned={(images) => {
-                            const newDocs = images.map((uri, index) => ({
-                                uri,
-                                fileName: `manuscript_${Date.now()}_${index + 1}.jpg`,
-                            }));
-                            setManuscripts([...manuscripts, ...newDocs]);
-                        }}
-                        buttonText="Scan Manuscripts" 
-                    />
+                    <View style={styles.buttonRow}>
+                        <View style={styles.buttonWrapper}>
+                            <DocumentScannerButton 
+                                onDocumentsScanned={(images) => {
+                                    const newDocs = images.map((uri, index) => ({
+                                        uri,
+                                        fileName: `manuscript_${Date.now()}_${index + 1}.jpg`,
+                                    }));
+                                    setManuscripts([...manuscripts, ...newDocs]);
+                                }}
+                                buttonText="Scan Images" 
+                            />
+                        </View>
+                        <View style={styles.buttonWrapper}>
+                            <TouchableOpacity
+                                style={[styles.pdfButton, { backgroundColor: theme.tint }]}
+                                onPress={handlePickManuscriptPdf}
+                            >
+                                <IconSymbol name="doc.fill" size={20} color="#fff" />
+                                <Text style={styles.pdfButtonText}>Pick PDF</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
 
                     {manuscripts.length > 0 && (
                         <ScannedDocumentPreview
@@ -285,25 +338,39 @@ export default function UploadHeritageScreen() {
                             <Text style={[styles.uploadedTitle, { color: theme.text }]}>
                                 Uploaded ({uploadedManuscripts.length})
                             </Text>
-                            {uploadedManuscripts.map((doc) => (
-                                <View key={doc._id} style={[styles.uploadedItem, { borderColor: theme.border }]}>
-                                    <Image source={{ uri: doc.file_path }} style={styles.uploadedThumbnail} />
-                                    <View style={styles.uploadedInfo}>
-                                        <Text style={[styles.uploadedFileName, { color: theme.text }]} numberOfLines={1}>
-                                            {doc.file_name}
-                                        </Text>
-                                        <Text style={[styles.uploadedDate, { color: theme.mutedText }]}>
-                                            {new Date(doc.created_at).toLocaleDateString()}
-                                        </Text>
-                                    </View>
+                            {uploadedManuscripts.map((doc) => {
+                                const isPdf = doc.mime_type === 'application/pdf' || doc.file_name.toLowerCase().endsWith('.pdf');
+                                return (
                                     <TouchableOpacity
-                                        onPress={() => handleDeleteDocument(doc._id, doc.category)}
-                                        style={styles.deleteButton}
+                                        key={doc._id}
+                                        style={[styles.uploadedItem, { borderColor: theme.border }]}
+                                        onPress={() => isPdf && setViewingPdf({ url: doc.file_path, name: doc.file_name })}
+                                        activeOpacity={isPdf ? 0.7 : 1}
                                     >
-                                        <IconSymbol name="trash" size={20} color="#ef4444" />
+                                        {isPdf ? (
+                                            <View style={[styles.uploadedThumbnail, { backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center' }]}>
+                                                <IconSymbol name="doc.fill" size={32} color="#fff" />
+                                            </View>
+                                        ) : (
+                                            <Image source={{ uri: doc.file_path }} style={styles.uploadedThumbnail} />
+                                        )}
+                                        <View style={styles.uploadedInfo}>
+                                            <Text style={[styles.uploadedFileName, { color: theme.text }]} numberOfLines={1}>
+                                                {doc.file_name}
+                                            </Text>
+                                            <Text style={[styles.uploadedDate, { color: theme.mutedText }]}>
+                                                {new Date(doc.created_at).toLocaleDateString()}
+                                            </Text>
+                                        </View>
+                                        <TouchableOpacity
+                                            onPress={() => handleDeleteDocument(doc._id, doc.category)}
+                                            style={styles.deleteButton}
+                                        >
+                                            <IconSymbol name="trash" size={20} color="#ef4444" />
+                                        </TouchableOpacity>
                                     </TouchableOpacity>
-                                </View>
-                            ))}
+                                );
+                            })}
                         </View>
                     )}
                 </View>
@@ -320,16 +387,29 @@ export default function UploadHeritageScreen() {
                         Scan religious texts, sacred scriptures, and spiritual documents
                     </Text>
 
-                    <DocumentScannerButton 
-                        onDocumentsScanned={(images) => {
-                            const newDocs = images.map((uri, index) => ({
-                                uri,
-                                fileName: `scripture_${Date.now()}_${index + 1}.jpg`,
-                            }));
-                            setScriptures([...scriptures, ...newDocs]);
-                        }}
-                        buttonText="Scan Scriptures" 
-                    />
+                    <View style={styles.buttonRow}>
+                        <View style={styles.buttonWrapper}>
+                            <DocumentScannerButton 
+                                onDocumentsScanned={(images) => {
+                                    const newDocs = images.map((uri, index) => ({
+                                        uri,
+                                        fileName: `scripture_${Date.now()}_${index + 1}.jpg`,
+                                    }));
+                                    setScriptures([...scriptures, ...newDocs]);
+                                }}
+                                buttonText="Scan Images" 
+                            />
+                        </View>
+                        <View style={styles.buttonWrapper}>
+                            <TouchableOpacity
+                                style={[styles.pdfButton, { backgroundColor: theme.tint }]}
+                                onPress={handlePickScripturePdf}
+                            >
+                                <IconSymbol name="doc.fill" size={20} color="#fff" />
+                                <Text style={styles.pdfButtonText}>Pick PDF</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
 
                     {scriptures.length > 0 && (
                         <ScannedDocumentPreview
@@ -344,25 +424,39 @@ export default function UploadHeritageScreen() {
                             <Text style={[styles.uploadedTitle, { color: theme.text }]}>
                                 Uploaded ({uploadedScriptures.length})
                             </Text>
-                            {uploadedScriptures.map((doc) => (
-                                <View key={doc._id} style={[styles.uploadedItem, { borderColor: theme.border }]}>
-                                    <Image source={{ uri: doc.file_path }} style={styles.uploadedThumbnail} />
-                                    <View style={styles.uploadedInfo}>
-                                        <Text style={[styles.uploadedFileName, { color: theme.text }]} numberOfLines={1}>
-                                            {doc.file_name}
-                                        </Text>
-                                        <Text style={[styles.uploadedDate, { color: theme.mutedText }]}>
-                                            {new Date(doc.created_at).toLocaleDateString()}
-                                        </Text>
-                                    </View>
+                            {uploadedScriptures.map((doc) => {
+                                const isPdf = doc.mime_type === 'application/pdf' || doc.file_name.toLowerCase().endsWith('.pdf');
+                                return (
                                     <TouchableOpacity
-                                        onPress={() => handleDeleteDocument(doc._id, doc.category)}
-                                        style={styles.deleteButton}
+                                        key={doc._id}
+                                        style={[styles.uploadedItem, { borderColor: theme.border }]}
+                                        onPress={() => isPdf && setViewingPdf({ url: doc.file_path, name: doc.file_name })}
+                                        activeOpacity={isPdf ? 0.7 : 1}
                                     >
-                                        <IconSymbol name="trash" size={20} color="#ef4444" />
+                                        {isPdf ? (
+                                            <View style={[styles.uploadedThumbnail, { backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center' }]}>
+                                                <IconSymbol name="doc.fill" size={32} color="#fff" />
+                                            </View>
+                                        ) : (
+                                            <Image source={{ uri: doc.file_path }} style={styles.uploadedThumbnail} />
+                                        )}
+                                        <View style={styles.uploadedInfo}>
+                                            <Text style={[styles.uploadedFileName, { color: theme.text }]} numberOfLines={1}>
+                                                {doc.file_name}
+                                            </Text>
+                                            <Text style={[styles.uploadedDate, { color: theme.mutedText }]}>
+                                                {new Date(doc.created_at).toLocaleDateString()}
+                                            </Text>
+                                        </View>
+                                        <TouchableOpacity
+                                            onPress={() => handleDeleteDocument(doc._id, doc.category)}
+                                            style={styles.deleteButton}
+                                        >
+                                            <IconSymbol name="trash" size={20} color="#ef4444" />
+                                        </TouchableOpacity>
                                     </TouchableOpacity>
-                                </View>
-                            ))}
+                                );
+                            })}
                         </View>
                     )}
                 </View>
@@ -379,16 +473,29 @@ export default function UploadHeritageScreen() {
                         Scan photos/records of artifacts, relics, and cultural treasures
                     </Text>
 
-                    <DocumentScannerButton 
-                        onDocumentsScanned={(images) => {
-                            const newDocs = images.map((uri, index) => ({
-                                uri,
-                                fileName: `artifact_${Date.now()}_${index + 1}.jpg`,
-                            }));
-                            setArtifacts([...artifacts, ...newDocs]);
-                        }}
-                        buttonText="Scan Artifacts" 
-                    />
+                    <View style={styles.buttonRow}>
+                        <View style={styles.buttonWrapper}>
+                            <DocumentScannerButton 
+                                onDocumentsScanned={(images) => {
+                                    const newDocs = images.map((uri, index) => ({
+                                        uri,
+                                        fileName: `artifact_${Date.now()}_${index + 1}.jpg`,
+                                    }));
+                                    setArtifacts([...artifacts, ...newDocs]);
+                                }}
+                                buttonText="Scan Images" 
+                            />
+                        </View>
+                        <View style={styles.buttonWrapper}>
+                            <TouchableOpacity
+                                style={[styles.pdfButton, { backgroundColor: theme.tint }]}
+                                onPress={handlePickArtifactPdf}
+                            >
+                                <IconSymbol name="doc.fill" size={20} color="#fff" />
+                                <Text style={styles.pdfButtonText}>Pick PDF</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
 
                     {artifacts.length > 0 && (
                         <ScannedDocumentPreview
@@ -403,25 +510,39 @@ export default function UploadHeritageScreen() {
                             <Text style={[styles.uploadedTitle, { color: theme.text }]}>
                                 Uploaded ({uploadedArtifacts.length})
                             </Text>
-                            {uploadedArtifacts.map((doc) => (
-                                <View key={doc._id} style={[styles.uploadedItem, { borderColor: theme.border }]}>
-                                    <Image source={{ uri: doc.file_path }} style={styles.uploadedThumbnail} />
-                                    <View style={styles.uploadedInfo}>
-                                        <Text style={[styles.uploadedFileName, { color: theme.text }]} numberOfLines={1}>
-                                            {doc.file_name}
-                                        </Text>
-                                        <Text style={[styles.uploadedDate, { color: theme.mutedText }]}>
-                                            {new Date(doc.created_at).toLocaleDateString()}
-                                        </Text>
-                                    </View>
+                            {uploadedArtifacts.map((doc) => {
+                                const isPdf = doc.mime_type === 'application/pdf' || doc.file_name.toLowerCase().endsWith('.pdf');
+                                return (
                                     <TouchableOpacity
-                                        onPress={() => handleDeleteDocument(doc._id, doc.category)}
-                                        style={styles.deleteButton}
+                                        key={doc._id}
+                                        style={[styles.uploadedItem, { borderColor: theme.border }]}
+                                        onPress={() => isPdf && setViewingPdf({ url: doc.file_path, name: doc.file_name })}
+                                        activeOpacity={isPdf ? 0.7 : 1}
                                     >
-                                        <IconSymbol name="trash" size={20} color="#ef4444" />
+                                        {isPdf ? (
+                                            <View style={[styles.uploadedThumbnail, { backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center' }]}>
+                                                <IconSymbol name="doc.fill" size={32} color="#fff" />
+                                            </View>
+                                        ) : (
+                                            <Image source={{ uri: doc.file_path }} style={styles.uploadedThumbnail} />
+                                        )}
+                                        <View style={styles.uploadedInfo}>
+                                            <Text style={[styles.uploadedFileName, { color: theme.text }]} numberOfLines={1}>
+                                                {doc.file_name}
+                                            </Text>
+                                            <Text style={[styles.uploadedDate, { color: theme.mutedText }]}>
+                                                {new Date(doc.created_at).toLocaleDateString()}
+                                            </Text>
+                                        </View>
+                                        <TouchableOpacity
+                                            onPress={() => handleDeleteDocument(doc._id, doc.category)}
+                                            style={styles.deleteButton}
+                                        >
+                                            <IconSymbol name="trash" size={20} color="#ef4444" />
+                                        </TouchableOpacity>
                                     </TouchableOpacity>
-                                </View>
-                            ))}
+                                );
+                            })}
                         </View>
                     )}
                 </View>
@@ -451,6 +572,13 @@ export default function UploadHeritageScreen() {
                     )}
                 </TouchableOpacity>
             </ScrollView>
+
+            <PdfViewer
+                visible={!!viewingPdf}
+                pdfUrl={viewingPdf?.url || ''}
+                fileName={viewingPdf?.name}
+                onClose={() => setViewingPdf(null)}
+            />
         </View>
     );
 }
@@ -561,5 +689,28 @@ const styles = StyleSheet.create({
     },
     deleteButton: {
         padding: 8,
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: 12,
+    },
+    buttonWrapper: {
+        flex: 1,
+    },
+    pdfButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        height: 44,
+    },
+    pdfButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
     },
 });

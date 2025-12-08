@@ -81,6 +81,8 @@ const MAPPING = {
   'gear': 'settings',
   'gearshape.fill': 'settings',
   'slider.horizontal.3': 'tune',
+  'line.horizontal.3.decrease.circle': 'filter-list',
+  'line.horizontal.3.decrease.circle.fill': 'filter-list',
   'info.circle.fill': 'info',
   'questionmark.circle.fill': 'help',
   'exclamationmark.triangle.fill': 'warning',
@@ -97,8 +99,11 @@ const MAPPING = {
   'doc.text.fill': 'description',
   'folder.fill': 'folder',
   'photo.fill': 'photo',
+  'photo.badge.plus': 'add-photo-alternate',
+  'photo.stack': 'collections',
   'camera.fill': 'camera-alt',
   'trash.fill': 'delete',
+  'archivebox.fill': 'archive',
 
   // Navigation & Direction
   'arrow.right': 'arrow-forward',
@@ -152,6 +157,8 @@ const MAPPING = {
 
   // Additional icons for immersive experience
   'hand.draw.fill': 'gesture',
+  'hand.tap.fill': 'touch-app',
+  'rotate.3d': '3d-rotation',
   'arrow.up.circle': 'arrow-circle-up',
   'arrow.down.circle': 'arrow-circle-down',
 

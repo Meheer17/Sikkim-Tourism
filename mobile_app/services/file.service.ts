@@ -121,7 +121,8 @@ export class FileService {
     async uploadDocument(
         filePath: string,
         category: string = 'document',
-        businessId?: string
+        businessId?: string,
+        locationId?: string
     ): Promise<ApiResponse<FileUploadResponse>> {
         try {
             // Extract filename from path
@@ -131,8 +132,11 @@ export class FileService {
             const response = await fetch(filePath);
             const blob = await response.blob();
             
-            // Determine file type
-            const fileType = blob.type || 'image/jpeg';
+            // Determine file type - support PDF
+            let fileType = blob.type || 'image/jpeg';
+            if (fileName.toLowerCase().endsWith('.pdf')) {
+                fileType = 'application/pdf';
+            }
             
             const formData = new FormData();
             formData.append('file', {
@@ -145,6 +149,9 @@ export class FileService {
             formData.append('category', category);
             if (businessId) {
                 formData.append('business_id', businessId);
+            }
+            if (locationId) {
+                formData.append('location_id', locationId);
             }
 
             return await apiClient.uploadFile<FileUploadResponse>(`/upload/document`, formData);
@@ -340,6 +347,63 @@ export class FileService {
             return response;
         } catch (error) {
             console.error('Delete document error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Stitch multiple images into 360° panorama
+     */
+    async stitchPanorama(request: {
+        files: Array<{ uri: string; type: string; name: string }>;
+        mode?: 'auto' | 'cylindrical' | 'spherical';
+        locationId?: string;
+    }): Promise<ApiResponse<FileUploadResponse>> {
+        try {
+            // Validate inputs
+            if (request.files.length < 2) {
+                throw new Error('Need at least 2 images to stitch a panorama');
+            }
+
+            if (request.files.length > 20) {
+                throw new Error('Maximum 20 images allowed per panorama');
+            }
+
+            // Create FormData
+            const formData = new FormData();
+            
+            request.files.forEach((file, index) => {
+                formData.append('files', {
+                    uri: file.uri,
+                    type: file.type,
+                    name: file.name,
+                } as any);
+            });
+
+            formData.append('mode', request.mode || 'auto');
+            
+            if (request.locationId) {
+                formData.append('location_id', request.locationId);
+            }
+
+            console.log('📤 [FileService] Stitching panorama:', {
+                imageCount: request.files.length,
+                mode: request.mode || 'auto',
+                locationId: request.locationId,
+            });
+
+            // Use extended timeout for panorama stitching (2 minutes)
+            const resp = await apiClient.uploadFile<FileUploadResponse>(
+                `/upload/stitch-panorama`, 
+                formData,
+                { timeout: 120000 } // 2 minutes timeout
+            );
+
+            console.log('📥 [FileService] Stitch response:', resp);
+
+            return resp;
+        } catch (error) {
+            console.error('Panorama stitching error:', error);
             throw error;
         }
     }

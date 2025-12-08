@@ -9,11 +9,11 @@ interface Position { x: number; y: number }
 class MovementService {
   private lastPosition: Position | null = null;
   private intervalId: number | null = null;
-  private readonly intervalMs = 15 * 1000; // 1 minute
+  private readonly intervalMs = 5 * 60 * 1000; // 5 minutes to avoid API quota exhaustion
 
-  // thresholds in meters per minute
-  private readonly standingThreshold = 10; // <= 10m -> standing
-  private readonly walkingThreshold = 100; // <=100m -> walking
+  // thresholds in meters per 5 minutes
+  private readonly standingThreshold = 50; // <= 50m -> standing
+  private readonly walkingThreshold = 500; // <=500m -> walking
 
   constructor() {}
 
@@ -89,11 +89,22 @@ class MovementService {
       console.log('[MovementService] tick', { timestamp, current, last: this.lastPosition, distance, movement });
 
       // Prepare payload to send to trigger endpoint
-      const payload = {
+      // Include the device timezone so the backend can make timezone-aware decisions.
+      const deviceTimeZone = (() => {
+        try {
+          return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+        } catch (e) {
+          return undefined;
+        }
+      })();
+
+      const payload: any = {
         type: movement,
         time: timestamp,
-        position: { x: current.x, y: current.y }
+        position: { x: current.x, y: current.y },
       };
+
+      if (deviceTimeZone) payload.timezone = deviceTimeZone;
 
       // Fire-and-forget the trigger call (log response)
       try {
@@ -109,7 +120,40 @@ class MovementService {
           // if notifier doesn't have isOpen, continue as before
         }
 
-        const resp = await apiClient.post('/ai-planner/trigger', payload);
+        // Try the trigger call. If backend fails due to an unknown timezone key, retry once
+        // with a known alias mapping (some TZ databases use legacy keys).
+        let resp: any = null;
+        try {
+          resp = await apiClient.post('/ai-planner/trigger', payload);
+        } catch (err: any) {
+          // Check for timezone-related 500 error and attempt alias mapping retry
+          const errMsg = err?.response?.data || err?.message || '';
+          const isTZError = typeof errMsg === 'string' ? errMsg.includes('No time zone') : (errMsg?.detail || '').includes('No time zone');
+          if (isTZError && payload.timezone) {
+            // Common alias mapping - add more if needed
+            const aliasMap: Record<string, string> = {
+              'Asia/Kolkata': 'Asia/Calcutta',
+              'Asia/Calcutta': 'Asia/Kolkata',
+            };
+            const alias = aliasMap[payload.timezone];
+            if (alias) {
+              try {
+                const retryPayload = { ...payload, timezone: alias };
+                console.log('[MovementService] retrying trigger with timezone alias', alias);
+                resp = await apiClient.post('/ai-planner/trigger', retryPayload);
+              } catch (retryErr) {
+                console.warn('[MovementService] trigger retry failed', retryErr);
+                throw retryErr;
+              }
+            } else {
+              // No alias available, rethrow the original error to be caught by outer catch
+              throw err;
+            }
+          } else {
+            throw err;
+          }
+        }
+
         console.log('[MovementService] trigger response', resp);
 
         // If backend returned gemini.agent_message, notify UI
