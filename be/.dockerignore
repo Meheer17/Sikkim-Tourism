@@ -1,0 +1,40 @@
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Git
+.git
+
+# Dockerfile artifacts
+.dockerignore
+
+# Editor directories and files
+.vscode/
+*.swp
+
+# Dependency directories
+node_modules/
+
+# Distribution / build
+build/
+dist/
+*.egg-info/
+
+# Local data
+app-data/
+data.csv
+*.sqlite3
+
+# Env files
+.env
+*.env
+
+# Pytest
+.pytest_cache/

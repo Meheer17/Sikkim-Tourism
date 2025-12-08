@@ -1,3 +1,4 @@
+from bson import ObjectId
 import google.generativeai as genai
 from typing import List, Dict, Any, Optional
 import json
@@ -363,29 +364,30 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
             except Exception:
                 trigger_time_ist = datetime.now(tz=ZoneInfo("Asia/Kolkata"))
 
-            # Log the incoming trigger to DB so future fetches include this event
+            recent_actions_map = {}
             try:
                 db = get_database()
                 if db is not None:
-                    doc = {
-                        "uid": user_id,
-                        "user_id": user_id,
-                        "type": trigger.type,
-                        # store action as the same as type by default so action-based lookups work
-                        "action": trigger.type,
-                        "position": {"x": trigger.position.x, "y": trigger.position.y} if getattr(trigger, "position", None) else None,
-                        # createdAt is the canonical timestamp field used elsewhere (store in IST)
-                        "createdAt": trigger_time_ist,
-                        # store full raw payload for debugging/audit
-                        "raw": trigger.dict()
-                    }
-                    try:
-                        insert_result = await db.triggers.insert_one(doc)
-                        print(f"Logged trigger to DB for user={user_id}, id={insert_result.inserted_id}")
-                    except Exception as ie:
-                        print(f"Failed to insert trigger document: {ie}")
+                    query = {"uid": ObjectId(user_id)}
+                    cursor = db.triggers.find(query, {"action": 1, "type": 1, "createdAt": 1}).sort("createdAt", -1).limit(20)
+                    docs = await cursor.to_list(length=20)
+                    for d in docs:
+                        action = d.get("action") or d.get("type") or None
+                        created = d.get("createdAt") or d.get("created_at") or d.get("time")
+                        if not action or not created:
+                            continue
+                        try:
+                            created_iso = created.isoformat()
+                        except Exception:
+                            created_iso = str(created)
+
+                        if action not in recent_actions_map:
+                            recent_actions_map[action] = created_iso
+
+                    if recent_actions_map:
+                        print(f"Found recent actions for user {user_id}: {recent_actions_map}")
             except Exception as e:
-                print(f"Could not log trigger to DB: {e}")
+                print(f"Could not fetch recent triggers from DB: {e}")
 
             # Build a contextual Gemini prompt based on trigger inputs (type/time/position)
             # The model should return a JSON object describing the suggested action for the client UI
@@ -408,36 +410,7 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
                 {"type": "tourist_entry", "category": "tourist_entry", "id": "69330a6098cade204f63d80f"}
             ]
 
-            # Fetch recent triggers from DB (if available) to avoid repeating actions too frequently
-            recent_actions_map = {}
-            try:
-                db = get_database()
-                if db is not None:
-                    # Look for documents that may be stored under either 'uid' or 'user_id'
-                    query = {"$or": [{"uid": user_id}, {"user_id": user_id}]}
-                    cursor = db.triggers.find(query, {"uid": 1, "type": 1, "action": 1, "createdAt": 1}).sort("createdAt", -1).limit(200)
-                    docs = await cursor.to_list(length=200)
-                    for d in docs:
-                        action = d.get("action") or d.get("type") or None
-                        created = d.get("createdAt") or d.get("created_at") or d.get("time")
-                        if not action or not created:
-                            continue
-                        # Ensure ISO string representation for the prompt
-                        try:
-                            # If created is a datetime-like object
-                            created_iso = created.isoformat()
-                        except Exception:
-                            created_iso = str(created)
-
-                        # only keep the latest (cursor is sorted desc so first occurrence is latest)
-                        if action not in recent_actions_map:
-                            recent_actions_map[action] = created_iso
-
-                    if recent_actions_map:
-                        print(f"Found recent actions for user {user_id}: {recent_actions_map}")
-            except Exception as e:
-                # DB may be unavailable in some environments; log and continue with fallback
-                print(f"Could not fetch recent triggers from DB: {e}")
+            # recent_actions_map already fetched earlier
 
             recent_actions_json = json.dumps(recent_actions_map)
 
@@ -510,6 +483,37 @@ Remember
                         gemini_result['no_popup'] = True
                 except Exception as e:
                     print(f"Error applying no_action suppression to gemini result: {e}")
+                # Server-side cooldown enforcement: if the AI suggested action was suggested
+                # recently for this user (within cooldown window), force a no_action response
+                try:
+                    cooldowns = {"restaurant": 160, "cab": 105, "hotel": 160, "guide": 120, "event": 160, "tourist_entry": 160}
+                    if isinstance(gemini_result, dict):
+                        suggested = gemini_result.get('type')
+                        if suggested and suggested in recent_actions_map:
+                            last_seen_iso = recent_actions_map.get(suggested)
+                            try:
+                                last_seen_dt = datetime.fromisoformat(last_seen_iso)
+                            except Exception:
+                                try:
+                                    # try without timezone Z
+                                    last_seen_dt = datetime.fromisoformat(last_seen_iso.replace('Z', '+00:00'))
+                                except Exception:
+                                    last_seen_dt = None
+
+                            if last_seen_dt is not None and trigger_time_ist is not None:
+                                elapsed_minutes = (trigger_time_ist - last_seen_dt).total_seconds() / 60.0
+                                cd = cooldowns.get(suggested, 0)
+                                if elapsed_minutes < cd:
+                                    # Enforce no_action
+                                    gemini_result = {
+                                        "type": "no_action",
+                                        "agent_message": "I'll remind you later.",
+                                        "buttons": {"positive": {"text": "Remind me", "action": "remind"}, "negative": {"text": "Dismiss", "action": "return"}},
+                                        "no_popup": True
+                                    }
+                                    print(f"Server cooldown enforced for user={user_id}, action={suggested}, elapsed_minutes={elapsed_minutes:.1f} < cooldown={cd}")
+                except Exception as e:
+                    print(f"Error enforcing cooldowns: {e}")
             except Exception as e:
                 # Fallback: use simple rule-based suggestion so client still receives a usable action
                 print(f"⚠️ Gemini trigger suggestion failed, falling back to rule-based: {e}")
@@ -558,6 +562,32 @@ Remember
                         gemini_result['no_popup'] = True
                 except Exception as e:
                     print(f"Error applying no_action suppression to fallback gemini result: {e}")
+
+            try:
+                db = get_database()
+                if db is not None:
+                    action_from_ai = None
+                    try:
+                        if isinstance(gemini_result, dict):
+                            action_from_ai = gemini_result.get('type')
+                    except Exception:
+                        action_from_ai = None
+
+                    doc = {
+                        "uid": ObjectId(user_id),
+                        "type": trigger.type,
+                        "action": action_from_ai,
+                        "position": {"x": trigger.position.x, "y": trigger.position.y} if getattr(trigger, "position", None) else None,
+                        "createdAt": trigger_time_ist,
+                        "raw": trigger.dict()
+                    }
+                    try:
+                        insert_result = await db.triggers.insert_one(doc)
+                        print(f"Inserted trigger record for user={user_id}, id={insert_result.inserted_id}, action={action_from_ai}")
+                    except Exception as ie:
+                        print(f"Failed to insert trigger record: {ie}")
+            except Exception as e:
+                print(f"Could not persist trigger to DB: {e}")
 
             result = {
                 "status": "ok",

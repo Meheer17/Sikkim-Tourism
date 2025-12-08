@@ -104,8 +104,6 @@ class businessUpdate(BaseModel):
     l_id: Optional[str] = None
     scheduled_at: Optional[datetime] = None
     approved: Optional[bool] = None
-    banner_image: Optional[str] = None
-    images: Optional[list[str]] = None
 
     @field_validator("type_id", "l_id")
     @classmethod
