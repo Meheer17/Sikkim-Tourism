@@ -53,8 +53,15 @@ export default function UserLayout() {
         return routePage === currentPage || pathname === route;
     };
 
-    // Hide tab bar on community chat, immersive experience, friends list, AI chat screens, and create event
-    const shouldShowTabBar = !pathname.includes('/community-chat') && !pathname.includes('/immersive-experience') && !pathname.includes('/friends-list') && !pathname.includes('/ai-planner-chat') && !pathname.includes('/create-event') && !pathname.includes('/profile');
+    // Hide tab bar on certain immersive/deep screens so it doesn't overlap UI like chat input.
+    // Show tab bar on top-level pages (home, services, explore, bookings) but keep chat as a full-screen view.
+    const currentPage = pathname.split('/').pop() || '';
+    const topLevelPages = tabs.map(tab => tab.route.split('/').pop() || '');
+    const isTopLevel = topLevelPages.includes(currentPage) && !pathname.includes('/(stack)');
+    // Keep chat as full-screen (hide tabs) to avoid overlaying the typing bar
+    const shouldShowTabBar = isTopLevel && currentPage !== 'community-chat';
+
+    // Back arrow overlay removed per request; only tab visibility logic retained.
 
     return (
         <View style={styles.container}>
@@ -122,6 +129,7 @@ export default function UserLayout() {
                     })}
                 </Animated.View>
             )}
+            {/* Global back arrow removed - navigation handled by individual screens */}
         </View>
     );
 }
@@ -165,4 +173,5 @@ const styles = StyleSheet.create({
         marginTop: 2,
         fontWeight: '500',
     },
+    /* globalBackButton removed - back arrow handled by individual screens */
 });

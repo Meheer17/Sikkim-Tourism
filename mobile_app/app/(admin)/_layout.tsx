@@ -41,7 +41,13 @@ export default function AdminLayout() {
         return routePage === currentPage || pathname === route;
     };
 
-    const shouldShowTabBar = !pathname.includes('/(admin)/(stack)') && !pathname.includes('/profile');
+    // Show admin tab bar on top-level admin pages (dashboard, manage, places, roles)
+    const adminCurrentPage = pathname.split('/').pop() || '';
+    const adminTopLevelPages = tabs.map(tab => tab.route.split('/').pop() || '');
+    const isAdminTopLevel = adminTopLevelPages.includes(adminCurrentPage) && !pathname.includes('/(stack)');
+    const shouldShowTabBar = isAdminTopLevel;
+
+    // Back arrow overlay removed per request; only tab visibility logic retained.
 
     return (
         <View style={styles.container}>
@@ -110,6 +116,7 @@ export default function AdminLayout() {
                     })}
                 </Animated.View>
             )}
+            {/* Global back arrow removed - navigation handled by individual screens */}
         </View>
     );
 }
@@ -153,4 +160,5 @@ const styles = StyleSheet.create({
         marginTop: 2,
         fontWeight: '500',
     },
+    /* globalBackButton removed - back arrow handled by individual screens */
 });
