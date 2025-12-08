@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -7,6 +7,7 @@ import { businessService } from '@/services/business.service';
 
 interface Event {
     id: string;
+    _id?: string;
     name: string;
     description: string;
     short_description: string;
@@ -15,18 +16,22 @@ interface Event {
     approved?: boolean;
     created_at?: string;
     updated_at?: string;
+    uid?: string;
 }
 
 export default function EventsListScreen() {
     const router = useRouter();
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
+    const [navigatingEventId, setNavigatingEventId] = useState<string | null>(null);
+    const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const background = useThemeColor('background');
     const card = useThemeColor('card');
     const text = useThemeColor('text');
     const muted = useThemeColor('mutedText');
     const tint = useThemeColor('tint');
+    const border = useThemeColor('border');
 
     useEffect(() => {
         loadEvents();
@@ -49,10 +54,48 @@ export default function EventsListScreen() {
         }
     };
 
-    const renderEventCard = ({ item }: { item: Event }) => (
+    const handleEventPress = (eventId?: string) => {
+        if (!eventId) return;
+
+        setNavigatingEventId(eventId);
+
+        if (navigationTimeoutRef.current) {
+            clearTimeout(navigationTimeoutRef.current);
+        }
+
+        navigationTimeoutRef.current = setTimeout(() => {
+            router.push({
+                pathname: '/(user)/(stack)/event-details' as any,
+                params: { eventId }
+            });
+        }, 120);
+    };
+
+    const cancelNavigation = () => {
+        if (navigationTimeoutRef.current) {
+            clearTimeout(navigationTimeoutRef.current);
+            navigationTimeoutRef.current = null;
+        }
+        setNavigatingEventId(null);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (navigationTimeoutRef.current) {
+                clearTimeout(navigationTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    const renderEventCard = ({ item }: { item: Event }) => {
+        const eventId = item.id || item._id;
+        const isNavigating = navigatingEventId === eventId;
+
+        return (
         <TouchableOpacity
             style={[styles.card, { backgroundColor: card }]}
-            onPress={() => router.push(`/(user)/(stack)/business-details?id=${item.id}` as any)}
+            onPress={() => handleEventPress(eventId)}
+            disabled={isNavigating}
         >
             <View style={styles.dateContainer}>
                 <Text style={[styles.dateDay, { color: tint }]}>
@@ -77,8 +120,19 @@ export default function EventsListScreen() {
             </View>
 
             <IconSymbol name="chevron.right" size={20} color={muted} />
+
+            {isNavigating && (
+                <View style={[styles.cardOverlay, { backgroundColor: `${card}ee` }]}> 
+                    <ActivityIndicator size="large" color={tint} />
+                    <TouchableOpacity style={[styles.cancelButton, { borderColor: border, backgroundColor: card }]} onPress={cancelNavigation}>
+                        <IconSymbol name="xmark" size={16} color={text} />
+                        <Text style={[styles.cancelButtonText, { color: text }]}>Cancel</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
         </TouchableOpacity>
-    );
+        );
+    };
 
     if (loading) {
         return (
@@ -104,7 +158,7 @@ export default function EventsListScreen() {
             <FlatList
                 data={events}
                 renderItem={renderEventCard}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.id || item._id || Math.random().toString()}
                 contentContainerStyle={styles.listContent}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
@@ -217,5 +271,29 @@ const styles = StyleSheet.create({
     },
     emptySubtext: {
         fontSize: 14,
+    },
+    cardOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 12,
+    },
+    cancelButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 10,
+        borderWidth: 1,
+    },
+    cancelButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
     },
 });
