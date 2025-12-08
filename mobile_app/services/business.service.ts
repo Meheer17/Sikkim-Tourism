@@ -23,6 +23,7 @@ export interface BusinessModel {
   images?: string[];
   created_at?: string;
   updated_at?: string;
+  uid?: string; // Owner user ID
 }
 
 export interface BusinessType {

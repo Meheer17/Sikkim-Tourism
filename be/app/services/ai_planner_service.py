@@ -1,8 +1,10 @@
 from bson import ObjectId
 import google.generativeai as genai
 from typing import List, Dict, Any, Optional
+import asyncio
+import time
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 import random
 import uuid
@@ -56,6 +58,35 @@ class AIPlannerService:
             self.model = genai.GenerativeModel('gemini-flash-latest', safety_settings=safety_settings)
         else:
             self.model = None
+
+        # Prepare IST timezone resiliently: prefer zoneinfo but fall back to fixed offset
+        try:
+            self.ist_zone = ZoneInfo("Asia/Kolkata")
+        except Exception:
+            # Fallback to fixed +5:30 offset if tzdata is not available on the host
+            self.ist_zone = timezone(timedelta(hours=5, minutes=30))
+
+    async def _call_model_generate(self, prompt: str, retries: int = 3, backoff: float = 1.0):
+        """Call Gemini model.generate_content in a thread with retries/backoff to handle transient network errors."""
+        if not self.model:
+            raise Exception("Gemini model not configured")
+
+        last_exc = None
+        for attempt in range(1, retries + 1):
+            try:
+                # Run the blocking SDK call in a thread
+                resp = await asyncio.to_thread(self.model.generate_content, prompt)
+                return resp
+            except Exception as e:
+                last_exc = e
+                print(f"Attempt {attempt} failed calling Gemini: {e}")
+                if attempt < retries:
+                    sleep_for = backoff * (2 ** (attempt - 1))
+                    print(f"Retrying Gemini call in {sleep_for}s (attempt {attempt + 1}/{retries})")
+                    await asyncio.sleep(sleep_for)
+                else:
+                    print("Gemini call failed after retries; raising last exception")
+                    raise
     
     # Chat-based travel planning methods
     
@@ -261,7 +292,7 @@ Only set is_ready to true when you have at least: duration, budget, and traveler
         
         try:
             print(f"Calling Gemini API with prompt length: {len(response_prompt)}")
-            response = self.model.generate_content(response_prompt)
+            response = await self._call_model_generate(response_prompt)
             
             # Check if response was blocked by safety filters
             if not response.candidates or not response.candidates[0].content.parts:
@@ -354,15 +385,15 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
             # Normalize incoming trigger time to IST and log the incoming trigger to DB so future fetches include this event
             # Treat timezone-naive times as already in IST (frontend should send IST)
             try:
-                if trigger.time:
-                    if trigger.time.tzinfo is None:
-                        trigger_time_ist = trigger.time.replace(tzinfo=ZoneInfo("Asia/Kolkata"))
+                    if trigger.time:
+                        if trigger.time.tzinfo is None:
+                            trigger_time_ist = trigger.time.replace(tzinfo=self.ist_zone)
+                        else:
+                            trigger_time_ist = trigger.time.astimezone(self.ist_zone)
                     else:
-                        trigger_time_ist = trigger.time.astimezone(ZoneInfo("Asia/Kolkata"))
-                else:
-                    trigger_time_ist = datetime.now(tz=ZoneInfo("Asia/Kolkata"))
+                        trigger_time_ist = datetime.now(tz=self.ist_zone)
             except Exception:
-                trigger_time_ist = datetime.now(tz=ZoneInfo("Asia/Kolkata"))
+                trigger_time_ist = datetime.now(tz=self.ist_zone)
 
             recent_actions_map = {}
             try:
@@ -459,7 +490,7 @@ Remember
                 if not self.model:
                     raise Exception("Gemini model not configured")
 
-                response = self.model.generate_content(prompt)
+                response = await self._call_model_generate(prompt)
                 if not response.candidates or not response.candidates[0].content.parts:
                     raise Exception("Empty Gemini response or blocked by safety filter")
 
