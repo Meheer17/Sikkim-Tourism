@@ -173,7 +173,11 @@ export default function ExploreScreen() {
     try {
       setLoading(true);
 
+<<<<<<< HEAD
+      const params: any = { skip: 0, limit: 50 };
+=======
       const params: any = { skip: 0, limit: 150 };
+>>>>>>> 9b25bfd58abe9653597af64277c15cecb9396457
       const radiusMeters = getRadiusMeters(selectedDistance);
       if (radiusMeters !== undefined && userLocation) {
         params.position_lat = userLocation.coords.latitude;
@@ -185,7 +189,6 @@ export default function ExploreScreen() {
       const response = await locationService.list(params);
       const locations = response.data || [];
 
-      console.log('📍 Loaded locations:', locations.length, 'using params', params);
 
       // Map backend locations to Place format
       const mappedPlaces: Place[] = locations.map((loc: any) => {
@@ -193,7 +196,6 @@ export default function ExploreScreen() {
         const images = rawImages.map((f: string) => buildImageUrl(f)).filter(Boolean) as string[];
 
         const firstImage = images[0];
-
         return {
           id: loc.id,
           name: loc.name,
@@ -203,7 +205,7 @@ export default function ExploreScreen() {
           distance: '0 km',
           imageUrl: firstImage || undefined,
           images: images,
-          modelPath: loc.metadata?.model_url || undefined,
+          modelPath: loc.metadata?.models || undefined,
           has360Images: !!loc.metadata?.panorama_360,
           panorama360Url: buildImageUrl(loc.metadata?.panorama_360) || undefined,
           latitude: loc.position?.y || 27.3389,
