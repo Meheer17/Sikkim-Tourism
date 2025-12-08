@@ -1,18 +1,21 @@
 import React, { useMemo, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, Animated, ActivityIndicator } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
 import { Event } from '@/services/event.service';
 
-type ViewMode = 'list' | 'calendar';
+type ViewMode = 'list' | 'calendar' | 'myEvents';
 
 interface EventViewProps {
     events: Event[];
+    myEvents?: Event[];
     refreshing?: boolean;
     onRefresh?: () => Promise<void> | void;
-    onEventPress?: (event: Event) => void;
+    onEventPress?: (event: Event, isMyEvent?: boolean) => void;
+    navigatingEventId?: string | null;
+    onCancelNavigation?: () => void;
 }
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -44,7 +47,7 @@ const formatDisplayDate = (dateString?: string): string => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-export default function EventView({ events, refreshing, onRefresh, onEventPress }: EventViewProps) {
+export default function EventView({ events, myEvents = [], refreshing, onRefresh, onEventPress, navigatingEventId, onCancelNavigation }: EventViewProps) {
     const { language } = useLanguage();
     const t = getLanguageTranslations(language);
     const background = useThemeColor('background');
@@ -184,7 +187,7 @@ export default function EventView({ events, refreshing, onRefresh, onEventPress 
         );
     };
 
-    const EventCard = ({ event }: { event: Event }) => {
+    const EventCard = ({ event, showStatus = false }: { event: Event; showStatus?: boolean }) => {
         const eventHours =
             event.open_hours?.start && event.open_hours?.end
                 ? `${event.open_hours.start} - ${event.open_hours.end}`
@@ -200,11 +203,26 @@ export default function EventView({ events, refreshing, onRefresh, onEventPress 
                 <View style={styles.eventCardContent}>
                     <View style={styles.eventHeader}>
                         <Text style={[styles.eventName, { color: text }]} numberOfLines={2}>{event.name}</Text>
-                        <View style={[styles.eventTimeBadge, { backgroundColor: `${tint}15` }]}>
-                            <IconSymbol name="clock.fill" size={12} color={tint} />
-                            <Text style={[styles.eventTime, { color: tint }]}>
-                                {formatEventTime(event.scheduled_at)}
-                            </Text>
+                        <View style={styles.eventHeaderRight}>
+                            <View style={[styles.eventTimeBadge, { backgroundColor: `${tint}15` }]}>
+                                <IconSymbol name="clock.fill" size={12} color={tint} />
+                                <Text style={[styles.eventTime, { color: tint }]}>
+                                    {formatEventTime(event.scheduled_at)}
+                                </Text>
+                            </View>
+                            {showStatus && (
+                                <View style={[
+                                    styles.statusBadge,
+                                    { backgroundColor: event.approved ? '#10b98120' : '#f59e0b20' }
+                                ]}>
+                                    <Text style={[
+                                        styles.statusText,
+                                        { color: event.approved ? '#10b981' : '#f59e0b' }
+                                    ]}>
+                                        {event.approved ? 'Approved' : 'Pending'}
+                                    </Text>
+                                </View>
+                            )}
                         </View>
                     </View>
                     <Text style={[styles.eventDesc, { color: muted }]} numberOfLines={2}>
@@ -229,6 +247,21 @@ export default function EventView({ events, refreshing, onRefresh, onEventPress 
         );
     };
 
+    const renderLoadingOverlay = () => (
+        <View style={styles.loaderOverlay}>
+            <ActivityIndicator size="large" color={tint} />
+            <TouchableOpacity
+                style={[styles.cancelButton, { borderColor: border }]}
+                onPress={onCancelNavigation ?? (() => {})}
+                disabled={!onCancelNavigation}
+                activeOpacity={0.7}
+            >
+                <IconSymbol name="xmark" size={16} color={text as string} />
+                <Text style={[styles.cancelButtonText, { color: text }]}>Cancel</Text>
+            </TouchableOpacity>
+        </View>
+    );
+
     const renderList = () => (
         <ScrollView
             style={styles.scrollView}
@@ -242,9 +275,24 @@ export default function EventView({ events, refreshing, onRefresh, onEventPress 
         >
             {events.length > 0 ? (
                 <React.Fragment>
-                    {events.map((event) => (
-                        <EventCard key={event._id} event={event} />
-                    ))}
+                    {events.map((event, index) => {
+                        const eventId = (event as any).id || event._id;
+                        const isNavigating = navigatingEventId === eventId;
+
+                        return (
+                            <TouchableOpacity
+                                key={eventId || `event-${index}`}
+                                activeOpacity={0.7}
+                                onPress={() => onEventPress?.(event)}
+                                disabled={isNavigating}
+                            >
+                                <View style={{ position: 'relative' }}>
+                                    <EventCard event={event} />
+                                    {isNavigating && renderLoadingOverlay()}
+                                </View>
+                            </TouchableOpacity>
+                        );
+                    })}
                 </React.Fragment>
             ) : (
                 <View style={styles.emptyState}>
@@ -252,6 +300,50 @@ export default function EventView({ events, refreshing, onRefresh, onEventPress 
                     <Text style={[styles.emptyTitle, { color: text }]}>No Events</Text>
                     <Text style={[styles.emptySubtitle, { color: muted }]}>
                         New events will appear here
+                    </Text>
+                </View>
+            )}
+        </ScrollView>
+    );
+
+    const renderMyEvents = () => (
+        <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            refreshControl={
+                onRefresh ? (
+                    <RefreshControl refreshing={Boolean(refreshing)} onRefresh={onRefresh} tintColor={tint} />
+                ) : undefined
+            }
+            showsVerticalScrollIndicator={false}
+        >
+            {myEvents.length > 0 ? (
+                <React.Fragment>
+                    {myEvents.map((event, index) => {
+                        const eventId = (event as any).id || event._id;
+                        const isNavigating = navigatingEventId === eventId;
+                        
+                        return (
+                            <TouchableOpacity
+                                key={eventId || `my-event-${index}`}
+                                activeOpacity={0.7}
+                                onPress={() => onEventPress?.(event, true)}
+                                disabled={isNavigating}
+                            >
+                                <View style={{ position: 'relative' }}>
+                                    <EventCard event={event} showStatus={true} />
+                                    {isNavigating && renderLoadingOverlay()}
+                                </View>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </React.Fragment>
+            ) : (
+                <View style={styles.emptyState}>
+                    <IconSymbol name="calendar.badge.plus" size={56} color={muted as string} />
+                    <Text style={[styles.emptyTitle, { color: text }]}>No Events Created</Text>
+                    <Text style={[styles.emptySubtitle, { color: muted }]}>
+                        Create your first event to see it here
                     </Text>
                 </View>
             )}
@@ -378,13 +470,14 @@ export default function EventView({ events, refreshing, onRefresh, onEventPress 
             {/* Toggle Bar */}
             <View style={[styles.toggleBar, { backgroundColor: card, borderColor: border }]}>
                 <TouchableOpacity
-                    style={[
-                        styles.toggleButton,
-                        viewMode === 'list' && { backgroundColor: tint },
-                    ]}
+                    style={styles.toggleButton}
                     onPress={() => setViewMode('list')}
                     activeOpacity={0.9}
                 >
+                    <Animated.View style={[
+                        styles.toggleButtonBg,
+                        viewMode === 'list' && { backgroundColor: tint }
+                    ]} />
                     <IconSymbol 
                         name="list.bullet" 
                         size={16} 
@@ -392,19 +485,21 @@ export default function EventView({ events, refreshing, onRefresh, onEventPress 
                     />
                     <Text style={[
                         styles.toggleText,
+                        { color: viewMode === 'list' ? '#fff' : (muted as string) },
                         viewMode === 'list' && styles.toggleTextActive
                     ]}>
                         List
                     </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                    style={[
-                        styles.toggleButton,
-                        viewMode === 'calendar' && { backgroundColor: tint },
-                    ]}
+                    style={styles.toggleButton}
                     onPress={() => setViewMode('calendar')}
                     activeOpacity={0.9}
                 >
+                    <Animated.View style={[
+                        styles.toggleButtonBg,
+                        viewMode === 'calendar' && { backgroundColor: tint }
+                    ]} />
                     <IconSymbol 
                         name="calendar" 
                         size={16} 
@@ -412,14 +507,37 @@ export default function EventView({ events, refreshing, onRefresh, onEventPress 
                     />
                     <Text style={[
                         styles.toggleText,
+                        { color: viewMode === 'calendar' ? '#fff' : (muted as string) },
                         viewMode === 'calendar' && styles.toggleTextActive
                     ]}>
                         Calendar
                     </Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.toggleButton}
+                    onPress={() => setViewMode('myEvents')}
+                    activeOpacity={0.9}
+                >
+                    <Animated.View style={[
+                        styles.toggleButtonBg,
+                        viewMode === 'myEvents' && { backgroundColor: tint }
+                    ]} />
+                    <IconSymbol 
+                        name="person.crop.circle.fill" 
+                        size={16} 
+                        color={viewMode === 'myEvents' ? '#fff' : (muted as string)} 
+                    />
+                    <Text style={[
+                        styles.toggleText,
+                        { color: viewMode === 'myEvents' ? '#fff' : (muted as string) },
+                        viewMode === 'myEvents' && styles.toggleTextActive
+                    ]}>
+                        My Events
+                    </Text>
+                </TouchableOpacity>
             </View>
 
-            {viewMode === 'list' ? renderList() : renderCalendar()}
+            {viewMode === 'list' ? renderList() : viewMode === 'calendar' ? renderCalendar() : renderMyEvents()}
         </View>
     );
 }
@@ -440,15 +558,26 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         paddingVertical: 12,
-        paddingHorizontal: 12,
+        paddingHorizontal: 8,
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
         gap: 6,
+        position: 'relative',
+        overflow: 'hidden',
+    },
+    toggleButtonBg: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderRadius: 10,
     },
     toggleText: {
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: '600',
+        zIndex: 1,
     },
     toggleTextActive: {
         color: '#fff',
@@ -494,6 +623,11 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         gap: 8,
     },
+    eventHeaderRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
     eventName: {
         fontSize: 16,
         fontWeight: '700',
@@ -506,6 +640,16 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
         borderRadius: 8,
         gap: 4,
+    },
+    statusBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    statusText: {
+        fontSize: 11,
+        fontWeight: '700',
+        textTransform: 'uppercase',
     },
     eventTime: {
         fontSize: 12,
@@ -707,5 +851,31 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         paddingVertical: 8,
+    },
+    loaderOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 12,
+    },
+    cancelButton: {
+        marginTop: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 10,
+        borderWidth: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: '#fff',
+    },
+    cancelButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
     },
 });
