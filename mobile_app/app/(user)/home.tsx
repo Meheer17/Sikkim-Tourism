@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { servicesService, businessService } from '@/services';
+import { locationService } from '@/services/location.service';
+import { buildImageUrl } from '@/utils/image-url';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
 
@@ -14,6 +16,10 @@ export default function HomeScreen() {
     const insets = useSafeAreaInsets();
     const [services, setServices] = useState<Service[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    // --- Search Bar State ---
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searching, setSearching] = useState(false);
+    const [results, setResults] = useState<any[]>([]);
     const { language } = useLanguage();
     const t = getLanguageTranslations(language);
     const background = useThemeColor('background');
@@ -25,6 +31,19 @@ export default function HomeScreen() {
     useEffect(() => {
         loadServices();
     }, []);
+
+    // Debounced search effect
+    useEffect(() => {
+        if (!searchQuery || searchQuery.trim().length === 0) {
+            setResults([]);
+            setSearching(false);
+            return;
+        }
+        const id = setTimeout(() => {
+            performSearch(searchQuery.trim());
+        }, 300);
+        return () => clearTimeout(id);
+    }, [searchQuery]);
 
     const loadServices = async () => {
         try {
@@ -72,30 +91,137 @@ export default function HomeScreen() {
     };
 
     const handleServicePress = (service: Service) => {
-        router.push(`/(user)/(stack)/service-details?id=${service.id}` as any);
+        router.push({
+            pathname: '/(user)/(stack)/service-details',
+            params: { id: service.id }
+        });
     };
 
     const handleViewAllServices = () => {
         router.push('/(user)/services' as any);
     };
 
+    const handleViewUpcomingBookings = () => {
+        router.push('/(user)/(stack)/schedule' as any);
+    };
+
+    // --- Search Logic ---
+    const performSearch = async (q: string) => {
+        setSearching(true);
+        try {
+            // Run searches in parallel
+            const [svcResp, bizResp, locResp] = await Promise.allSettled([
+                servicesService.list({ skip: 0, limit: 50 }),
+                businessService.list({ skip: 0, limit: 50 }),
+                locationService.list({ skip: 0, limit: 50 }),
+            ]);
+
+            const items: any[] = [];
+
+            if (svcResp.status === 'fulfilled' && svcResp.value?.data) {
+                const servicesList = svcResp.value.data || [];
+                servicesList.forEach((s: any) => {
+                    const name = (s.name || '').toString();
+                    const desc = (s.short_description || s.description || '').toString();
+                    if (name.toLowerCase().includes(q.toLowerCase()) || desc.toLowerCase().includes(q.toLowerCase())) {
+                        items.push({ id: s.id, type: 'service', title: s.name, subtitle: s.short_description || s.description, route: '/(user)/(stack)/service-details' });
+                    }
+                });
+            }
+
+            if (bizResp.status === 'fulfilled' && bizResp.value?.data) {
+                const businessList = bizResp.value.data || [];
+                businessList.forEach((b: any) => {
+                    const name = (b.name || '').toString();
+                    const desc = (b.short_description || b.description || '').toString();
+                    if (name.toLowerCase().includes(q.toLowerCase()) || desc.toLowerCase().includes(q.toLowerCase())) {
+                        items.push({ id: b.id, type: 'business', title: b.name, subtitle: b.short_description || b.description, route: '/(user)/(stack)/business-details' });
+                    }
+                });
+            }
+
+            if (locResp.status === 'fulfilled' && locResp.value?.data) {
+                const locList = locResp.value.data || [];
+                locList.forEach((l: any) => {
+                    const name = (l.name || '').toString();
+                    const desc = (l.short_description || l.description || '').toString();
+                    if (name.toLowerCase().includes(q.toLowerCase()) || desc.toLowerCase().includes(q.toLowerCase())) {
+                        items.push({ id: l.id, type: 'location', title: l.name, subtitle: l.short_description || l.description, route: '/(user)/(stack)/location-details' });
+                    }
+                });
+            }
+
+            // Deduplicate by type+id, keep first occurrences
+            const seen = new Set<string>();
+            const deduped = items.filter((it) => {
+                const key = `${it.type}:${it.id}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+
+            setResults(deduped.slice(0, 50));
+        } catch (error) {
+            console.error('Search failed', error);
+            setResults([]);
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const handleResultPress = async (item: any) => {
+        try {
+            if (item.type === 'service') {
+                router.push(`${item.route}?id=${item.id}` as any);
+            } else if (item.type === 'business') {
+                router.push(`${item.route}?id=${item.id}` as any);
+            } else if (item.type === 'location') {
+                // Fetch full location/place details so we can navigate with the
+                // same params Explore uses (ensures identical screen/state).
+                const resp = await locationService.get(item.id);
+                const loc = resp?.data;
+
+                // Build params similar to Explore's handlePlacePress
+                // Map fields the same way `explore.tsx` maps backend locations to Place
+                const rawImages: string[] = loc?.metadata?.images || [];
+                const images = rawImages.map((f: string) => buildImageUrl(f)).filter(Boolean) as string[];
+                const imageUrl = images[0] || '';
+                const params: Record<string, string> = {
+                    id: loc?.id || item.id,
+                    name: (loc?.name as string) || item.title || '',
+                    description: (loc?.description as string) || (loc?.short_description as string) || item.subtitle || '',
+                    distance: '',
+                    rating: '',
+                    category: (loc?.type as string) || '',
+                    imageUrl: imageUrl,
+                    images: JSON.stringify(images || []),
+                    modelPath: (loc?.metadata?.model_url as string) || '',
+                    has360Images: (!!loc?.metadata?.panorama_360).toString(),
+                    panorama360Url: buildImageUrl(loc?.metadata?.panorama_360) || '',
+                    latitude: loc?.position?.y ? String(loc.position.y) : '',
+                    longitude: loc?.position?.x ? String(loc.position.x) : '',
+                    shortDescription: (loc?.short_description as string) || '',
+                };
+
+                router.push({ pathname: '/(user)/(stack)/place-details', params } as any);
+            } else {
+                // Fallback: go to home
+                router.push('/(user)/home' as any);
+            }
+        } catch (err) {
+            console.error('Failed navigating to result', err);
+            router.push('/(user)/home' as any);
+        } finally {
+            // Clear search after navigate
+            setSearchQuery('');
+            setResults([]);
+        }
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: background }]}>
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={[
-                    styles.scrollContent,
-                    { paddingTop: Math.max(insets.top, 20) }
-                ]}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        progressViewOffset={insets.top + 20}
-                    />
-                }
-            >
-                {/* Header */}
+            {/* Top area: header + search (kept outside ScrollView to avoid nesting VirtualizedList) */}
+            <View style={{ paddingTop: Math.max(insets.top, 20), paddingHorizontal: 20 }}>
                 <View style={styles.header}>
                     <View>
                         <Text style={[styles.greeting, { color: text }]}>{t.welcomeBack || 'Welcome Back!'}</Text>
@@ -108,6 +234,71 @@ export default function HomeScreen() {
                         <IconSymbol name="person.crop.circle.fill" size={32} color={tint} />
                     </TouchableOpacity>
                 </View>
+
+                {/* Search Bar */}
+                <View style={[styles.searchContainer, { backgroundColor: card }]}>
+                    <IconSymbol name="magnifyingglass" size={18} color={muted as string} />
+                    <TextInput
+                        style={[styles.searchInput, { color: text }]}
+                        placeholder={t.search || 'Search'}
+                        placeholderTextColor={muted as string}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        returnKeyType="search"
+                        onSubmitEditing={() => performSearch(searchQuery.trim())}
+                    />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity onPress={() => { setSearchQuery(''); setResults([]); }}>
+                            <IconSymbol name="xmark.circle.fill" size={18} color={muted as string} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {/* Search Results (shows when query present) - outside ScrollView so FlatList isn't nested */}
+                {searchQuery.trim().length > 0 && (
+                    <View style={[styles.resultsContainer, { backgroundColor: 'transparent' }]}>
+                        {searching ? (
+                            <Text style={[styles.resultsStatus, { color: muted }]}>{t.searching || 'Searching...'}</Text>
+                        ) : results.length === 0 ? (
+                            <Text style={[styles.resultsStatus, { color: muted }]}>{t.no_results || 'No results'}</Text>
+                        ) : (
+                            <FlatList
+                                data={results}
+                                keyExtractor={(i) => `${i.type}-${i.id}`}
+                                style={{ maxHeight: 320 }}
+                                keyboardShouldPersistTaps="handled"
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity style={[styles.resultRow, { backgroundColor: card }]} onPress={() => handleResultPress(item)}>
+                                        <View style={styles.resultLeft}>
+                                            <IconSymbol name={item.type === 'service' ? 'sparkles' : item.type === 'business' ? 'building.2' : 'mappin.circle.fill'} size={20} color={tint} />
+                                        </View>
+                                        <View style={styles.resultTextContainer}>
+                                            <Text style={[styles.resultTitle, { color: text }]} numberOfLines={1}>{item.title}</Text>
+                                            <Text style={[styles.resultSubtitle, { color: muted }]} numberOfLines={1}>{item.subtitle}</Text>
+                                        </View>
+                                        <View style={styles.resultBadge}>
+                                            <Text style={[styles.resultBadgeText, { color: tint }]}>{item.type}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        )}
+                    </View>
+                )}
+
+            </View>
+
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        progressViewOffset={insets.top + 20}
+                    />
+                }
+            >
 
                 {/* Quick Stats */}
                 <View style={styles.statsContainer}>
@@ -146,6 +337,24 @@ export default function HomeScreen() {
                         </View>
                     </View>
                     <IconSymbol name="chevron.right" size={24} color="#fff" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.scheduleButton, { backgroundColor: card }]}
+                    activeOpacity={0.85}
+                    onPress={handleViewUpcomingBookings}
+                >
+                    <View style={styles.scheduleButtonLeft}>
+                        <View style={[styles.scheduleIcon, { backgroundColor: `${tint}15` }]}
+                        >
+                            <IconSymbol name="calendar" size={20} color={tint} />
+                        </View>
+                        <View>
+                            <Text style={[styles.scheduleTitle, { color: text }]}>View Upcoming Events</Text>
+                            <Text style={[styles.scheduleSubtitle, { color: muted }]}>See what's happening around</Text>
+                        </View>
+                    </View>
+                    <IconSymbol name="chevron.right" size={18} color={tint} />
                 </TouchableOpacity>
 
                 {/* Services Section */}
@@ -330,5 +539,112 @@ const styles = StyleSheet.create({
     },
     bannerSubtitle: {
         fontSize: 14,
+    },
+    scheduleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 16,
+        borderRadius: 16,
+        marginBottom: 24,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+    },
+    scheduleButtonLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        flex: 1,
+    },
+    scheduleIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    scheduleTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        marginBottom: 2,
+    },
+    scheduleSubtitle: {
+        fontSize: 13,
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginTop: 12,
+        marginBottom: 8,
+        shadowColor: '#000',
+        shadowOpacity: 0.04,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: 16,
+        paddingVertical: 4,
+        marginHorizontal: 4,
+        zIndex: 15,
+    },
+    resultsContainer: {
+        borderRadius: 12,
+        marginTop: 4,
+        marginBottom: 8,
+        paddingBottom: 8,
+        shadowColor: '#000',
+        shadowOpacity: 0.04,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    resultsStatus: {
+        paddingHorizontal: 20,
+        paddingVertical: 8,
+        fontSize: 14,
+    },
+    resultRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+        marginHorizontal: 20,
+        marginBottom: 8,
+        borderRadius: 12,
+    },
+    resultLeft: {
+        width: 36,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 12,
+    },
+    resultTextContainer: {
+        flex: 1,
+    },
+    resultTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    resultSubtitle: {
+        fontSize: 12,
+        marginTop: 2,
+    },
+    resultBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 10,
+        backgroundColor: 'transparent',
+        marginLeft: 8,
+    },
+    resultBadgeText: {
+        fontSize: 12,
+        fontWeight: '700',
+        textTransform: 'capitalize',
     },
 });

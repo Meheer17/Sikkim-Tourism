@@ -13,7 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { businessService, fileService } from '@/services';
+import { businessService, fileService, locationService } from '@/services';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function BusinessEditProfile() {
@@ -53,8 +53,20 @@ export default function BusinessEditProfile() {
                 setName(biz.name || '');
                 setDescription(biz.description || '');
                 setShortDescription(biz.short_description || '');
-                setBannerImage(biz.banner_image || null);
-                setImages(biz.images || []);
+                
+                // Get location data to load images from metadata
+                if (biz.l_id) {
+                    try {
+                        const locationResponse = await locationService.get(biz.l_id);
+                        if (locationResponse.success && locationResponse.data) {
+                            const location = locationResponse.data;
+                            setBannerImage(location.metadata?.banner_image || null);
+                            setImages(location.metadata?.images || []);
+                        }
+                    } catch (error: any) {
+                        console.warn('Failed to load location data:', error);
+                    }
+                }
             }
         } catch (error: any) {
             Alert.alert('Error', 'Failed to load business profile');
@@ -77,12 +89,33 @@ export default function BusinessEditProfile() {
     };
 
     const uploadBannerImage = async (uri: string) => {
+        if (!business?.l_id) {
+            Alert.alert('Error', 'No location associated with this business');
+            return;
+        }
+        
         setUploadingBanner(true);
         try {
             const response = await fileService.uploadDocument(uri, 'business_banner', business?.id);
             if (response.success && response.data) {
-                setBannerImage(response.data.cdn_url || response.data.url);
-                Alert.alert('Success', 'Banner image uploaded successfully');
+                const imageUrl = response.data.cdn_url || response.data.url;
+                setBannerImage(imageUrl);
+                
+                // Get current location to preserve existing metadata
+                const locationResponse = await locationService.get(business.l_id);
+                if (locationResponse.success && locationResponse.data) {
+                    const currentMetadata = locationResponse.data.metadata || {};
+                    
+                    // Update location metadata with banner image
+                    await locationService.update(business.l_id, {
+                        metadata: {
+                            ...currentMetadata,
+                            banner_image: imageUrl
+                        }
+                    });
+                    
+                    Alert.alert('Success', 'Banner image uploaded successfully');
+                }
             }
         } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to upload banner image');
@@ -106,12 +139,32 @@ export default function BusinessEditProfile() {
     };
 
     const uploadGalleryImage = async (uri: string) => {
+        if (!business?.l_id) {
+            Alert.alert('Error', 'No location associated with this business');
+            return;
+        }
+        
         setUploadingImage(true);
         try {
             const response = await fileService.uploadDocument(uri, 'business_gallery', business?.id);
             if (response.success && response.data) {
-                const imageUrl = response.data.url;
-                setImages(prev => [...prev, imageUrl]);
+                const imageUrl = response.data.cdn_url || response.data.url;
+                const newImages = [...images, imageUrl];
+                setImages(newImages);
+                
+                // Get current location to preserve existing metadata
+                const locationResponse = await locationService.get(business.l_id);
+                if (locationResponse.success && locationResponse.data) {
+                    const currentMetadata = locationResponse.data.metadata || {};
+                    
+                    // Update location metadata with new images array
+                    await locationService.update(business.l_id, {
+                        metadata: {
+                            ...currentMetadata,
+                            images: newImages
+                        }
+                    });
+                }
             }
         } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to upload image');
@@ -120,7 +173,12 @@ export default function BusinessEditProfile() {
         }
     };
 
-    const removeGalleryImage = (index: number) => {
+    const removeGalleryImage = async (index: number) => {
+        if (!business?.l_id) {
+            Alert.alert('Error', 'No location associated with this business');
+            return;
+        }
+        
         Alert.alert(
             'Remove Image',
             'Are you sure you want to remove this image?',
@@ -129,8 +187,27 @@ export default function BusinessEditProfile() {
                 {
                     text: 'Remove',
                     style: 'destructive',
-                    onPress: () => {
-                        setImages(prev => prev.filter((_, i) => i !== index));
+                    onPress: async () => {
+                        const newImages = images.filter((_, i) => i !== index);
+                        setImages(newImages);
+                        
+                        // Get current location to preserve existing metadata
+                        try {
+                            const locationResponse = await locationService.get(business.l_id);
+                            if (locationResponse.success && locationResponse.data) {
+                                const currentMetadata = locationResponse.data.metadata || {};
+                                
+                                // Update location metadata with new images array
+                                await locationService.update(business.l_id, {
+                                    metadata: {
+                                        ...currentMetadata,
+                                        images: newImages
+                                    }
+                                });
+                            }
+                        } catch (error: any) {
+                            Alert.alert('Error', 'Failed to update images');
+                        }
                     },
                 },
             ]
@@ -155,14 +232,6 @@ export default function BusinessEditProfile() {
                 description: description.trim(),
                 short_description: shortDescription.trim(),
             };
-
-            if (bannerImage) {
-                updateData.banner_image = bannerImage;
-            }
-
-            if (images.length > 0) {
-                updateData.images = images;
-            }
 
             const response = await businessService.update(business.id, updateData);
             if (response.success) {

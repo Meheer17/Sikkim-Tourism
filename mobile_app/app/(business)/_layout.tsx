@@ -1,4 +1,4 @@
-import React from 'react';
+        // juhygtfrdesw-o0dfxrzeswaq    uimport React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Stack, useRouter, usePathname } from 'expo-router';
 import Animated, { FadeInDown, SlideInUp, SlideOutDown, Easing } from 'react-native-reanimated';
