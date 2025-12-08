@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking, FlatList, Dimensions, Modal, StatusBar, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking, FlatList, Dimensions, Modal, StatusBar, Platform, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -125,6 +126,47 @@ export default function PlaceDetailsScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [fullScreenVisible, setFullScreenVisible] = useState(false);
   const [fullScreenImageIndex, setFullScreenImageIndex] = useState(0);
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  // Check if place is favorited on mount
+  useEffect(() => {
+    checkFavoriteStatus();
+  }, [place.id]);
+
+  const checkFavoriteStatus = async () => {
+    try {
+      const favoritesData = await AsyncStorage.getItem('favorites');
+      const favorites = favoritesData ? JSON.parse(favoritesData) : [];
+      setIsFavorite(favorites.includes(place.id));
+    } catch (error) {
+      console.error('Error checking favorite status:', error);
+    }
+  };
+
+  const toggleFavorite = async () => {
+    try {
+      const favoritesData = await AsyncStorage.getItem('favorites');
+      let favorites = favoritesData ? JSON.parse(favoritesData) : [];
+
+      if (isFavorite) {
+        // Remove from favorites
+        favorites = favorites.filter((id: string) => id !== place.id);
+        setIsFavorite(false);
+      } else {
+        // Add to favorites
+        if (!favorites.includes(place.id)) {
+          favorites.push(place.id);
+        }
+        setIsFavorite(true);
+        Alert.alert('Success', 'This place is added to your favourites');
+      }
+
+      await AsyncStorage.setItem('favorites', JSON.stringify(favorites));
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      Alert.alert('Error', 'Failed to update favorites');
+    }
+  };
 
   const handleImagePress = (index: number) => {
     setFullScreenImageIndex(index);
@@ -241,13 +283,22 @@ export default function PlaceDetailsScreen() {
         <View style={styles.content}>
           {/* Title and Rating */}
           <View style={styles.header}>
-            <Text style={[styles.name, { color: text }]}>{place.name}</Text>
-            {place.rating && (
-              <View style={styles.ratingContainer}>
-                <IconSymbol name="star.fill" size={20} color="#fbbf24" />
-                <Text style={[styles.rating, { color: text }]}>{place.rating}</Text>
-              </View>
-            )}
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.name, { color: text }]}>{place.name}</Text>
+              {place.rating && (
+                <View style={styles.ratingContainer}>
+                  <IconSymbol name="star.fill" size={20} color="#fbbf24" />
+                  <Text style={[styles.rating, { color: text }]}>{place.rating}</Text>
+                </View>
+              )}
+            </View>
+            <TouchableOpacity 
+              style={styles.favoriteButtonPlaceDetails}
+              onPress={toggleFavorite}
+              activeOpacity={0.7}
+            >
+              <IconSymbol name="heart.fill" size={24} color={isFavorite ? '#ef4444' : '#ccc'} />
+            </TouchableOpacity>
           </View>
 
           {/* Category and Distance */}
@@ -683,5 +734,12 @@ const styles = StyleSheet.create({
   },
   fullScreenDot: {
     borderRadius: 5,
+  },
+  favoriteButtonPlaceDetails: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

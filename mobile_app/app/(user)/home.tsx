@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, FlatList } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import ServiceCard, { Service } from '@/components/services/ServiceCard';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -16,6 +17,8 @@ export default function HomeScreen() {
     const insets = useSafeAreaInsets();
     const [services, setServices] = useState<Service[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [bookingsCount, setBookingsCount] = useState(0);
+    const [favoritesCount, setFavoritesCount] = useState(0);
     // --- Search Bar State ---
     const [searchQuery, setSearchQuery] = useState('');
     const [searching, setSearching] = useState(false);
@@ -30,7 +33,26 @@ export default function HomeScreen() {
 
     useEffect(() => {
         loadServices();
+        loadCounts();
     }, []);
+
+    // Load favorites count whenever screen is focused
+    useFocusEffect(
+        React.useCallback(() => {
+            loadCounts();
+        }, [])
+    );
+
+    const loadCounts = async () => {
+        try {
+            const favoritesData = await AsyncStorage.getItem('favorites');
+            const favorites = favoritesData ? JSON.parse(favoritesData) : [];
+            setFavoritesCount(favorites.length);
+        } catch (error) {
+            console.error('Error loading counts:', error);
+            setFavoritesCount(0);
+        }
+    };
 
     // Debounced search effect
     useEffect(() => {
@@ -304,19 +326,14 @@ export default function HomeScreen() {
                 <View style={styles.statsContainer}>
                     <View style={[styles.statCard, { backgroundColor: card }]}>
                         <IconSymbol name="ticket.fill" size={24} color={tint} />
-                        <Text style={[styles.statValue, { color: text }]}>12</Text>
+                        <Text style={[styles.statValue, { color: text }]}>{bookingsCount}</Text>
                         <Text style={[styles.statLabel, { color: muted }]}>{t.bookings || 'Bookings'}</Text>
                     </View>
-                    <View style={[styles.statCard, { backgroundColor: card }]}>
+                    <TouchableOpacity style={[styles.statCard, { backgroundColor: card }]} onPress={() => router.push('/(user)/(stack)/favorites' as any)}>
                         <IconSymbol name="heart.fill" size={24} color="#ef4444" />
-                        <Text style={[styles.statValue, { color: text }]}>8</Text>
+                        <Text style={[styles.statValue, { color: text }]}>{favoritesCount}</Text>
                         <Text style={[styles.statLabel, { color: muted }]}>{t.myFavorites || 'Favorites'}</Text>
-                    </View>
-                    <View style={[styles.statCard, { backgroundColor: card }]}>
-                        <IconSymbol name="mappin.circle.fill" size={24} color="#10b981" />
-                        <Text style={[styles.statValue, { color: text }]}>5</Text>
-                        <Text style={[styles.statLabel, { color: muted }]}>Visited</Text>
-                    </View>
+                    </TouchableOpacity>
                 </View>
 
                 {/* AI Planner Banner */}
