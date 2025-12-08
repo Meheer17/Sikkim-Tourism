@@ -41,3 +41,6 @@ pydub==0.25.1
 moviepy==1.0.3
 google-generativeai==0.8.3
 cryptography
+opencv-python==4.10.0.84
+opencv-contrib-python==4.10.0.84
+numpy==1.26.4

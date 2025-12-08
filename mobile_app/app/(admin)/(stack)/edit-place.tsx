@@ -254,7 +254,125 @@ export default function EditPlaceScreen() {
         }
     };
 
-    const handleUpload360Image = async () => {
+    const handleStitchPanorama = async () => {
+        Alert.alert(
+            'Create 360° Panorama',
+            'Choose how to create your panorama:',
+            [
+                {
+                    text: 'Stitch Multiple Photos',
+                    onPress: async () => {
+                        try {
+                            // Pick 2-20 images
+                            const images = await FilePicker.pickImageWithSource({ 
+                                allowsMultipleSelection: true,
+                                allowsEditing: false 
+                            });
+                            
+                            if (images.length === 0) return;
+                            
+                            if (images.length < 2) {
+                                Alert.alert('Not Enough Images', 'Please select at least 2 images to stitch together.');
+                                return;
+                            }
+                            
+                            if (images.length > 20) {
+                                Alert.alert('Too Many Images', 'Maximum 20 images allowed. Please select fewer images.');
+                                return;
+                            }
+                            
+                            // Show instructions
+                            Alert.alert(
+                                'Stitching ' + images.length + ' Images',
+                                'Make sure your images:\n\n' +
+                                '• Are ordered left-to-right\n' +
+                                '• Have 30-40% overlap\n' +
+                                '• Were taken from the same spot\n' +
+                                '• Have similar lighting\n\n' +
+                                'Processing may take 10-60 seconds...',
+                                [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    { 
+                                        text: 'Stitch Now',
+                                        onPress: async () => {
+                                            setUploadingImage(true);
+                                            
+                                            try {
+                                                // Create FormData with multiple images
+                                                const formData = new FormData();
+                                                images.forEach((image, index) => {
+                                                    formData.append('files', {
+                                                        uri: image.uri,
+                                                        type: image.type,
+                                                        name: image.name,
+                                                    } as any);
+                                                });
+                                                formData.append('mode', 'auto');
+                                                
+                                                // Call stitching API
+                                                const resp = await fileService.stitchPanorama({
+                                                    files: images.map(img => ({
+                                                        uri: img.uri,
+                                                        type: img.type,
+                                                        name: img.name,
+                                                    } as any)),
+                                                    mode: 'auto',
+                                                });
+                                                
+                                                if (resp.success && resp.data) {
+                                                    const panoramaUrl = (resp.data as any).cdn_url || 
+                                                                       (resp.data as any).url || 
+                                                                       (resp.data as any).cdn_response?.cdnUrl;
+                                                    
+                                                    if (panoramaUrl) {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            metadata: {
+                                                                ...prev.metadata,
+                                                                panorama_360: panoramaUrl,
+                                                            },
+                                                        }));
+                                                        
+                                                        const dimensions = (resp.data as any).dimensions || {};
+                                                        Alert.alert(
+                                                            'Success!', 
+                                                            `Stitched ${images.length} images into 360° panorama!\n\n` +
+                                                            `Dimensions: ${dimensions.width}x${dimensions.height}\n` +
+                                                            `Aspect Ratio: ${(resp.data as any).aspect_ratio || 'N/A'}\n\n` +
+                                                            'Remember to click Save to update the location!',
+                                                            [{ text: 'OK' }]
+                                                        );
+                                                    }
+                                                } else {
+                                                    Alert.alert('Stitching Failed', resp.message || 'Could not stitch images. Ensure they have 30-40% overlap.');
+                                                }
+                                            } catch (error: any) {
+                                                Alert.alert('Error', error.message || 'Failed to stitch panorama');
+                                            } finally {
+                                                setUploadingImage(false);
+                                            }
+                                        }
+                                    }
+                                ]
+                            );
+                        } catch (error: any) {
+                            Alert.alert('Error', error.message || 'Failed to select images');
+                        }
+                    }
+                },
+                {
+                    text: 'Upload Single 360° Photo',
+                    onPress: () => handleUploadSingle360Image()
+                },
+                {
+                    text: 'Cancel',
+                    style: 'cancel'
+                }
+            ]
+        );
+    };
+
+    const handleUploadSingle360Image = async () => {
         try {
             const images = await FilePicker.pickImageWithSource({ 
                 allowsMultipleSelection: false,
@@ -534,16 +652,16 @@ export default function EditPlaceScreen() {
                         <View style={styles.sectionHeader}>
                             <View>
                                 <Text style={styles.label}>360° Panorama</Text>
-                                <Text style={styles.fieldHint}>Must be 2:1 aspect ratio, JPG format</Text>
+                                <Text style={styles.fieldHint}>Upload single 360° photo or stitch multiple images</Text>
                             </View>
                             <TouchableOpacity
                                 style={[styles.uploadButton, uploadingImage && styles.uploadButtonDisabled]}
-                                onPress={handleUpload360Image}
+                                onPress={handleStitchPanorama}
                                 disabled={uploadingImage}
                             >
                                 <IconSymbol name="rotate.3d" size={16} color="#fff" />
                                 <Text style={styles.uploadButtonText}>
-                                    {uploadingImage ? 'Uploading...' : 'Upload 360°'}
+                                    {uploadingImage ? 'Processing...' : 'Add 360°'}
                                 </Text>
                             </TouchableOpacity>
                         </View>
