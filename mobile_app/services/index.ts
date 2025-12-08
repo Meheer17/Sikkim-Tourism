@@ -15,7 +15,6 @@ export { aiChatService } from './ai-chat.service';
 export { eventService, EventService } from './event.service';
 export { ordersService } from './orders.service';
 export { bookingsService } from './bookings.service';
-export { eventService } from './event.service';
 export { FriendsAPI } from './friends.service';
 
 export type { Event, EventOpenHours, EventListParams, EventCreateData } from './event.service';

@@ -253,7 +253,8 @@ class ApiClient {
                 ...config?.headers,
                 'Content-Type': 'multipart/form-data',
             },
-            timeout: 120000, // 2 minutes for file uploads
+            // Use provided timeout or default to 2 minutes for file uploads
+            timeout: config?.timeout || 120000,
         };
 
         const response = await this.client.post(url, formData, uploadConfig);

@@ -392,7 +392,12 @@ export class FileService {
                 locationId: request.locationId,
             });
 
-            const resp = await apiClient.uploadFile<FileUploadResponse>(`/upload/stitch-panorama`, formData);
+            // Use extended timeout for panorama stitching (2 minutes)
+            const resp = await apiClient.uploadFile<FileUploadResponse>(
+                `/upload/stitch-panorama`, 
+                formData,
+                { timeout: 120000 } // 2 minutes timeout
+            );
 
             console.log('📥 [FileService] Stitch response:', resp);
 
