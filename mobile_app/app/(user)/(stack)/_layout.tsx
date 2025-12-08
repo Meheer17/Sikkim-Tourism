@@ -146,6 +146,20 @@ export default function StackLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="schedule"
+        options={{
+          title: 'View Upcoming Events',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name="create-event"
+        options={{
+          title: 'Create Event',
+          headerShown: false,
+        }}
+      />
 
     </Stack>
   );

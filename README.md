@@ -34,15 +34,15 @@
 - ✅ Location-based audio guides (GPS)
 - ✅ Tourism analytics dashboard
 - ✅ Community chat & messaging
+- ✅ Booking system for events
+- ✅ Local transport integration
+- ✅ Calendar View for Events
 
 ## 📝 **To-Do Features (8/21)**
 
-- ⬜ Booking system for events
 - ⬜ Travel routes & nearby attractions on map
-- ⬜ Local transport integration
 - ⬜ Document View for Scanned manuscripts, murals, and historical documents.
-- ⬜ Calendar View for Events
-          - ⬜ Offline mode for remote areas
+- ⬜ Offline mode for remote areas
 - ⬜ Participatory archiving (user contributions)
 
 

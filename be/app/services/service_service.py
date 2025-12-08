@@ -48,6 +48,9 @@ class ServiceService:
         cursor = collection.find(query).skip(skip).limit(limit)
         services = []
         async for doc in cursor:
+            # Ensure metadata is a list if it's a dict
+            if "metadata" in doc and isinstance(doc["metadata"], dict):
+                doc["metadata"] = [doc["metadata"]]
             service_db = ServiceInDB(**doc)
             services.append(Service(
                 id=str(service_db.id),

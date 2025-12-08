@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, TextInput, Alert, Image, FlatList, Dimensions, ActivityIndicator, Linking, Animated, SafeAreaView } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, TextInput, Alert, Image, FlatList, Dimensions, ActivityIndicator, Linking, Animated } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { geminiNotifier, GeminiPayload } from '@/utils/gemini-notifier';
 import { businessService, locationService } from '@/services';
 import { buildImageUrl } from '@/utils/image-url';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { platformConfig } from '@/config/api.config';
 
 export default function GeminiPopup() {
   const [visible, setVisible] = useState(false);
@@ -102,6 +104,11 @@ export default function GeminiPopup() {
   }, [visible, showTimePicker, showResultsModal]);
 
   const onPositive = () => {
+    if (!payload) {
+      console.warn('GeminiPopup: positive action called with null payload');
+      hideBar();
+      return;
+    }
     const action = payload.positiveAction;
     const businessType = (payload as any).businessType as string | undefined;
     const position = (payload as any).position as { x: number; y: number } | undefined;
@@ -384,7 +391,6 @@ export default function GeminiPopup() {
 
 // Results modal component styles and UI appended below
 
-
 const styles = StyleSheet.create({
   topBar: {
     position: 'absolute',
@@ -401,13 +407,14 @@ const styles = StyleSheet.create({
   gradientBar: {
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
+    minHeight: platformConfig.isIOS ? 50 : 68, // Taller for Android
   },
   topBarInner: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 60 : 24,
-    paddingBottom: 36,
+    paddingTop: Platform.OS === 'android' ? 62 : 20, // More padding for Android
+    paddingBottom: Platform.OS === 'android' ? 28 : 0, // More padding for Android
   },
   iconCircle: {
     width: 56,
@@ -423,7 +430,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
   },
   topBarTitle: {
-    fontSize: 19,
+    fontSize: Platform.OS === 'android' ? 22 : 19,
     fontWeight: '800',
     marginBottom: 6,
     color: '#fff',
@@ -432,10 +439,13 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   topBarMessage: {
-    fontSize: 17,
+    fontSize: Platform.OS === 'android' ? 20 : 17,
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.95)',
-    lineHeight: 24,
+    lineHeight: Platform.OS === 'android' ? 28 : 24,
+    textAlign: 'left',
+    alignSelf: 'flex-start',
+    width: '100%',
   },
   topBarButtons: {
     flexDirection: 'row',
@@ -458,7 +468,7 @@ const styles = StyleSheet.create({
   topBarBtnText: {
     color: '#667eea',
     fontWeight: '700',
-    fontSize: 15,
+    fontSize: Platform.OS === 'android' ? 18 : 15,
   },
   overlay: {
     flex: 1,
@@ -477,14 +487,16 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
+    ...(Platform.OS === 'ios' && { minHeight: 480 }),
+    ...(Platform.OS === 'android' && { minHeight: 440 }), // Even taller modal on Android
   },
   title: {
-    fontSize: 18,
+    fontSize: Platform.OS === 'android' ? 22 : 18,
     fontWeight: '700',
     marginBottom: 8,
   },
   message: {
-    fontSize: 16,
+    fontSize: Platform.OS === 'android' ? 19 : 16,
     marginBottom: 16,
   },
   buttonsRow: {
@@ -503,23 +515,24 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: '600',
+    fontSize: Platform.OS === 'android' ? 17 : 15,
   },
   resultCard: {
-    width: Math.min(320, Dimensions.get('window').width - 80),
+    width: Math.min(340, Dimensions.get('window').width - 60),
     marginRight: 12,
     borderRadius: 10,
-    padding: 8,
+    padding: 12,
     alignItems: 'center',
   },
   resultImage: {
     width: '100%',
-    height: 140,
+    height: Platform.OS === 'android' ? 210 : 200, // Even taller for Android
     borderRadius: 8,
     backgroundColor: '#ddd',
   },
   resultPlaceholder: {
     width: '100%',
-    height: 140,
+    height: Platform.OS === 'android' ? 210 : 200, // Even taller for Android
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',

@@ -53,8 +53,8 @@ export default function UserLayout() {
         return routePage === currentPage || pathname === route;
     };
 
-    // Hide tab bar on community chat, immersive experience, friends list, and AI chat screens
-    const shouldShowTabBar = !pathname.includes('/community-chat') && !pathname.includes('/immersive-experience') && !pathname.includes('/friends-list') && !pathname.includes('/ai-planner-chat');
+    // Hide tab bar on community chat, immersive experience, friends list, AI chat screens, and create event
+    const shouldShowTabBar = !pathname.includes('/community-chat') && !pathname.includes('/immersive-experience') && !pathname.includes('/friends-list') && !pathname.includes('/ai-planner-chat') && !pathname.includes('/create-event');
 
     return (
         <View style={styles.container}>

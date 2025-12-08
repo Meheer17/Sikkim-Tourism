@@ -13,7 +13,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show nearby places and provide personalized recommendations.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location to show nearby places and provide personalized recommendations.",
-        "NSMotionUsageDescription": "This app needs access to motion and fitness data to track your activities and provide personalized travel insights."
+        "NSMotionUsageDescription": "This app needs access to motion and fitness data to track your activities and provide personalized travel insights.",
+        "NSCameraUsageDescription": "We need camera access to scan business documents, licenses, and verification materials."
       }
     },
     "android": {
@@ -42,6 +43,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "react-native-document-scanner-plugin",
+        {
+          "cameraPermission": "We need camera access to scan business documents, licenses, and verification materials."
+        }
+      ],
       [
         "expo-location",
         {

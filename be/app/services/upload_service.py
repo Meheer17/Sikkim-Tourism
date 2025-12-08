@@ -221,6 +221,11 @@ class UploadService:
                         detail=f"CDN upload failed: {response.text}"
                     )
                     
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"CDN upload failed: {e.response.status_code} - {e.response.text}"
+            )
         except httpx.RequestError as e:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -790,6 +795,200 @@ class UploadService:
             "filename": filename,
             "compression_ratio": f"{(1 - len(compressed_content)/len(file_content)) * 100:.1f}%"
         }
+    
+    async def upload_document(
+        self, 
+        file: UploadFile, 
+        category: str = "document", 
+        user_id: Optional[str] = None,
+        business_id: Optional[str] = None
+    ):
+        """
+        Upload scanned document (from document scanner) to CDN and save metadata to database
+        
+        Args:
+            file: Scanned document file (image or PDF)
+            category: Document category for organization
+            user_id: User who uploaded the document
+            business_id: Optional business ID to associate with document
+            
+        Returns:
+            Upload details with CDN URL
+        """
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
+        if not file.content_type or file.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unsupported document type: {file.content_type}. Supported: JPG, PNG, PDF"
+            )
+        
+        # Read file content
+        file_content = await file.read()
+        
+        # Compress if it's an image
+        compressed_content = file_content
+        if file.content_type.startswith('image/'):
+            # Higher quality for documents (90 vs 85)
+            compressed_content = await self.compress_image(file_content, max_size_mb=2.0, quality=90)
+        
+        # Reset file pointer
+        await file.seek(0)
+        
+        # Upload to CDN
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                files = {
+                    'file': (file.filename, compressed_content, file.content_type)
+                }
+                
+                headers = {
+                    'Authorization': f'Bearer {self.cdn_api_key}'
+                } if self.cdn_api_key else {}
+                
+                # CDN_URL already includes the /upload path
+                endpoint = self.cdn_url
+                
+                print(f"[DEBUG] Uploading document to CDN: {endpoint}")
+                print(f"[DEBUG] File: {file.filename}, Type: {file.content_type}, Size: {len(compressed_content)} bytes")
+                
+                upload_response = await client.post(
+                    endpoint,
+                    files=files,
+                    headers=headers
+                )
+                
+                print(f"[DEBUG] CDN Response Status: {upload_response.status_code}")
+                print(f"[DEBUG] CDN Response Body: {upload_response.text}")
+                
+                upload_response.raise_for_status()
+                cdn_response = upload_response.json()
+        
+        except httpx.HTTPStatusError as e:
+            print(f"[ERROR] CDN HTTP Error: Status {e.response.status_code}, Body: {e.response.text}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"CDN upload failed: {e.response.status_code} - {e.response.text}"
+            )
+        except httpx.RequestError as e:
+            print(f"[ERROR] CDN Request Error: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"CDN service unavailable: {str(e)}"
+            )
+        
+        # Extract CDN URL
+        cdn_url = cdn_response.get("url", "") or cdn_response.get("cdnUrl", "")
+        
+        # Convert CDN URL to API proxy URL if needed
+        if cdn_url and "/images/" in cdn_url:
+            import re
+            filename_match = re.search(r'/images/([^/]+)$', cdn_url)
+            if filename_match:
+                filename = filename_match.group(1)
+                cdn_url = f"http://{self.local_ip}:8000/api/v1/cdn/images/{filename}"
+        
+        # Save to database with document category
+        file_data = {
+            "file_name": file.filename,
+            "file_path": cdn_url,
+            "file_type": "document",
+            "category": category,
+            "business_id": ObjectId(business_id) if business_id and ObjectId.is_valid(business_id) else None,
+            "uploaded_by": ObjectId(user_id) if user_id and ObjectId.is_valid(user_id) else None,
+            "cdn_response": cdn_response,
+            "created_at": datetime.utcnow(),
+            "original_size": len(file_content),
+            "compressed_size": len(compressed_content) if compressed_content != file_content else None,
+            "mime_type": file.content_type
+        }
+        
+        result = await self._collection().insert_one(file_data)
+        
+        return {
+            "file_id": str(result.inserted_id),
+            "url": cdn_url,
+            "cdn_url": cdn_url,
+            "cdn_response": cdn_response,
+            "filename": file.filename,
+            "category": category,
+            "size": len(compressed_content),
+            "compression_ratio": f"{(1 - len(compressed_content)/len(file_content)) * 100:.1f}%" if compressed_content != file_content else "0%"
+        }
+    
+    async def get_documents(
+        self,
+        category: Optional[str] = None,
+        business_id: Optional[str] = None,
+        user_id: Optional[str] = None
+    ):
+        """
+        Get documents with optional filters
+        
+        Args:
+            category: Document category filter
+            business_id: Business ID filter
+            user_id: User ID (for permission checking)
+            
+        Returns:
+            List of documents
+        """
+        query = {}
+        
+        if category:
+            query["category"] = category
+        
+        if business_id and ObjectId.is_valid(business_id):
+            query["business_id"] = ObjectId(business_id)
+        
+        print(f"[DEBUG] Querying documents with: {query}")
+        
+        # Get documents from database
+        cursor = self._collection().find(query).sort("created_at", -1)
+        documents = await cursor.to_list(length=None)
+        
+        print(f"[DEBUG] Found {len(documents)} documents")
+        
+        # Convert ObjectId to string
+        for doc in documents:
+            doc["_id"] = str(doc["_id"])
+            if "uploaded_by" in doc and doc["uploaded_by"]:
+                doc["uploaded_by"] = str(doc["uploaded_by"])
+            if "business_id" in doc and doc["business_id"]:
+                doc["business_id"] = str(doc["business_id"])
+        
+        return documents
+    
+    async def delete_document(self, file_id: str, user_id: str):
+        """
+        Delete a document by ID
+        
+        Args:
+            file_id: Document file ID
+            user_id: User requesting deletion (for permission checking)
+        """
+        if not ObjectId.is_valid(file_id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid file ID"
+            )
+        
+        # Find the document
+        document = await self._collection().find_one({"_id": ObjectId(file_id)})
+        
+        if not document:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found"
+            )
+        
+        # Delete from database
+        await self._collection().delete_one({"_id": ObjectId(file_id)})
+        
+        # Note: CDN file deletion would go here if needed
+        # For now, we only delete the database record
+        
+        return True
     
     async def process_upload(
         self,

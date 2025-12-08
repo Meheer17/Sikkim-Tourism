@@ -3,8 +3,10 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { getLanguageTranslations } from '@/constants/translations';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { bookingsService, servicesService, businessService } from '@/services';
+import { OrderModel } from '@/services/orders.service';
 import React, { useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator } from 'react-native';
 
 const STATUS_FILTERS = [
     { key: 'all', label: 'All' },
@@ -28,6 +30,8 @@ export default function MyBookingsScreen() {
     const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
     const [selectedFilter, setSelectedFilter] = useState('all');
     const [refreshing, setRefreshing] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [rawOrders, setRawOrders] = useState<OrderModel[]>([]);
 
     // Theme colors
     const screenBg = useThemeColor('background');
@@ -46,11 +50,70 @@ export default function MyBookingsScreen() {
     }, [selectedFilter, bookings]);
 
     const loadBookings = async () => {
-        // TODO: Replace with actual API call
-        // const response = await apiClient.get('/bookings');
-        // setBookings(response.data);
+        try {
+            setLoading(true);
+            const response = await bookingsService.getMyBookings({ skip: 0, limit: 100 });
 
-        setBookings([]);
+            if (response.success && response.data) {
+                const orders = response.data;
+                setRawOrders(orders);
+
+                // Transform OrderModel to Booking format
+                const transformedBookings: Booking[] = await Promise.all(
+                    orders.map(async (order) => {
+                        try {
+                            // Get service details
+                            const serviceResponse = await servicesService.get(order.service_id);
+                            const serviceName = serviceResponse.data?.name || 'Service';
+
+                            // Determine booking status based on order and payment status
+                            let status: 'active' | 'upcoming' | 'completed' | 'cancelled' = 'upcoming';
+
+                            if (order.order_status === 'cancelled') {
+                                status = 'cancelled';
+                            } else if (order.order_status === 'completed') {
+                                status = 'completed';
+                            } else if (order.order_status === 'confirmed' && order.payment_status === 'completed') {
+                                status = 'active';
+                            }
+
+                            return {
+                                id: order.id,
+                                serviceName,
+                                bookingDate: new Date(order.created_at).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US'),
+                                status,
+                                serviceType: order.metadata?.type || 'Service',
+                                price: order.amount,
+                                bookingCode: order.id.substring(0, 8).toUpperCase(),
+                            };
+                        } catch (error) {
+                            console.error(`Error transforming order ${order.id}:`, error);
+                            return {
+                                id: order.id,
+                                serviceName: 'Service',
+                                bookingDate: new Date(order.created_at).toLocaleDateString(),
+                                status: 'upcoming' as const,
+                                serviceType: 'Service',
+                                price: order.amount,
+                                bookingCode: order.id.substring(0, 8).toUpperCase(),
+                            };
+                        }
+                    })
+                );
+
+                console.log('Loaded bookings:', transformedBookings);
+                setBookings(transformedBookings.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime()));
+            } else {
+                console.warn('Failed to load bookings:', response.errors);
+                setBookings([]);
+            }
+        } catch (error) {
+            console.error('Failed to load bookings:', error);
+            Alert.alert(t.error || 'Error', t.failed_load_bookings || 'Failed to load bookings');
+            setBookings([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const filterBookings = () => {
@@ -69,7 +132,35 @@ export default function MyBookingsScreen() {
 
     const handleBookingPress = (booking: Booking) => {
         console.log('Booking pressed:', booking);
-        // TODO: Navigate to booking details
+        Alert.alert(
+            booking.bookingCode || booking.id,
+            `${booking.serviceName}\n₹${booking.price}\nStatus: ${booking.status}`
+        );
+    };
+
+    const handlePayment = async (order: OrderModel) => {
+        Alert.alert(
+            t.pay || 'Pay Now',
+            `${t.paymentAmount || 'Payment Amount'}: ₹${order.amount}`,
+            [
+                { text: t.cancel || 'Cancel', style: 'cancel' },
+                {
+                    text: t.confirm || 'Confirm',
+                    onPress: async () => {
+                        try {
+                            // Call payment update
+                            const resp = await bookingsService.markPaymentCompleted(order.id);
+                            if (resp.success) {
+                                Alert.alert(t.success || 'Success', t.paymentSuccessful || 'Payment successful! Your booking is now in progress.');
+                                loadBookings();
+                            }
+                        } catch (error: any) {
+                            Alert.alert(t.error || 'Error', error.message || t.paymentFailed || 'Payment failed. Please try again.');
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const activeCount = bookings.filter(b => b.status === 'active').length;
@@ -151,26 +242,46 @@ export default function MyBookingsScreen() {
                 }
                 showsVerticalScrollIndicator={false}
             >
-                {filteredBookings.length > 0 ? (
-                    filteredBookings.map((booking) => (
-                        <BookingCard
-                            key={booking.id}
-                            booking={booking}
-                            onPress={handleBookingPress}
-                        />
-                    ))
+                {loading ? (
+                    <View style={styles.emptyState}>
+                        <ActivityIndicator size="large" color={tint as string} />
+                        <Text style={[styles.emptyTitle, { color: text, marginTop: 16 }]}>
+                            {t.loading_bookings || 'Loading bookings...'}
+                        </Text>
+                    </View>
+                ) : filteredBookings.length > 0 ? (
+                    filteredBookings.map((booking) => {
+                        // Find the corresponding raw order
+                        const rawOrder = rawOrders.find(o => o.id === booking.id);
+                        const needsPayment = rawOrder && rawOrder.order_status === 'confirmed' && rawOrder.payment_status === 'pending';
+
+                        return (
+                            <View key={booking.id}>
+                                <BookingCard
+                                    booking={booking}
+                                    onPress={handleBookingPress}
+                                />
+                                {needsPayment && (
+                                    <TouchableOpacity
+                                        style={[styles.payButton, { backgroundColor: tint }]}
+                                        onPress={() => handlePayment(rawOrder)}
+                                    >
+                                        <IconSymbol name="creditcard.fill" size={18} color="#fff" />
+                                        <Text style={styles.payButtonText}>{t.pay || 'Pay Now'}</Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        );
+                    })
                 ) : (
                     <View style={styles.emptyState}>
                         <IconSymbol name="calendar.badge.exclamationmark" size={64} color={border as string} />
-                        <Text style={[styles.emptyTitle, { color: text }]}>{t.noBookings}</Text>
+                        <Text style={[styles.emptyTitle, { color: text }]}>{t.noBookings || 'No bookings'}</Text>
                         <Text style={[styles.emptySubtitle, { color: mutedText }]}>
                             {selectedFilter === 'all'
-                                ? t.explore_places
-                                : t.noBookings}
+                                ? t.explore_places || 'Explore and book services'
+                                : t.noBookings || 'No bookings'}
                         </Text>
-                        <TouchableOpacity style={[styles.exploreButton, { backgroundColor: tint }]}>
-                            <Text style={styles.exploreButtonText}>Explore Services</Text>
-                        </TouchableOpacity>
                     </View>
                 )}
             </ScrollView>
@@ -287,6 +398,21 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     exploreButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#fff',
+    },
+    payButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginHorizontal: 16,
+        marginBottom: 12,
+        paddingVertical: 12,
+        borderRadius: 12,
+    },
+    payButtonText: {
         fontSize: 16,
         fontWeight: '600',
         color: '#fff',

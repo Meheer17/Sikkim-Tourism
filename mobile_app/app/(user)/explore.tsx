@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder, ActivityIndicator, Platform, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder, ActivityIndicator, Platform, Modal, Alert, TextInput } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -48,12 +48,12 @@ const SIKKIM_REGION = {
 
 // Map boundaries for Sikkim and adjacent areas
 // Sikkim: 27.05°N to 28.13°N, 88.05°E to 88.93°E
-// Including West Bengal (Darjeeling), Nepal border, Bhutan border, Tibet border
+// Including West Bengal (Darjeeling), Nepal border, Bhutan border, Tibet border, Meghalaya (Shillong)
 const MAP_BOUNDARIES = {
-  minLatitude: 26.5,   // South (includes Darjeeling area)
+  minLatitude: 25.0,   // South (includes Shillong/Meghalaya: ~25.5°N)
   maxLatitude: 28.5,   // North (includes Tibet border)
   minLongitude: 87.8,  // West (includes Nepal border)
-  maxLongitude: 89.2,  // East (includes Bhutan border)
+  maxLongitude: 92.0,  // East (includes Shillong/Meghalaya: ~91.8°E)
 };
 
 export default function ExploreScreen() {
@@ -61,7 +61,7 @@ export default function ExploreScreen() {
   const [nearbyPlaces, setNearbyPlaces] = useState<Place[]>([]);
   const [region, setRegion] = useState(SIKKIM_REGION);
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
-  const [isUserInSikkim, setIsUserInSikkim] = useState(false);
+  const [isUserInRegion, setIsUserInRegion] = useState(false);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [loading, setLoading] = useState(true);
   const [mapError, setMapError] = useState(false);
@@ -81,6 +81,8 @@ export default function ExploreScreen() {
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
   const [selectedDistance, setSelectedDistance] = useState<DistanceFilter>('all');
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isFiltering, setIsFiltering] = useState(false);
 
   // Theming
   const screenBg = useThemeColor('background');
@@ -119,17 +121,30 @@ export default function ExploreScreen() {
     fetchAndLoadLocations();
   }, []);
 
-  // Apply filters whenever filter settings or location changes
+  // Apply filters whenever filter settings or location changes (with debounce to prevent race conditions)
   useEffect(() => {
-    // When filters change, either fetch nearby locations from server (if distance filter and user location available)
-    // or apply client-side filters on already loaded places.
-    if (selectedDistance !== 'all' && userLocation) {
-      // fetch using radius from server
-      fetchAndLoadLocations();
-    } else {
+    if (isFiltering) return; // Prevent concurrent filter operations
+    
+    const timeoutId = setTimeout(() => {
+      // When filters change, either fetch nearby locations from server (if distance filter and user location available)
+      // or apply client-side filters on already loaded places.
+      if (selectedDistance !== 'all' && userLocation) {
+        // fetch using radius from server
+        fetchAndLoadLocations();
+      } else {
+        applyFilters();
+      }
+    }, 300); // 300ms debounce
+    
+    return () => clearTimeout(timeoutId);
+  }, [selectedCategory, selectedDistance, searchQuery, userLocation]);
+  
+  // Separate effect for initial data load or when allPlaces changes
+  useEffect(() => {
+    if (allPlaces.length > 0 && !isFiltering) {
       applyFilters();
     }
-  }, [selectedCategory, selectedDistance, userLocation, allPlaces]);
+  }, [allPlaces]);
 
   // Update active filters count
   useEffect(() => {
@@ -203,7 +218,7 @@ export default function ExploreScreen() {
       const updatedPlaces = mappedPlaces.map(place => {
         if (place.latitude && place.longitude) {
           const dist = calculateDistance(refLat, refLon, place.latitude, place.longitude);
-          const distanceText = (userLocation && isUserInSikkim) ? `${dist} km` : `${dist} km`;
+          const distanceText = (userLocation && isUserInRegion) ? `${dist} km` : `${dist} km`;
           return { ...place, distance: distanceText };
         }
         return place;
@@ -230,7 +245,19 @@ export default function ExploreScreen() {
 
   // Apply filters to places
   const applyFilters = () => {
+    setIsFiltering(true);
+    
     let filtered = [...allPlaces];
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(place => 
+        place.name.toLowerCase().includes(query) ||
+        place.description.toLowerCase().includes(query) ||
+        place.category.toLowerCase().includes(query)
+      );
+    }
 
     // Filter by category
     if (selectedCategory !== 'all') {
@@ -248,12 +275,14 @@ export default function ExploreScreen() {
     }
 
     setNearbyPlaces(filtered);
+    setIsFiltering(false);
   };
 
   // Reset all filters
   const resetFilters = () => {
     setSelectedCategory('all');
     setSelectedDistance('all');
+    setSearchQuery('');
   };
 
   // Calculate distance between two coordinates using Haversine formula
@@ -271,14 +300,14 @@ export default function ExploreScreen() {
   };
 
   // Update distances based on user location or default to Gangtok center
-  const updatePlaceDistances = (userLat?: number, userLon?: number, isInSikkim: boolean = false) => {
+  const updatePlaceDistances = (userLat?: number, userLon?: number, isInRegion: boolean = false) => {
     const refLat = userLat || SIKKIM_REGION.latitude; // Default to Gangtok
     const refLon = userLon || SIKKIM_REGION.longitude;
 
     const updatedPlaces = allPlaces.map((place: Place) => {
       if (place.latitude && place.longitude) {
         const dist = calculateDistance(refLat, refLon, place.latitude, place.longitude);
-        const distanceText = isInSikkim
+        const distanceText = isInRegion
           ? `${dist} km`
           : `${dist} km from Gangtok`;
         return {
@@ -301,12 +330,12 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     // Update distances when component mounts or user location changes
-    if (userLocation && isUserInSikkim) {
+    if (userLocation && isUserInRegion) {
       updatePlaceDistances(userLocation.coords.latitude, userLocation.coords.longitude, true);
     } else if (allPlaces.length > 0) {
       updatePlaceDistances(undefined, undefined, false); // Use Gangtok as reference
     }
-  }, [userLocation, isUserInSikkim]);
+  }, [userLocation, isUserInRegion]);
 
   const handleGetUserLocation = async () => {
     setIsLoadingLocation(true);
@@ -326,14 +355,14 @@ export default function ExploreScreen() {
           location.longitude >= MAP_BOUNDARIES.minLongitude &&
           location.longitude <= MAP_BOUNDARIES.maxLongitude;
 
-        setIsUserInSikkim(isWithinBounds);
+        setIsUserInRegion(isWithinBounds);
 
         if (isWithinBounds) {
           const clampedLocation = clampRegion(location);
           setRegion(clampedLocation);
           mapRef.current?.animateToRegion(clampedLocation, 1000);
         } else {
-          alert('Oops. You are currently outside this region. Showing distances from Gangtok, Sikkim.');
+          alert('You are currently outside the mapped region. Showing distances from Gangtok, Sikkim.');
           mapRef.current?.animateToRegion(SIKKIM_REGION, 1000);
         }
       }
@@ -615,7 +644,7 @@ export default function ExploreScreen() {
 
           {/* Modal Header */}
           <View style={styles.modalHeader}>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={[styles.modalTitle, { color: text }]}>{t.nearbyPlaces || 'Nearby Places'}</Text>
               <Text style={[styles.modalSubtitle, { color: muted }]}>
                 {nearbyPlaces.length} places found
@@ -632,6 +661,26 @@ export default function ExploreScreen() {
                 </View>
               )}
             </TouchableOpacity>
+          </View>
+          
+          {/* Search Bar */}
+          <View style={styles.searchContainer}>
+            <View style={[styles.searchInputContainer, { backgroundColor: soft, borderColor: border }]}>
+              <IconSymbol name="magnifyingglass" size={18} color={muted as string} />
+              <TextInput
+                style={[styles.searchInput, { color: text }]}
+                placeholder="Search places..."
+                placeholderTextColor={muted as string}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                returnKeyType="search"
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <IconSymbol name="xmark.circle.fill" size={18} color={muted as string} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
 
@@ -882,6 +931,24 @@ const styles = StyleSheet.create({
   },
   modalSubtitle: {
     fontSize: 14,
+  },
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    padding: 0,
   },
   filterButton: {
     width: 40,

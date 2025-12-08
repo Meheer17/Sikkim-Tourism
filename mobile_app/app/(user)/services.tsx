@@ -60,7 +60,7 @@ export default function ServicesScreen() {
             const typeNames = types.map((type: BusinessType) => type.type);
             console.log('Categories built:', ['All', ...typeNames, 'Other']);
             setCategories(['All', ...typeNames, 'Other']);
-            
+
             // NOW load services after business types are ready
             await loadServices(types);
         } catch (error) {
@@ -78,7 +78,6 @@ export default function ServicesScreen() {
             console.log('Total services from API:', servicesList.length);
             console.log('Business types available:', types.map(t => `${t.id}: ${t.type}`).join(', '));
 
-            // Map services to Service format for the UI
             const mappedServices: Service[] = await Promise.all(
                 servicesList.map(async (svc: ServiceModel) => {
                     // Get business details to find the category
@@ -166,7 +165,10 @@ export default function ServicesScreen() {
     };
 
     const handleServicePress = (service: Service) => {
-        router.push(`/(user)/(stack)/service-details?id=${service.id}` as any);
+        router.push({
+            pathname: '/(user)/(stack)/service-details',
+            params: { id: service.id }
+        });
     };
 
     return (
