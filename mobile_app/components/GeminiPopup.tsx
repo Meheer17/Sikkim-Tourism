@@ -7,8 +7,10 @@ import { businessService, locationService } from '@/services';
 import { buildImageUrl } from '@/utils/image-url';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { platformConfig } from '@/config/api.config';
+import { usePathname } from 'expo-router';
 
 export default function GeminiPopup() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [payload, setPayload] = useState<GeminiPayload | null>(null);
 
@@ -28,6 +30,13 @@ export default function GeminiPopup() {
 
   useEffect(() => {
     const unsub = geminiNotifier.subscribe((p: any) => {
+      // Only show popup on home and explore pages
+      const allowedRoutes = ['/(user)/home', '/(user)/explore'];
+      if (!allowedRoutes.includes(pathname)) {
+        console.log('GeminiPopup: suppressing popup, not on home/explore page. Current:', pathname);
+        return;
+      }
+
       // normalize backend shapes into our GeminiPayload shape
       console.log('GeminiPopup received raw payload', p);
       const normalized: any = {
@@ -65,7 +74,7 @@ export default function GeminiPopup() {
     });
 
     return () => unsub();
-  }, []);
+  }, [pathname]);
 
   
 

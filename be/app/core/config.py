@@ -35,10 +35,10 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str
     
     # CDN Configuration (for uploading media files and 3D models)
-    CDN_URL: str
-    CDN_MODEL_URL: str
-    CDN_API_KEY: str
-    LOCAL_IP: str
+    CDN_URL: str = ""
+    CDN_MODEL_URL: str = ""
+    CDN_API_KEY: str = ""
+    LOCAL_IP: str = "127.0.0.1"
     
     class Config:
         env_file = str(ENV_FILE)

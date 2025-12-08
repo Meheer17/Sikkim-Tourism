@@ -349,10 +349,7 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
         Later this should construct a Gemini prompt and invoke the model.
         """
         try:
-            print(f"🔔 Trigger received from user={user_id}: type={trigger.type}, time={trigger.time}, position={trigger.position}")
-
-            # Normalize incoming trigger time to IST and log the incoming trigger to DB so future fetches include this event
-            # Treat timezone-naive times as already in IST (frontend should send IST)
+            print(f"Trigger from user={user_id}: type={trigger.type}")
             try:
                 if trigger.time:
                     if trigger.time.tzinfo is None:
@@ -385,14 +382,11 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
                             recent_actions_map[action] = created_iso
 
                     if recent_actions_map:
-                        print(f"Found recent actions for user {user_id}: {recent_actions_map}")
+                        print(f"Found recent actions {len(recent_actions_map)}")
+                        print(f"Action types from DB: {list(recent_actions_map.keys())}")
             except Exception as e:
                 print(f"Could not fetch recent triggers from DB: {e}")
 
-            # Build a contextual Gemini prompt based on trigger inputs (type/time/position)
-            # The model should return a JSON object describing the suggested action for the client UI
-            # Keep the JSON format small and stable so the mobile app can parse it directly.
-            # Use IST-normalized time for prompt and hour calculation
             try:
                 trigger_time_iso = trigger_time_ist.isoformat()
                 hour = trigger_time_ist.hour
@@ -400,7 +394,6 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
                 trigger_time_iso = None
                 hour = None
 
-            # Small set of service types (helpful for the assistant). We include them inline so Gemini can pick appropriate suggestions.
             service_types = [
                 {"type": "hotel", "category": "buy", "id": "6927dd74c83ad21b4792693d"},
                 {"type": "restaurant", "category": "buy", "id": "6927dd74c83ad21b4792693e"},
@@ -465,17 +458,14 @@ Remember
 
                 gemini_json = self._parse_json_response(response.text)
                 gemini_result = gemini_json
-                # Attach a default nearby places query so the mobile client can call the locations API
                 try:
                     lat = float(trigger.position.y)
                     lng = float(trigger.position.x)
-                    radius = 1000  # default radius in meters (maps default-ish)
+                    radius = 1000 
                     nearby_url = f"/api/v1/location?position_lat={lat}&position_lng={lng}&radius_m={radius}&skip=0&limit=50"
                     gemini_result.setdefault('nearby_url', nearby_url)
                 except Exception:
-                    # if position missing or malformed, skip adding nearby_url
                     pass
-                # If model suggests no_action, suppress popups on the client by removing message/buttons and setting a flag
                 try:
                     if isinstance(gemini_result, dict) and gemini_result.get('type') == 'no_action':
                         gemini_result.pop('agent_message', None)
@@ -545,16 +535,6 @@ Remember
                     "buttons": {"positive": positive, "negative": negative}
                 }
 
-                # Add default nearby places query URL for the mobile client
-                try:
-                    lat = float(trigger.position.y)
-                    lng = float(trigger.position.x)
-                    radius = 1000
-                    gemini_result["nearby_url"] = f"/api/v1/location?position_lat={lat}&position_lng={lng}&radius_m={radius}&skip=0&limit=50"
-                except Exception:
-                    pass
-
-                # If fallback or rule-based result indicates no_action, ensure no popups
                 try:
                     if isinstance(gemini_result, dict) and gemini_result.get('type') == 'no_action':
                         gemini_result.pop('agent_message', None)
@@ -570,6 +550,7 @@ Remember
                     try:
                         if isinstance(gemini_result, dict):
                             action_from_ai = gemini_result.get('type')
+                            print(gemini_result.get('type'), gemini_result.get('no_popup'))
                     except Exception:
                         action_from_ai = None
 
@@ -583,7 +564,6 @@ Remember
                     }
                     try:
                         insert_result = await db.triggers.insert_one(doc)
-                        print(f"Inserted trigger record for user={user_id}, id={insert_result.inserted_id}, action={action_from_ai}")
                     except Exception as ie:
                         print(f"Failed to insert trigger record: {ie}")
             except Exception as e:
