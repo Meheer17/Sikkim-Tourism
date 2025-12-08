@@ -124,7 +124,7 @@ export default function ExploreScreen() {
   // Apply filters whenever filter settings or location changes (with debounce to prevent race conditions)
   useEffect(() => {
     if (isFiltering) return; // Prevent concurrent filter operations
-    
+
     const timeoutId = setTimeout(() => {
       // When filters change, either fetch nearby locations from server (if distance filter and user location available)
       // or apply client-side filters on already loaded places.
@@ -135,10 +135,10 @@ export default function ExploreScreen() {
         applyFilters();
       }
     }, 300); // 300ms debounce
-    
+
     return () => clearTimeout(timeoutId);
   }, [selectedCategory, selectedDistance, searchQuery, userLocation]);
-  
+
   // Separate effect for initial data load or when allPlaces changes
   useEffect(() => {
     if (allPlaces.length > 0 && !isFiltering) {
@@ -172,12 +172,7 @@ export default function ExploreScreen() {
   const fetchAndLoadLocations = async () => {
     try {
       setLoading(true);
-
-<<<<<<< HEAD
-      const params: any = { skip: 0, limit: 50 };
-=======
       const params: any = { skip: 0, limit: 150 };
->>>>>>> 9b25bfd58abe9653597af64277c15cecb9396457
       const radiusMeters = getRadiusMeters(selectedDistance);
       if (radiusMeters !== undefined && userLocation) {
         params.position_lat = userLocation.coords.latitude;
@@ -248,13 +243,13 @@ export default function ExploreScreen() {
   // Apply filters to places
   const applyFilters = () => {
     setIsFiltering(true);
-    
+
     let filtered = [...allPlaces];
 
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(place => 
+      filtered = filtered.filter(place =>
         place.name.toLowerCase().includes(query) ||
         place.description.toLowerCase().includes(query) ||
         place.category.toLowerCase().includes(query)
@@ -617,10 +612,10 @@ export default function ExploreScreen() {
             <IconSymbol name="minus" size={24} color={text} />
           </TouchableOpacity>
           <TouchableOpacity
-          style={[styles.controlButton, { backgroundColor: controlBg }]}
-          onPress={() => router.push('/(user)/(stack)/friends' as any)}
+            style={[styles.controlButton, { backgroundColor: controlBg }]}
+            onPress={() => router.push('/(user)/(stack)/friends' as any)}
           >
-          <IconSymbol name="person.2.fill" size={24} color={tint} />
+            <IconSymbol name="person.2.fill" size={24} color={tint} />
           </TouchableOpacity>
         </View>
       </View>
@@ -652,7 +647,7 @@ export default function ExploreScreen() {
                 {nearbyPlaces.length} places found
               </Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.filterButton, { backgroundColor: soft }]}
               onPress={() => setShowFilterModal(true)}
             >
@@ -664,7 +659,7 @@ export default function ExploreScreen() {
               )}
             </TouchableOpacity>
           </View>
-          
+
           {/* Search Bar */}
           <View style={styles.searchContainer}>
             <View style={[styles.searchInputContainer, { backgroundColor: soft, borderColor: border }]}>
@@ -746,17 +741,17 @@ export default function ExploreScreen() {
                       style={[
                         styles.filterChip,
                         { borderColor: border },
-                        selectedCategory === cat.value && { 
-                          backgroundColor: tint as string, 
-                          borderColor: tint as string 
+                        selectedCategory === cat.value && {
+                          backgroundColor: tint as string,
+                          borderColor: tint as string
                         }
                       ]}
                       onPress={() => setSelectedCategory(cat.value)}
                     >
-                      <IconSymbol 
-                        name={cat.icon as any} 
-                        size={18} 
-                        color={selectedCategory === cat.value ? '#fff' : text as string} 
+                      <IconSymbol
+                        name={cat.icon as any}
+                        size={18}
+                        color={selectedCategory === cat.value ? '#fff' : text as string}
                       />
                       <Text style={[
                         styles.filterChipText,
