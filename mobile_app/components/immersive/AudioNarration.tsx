@@ -28,8 +28,8 @@ export default function AudioNarration({
     const [distance, setDistance] = useState<number | null>(null);
     const [hasAutoPlayed, setHasAutoPlayed] = useState(false);
     const slideAnim = useRef(new Animated.Value(100)).current;
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
-    const proximityCheckRef = useRef<NodeJS.Timeout | null>(null);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const proximityCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
         // Slide in animation

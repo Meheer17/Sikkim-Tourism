@@ -18,8 +18,18 @@ export default function PanoramaViewer({
     const [imageUri, setImageUri] = useState<string>('');
 
     useEffect(() => {
-        if (typeof imageSource === 'object' && imageSource?.uri) {
+        console.log('PanoramaViewer imageSource:', imageSource, 'type:', typeof imageSource);
+        
+        if (typeof imageSource === 'string') {
+            // Direct URL string
+            setImageUri(imageSource);
+            console.log('Set imageUri from string:', imageSource);
+        } else if (typeof imageSource === 'object' && imageSource?.uri) {
+            // Object with uri property
             setImageUri(imageSource.uri);
+            console.log('Set imageUri from object.uri:', imageSource.uri);
+        } else {
+            console.warn('Invalid imageSource format:', imageSource);
         }
     }, [imageSource]);
 
@@ -76,6 +86,8 @@ export default function PanoramaViewer({
     <script>
         const IMAGE_URL = '${imageUri}';
         
+        console.log('PanoramaViewer WebView - IMAGE_URL:', IMAGE_URL);
+        
         let camera, scene, renderer, sphere;
         let isUserInteracting = false;
         let onPointerDownMouseX = 0, onPointerDownMouseY = 0;
@@ -97,10 +109,12 @@ export default function PanoramaViewer({
             const loader = new THREE.TextureLoader();
             loader.crossOrigin = 'anonymous';
             
-            if (IMAGE_URL && IMAGE_URL.length > 0) {
+            if (IMAGE_URL && IMAGE_URL.length > 0 && IMAGE_URL !== 'undefined' && IMAGE_URL !== 'null') {
+                console.log('Loading texture from URL:', IMAGE_URL);
                 loader.load(
                     IMAGE_URL,
                     function(texture) {
+                        console.log('Texture loaded successfully');
                         document.getElementById('loading').style.display = 'none';
                         texture.minFilter = THREE.LinearFilter;
                         texture.magFilter = THREE.LinearFilter;
@@ -108,17 +122,39 @@ export default function PanoramaViewer({
                         sphere = new THREE.Mesh(geometry, material);
                         scene.add(sphere);
                         animate();
+                        
+                        // Notify React Native that image loaded
+                        if (window.ReactNativeWebView) {
+                            window.ReactNativeWebView.postMessage(JSON.stringify({
+                                type: 'imageLoaded',
+                                success: true
+                            }));
+                        }
                     },
-                    undefined,
+                    function(progress) {
+                        console.log('Loading progress:', (progress.loaded / progress.total * 100).toFixed(2) + '%');
+                    },
                     function(err) {
                         console.error('Texture load error:', err);
-                        document.getElementById('loading').innerHTML = 'Failed to load image';
-                        // Create fallback gradient
-                        createFallbackSphere(geometry);
+                        document.getElementById('loading').innerHTML = '<div class=\"spinner\"></div>Failed to load image<br><small>' + IMAGE_URL + '</small>';
+                        
+                        // Notify React Native of error
+                        if (window.ReactNativeWebView) {
+                            window.ReactNativeWebView.postMessage(JSON.stringify({
+                                type: 'imageLoadError',
+                                error: err.message || 'Unknown error',
+                                url: IMAGE_URL
+                            }));
+                        }
+                        
+                        // Create fallback gradient after a delay
+                        setTimeout(() => createFallbackSphere(geometry), 2000);
                     }
                 );
             } else {
-                createFallbackSphere(geometry);
+                console.warn('No valid IMAGE_URL provided:', IMAGE_URL);
+                document.getElementById('loading').innerHTML = 'No panorama image URL provided';
+                setTimeout(() => createFallbackSphere(geometry), 1000);
             }
             
             renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -268,10 +304,18 @@ export default function PanoramaViewer({
     const handleMessage = (event: any) => {
         try {
             const data = JSON.parse(event.nativeEvent.data);
+            console.log('WebView message:', data);
+            
             if (data.type === 'orientation' && onOrientationChange) {
                 onOrientationChange({ pitch: data.pitch, yaw: data.yaw });
+            } else if (data.type === 'imageLoaded') {
+                console.log('✅ Panorama image loaded successfully');
+            } else if (data.type === 'imageLoadError') {
+                console.error('❌ Panorama image load error:', data.error, 'URL:', data.url);
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error parsing WebView message:', e);
+        }
     };
 
     return (

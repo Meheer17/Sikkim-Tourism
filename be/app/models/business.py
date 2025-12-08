@@ -65,8 +65,6 @@ class businessBase(BaseModel):
     l_id: str     
     scheduled_at: datetime  
     approved: bool = False
-    banner_image: Optional[str] = None  # CDN URL for banner image
-    images: Optional[list[str]] = Field(default_factory=list)  # List of CDN URLs for gallery images  
 
     @field_validator("type_id", "l_id")
     @classmethod
@@ -103,8 +101,6 @@ class businessUpdate(BaseModel):
     l_id: Optional[str] = None
     scheduled_at: Optional[datetime] = None
     approved: Optional[bool] = None
-    banner_image: Optional[str] = None
-    images: Optional[list[str]] = None
 
     @field_validator("type_id", "l_id")
     @classmethod
