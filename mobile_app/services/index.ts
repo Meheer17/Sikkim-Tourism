@@ -14,6 +14,7 @@ export { aiPlannerService } from './ai-planner.service';
 export { aiChatService } from './ai-chat.service';
 export { ordersService } from './orders.service';
 export { bookingsService } from './bookings.service';
+export { eventService } from './event.service';
 export { FriendsAPI } from './friends.service';
 
 // Re-export types for convenience
@@ -37,6 +38,8 @@ export type {
   RequestConfig,
   ResponseConfig,
 } from '../types/api.types';
+
+export type { EventCreateData } from './event.service';
 
 // Import BaseService class to use in factory
 import { BaseService as BaseServiceClass } from './base.service';

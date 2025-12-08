@@ -9,6 +9,7 @@ from app.services.user_communities_service import user_communities_service
 from app.services.user_service import user_service
 from app.services.community_service import community_service
 from app.utils.profanity_filter import profanity_filter
+from app.utils.encryption import encrypt_text, decrypt_text
 
 
 class MessageService:
@@ -66,12 +67,16 @@ class MessageService:
         messages = []
         async for message in cursor:
             msg_db = MessageInDB(**message)
+            # Decrypt message text
+            uid_str = str(msg_db.uid)
+            decrypted_text = await decrypt_text(uid_str, msg_db.text)
+            
             messages.append(
                 Message(
                     id=str(msg_db.id),
-                    uid=str(msg_db.uid),
+                    uid=uid_str,
                     cid=str(msg_db.cid),
-                    text=msg_db.text,
+                    text=decrypted_text,
                     status=msg_db.status,
                     flagged_count=msg_db.flagged_count,
                     created_at=msg_db.created_at,
@@ -107,6 +112,9 @@ class MessageService:
             msg_db = MessageInDB(**message)
             uid_str = str(msg_db.uid)
             
+            # Decrypt message text
+            decrypted_text = await decrypt_text(uid_str, msg_db.text)
+            
             # Get user info from cache or fetch
             if uid_str not in user_cache:
                 user = await user_service.get_by_id(uid_str)
@@ -126,7 +134,7 @@ class MessageService:
                     id=str(msg_db.id),
                     uid=uid_str,
                     cid=str(msg_db.cid),
-                    text=msg_db.text,
+                    text=decrypted_text,
                     status=msg_db.status,
                     flagged_count=msg_db.flagged_count,
                     created_at=msg_db.created_at,
@@ -198,11 +206,14 @@ class MessageService:
                 if datetime.utcnow() - last_ts < timedelta(seconds=3):
                     raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="You're sending messages too quickly")
 
+        # Encrypt message text
+        encrypted_text = await encrypt_text(current_user_id, text)
+        
         # Build and insert
         message_dict = {
             "uid": ObjectId(current_user_id),
             "cid": ObjectId(message_create.cid),
-            "text": text,
+            "text": encrypted_text,
             "status": MessageStatus.active.value,
             "flagged_by": [],
             "flagged_count": 0,
@@ -211,6 +222,9 @@ class MessageService:
 
         result = await self._collection().insert_one(message_dict)
         created = await self.get_by_id(str(result.inserted_id))
+        
+        # Decrypt message text for response
+        decrypted_text = await decrypt_text(current_user_id, created.text)
         
         # Get user info for response
         name = user.name
@@ -221,7 +235,7 @@ class MessageService:
             id=str(created.id),
             uid=str(created.uid),
             cid=str(created.cid),
-            text=created.text,
+            text=decrypted_text,
             status=created.status,
             flagged_count=created.flagged_count,
             created_at=created.created_at,
@@ -294,11 +308,14 @@ class MessageService:
         )
         
         updated = await self.get_by_id(message_id)
+        # Decrypt text for response
+        decrypted_text = await decrypt_text(str(updated.uid), updated.text)
+        
         return Message(
             id=str(updated.id),
             uid=str(updated.uid),
             cid=str(updated.cid),
-            text=updated.text,
+            text=decrypted_text,
             status=updated.status,
             flagged_count=updated.flagged_count,
             created_at=updated.created_at,
@@ -315,6 +332,9 @@ class MessageService:
         async for message in cursor:
             msg_db = MessageInDB(**message)
             uid_str = str(msg_db.uid)
+            
+            # Decrypt message text
+            decrypted_text = await decrypt_text(uid_str, msg_db.text)
             
             if uid_str not in user_cache:
                 user = await user_service.get_by_id(uid_str)
@@ -333,7 +353,7 @@ class MessageService:
                     id=str(msg_db.id),
                     uid=uid_str,
                     cid=str(msg_db.cid),
-                    text=msg_db.text,
+                    text=decrypted_text,
                     status=msg_db.status,
                     flagged_count=msg_db.flagged_count,
                     created_at=msg_db.created_at,
@@ -365,13 +385,20 @@ class MessageService:
         if len(new_text) > 1000:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Text too long (max 1000)")
 
-        await self._collection().update_one({"_id": ObjectId(message_id)}, {"$set": {"text": new_text}})
+        # Encrypt new text
+        encrypted_new_text = await encrypt_text(str(msg.uid), new_text)
+        
+        await self._collection().update_one({"_id": ObjectId(message_id)}, {"$set": {"text": encrypted_new_text}})
         updated = await self.get_by_id(message_id)
+        
+        # Decrypt for response
+        decrypted_text = await decrypt_text(str(updated.uid), updated.text)
+        
         return Message(
             id=str(updated.id),
             uid=str(updated.uid),
             cid=str(updated.cid),
-            text=updated.text,
+            text=decrypted_text,
             created_at=updated.created_at,
         )
 

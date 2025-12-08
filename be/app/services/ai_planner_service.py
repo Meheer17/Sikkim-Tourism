@@ -24,6 +24,7 @@ from app.schemas.ai_planner import (
 
 from app.schemas.ai_planner import TriggerRequest, TriggerResponse
 from app.core.database import get_database
+from app.utils.encryption import encrypt_text, decrypt_text
 
 
 # In-memory storage for chat sessions (in production, use Redis or database)
@@ -573,11 +574,20 @@ Remember
                     except Exception:
                         action_from_ai = None
 
+                    # Encrypt sensitive trigger data
+                    encrypted_type = await encrypt_text(user_id, trigger.type)
+                    encrypted_action = await encrypt_text(user_id, action_from_ai) if action_from_ai else None
+                    encrypted_position = None
+                    if getattr(trigger, "position", None):
+                        encrypted_x = await encrypt_text(user_id, str(trigger.position.x))
+                        encrypted_y = await encrypt_text(user_id, str(trigger.position.y))
+                        encrypted_position = {"x": encrypted_x, "y": encrypted_y}
+                    
                     doc = {
                         "uid": ObjectId(user_id),
-                        "type": trigger.type,
-                        "action": action_from_ai,
-                        "position": {"x": trigger.position.x, "y": trigger.position.y} if getattr(trigger, "position", None) else None,
+                        "type": encrypted_type,
+                        "action": encrypted_action,
+                        "position": encrypted_position,
                         "createdAt": trigger_time_ist,
                         "raw": trigger.dict()
                     }

@@ -263,12 +263,21 @@ export default function CreateBusinessScreen() {
                 scheduled_at: scheduledAt || new Date().toISOString(),
             };
 
-            // Add position if coordinates are provided
+            // Add position if coordinates are provided (parse as floats, not strings)
             if (latitude.trim() && longitude.trim()) {
-                businessData.position = {
-                    x: latitude.trim(),
-                    y: longitude.trim(),
-                };
+                const lat = parseFloat(latitude.trim());
+                const lng = parseFloat(longitude.trim());
+                
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    businessData.position = {
+                        x: lng,  // longitude is x
+                        y: lat,  // latitude is y
+                    };
+                } else {
+                    Alert.alert('Validation Error', 'Invalid latitude or longitude values');
+                    setSubmitting(false);
+                    return;
+                }
             }
 
                 const resp = await businessService.create(businessData);

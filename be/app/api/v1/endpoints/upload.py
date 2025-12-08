@@ -67,6 +67,7 @@ async def upload_document(
     file: UploadFile = File(..., description="Document to upload (scanned images, PDFs)"),
     category: Optional[str] = Form("document", description="Document category (e.g., business_license, verification)"),
     business_id: Optional[str] = Form(None, description="Optional business ID to associate with document"),
+    location_id: Optional[str] = Form(None, description="Optional location ID to associate with document"),
     current_user_id: str = Depends(get_current_user_id)
 ):
     """
@@ -100,7 +101,8 @@ async def upload_document(
             file=file,
             category=category,
             user_id=current_user_id,
-            business_id=business_id
+            business_id=business_id,
+            location_id=location_id
         )
         return result
     else:
@@ -155,18 +157,21 @@ async def upload_from_url(
 async def get_documents(
     category: Optional[str] = None,
     business_id: Optional[str] = None,
+    location_id: Optional[str] = None,
     current_user_id: str = Depends(get_current_user_id)
 ):
     """
-    Get uploaded documents, optionally filtered by category and business ID.
+    Get uploaded documents, optionally filtered by category, business ID, or location ID.
     
     - **category**: Filter by document category (e.g., heritage_manuscript)
     - **business_id**: Filter by associated business
+    - **location_id**: Filter by associated location
     - Returns list of documents with metadata
     """
     documents = await upload_service.get_documents(
         category=category,
         business_id=business_id,
+        location_id=location_id,
         user_id=current_user_id
     )
     return {"documents": documents}

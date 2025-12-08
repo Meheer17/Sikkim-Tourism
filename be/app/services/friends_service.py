@@ -5,6 +5,7 @@ from bson import ObjectId
 from fastapi import HTTPException, status
 
 from app.core.database import get_database
+from app.utils.encryption import encrypt_text, decrypt_text
 
 
 class FriendsService:
@@ -73,12 +74,16 @@ class FriendsService:
         gid = ObjectId(group_id) if ObjectId.is_valid(group_id) else group_id
         uid = ObjectId(user_id) if ObjectId.is_valid(user_id) else user_id
 
+        # Encrypt location coordinates
+        encrypted_lat = await encrypt_text(user_id, str(lat))
+        encrypted_lng = await encrypt_text(user_id, str(lng))
+        
         await db.group_locations.update_one(
             {"group_id": gid, "user_id": uid},
             {
                 "$set": {
-                    "lat": lat,
-                    "lng": lng,
+                    "lat": encrypted_lat,
+                    "lng": encrypted_lng,
                     "last_seen_at": datetime.utcnow(),
                 }
             },
@@ -125,12 +130,30 @@ class FriendsService:
                     initials = "".join(p[0].upper() for p in parts[:2] if p)
 
             loc = locations.get(mid, {})
+            # Decrypt location coordinates
+            encrypted_lat = loc.get("lat")
+            encrypted_lng = loc.get("lng")
+            decrypted_lat = None
+            decrypted_lng = None
+            if encrypted_lat:
+                try:
+                    decrypted_lat_str = await decrypt_text(mid, str(encrypted_lat))
+                    decrypted_lat = float(decrypted_lat_str) if decrypted_lat_str else None
+                except:
+                    pass
+            if encrypted_lng:
+                try:
+                    decrypted_lng_str = await decrypt_text(mid, str(encrypted_lng))
+                    decrypted_lng = float(decrypted_lng_str) if decrypted_lng_str else None
+                except:
+                    pass
+            
             members.append({
                 "user_id": mid,
                 "name": name,
                 "initials": initials,
-                "lat": loc.get("lat"),
-                "lng": loc.get("lng"),
+                "lat": decrypted_lat,
+                "lng": decrypted_lng,
                 "last_seen_at": loc.get("last_seen_at"),
             })
 

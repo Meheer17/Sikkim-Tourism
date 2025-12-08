@@ -304,7 +304,7 @@ export default function PanoramaViewer({
     const handleMessage = (event: any) => {
         try {
             const data = JSON.parse(event.nativeEvent.data);
-            console.log('WebView message:', data);
+            // console.log('WebView message:', data);
             
             if (data.type === 'orientation' && onOrientationChange) {
                 onOrientationChange({ pitch: data.pitch, yaw: data.yaw });

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, TextInput, Alert, Image, FlatList, Dimensions, ActivityIndicator, Linking, Animated } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, TextInput, Alert, Image, FlatList, Dimensions, Linking, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { geminiNotifier, GeminiPayload } from '@/utils/gemini-notifier';
@@ -11,6 +11,7 @@ import { platformConfig } from '@/config/api.config';
 export default function GeminiPopup() {
   const [visible, setVisible] = useState(false);
   const [payload, setPayload] = useState<GeminiPayload | null>(null);
+  const cooldownUntil = useRef<Date | null>(null);
 
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [hour, setHour] = useState<string>(new Date().getHours().toString());
@@ -28,6 +29,12 @@ export default function GeminiPopup() {
 
   useEffect(() => {
     const unsub = geminiNotifier.subscribe((p: any) => {
+      const now = Date.now();
+      if (cooldownUntil.current && now < cooldownUntil.current.getTime()) {
+        console.log('GeminiPopup suppressed due to cooldown until', cooldownUntil.current.toISOString());
+        return;
+      }
+
       // normalize backend shapes into our GeminiPayload shape
       console.log('GeminiPopup received raw payload', p);
       const normalized: any = {
@@ -133,6 +140,11 @@ export default function GeminiPopup() {
 
   const onNegative = () => {
     const action = (payload as any).negativeAction as string | undefined;
+    // set random cooldown between 30 minutes and 2 hours
+    const minutes = 30 + Math.random() * 90; // 30 to 120 minutes
+    const ms = minutes * 60 * 1000;
+    cooldownUntil.current = new Date(Date.now() + ms);
+
     if (action === 'return') {
       // Close and do nothing
       hideBar();

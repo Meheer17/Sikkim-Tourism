@@ -173,7 +173,7 @@ export default function ExploreScreen() {
     try {
       setLoading(true);
 
-      const params: any = { skip: 0, limit: 100 };
+      const params: any = { skip: 0, limit: 150 };
       const radiusMeters = getRadiusMeters(selectedDistance);
       if (radiusMeters !== undefined && userLocation) {
         params.position_lat = userLocation.coords.latitude;

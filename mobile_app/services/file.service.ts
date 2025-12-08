@@ -121,7 +121,8 @@ export class FileService {
     async uploadDocument(
         filePath: string,
         category: string = 'document',
-        businessId?: string
+        businessId?: string,
+        locationId?: string
     ): Promise<ApiResponse<FileUploadResponse>> {
         try {
             // Extract filename from path
@@ -131,8 +132,11 @@ export class FileService {
             const response = await fetch(filePath);
             const blob = await response.blob();
             
-            // Determine file type
-            const fileType = blob.type || 'image/jpeg';
+            // Determine file type - support PDF
+            let fileType = blob.type || 'image/jpeg';
+            if (fileName.toLowerCase().endsWith('.pdf')) {
+                fileType = 'application/pdf';
+            }
             
             const formData = new FormData();
             formData.append('file', {
@@ -145,6 +149,9 @@ export class FileService {
             formData.append('category', category);
             if (businessId) {
                 formData.append('business_id', businessId);
+            }
+            if (locationId) {
+                formData.append('location_id', locationId);
             }
 
             return await apiClient.uploadFile<FileUploadResponse>(`/upload/document`, formData);
