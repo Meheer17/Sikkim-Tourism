@@ -381,6 +381,9 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
         Later this should construct a Gemini prompt and invoke the model.
         """
         try:
+<<<<<<< HEAD
+            print(f"Trigger from user={user_id}: type={trigger.type}")
+=======
             print(f"🔔 Trigger received from user={user_id}: type={trigger.type}, time={trigger.time}, position={trigger.position}")
 
             # Admin check: skip AI suggestions for admin users
@@ -398,6 +401,7 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
                 print(f"[AIPlannerService] Warning: failed to check user role for {user_id}: {e}")
 
             # Normalize incoming trigger time to IST (Asia/Kolkata), using self.ist_zone which has a safe fallback
+>>>>>>> 9b25bfd58abe9653597af64277c15cecb9396457
             try:
                 if trigger.time:
                     if trigger.time.tzinfo is None:
@@ -430,11 +434,15 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
                         if action not in recent_actions_map:
                             recent_actions_map[action] = created_iso
                     if recent_actions_map:
-                        print(f"Found recent actions for user {user_id}: {recent_actions_map}")
+                        print(f"Found recent actions {len(recent_actions_map)}")
+                        print(f"Action types from DB: {list(recent_actions_map.keys())}")
             except Exception as e:
                 print(f"Could not fetch recent triggers from DB: {e}")
 
+<<<<<<< HEAD
+=======
             # Prepare prompt context values
+>>>>>>> 9b25bfd58abe9653597af64277c15cecb9396457
             try:
                 trigger_time_iso = trigger_time_ist.isoformat()
                 hour = trigger_time_ist.hour
@@ -504,17 +512,19 @@ Remember
 
                 gemini_json = self._parse_json_response(response.text)
                 gemini_result = gemini_json
-                # Attach a default nearby places query so the mobile client can call the locations API
                 try:
                     lat = float(trigger.position.y)
                     lng = float(trigger.position.x)
-                    radius = 1000  # default radius in meters (maps default-ish)
+                    radius = 1000 
                     nearby_url = f"/api/v1/location?position_lat={lat}&position_lng={lng}&radius_m={radius}&skip=0&limit=50"
                     gemini_result.setdefault('nearby_url', nearby_url)
                 except Exception:
                     pass
+<<<<<<< HEAD
+=======
 
                 # If model suggests no_action, suppress popups on the client by removing message/buttons and setting a flag
+>>>>>>> 9b25bfd58abe9653597af64277c15cecb9396457
                 try:
                     if isinstance(gemini_result, dict) and gemini_result.get('type') == 'no_action':
                         gemini_result.pop('agent_message', None)
@@ -581,6 +591,8 @@ Remember
                     "buttons": {"positive": positive, "negative": negative}
                 }
 
+<<<<<<< HEAD
+=======
                 try:
                     lat = float(trigger.position.y)
                     lng = float(trigger.position.x)
@@ -589,6 +601,7 @@ Remember
                 except Exception:
                     pass
 
+>>>>>>> 9b25bfd58abe9653597af64277c15cecb9396457
                 try:
                     if isinstance(gemini_result, dict) and gemini_result.get('type') == 'no_action':
                         gemini_result.pop('agent_message', None)
@@ -605,6 +618,7 @@ Remember
                     try:
                         if isinstance(gemini_result, dict):
                             action_from_ai = gemini_result.get('type')
+                            print(gemini_result.get('type'), gemini_result.get('no_popup'))
                     except Exception:
                         action_from_ai = None
 
@@ -627,7 +641,6 @@ Remember
                     }
                     try:
                         insert_result = await db.triggers.insert_one(doc)
-                        print(f"Inserted trigger record for user={user_id}, id={insert_result.inserted_id}, action={action_from_ai}")
                     except Exception as ie:
                         print(f"Failed to insert trigger record: {ie}")
             except Exception as e:

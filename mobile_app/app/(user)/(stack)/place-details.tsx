@@ -97,6 +97,8 @@ export default function PlaceDetailsScreen() {
   const border = useThemeColor('border');
   const soft = useThemeColor('tintSoftBg');
 
+  console.log('Place Details Params:', params);
+
   // Parse the place data from params
   const imagesParam = params.images as string;
   let images: string[] = [];
@@ -179,7 +181,10 @@ export default function PlaceDetailsScreen() {
       const url = place.modelPath.startsWith('http') 
         ? place.modelPath 
         : `https://models.shrishesha.space/viewer/${place.modelPath}`;
-      Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
+      router.push({
+        pathname: '/(user)/3d',
+        params: { url, name: place.name }
+      } as any);
     }
   };
 

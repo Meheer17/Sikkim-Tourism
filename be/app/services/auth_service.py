@@ -55,7 +55,7 @@ class AuthService:
             )
         
         # 3 hours expiry
-        access_token_expires = timedelta(hours=3)
+        access_token_expires = timedelta(hours=12)
         access_token = create_access_token(
             data={"sub": str(user.id)},
             expires_delta=access_token_expires

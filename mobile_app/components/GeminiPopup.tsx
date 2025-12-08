@@ -7,8 +7,10 @@ import { businessService, locationService } from '@/services';
 import { buildImageUrl } from '@/utils/image-url';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { platformConfig } from '@/config/api.config';
+import { usePathname } from 'expo-router';
 
 export default function GeminiPopup() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [payload, setPayload] = useState<GeminiPayload | null>(null);
   const cooldownUntil = useRef<Date | null>(null);
@@ -29,9 +31,16 @@ export default function GeminiPopup() {
 
   useEffect(() => {
     const unsub = geminiNotifier.subscribe((p: any) => {
+<<<<<<< HEAD
+      // Only show popup on home and explore pages
+      const allowedRoutes = ['/(user)/home', '/(user)/explore'];
+      if (!allowedRoutes.includes(pathname)) {
+        console.log('GeminiPopup: suppressing popup, not on home/explore page. Current:', pathname);
+=======
       const now = Date.now();
       if (cooldownUntil.current && now < cooldownUntil.current.getTime()) {
         console.log('GeminiPopup suppressed due to cooldown until', cooldownUntil.current.toISOString());
+>>>>>>> 9b25bfd58abe9653597af64277c15cecb9396457
         return;
       }
 
@@ -72,7 +81,7 @@ export default function GeminiPopup() {
     });
 
     return () => unsub();
-  }, []);
+  }, [pathname]);
 
   
 
