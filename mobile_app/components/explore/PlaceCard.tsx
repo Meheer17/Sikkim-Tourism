@@ -163,13 +163,13 @@ export default function PlaceCard({ place, onPress }: PlaceCardProps) {
                         </TouchableOpacity>
                     )}
                 </View>
-                <TouchableOpacity 
+                {/* <TouchableOpacity 
                     style={styles.favoriteButton}
                     onPress={toggleFavorite}
                     activeOpacity={0.7}
                 >
                     <IconSymbol name="heart.fill" size={16} color={isFavorite ? '#ef4444' : muted} />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
         </TouchableOpacity>
     );

@@ -281,24 +281,34 @@ export default function PlaceDetailsScreen() {
 
         {/* Place Details */}
         <View style={styles.content}>
-          {/* Title and Rating */}
+          {/* Title and Favorite */}
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.name, { color: text }]}>{place.name}</Text>
-              {place.rating && (
-                <View style={styles.ratingContainer}>
-                  <IconSymbol name="star.fill" size={20} color="#fbbf24" />
-                  <Text style={[styles.rating, { color: text }]}>{place.rating}</Text>
-                </View>
-              )}
+              <TouchableOpacity 
+                style={[
+                  styles.favoriteButtonInline,
+                  { 
+                    backgroundColor: isFavorite ? '#fee2e2' : soft,
+                    borderWidth: 1,
+                    borderColor: isFavorite ? '#ef4444' : border,
+                  }
+                ]}
+                onPress={toggleFavorite}
+                activeOpacity={0.7}
+              >
+                <IconSymbol name="heart.fill" size={18} color={isFavorite ? '#ef4444' : muted} />
+                <Text style={[styles.favoriteText, { color: isFavorite ? '#ef4444' : text }]}>
+                  {isFavorite ? 'Favorited' : 'Add to Favorites'}
+                </Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity 
-              style={styles.favoriteButtonPlaceDetails}
-              onPress={toggleFavorite}
-              activeOpacity={0.7}
-            >
-              <IconSymbol name="heart.fill" size={24} color={isFavorite ? '#ef4444' : '#ccc'} />
-            </TouchableOpacity>
+            {place.rating && (
+              <View style={styles.ratingContainerTop}>
+                <IconSymbol name="star.fill" size={24} color="#fbbf24" />
+                <Text style={[styles.rating, { color: text }]}>{place.rating}</Text>
+              </View>
+            )}
           </View>
 
           {/* Category and Distance */}
@@ -563,6 +573,34 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     marginRight: 12,
+    marginBottom: 8,
+  },
+  favoriteButtonInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
+  favoriteText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  ratingContainerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fff7ed',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
   },
   ratingContainer: {
     flexDirection: 'row',
