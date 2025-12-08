@@ -38,6 +38,23 @@ export default function GeminiPopup() {
         position: p.position || p.data?.position || p.position,
       };
 
+      // Suppress showing popup for certain backend-driven actions
+      // If any action is 'tourist_entry' or backend explicitly requested no popup, ignore
+      const suppress = (
+        normalized.positiveAction === 'tourist_entry' ||
+        normalized.negativeAction === 'tourist_entry' ||
+        normalized.businessType === 'tourist_entry' ||
+        // some backends may include a direct flag
+        p.no_popup === true ||
+        p.action === 'tourist_entry' ||
+        p.type === 'tourist_entry'
+      );
+
+      if (suppress) {
+        console.log('GeminiPopup: suppressing popup for tourist_entry or no_popup flag', normalized);
+        return;
+      }
+
       setPayload(normalized);
       // show bar
       setVisible(true);
