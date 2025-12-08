@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
@@ -30,11 +31,53 @@ export default function PlaceCard({ place, onPress }: PlaceCardProps) {
     const card = useThemeColor('card');
     const tint = useThemeColor('tint');
     const soft = useThemeColor('tintSoftBg');
+    const [isFavorite, setIsFavorite] = useState(false);
     
     // Debug logging
-    React.useEffect(() => {
+    useEffect(() => {
         console.log(`🎴 PlaceCard [${place.name}]: imageUrl =`, place.imageUrl || 'NO IMAGE');
-    }, [place.imageUrl]);
+        checkFavoriteStatus();
+    }, [place.imageUrl, place.id]);
+
+    const checkFavoriteStatus = async () => {
+        try {
+            const favoritesData = await AsyncStorage.getItem('favorites');
+            const favorites = favoritesData ? JSON.parse(favoritesData) : [];
+            setIsFavorite(favorites.includes(place.id));
+        } catch (error) {
+            console.error('Failed to check favorite status:', error);
+        }
+    };
+
+    const handleFavoriteToggle = (e: any) => {
+        e.stopPropagation();
+        
+        try {
+            toggleFavorite();
+        } catch (error) {
+            console.error('Failed to toggle favorite:', error);
+        }
+    };
+
+    const toggleFavorite = async () => {
+        try {
+            const favoritesData = await AsyncStorage.getItem('favorites');
+            const favorites = favoritesData ? JSON.parse(favoritesData) : [];
+            
+            if (isFavorite) {
+                const updatedFavorites = favorites.filter((id: string) => id !== place.id);
+                await AsyncStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+                setIsFavorite(false);
+            } else {
+                favorites.push(place.id);
+                await AsyncStorage.setItem('favorites', JSON.stringify(favorites));
+                setIsFavorite(true);
+                Alert.alert('Success', 'This place is added to your favourites');
+            }
+        } catch (error) {
+            console.error('Failed to toggle favorite:', error);
+        }
+    };
     
     const handleDirections = (e: any) => {
         // Stop propagation to prevent card press
@@ -93,13 +136,28 @@ export default function PlaceCard({ place, onPress }: PlaceCardProps) {
             </View>
 
             <View style={styles.content}>
-                <View style={styles.header}>
-                    <Text style={[styles.name, { color: text }]} numberOfLines={1}>{place.name}</Text>
+                <View style={styles.headerWithFavorite}>
+                    <View style={styles.nameAndRating}>
+                        <Text style={[styles.name, { color: text }]} numberOfLines={1}>{place.name}</Text>
+                        {place.rating && (
+                            <View style={styles.ratingContainer}>
+                                <IconSymbol name="star.fill" size={14} color="#fbbf24" />
+                                <Text style={[styles.rating, { color: text }]}>{place.rating}</Text>
+                            </View>
+                        )}
+                    </View>
                     {place.rating && (
-                        <View style={styles.ratingContainer}>
-                            <IconSymbol name="star.fill" size={14} color="#fbbf24" />
-                            <Text style={[styles.rating, { color: text }]}>{place.rating}</Text>
-                        </View>
+                        <TouchableOpacity 
+                            style={styles.favoriteButton}
+                            onPress={handleFavoriteToggle}
+                            activeOpacity={0.7}
+                        >
+                            <IconSymbol 
+                                name={isFavorite ? "heart.fill" : "heart"} 
+                                size={16} 
+                                color={isFavorite ? "#ef4444" : muted} 
+                            />
+                        </TouchableOpacity>
                     )}
                 </View>
                 <Text style={[styles.category, { color: muted }]}>{place.category}</Text>
@@ -168,6 +226,16 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         marginBottom: 4,
     },
+    headerWithFavorite: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 4,
+        gap: 8,
+    },
+    nameAndRating: {
+        flex: 1,
+    },
     name: {
         flex: 1,
         fontSize: 16,
@@ -179,6 +247,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
+        marginTop: 2,
     },
     rating: {
         fontSize: 13,
@@ -225,5 +294,11 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#0a7ea4',
         fontWeight: '600',
+    },
+    favoriteButton: {
+        padding: 4,
+        marginTop: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

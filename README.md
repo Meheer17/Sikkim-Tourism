@@ -193,7 +193,7 @@ NODE_ENV=development
 
 # API Configuration
 # Your machine's local IP for physical devices: 192.168.0.104
-# Android Emulator auto-uses: 10.233.208.103
+# Android Emulator auto-uses: 172.17.124.111
 # iOS Simulator auto-uses: localhost
 # Uncomment below to override auto-detection:
 API_BASE_URL=http://192.168.0.104:8000/api/v1

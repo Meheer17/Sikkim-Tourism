@@ -76,7 +76,7 @@ const getBaseURL = (): string => {
     const url = getEnvVar(
         'API_BASE_URL',
         Platform.OS === 'android'
-            ? 'http://10.233.208.103:8000/api/v1'
+            ? 'http://172.17.124.111:8000/api/v1'
             : 'http://localhost:8000/api/v1'
     );
     console.log('🌐 [api.config] Final baseURL:', url);
@@ -151,7 +151,7 @@ if (isDevelopment) {
     console.log('🌐 API Base URL:', config.api.baseURL);
     console.log('📱 Platform:', Platform.OS);
     if (Platform.OS === 'android') {
-        console.log('💡 Android Emulator: Using 10.233.208.103 to access host machine');
+        console.log('💡 Android Emulator: Using 172.17.124.111 to access host machine');
         console.log('💡 Physical Device: Set API_BASE_URL env to your machine\'s IP (e.g., http://192.168.1.x:8000/api/v1)');
     }
 }

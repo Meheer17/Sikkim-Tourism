@@ -428,7 +428,7 @@ class UploadService:
         
         # Convert CDN URL to API proxy URL
         # From: http://localhost:3000/images/filename.jpg
-        # To: http://10.233.208.103:8000/api/v1/cdn/images/filename.jpg
+        # To: http://172.17.124.111:8000/api/v1/cdn/images/filename.jpg
         if cdn_url:
             # Extract filename from CDN URL
             import re

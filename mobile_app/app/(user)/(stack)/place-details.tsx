@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking, FlatList, Dimensions, Modal, StatusBar, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking, FlatList, Dimensions, Modal, StatusBar, Platform, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -125,6 +126,42 @@ export default function PlaceDetailsScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [fullScreenVisible, setFullScreenVisible] = useState(false);
   const [fullScreenImageIndex, setFullScreenImageIndex] = useState(0);
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  useEffect(() => {
+    checkFavoriteStatus();
+  }, [place.id]);
+
+  const checkFavoriteStatus = async () => {
+    try {
+      const favoritesData = await AsyncStorage.getItem('favorites');
+      const favorites = favoritesData ? JSON.parse(favoritesData) : [];
+      setIsFavorite(favorites.includes(place.id));
+    } catch (error) {
+      console.error('Failed to check favorite status:', error);
+    }
+  };
+
+  const handleFavoriteToggle = async () => {
+    try {
+      const favoritesData = await AsyncStorage.getItem('favorites');
+      const favorites = favoritesData ? JSON.parse(favoritesData) : [];
+      
+      if (isFavorite) {
+        const updatedFavorites = favorites.filter((id: string) => id !== place.id);
+        await AsyncStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+        setIsFavorite(false);
+        Alert.alert('Removed', 'This place has been removed from your favourites');
+      } else {
+        favorites.push(place.id);
+        await AsyncStorage.setItem('favorites', JSON.stringify(favorites));
+        setIsFavorite(true);
+        Alert.alert('Success', 'This place is added to your favourites');
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
+    }
+  };
 
   const handleImagePress = (index: number) => {
     setFullScreenImageIndex(index);
@@ -249,6 +286,24 @@ export default function PlaceDetailsScreen() {
               </View>
             )}
           </View>
+
+          {/* Favorite Button - Right below rating */}
+          {place.rating && (
+            <TouchableOpacity 
+              style={styles.favoriteButtonDetails}
+              onPress={handleFavoriteToggle}
+              activeOpacity={0.7}
+            >
+              <IconSymbol 
+                name={isFavorite ? "heart.fill" : "heart"} 
+                size={20} 
+                color={isFavorite ? "#ef4444" : muted} 
+              />
+              <Text style={[styles.favoriteButtonText, { color: isFavorite ? "#ef4444" : muted }]}>
+                {isFavorite ? 'Added to Favourites' : 'Add to Favourites'}
+              </Text>
+            </TouchableOpacity>
+          )}
 
           {/* Category and Distance */}
           <View style={styles.metaInfo}>
@@ -525,6 +580,22 @@ const styles = StyleSheet.create({
   rating: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  favoriteButtonDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    marginTop: 8,
+    marginBottom: 12,
+    alignSelf: 'flex-start',
+  },
+  favoriteButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   metaInfo: {
     flexDirection: 'row',

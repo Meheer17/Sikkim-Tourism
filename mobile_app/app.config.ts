@@ -67,7 +67,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     extra: {
         // Environment variables accessible in the app
-        API_BASE_URL: process.env.API_BASE_URL || 'http://10.233.208.103:8000/api/v1',
+        API_BASE_URL: process.env.API_BASE_URL || 'http://172.17.124.111:8000/api/v1',
         API_TIMEOUT: process.env.API_TIMEOUT || '30000',
         DEBUG_API_LOGS: process.env.DEBUG_API_LOGS || 'true',
         MAX_FILE_SIZE: process.env.MAX_FILE_SIZE || '10485760',

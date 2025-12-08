@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< Updated upstream
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, FlatList } from 'react-native';
+=======
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+>>>>>>> Stashed changes
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -16,10 +21,14 @@ export default function HomeScreen() {
     const insets = useSafeAreaInsets();
     const [services, setServices] = useState<Service[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+<<<<<<< Updated upstream
     // --- Search Bar State ---
     const [searchQuery, setSearchQuery] = useState('');
     const [searching, setSearching] = useState(false);
     const [results, setResults] = useState<any[]>([]);
+=======
+    const [favoritesCount, setFavoritesCount] = useState(0);
+>>>>>>> Stashed changes
     const { language } = useLanguage();
     const t = getLanguageTranslations(language);
     const background = useThemeColor('background');
@@ -30,6 +39,7 @@ export default function HomeScreen() {
 
     useEffect(() => {
         loadServices();
+        loadFavoritesCount();
     }, []);
 
     // Debounced search effect
@@ -73,6 +83,17 @@ export default function HomeScreen() {
         }
     };
 
+    const loadFavoritesCount = async () => {
+        try {
+            const favoritesData = await AsyncStorage.getItem('favorites');
+            const favorites = favoritesData ? JSON.parse(favoritesData) : [];
+            setFavoritesCount(favorites.length);
+        } catch (error) {
+            console.error('Failed to load favorites count:', error);
+            setFavoritesCount(0);
+        }
+    };
+
     const getCategoryIcon = (type?: string): any => {
         const iconMap: Record<string, string> = {
             'Adventure': 'mountain.2.fill',
@@ -87,6 +108,7 @@ export default function HomeScreen() {
     const onRefresh = async () => {
         setRefreshing(true);
         await loadServices();
+        await loadFavoritesCount();
         setRefreshing(false);
     };
 
@@ -302,21 +324,20 @@ export default function HomeScreen() {
 
                 {/* Quick Stats */}
                 <View style={styles.statsContainer}>
-                    <View style={[styles.statCard, { backgroundColor: card }]}>
+                    <View style={[styles.statCard, { backgroundColor: card }]}> 
                         <IconSymbol name="ticket.fill" size={24} color={tint} />
-                        <Text style={[styles.statValue, { color: text }]}>12</Text>
+                        <Text style={[styles.statValue, { color: text }]}>0</Text>
                         <Text style={[styles.statLabel, { color: muted }]}>{t.bookings || 'Bookings'}</Text>
                     </View>
-                    <View style={[styles.statCard, { backgroundColor: card }]}>
+                    <TouchableOpacity
+                        style={[styles.statCard, { backgroundColor: card }]}
+                        onPress={() => router.push('/(user)/favourites')}
+                        activeOpacity={0.7}
+                    >
                         <IconSymbol name="heart.fill" size={24} color="#ef4444" />
-                        <Text style={[styles.statValue, { color: text }]}>8</Text>
+                        <Text style={[styles.statValue, { color: text }]}>{favoritesCount}</Text>
                         <Text style={[styles.statLabel, { color: muted }]}>{t.myFavorites || 'Favorites'}</Text>
-                    </View>
-                    <View style={[styles.statCard, { backgroundColor: card }]}>
-                        <IconSymbol name="mappin.circle.fill" size={24} color="#10b981" />
-                        <Text style={[styles.statValue, { color: text }]}>5</Text>
-                        <Text style={[styles.statLabel, { color: muted }]}>Visited</Text>
-                    </View>
+                    </TouchableOpacity>
                 </View>
 
                 {/* AI Planner Banner */}
