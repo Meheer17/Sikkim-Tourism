@@ -256,7 +256,7 @@ class UploadService:
             }
             
             # Upload to CDN models endpoint
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
                     self.cdn_model_url,
                     headers=headers,
@@ -530,7 +530,9 @@ class UploadService:
         self,
         file: UploadFile,
         location_id: Optional[str] = None,
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None,
+        business_id: Optional[str] = None,
+        category: Optional[str] = None
     ) -> dict:
         """Upload 3D model to CDN and optionally save metadata to database"""
         
@@ -553,7 +555,10 @@ class UploadService:
                 "file_name": file.filename,
                 "file_path": cdn_response.get("url", ""),
                 "file_type": "model",
+                "mime_type": file.content_type,
+                "category": category,
                 "l_id": ObjectId(location_id),
+                "b_id": ObjectId(business_id) if business_id and ObjectId.is_valid(business_id) else None,
                 "uploaded_by": ObjectId(user_id) if user_id and ObjectId.is_valid(user_id) else None,
                 "cdn_response": cdn_response,
                 "created_at": datetime.utcnow(),

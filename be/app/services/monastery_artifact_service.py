@@ -6,7 +6,7 @@ import json
 
 from app.core.database import get_database
 from app.models.monastery_artifact import MonasteryArtifactCreate, MonasteryArtifact
-īfrom app.services.upload_service import upload_service
+from app.services.upload_service import upload_service
 
 
 class MonasteryArtifactService:

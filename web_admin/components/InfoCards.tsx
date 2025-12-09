@@ -8,20 +8,20 @@ import axiosInstance from '@/lib/axios';
 interface StatsData {
   total_users: number;
   total_businesses: number;
-  total_places: number;
+  total_locations: number;
   total_bookings: number;
-  total_revenue: number;
-  total_active_users: number;
+  revenue: number;
+  active_users: number;
 }
 
 export default function InfoCards() {
   const [stats, setStats] = useState<StatsData>({
     total_users: 0,
     total_businesses: 0,
-    total_places: 0,
+    total_locations: 0,
     total_bookings: 0,
-    total_revenue: 0,
-    total_active_users: 0
+    revenue: 0,
+    active_users: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -29,6 +29,7 @@ export default function InfoCards() {
     const fetchStats = async () => {
       try {
         const response = await axiosInstance.get<StatsData>('/api/v1/government/stats');
+        console.log('Fetched stats:', response.data);
         setStats(response.data);
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -38,15 +39,15 @@ export default function InfoCards() {
     };
 
     fetchStats();
-  }, []);
+  }, []); 
 
   const cards = [
     { title: 'Total Users', value: stats.total_users, color: 'bg-blue-500', icon: faUsers },
     { title: 'Total Businesses', value: stats.total_businesses, color: 'bg-purple-500', icon: faBuilding },
-    { title: 'Total Places', value: stats.total_places, color: 'bg-green-500', icon: faMapLocationDot },
+    { title: 'Total Places', value: stats.total_locations, color: 'bg-green-500', icon: faMapLocationDot },
     { title: 'Total Bookings', value: stats.total_bookings, color: 'bg-yellow-500', icon: faCalendarCheck },
-    { title: 'Total Revenue', value: `₹${stats.total_revenue || 0}`, color: 'bg-red-500', icon: faIndianRupeeSign },
-    { title: 'Active Users', value: stats.total_active_users, color: 'bg-indigo-500', icon: faUserCheck }
+    { title: 'Total Revenue', value: `₹${stats.revenue || 0}`, color: 'bg-red-500', icon: faIndianRupeeSign },
+    { title: 'Active Users', value: stats.active_users, color: 'bg-indigo-500', icon: faUserCheck }
   ];
 
   if (loading) {

@@ -6,6 +6,7 @@ import { config } from '../config/api.config';
 // Secure storage for sensitive data (tokens, credentials)
 export class SecureStorage {
     private static isWeb = Platform.OS === 'web';
+    private static useSecureStore = true; // Track if SecureStore is available
 
     static async setItem(key: string, value: string): Promise<void> {
         try {
@@ -13,13 +14,19 @@ export class SecureStorage {
                 // Fallback to localStorage for web
                 localStorage.setItem(key, value);
             } else {
-                try {
-                    await SecureStore.setItemAsync(key, value);
-                } catch (secureError) {
-                    // Fallback to AsyncStorage if SecureStore fails
-                    console.warn('SecureStore failed, using AsyncStorage fallback:', secureError);
-                    await AsyncStorage.setItem(key, value);
+                // Try SecureStore first if not previously failed
+                if (this.useSecureStore) {
+                    try {
+                        await SecureStore.setItemAsync(key, value);
+                        return;
+                    } catch (secureError) {
+                        // Permanently switch to AsyncStorage for this session
+                        console.warn('SecureStore unavailable, switching to AsyncStorage:', secureError);
+                        this.useSecureStore = false;
+                    }
                 }
+                // Use AsyncStorage as fallback
+                await AsyncStorage.setItem(key, value);
             }
         } catch (error) {
             console.error('SecureStorage setItem error:', error);
@@ -32,13 +39,18 @@ export class SecureStorage {
             if (this.isWeb) {
                 return localStorage.getItem(key);
             } else {
-                try {
-                    return await SecureStore.getItemAsync(key);
-                } catch (secureError) {
-                    // Fallback to AsyncStorage if SecureStore fails
-                    console.warn('SecureStore failed, using AsyncStorage fallback:', secureError);
-                    return await AsyncStorage.getItem(key);
+                // Try SecureStore first if not previously failed
+                if (this.useSecureStore) {
+                    try {
+                        return await SecureStore.getItemAsync(key);
+                    } catch (secureError) {
+                        // Permanently switch to AsyncStorage for this session
+                        console.warn('SecureStore unavailable, switching to AsyncStorage:', secureError);
+                        this.useSecureStore = false;
+                    }
                 }
+                // Use AsyncStorage as fallback
+                return await AsyncStorage.getItem(key);
             }
         } catch (error) {
             console.error('SecureStorage getItem error:', error);
@@ -51,13 +63,19 @@ export class SecureStorage {
             if (this.isWeb) {
                 localStorage.removeItem(key);
             } else {
-                try {
-                    await SecureStore.deleteItemAsync(key);
-                } catch (secureError) {
-                    // Fallback to AsyncStorage if SecureStore fails
-                    console.warn('SecureStore failed, using AsyncStorage fallback:', secureError);
-                    await AsyncStorage.removeItem(key);
+                // Try SecureStore first if not previously failed
+                if (this.useSecureStore) {
+                    try {
+                        await SecureStore.deleteItemAsync(key);
+                        return;
+                    } catch (secureError) {
+                        // Permanently switch to AsyncStorage for this session
+                        console.warn('SecureStore unavailable, switching to AsyncStorage:', secureError);
+                        this.useSecureStore = false;
+                    }
                 }
+                // Use AsyncStorage as fallback
+                await AsyncStorage.removeItem(key);
             }
         } catch (error) {
             console.error('SecureStorage removeItem error:', error);
@@ -82,17 +100,35 @@ export class TokenManager {
     static async saveToken(accessToken: string): Promise<void> {
         try {
             await SecureStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
+            
+            // Verify token was saved (with a small delay for AsyncStorage)
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const savedToken = await SecureStorage.getItem(this.ACCESS_TOKEN_KEY);
+            
+            if (__DEV__) {
+                if (savedToken === accessToken) {
+                    console.log('✅ Token saved and verified:', accessToken.substring(0, 20) + '...');
+                } else {
+                    console.warn('⚠️ Token saved but verification mismatch. Expected:', 
+                        accessToken.substring(0, 20) + '...', 
+                        'Got:', savedToken?.substring(0, 20) + '...');
+                }
+            }
         } catch (error) {
-            console.error('TokenManager saveToken error:', error);
+            console.error('❌ TokenManager saveToken error:', error);
             throw error;
         }
     }
 
     static async getAccessToken(): Promise<string | null> {
         try {
-            return await SecureStorage.getItem(this.ACCESS_TOKEN_KEY);
+            const token = await SecureStorage.getItem(this.ACCESS_TOKEN_KEY);
+            if (__DEV__ && !token) {
+                console.warn('⚠️ No token found in storage');
+            }
+            return token;
         } catch (error) {
-            console.error('TokenManager getAccessToken error:', error);
+            console.error('❌ TokenManager getAccessToken error:', error);
             return null;
         }
     }

@@ -28,8 +28,15 @@ class ApiClient {
                 // Add access token to headers
                 const { TokenManager } = await import('../utils/storage');
                 const accessToken = await TokenManager.getAccessToken();
+                
+                if (__DEV__ && appConfig.api.enableLogs) {
+                    console.log('🔑 Token retrieved for request:', accessToken ? `${accessToken.substring(0, 20)}...` : 'NO TOKEN');
+                }
+                
                 if (accessToken) {
                     config.headers.Authorization = `Bearer ${accessToken}`;
+                } else if (__DEV__) {
+                    console.warn('⚠️ No access token found for authenticated request to:', config.url);
                 }
 
                 // Log requests in development
@@ -38,7 +45,7 @@ class ApiClient {
                         method: config.method?.toUpperCase(),
                         url: config.url,
                         data: config.data,
-                        headers: config.headers,
+                        hasAuth: !!config.headers.Authorization,
                     });
                 }
 

@@ -172,10 +172,22 @@ class MonasteryService:
             
             await user_business_collection.insert_one(user_business_data)
             
+            # Step 5: Generate access token for the user
+            from datetime import timedelta
+            from app.core.security import create_access_token
+            
+            access_token_expires = timedelta(hours=3)
+            access_token = create_access_token(
+                data={"sub": user_id},
+                expires_delta=access_token_expires
+            )
+            
             return {
                 "user": user.model_dump(),
                 "location": location.model_dump(),
                 "business": business_obj.model_dump(),
+                "access_token": access_token,
+                "token_type": "bearer",
                 "message": "Monastery registered successfully"
             }
             
