@@ -13,6 +13,7 @@ from routes.translation import router as translation_router
 from routes.translate_tts import router as translate_tts_router
 
 import json
+import os
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -20,8 +21,10 @@ async def lifespan(app: FastAPI):
     yield
     await close_mongo_connection()
 
-
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION, description=settings.DESCRIPTION, lifespan=lifespan)
+
+PIPER_OUT = os.path.join(os.path.dirname(__file__), "..", "piper")
+app.mount("/tts/audio", StaticFiles(directory=PIPER_OUT), name="tts_audio")
 
 # Serve mp3 files
 app.mount("/static", StaticFiles(directory="static"), name="static")
