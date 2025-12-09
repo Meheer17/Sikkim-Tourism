@@ -694,7 +694,9 @@ export default function ExploreScreen() {
     const unsub = networkService.subscribe((offline) => {
       setIsOffline(offline);
     });
-    return () => unsub();
+    return () => {
+      unsub();
+    };
   }, []);
 
   const handleZoomIn = () => {
@@ -1403,6 +1405,110 @@ const styles = StyleSheet.create({
   },
   filterActionButtonText: {
     fontSize: 16,
+    fontWeight: '600',
+  },
+  loadingMore: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  loadingMoreText: {
+    fontSize: 14,
+  },
+  floatingDownloadButton: {
+    position: 'absolute',
+    bottom: MODAL_MIN_HEIGHT + 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  directionsTopBar: {
+    position: 'absolute',
+    top: 60,
+    left: 16,
+    right: 80,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    gap: 10,
+  },
+  directionsTopClose: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  directionsTopTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  markerActionsContainer: {
+    position: 'absolute',
+    bottom: MODAL_MIN_HEIGHT + 20,
+    left: 20,
+    right: 20,
+  },
+  markerActionsCard: {
+    borderRadius: 16,
+    padding: 16,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  markerActionsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  markerActionsButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  viewMoreButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewMoreText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  directionsButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  downloadText: {
+    color: '#555',
+    fontSize: 15,
     fontWeight: '600',
   },
 });
