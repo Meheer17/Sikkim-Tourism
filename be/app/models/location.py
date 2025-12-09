@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, BeforeValidator, ConfigDict
-from typing import Optional, Annotated
+from typing import Optional, Annotated, List
 from datetime import datetime
 from bson import ObjectId
 from enum import Enum
@@ -67,9 +67,20 @@ class LocationInDB(LocationBase):
     model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, json_encoders={ObjectId: str})
 
 
+class TranscriptionSummary(BaseModel):
+    id: str
+    text: str
+    avg_confidence: Optional[float] = None
+    file_name: Optional[str] = None
+    created_at: datetime
+
+    model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})
+
+
 class Location(LocationBase):
     id: str
     created_at: datetime
     updated_at: datetime
+    transcriptions: Optional[List[TranscriptionSummary]] = None
 
     model_config = ConfigDict(populate_by_name=True, json_encoders={ObjectId: str})

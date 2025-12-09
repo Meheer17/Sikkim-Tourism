@@ -226,6 +226,7 @@ export default function HomeScreen() {
                     latitude: loc?.position?.y ? String(loc.position.y) : '',
                     longitude: loc?.position?.x ? String(loc.position.x) : '',
                     shortDescription: (loc?.short_description as string) || '',
+                    transcriptions: JSON.stringify(loc?.transcriptions || []),
                 };
 
                 router.push({ pathname: '/(user)/(stack)/place-details', params } as any);

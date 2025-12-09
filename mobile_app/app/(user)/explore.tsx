@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder, ActivityIndicator, Platform, Modal, Alert, TextInput } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
+import { AppStorage } from '@/utils/storage';
 import * as Location from 'expo-location';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { networkService } from '@/services/network.service';
 import PlaceCard, { Place } from '@/components/explore/PlaceCard';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -72,6 +74,7 @@ export default function ExploreScreen() {
   const [scrollY, setScrollY] = useState(0);
   const mapRef = useRef<MapView>(null);
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { permissions, requestLocationPermission, getCurrentLocation } = usePermissions();
   const { language } = useLanguage();
   const t = getLanguageTranslations(language);
@@ -87,6 +90,11 @@ export default function ExploreScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalPlacesCount, setTotalPlacesCount] = useState(0);
+  const [selectedMarker, setSelectedMarker] = useState<Place | null>(null);
+  const [showMarkerActions, setShowMarkerActions] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [routeCoords, setRouteCoords] = useState<Array<{latitude: number; longitude: number}>>([]);
+  const [routeLoading, setRouteLoading] = useState(false);
 
   // Theming
   const screenBg = useThemeColor('background');
@@ -182,7 +190,7 @@ export default function ExploreScreen() {
         setPage(0);
       }
       const currentPage = loadMore ? page + 1 : 0;
-      const params: any = { skip: currentPage * 20, limit: 20 };
+      const params: any = { skip: currentPage * 10, limit: 10 };
       const radiusMeters = getRadiusMeters(selectedDistance);
       if (radiusMeters !== undefined && userLocation) {
         params.position_lat = userLocation.coords.latitude;
@@ -228,6 +236,7 @@ export default function ExploreScreen() {
           panorama360Url: buildImageUrl(loc.metadata?.panorama_360) || undefined,
           latitude: loc.position?.y || 27.3389,
           longitude: loc.position?.x || 88.6065,
+          transcriptions: loc.transcriptions || [],
         };
       });
 
@@ -252,16 +261,22 @@ export default function ExploreScreen() {
       });
 
       if (loadMore) {
-        setAllPlaces(prev => [...prev, ...updatedPlaces]);
+        // Append new places to existing ones
+        const newAllPlaces = [...allPlaces, ...updatedPlaces];
+        setAllPlaces(newAllPlaces);
         setPage(currentPage);
-        setHasMore(updatedPlaces.length === 20);
+        setHasMore(updatedPlaces.length === 10);
+        
+        // Apply filters to the updated full list
+        applyFiltersToPlaces(newAllPlaces);
       } else {
+        // Replace all places with new fetch
         setAllPlaces(updatedPlaces);
-        setHasMore(updatedPlaces.length === 20);
+        setHasMore(updatedPlaces.length === 10);
+        
+        // Apply filters to the new list
+        applyFiltersToPlaces(updatedPlaces);
       }
-
-      // Apply client-side filters (category & distance) after fetch
-      applyFilters();
 
     } catch (error) {
       console.error('Failed to load locations:', error);
@@ -272,6 +287,38 @@ export default function ExploreScreen() {
         setLoading(false);
       }
     }
+  };
+
+  // Helper function to apply filters to a given list of places
+  const applyFiltersToPlaces = (placesToFilter: Place[]) => {
+    let filtered = [...placesToFilter];
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(place => place.category === selectedCategory);
+    }
+
+    // Filter by distance (if user location available)
+    if (selectedDistance !== 'all' && userLocation) {
+      const maxDistance = parseFloat(selectedDistance);
+      filtered = filtered.filter(place => {
+        const distanceStr = place.distance.replace(' km', '');
+        const distance = parseFloat(distanceStr);
+        return !isNaN(distance) && distance <= maxDistance;
+      });
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(place =>
+        place.name.toLowerCase().includes(query) ||
+        place.description.toLowerCase().includes(query) ||
+        place.category.toLowerCase().includes(query)
+      );
+    }
+
+    setNearbyPlaces(filtered);
   };
 
   // Apply filters to places
@@ -314,6 +361,7 @@ export default function ExploreScreen() {
               panorama360Url: buildImageUrl(loc.metadata?.panorama_360) || undefined,
               latitude: loc.position?.y || 27.3389,
               longitude: loc.position?.x || 88.6065,
+              transcriptions: loc.transcriptions || [],
             };
           });
         
@@ -356,33 +404,11 @@ export default function ExploreScreen() {
       } catch (error) {
         console.error('Search failed:', error);
         // Fallback to filtering loaded places
-        let filtered = [...allPlaces].filter(place =>
-          place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          place.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          place.category.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        setNearbyPlaces(filtered);
+        applyFiltersToPlaces(allPlaces);
       }
     } else {
       // No search query - filter from loaded places
-      let filtered = [...allPlaces];
-
-      // Filter by category
-      if (selectedCategory !== 'all') {
-        filtered = filtered.filter(place => place.category === selectedCategory);
-      }
-
-      // Filter by distance (if user location available)
-      if (selectedDistance !== 'all' && userLocation) {
-        const maxDistance = parseFloat(selectedDistance);
-        filtered = filtered.filter(place => {
-          const distanceStr = place.distance.replace(' km', '');
-          const distance = parseFloat(distanceStr);
-          return !isNaN(distance) && distance <= maxDistance;
-        });
-      }
-
-      setNearbyPlaces(filtered);
+      applyFiltersToPlaces(allPlaces);
     }
 
     setIsFiltering(false);
@@ -498,6 +524,7 @@ export default function ExploreScreen() {
         modelPath: place.modelPath || '',
         has360Images: (place.has360Images || false).toString(),
         panorama360Url: place.panorama360Url || '',
+        transcriptions: JSON.stringify(place.transcriptions || []),
       },
     });
   };
@@ -607,9 +634,91 @@ export default function ExploreScreen() {
         longitudeDelta: 0.1,
       }, 1000);
     }
-    // Open place details
-    handlePlacePress(place);
+    // Show action buttons instead of immediately navigating
+    setSelectedMarker(place);
+    setShowMarkerActions(true);
   };
+
+  const fetchRoute = async (userLat: number, userLon: number, destLat: number, destLon: number) => {
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${userLon},${userLat};${destLon},${destLat}?overview=full&geometries=geojson`;
+      const res = await fetch(url);
+      const json = await res.json();
+      const coords: any[] = json?.routes?.[0]?.geometry?.coordinates || [];
+      const mapped = coords.map((c: any) => ({ latitude: c[1], longitude: c[0] }));
+      // include origin at start so polyline begins from user's location
+      const coordsWithOrigin = [{ latitude: userLat, longitude: userLon }, ...mapped];
+      setRouteCoords(coordsWithOrigin);
+      if (coordsWithOrigin.length > 0) {
+        // fit map to include origin and route
+        mapRef.current?.fitToCoordinates(coordsWithOrigin, { edgePadding: { top: 120, left: 40, right: 40, bottom: 240 }, animated: true });
+      }
+    } catch (err) {
+      console.error('Failed to fetch route', err);
+      Alert.alert('Directions', 'Unable to fetch directions.');
+    }
+  };
+
+  const handleGetDirections = async () => {
+    if (!selectedMarker) return;
+    setRouteLoading(true);
+    try {
+      let origin = userLocation;
+      if (!origin) {
+        // try to get current position directly
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setUserLocation(loc);
+        origin = loc;
+      }
+
+      if (!origin) {
+        Alert.alert('Location required', 'Please enable location to get directions.');
+        return;
+      }
+
+      const uLat = origin.coords.latitude;
+      const uLon = origin.coords.longitude;
+      const dLat = selectedMarker.latitude!;
+      const dLon = selectedMarker.longitude!;
+
+      await fetchRoute(uLat, uLon, dLat, dLon);
+      setShowMarkerActions(false);
+    } finally {
+      setRouteLoading(false);
+    }
+  };
+
+  // Listen for saved_route_id param to load saved routes when navigated from Offline modal
+  useEffect(() => {
+    const savedId = params?.saved_route_id as string | undefined;
+    if (!savedId) return;
+
+    (async () => {
+      try {
+        const savedRoutes = await AppStorage.getItem<any[]>('saved_routes', []);
+        const match = (savedRoutes || []).find(r => r.id === savedId);
+        if (match && Array.isArray(match.coords) && match.coords.length > 0) {
+          setRouteCoords(match.coords);
+          if (match.destination) {
+            setSelectedMarker({ id: match.id, name: match.name, description: '', latitude: match.destination.latitude, longitude: match.destination.longitude } as Place);
+          }
+          // Fit map
+          mapRef.current?.fitToCoordinates(match.coords, { edgePadding: { top: 120, left: 40, right: 40, bottom: 240 }, animated: true });
+        }
+      } catch (e) {
+        console.error('Failed to load saved route', e);
+      }
+    })();
+  }, [params]);
+
+  useEffect(() => {
+    const unsub = networkService.subscribe((offline) => {
+      setIsOffline(offline);
+    });
+    return () => {
+      unsub();
+    };
+  }, []);
 
   const handleZoomIn = () => {
     const newRegion = clampRegion({
@@ -678,23 +787,103 @@ export default function ExploreScreen() {
               minZoomLevel={8}
               maxZoomLevel={15}
             // onError={() => setMapError(true)}
+              onPress={() => {
+                // dismiss marker actions when tapping empty map
+                setSelectedMarker(null);
+                setShowMarkerActions(false);
+              }}
             >
-              {nearbyPlaces
-                .filter(place => place.latitude !== undefined && place.longitude !== undefined)
-                .map((place, index) => (
-                  <Marker
-                    key={`marker-${place.id}-${index}`}
-                    coordinate={{
-                      latitude: place.latitude!,
-                      longitude: place.longitude!,
-                    }}
-                    title={place.name}
-                    description={place.description}
-                    onPress={() => handleMarkerPress(place)}
-                    pinColor={tint as string}
+              {routeCoords.length > 0 && selectedMarker ? (
+                // When a route is active, show only the selected marker highlighted in red
+                <Marker
+                  key={`marker-selected-${selectedMarker.id}`}
+                  coordinate={{ latitude: selectedMarker.latitude!, longitude: selectedMarker.longitude! }}
+                  title={selectedMarker.name}
+                  description={selectedMarker.description}
+                  pinColor={"red"}
+                />
+              ) : (
+                nearbyPlaces
+                  .filter(place => place.latitude !== undefined && place.longitude !== undefined)
+                  .map((place, index) => (
+                    <Marker
+                      key={`marker-${place.id}-${index}`}
+                      coordinate={{
+                        latitude: place.latitude!,
+                        longitude: place.longitude!,
+                      }}
+                      title={place.name}
+                      description={place.description}
+                      onPress={() => handleMarkerPress(place)}
+                      pinColor={tint as string}
+                    />
+                  ))
+              )}
+                {routeCoords.length > 0 && (
+                  <Polyline
+                    coordinates={routeCoords}
+                    strokeColor={tint as string}
+                    strokeWidth={4}
                   />
-                ))}
+                )}
             </MapView>
+
+                {routeCoords.length > 0 && selectedMarker && (
+                  <View style={[styles.directionsTopBar, { backgroundColor: cardBg }]} pointerEvents="box-none">
+                    <TouchableOpacity
+                      style={styles.directionsTopClose}
+                      onPress={() => {
+                        // If in offline mode, open saved routes list instead
+                        if (isOffline) {
+                          // Ask RootLayout to show offline saved routes modal
+                          networkService.requestOpenSavedRoutes();
+                          return;
+                        }
+                        // Clear directions and restore markers
+                        setRouteCoords([]);
+                        setSelectedMarker(null);
+                        setShowMarkerActions(false);
+                      }}
+                    >
+                      <IconSymbol name="xmark" size={22} color={text} />
+                    </TouchableOpacity>
+                    <Text style={[styles.directionsTopTitle, { color: text }]} numberOfLines={1}>
+                      {selectedMarker.name}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Floating Download button (moved below modal to stay above it) */}
+
+              {showMarkerActions && selectedMarker && (
+                <View style={styles.markerActionsContainer} pointerEvents="box-none">
+                  <View style={[styles.markerActionsCard, { backgroundColor: cardBg }]}> 
+                    <Text style={[styles.markerActionsTitle, { color: text }]} numberOfLines={1}>{selectedMarker.name}</Text>
+                    <View style={styles.markerActionsButtons}>
+                      <TouchableOpacity
+                        style={[styles.viewMoreButton, { backgroundColor: tint as string }]}
+                        onPress={() => {
+                          handlePlacePress(selectedMarker);
+                          setShowMarkerActions(false);
+                        }}
+                      >
+                        <Text style={styles.viewMoreText}>View more</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.directionsButton, routeLoading && styles.controlButtonDisabled]}
+                        onPress={handleGetDirections}
+                        disabled={routeLoading}
+                      >
+                        {routeLoading ? (
+                          <ActivityIndicator size="small" color="#555" />
+                        ) : (
+                          <Text style={styles.downloadText}>Directions</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              )}
           </>
         ) : (
           <View style={styles.mapPlaceholder}>
@@ -734,12 +923,13 @@ export default function ExploreScreen() {
       </View>
 
       {/* Sliding Modal for Nearby Places */}
-      <Animated.View
-        style={[
-          styles.modalContainer,
-          { height: modalHeight, backgroundColor: cardBg }
-        ]}
-      >
+      {!isOffline ? (
+        <Animated.View
+          style={[
+            styles.modalContainer,
+            { height: modalHeight, backgroundColor: cardBg }
+          ]}
+        >
         {/* Handle and Header - Combined Draggable Area */}
         <View {...panResponder.panHandlers}>
           <View style={styles.modalHandle}>
@@ -842,7 +1032,37 @@ export default function ExploreScreen() {
             </>
           )}
         </ScrollView>
-      </Animated.View>
+        </Animated.View>
+      ) : null}
+
+      {/* Floating Download button rendered after modal so it appears above the sliding panel */}
+      {routeCoords.length > 0 && selectedMarker && (
+        <TouchableOpacity
+          style={[styles.floatingDownloadButton, { backgroundColor: tint as string }]}
+          onPress={async () => {
+            // Save route to local storage
+            try {
+              const existing = (await AppStorage.getItem<any[]>('saved_routes', [])) || [];
+              const newRoute = {
+                id: `route_${Date.now()}`,
+                name: selectedMarker.name,
+                createdAt: new Date().toISOString(),
+                origin: routeCoords[0] || null,
+                destination: { latitude: selectedMarker.latitude, longitude: selectedMarker.longitude },
+                coords: routeCoords,
+              };
+              existing.push(newRoute);
+              await AppStorage.setItem('saved_routes', existing);
+              Alert.alert('Saved', 'Route saved locally.');
+            } catch (err) {
+              console.error('Failed to save route', err);
+              Alert.alert('Error', 'Unable to save route locally.');
+            }
+          }}
+        >
+          <IconSymbol name="arrow.down.circle" size={22} color="#fff" />
+        </TouchableOpacity>
+      )}
 
       {/* Filter Modal */}
       <Modal
@@ -1015,15 +1235,6 @@ const styles = StyleSheet.create({
   },
   controlButtonDisabled: {
     opacity: 0.6,
-  },
-  loadingMore: {
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingMoreText: {
-    marginTop: 8,
-    fontSize: 14,
   },
   modalContainer: {
     position: 'absolute',
@@ -1215,6 +1426,110 @@ const styles = StyleSheet.create({
   },
   filterActionButtonText: {
     fontSize: 16,
+    fontWeight: '600',
+  },
+  loadingMore: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  loadingMoreText: {
+    fontSize: 14,
+  },
+  floatingDownloadButton: {
+    position: 'absolute',
+    bottom: MODAL_MIN_HEIGHT + 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  directionsTopBar: {
+    position: 'absolute',
+    top: 60,
+    left: 16,
+    right: 80,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    gap: 10,
+  },
+  directionsTopClose: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  directionsTopTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  markerActionsContainer: {
+    position: 'absolute',
+    bottom: MODAL_MIN_HEIGHT + 20,
+    left: 20,
+    right: 20,
+  },
+  markerActionsCard: {
+    borderRadius: 16,
+    padding: 16,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  markerActionsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  markerActionsButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  viewMoreButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewMoreText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  directionsButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  downloadText: {
+    color: '#555',
+    fontSize: 15,
     fontWeight: '600',
   },
 });

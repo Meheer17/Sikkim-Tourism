@@ -10,6 +10,8 @@ from app.models.user import UserCreate, UserUpdate, UserInDB, User
 from app.utils.encryption import encrypt_text, decrypt_text
 from pydantic import ValidationError
 
+from app.utils.encryption import decrypt_text
+
 
 class UserService:
     """Service for user operations"""

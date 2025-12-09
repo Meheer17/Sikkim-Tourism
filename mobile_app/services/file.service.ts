@@ -316,11 +316,13 @@ export class FileService {
     async getHeritageDocuments(params?: {
         category?: string;
         businessId?: string;
+        locationId?: string;
     }): Promise<ApiResponse<{ documents: any[] }>> {
         try {
             const queryParams = new URLSearchParams();
             if (params?.category) queryParams.append('category', params.category);
             if (params?.businessId) queryParams.append('business_id', params.businessId);
+            if (params?.locationId) queryParams.append('location_id', params.locationId);
 
             const url = `/upload/documents?${queryParams.toString()}`;
             console.log('[FileService] Fetching documents:', url);

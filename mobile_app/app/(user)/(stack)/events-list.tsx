@@ -4,6 +4,9 @@ import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { businessService } from '@/services/business.service';
+import { OfflineEventStorage } from '@/utils/offline-storage';
+import { useNetworkStatus } from '@/utils/network';
+import Toast from 'react-native-toast-message';
 
 interface Event {
     id: string;
@@ -21,9 +24,12 @@ interface Event {
 
 export default function EventsListScreen() {
     const router = useRouter();
+    const isOnline = useNetworkStatus();
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [navigatingEventId, setNavigatingEventId] = useState<string | null>(null);
+    const [isOfflineData, setIsOfflineData] = useState(false);
+    const [cacheTimestamp, setCacheTimestamp] = useState<Date | null>(null);
     const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const background = useThemeColor('background');
@@ -40,15 +46,77 @@ export default function EventsListScreen() {
     const loadEvents = async () => {
         setLoading(true);
         try {
-            // Events are businesses with scheduled_at
-            const resp = await businessService.list({ skip: 0, limit: 50 });
-            if (resp.success && resp.data) {
-                // Filter for events (those with scheduled_at)
-                const eventItems: Event[] = resp.data.filter(b => b.scheduled_at).map(b => ({ ...b }));
-                setEvents(eventItems);
+            if (isOnline) {
+                // Online: try to fetch from API
+                try {
+                    const resp = await businessService.list({ skip: 0, limit: 50 });
+                    if (resp.success && resp.data) {
+                        // Filter for events (those with scheduled_at)
+                        const eventItems: Event[] = resp.data.filter(b => b.scheduled_at).map(b => ({ ...b }));
+                        setEvents(eventItems);
+                        setIsOfflineData(false);
+                        setCacheTimestamp(null);
+                        
+                        // Save to offline cache
+                        await OfflineEventStorage.saveEvents(eventItems);
+                    } else {
+                        setEvents([]);
+                    }
+                } catch (apiError: any) {
+                    console.error('Failed to load events from API:', apiError);
+                    
+                    // Fall back to offline cache
+                    const cachedEvents = await OfflineEventStorage.getEvents();
+                    if (cachedEvents && cachedEvents.length > 0) {
+                        setEvents(cachedEvents);
+                        setIsOfflineData(true);
+                        const timestamp = await OfflineEventStorage.getCacheTimestamp();
+                        setCacheTimestamp(timestamp);
+                        
+                        Toast.show({
+                            type: 'info',
+                            text1: 'Using cached events',
+                            text2: `Last updated: ${timestamp?.toLocaleString()}`,
+                            position: 'bottom',
+                        });
+                    } else {
+                        setEvents([]);
+                        Toast.show({
+                            type: 'error',
+                            text1: 'Failed to load events',
+                            text2: 'No cached events available',
+                            position: 'bottom',
+                        });
+                    }
+                }
+            } else {
+                // Offline: load from cache only
+                const cachedEvents = await OfflineEventStorage.getEvents();
+                if (cachedEvents && cachedEvents.length > 0) {
+                    setEvents(cachedEvents);
+                    setIsOfflineData(true);
+                    const timestamp = await OfflineEventStorage.getCacheTimestamp();
+                    setCacheTimestamp(timestamp);
+                    
+                    Toast.show({
+                        type: 'info',
+                        text1: 'Offline Mode',
+                        text2: `Showing cached events from ${timestamp?.toLocaleString()}`,
+                        position: 'bottom',
+                    });
+                } else {
+                    setEvents([]);
+                    Toast.show({
+                        type: 'error',
+                        text1: 'No offline data',
+                        text2: 'No cached events available',
+                        position: 'bottom',
+                    });
+                }
             }
         } catch (error) {
-            console.error('Failed to load events:', error);
+            console.error('Error loading events:', error);
+            setEvents([]);
         } finally {
             setLoading(false);
         }
@@ -149,7 +217,14 @@ export default function EventsListScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <IconSymbol name="chevron.left" size={24} color={text} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: text }]}>Events</Text>
+                <View style={{ flex: 1 }}>
+                    <Text style={[styles.headerTitle, { color: text }]}>Events</Text>
+                    {isOfflineData && (
+                        <Text style={[styles.headerSubtitle, { color: '#ff6b6b' }]}>
+                            Offline • {cacheTimestamp?.toLocaleString()}
+                        </Text>
+                    )}
+                </View>
                 <TouchableOpacity onPress={loadEvents}>
                     <IconSymbol name="arrow.clockwise" size={24} color={tint} />
                 </TouchableOpacity>
@@ -191,6 +266,7 @@ const styles = StyleSheet.create({
         paddingBottom: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#e5e7eb',
+        gap: 12,
     },
     backButton: {
         width: 40,
@@ -202,8 +278,11 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 24,
         fontWeight: '700',
-        flex: 1,
-        textAlign: 'center',
+        marginBottom: 4,
+    },
+    headerSubtitle: {
+        fontSize: 12,
+        fontWeight: '500',
     },
     listContent: {
         padding: 16,

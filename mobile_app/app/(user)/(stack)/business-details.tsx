@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { businessService } from '@/services/business.service';
+import { fileService } from '@/services';
 import { useAuth } from '@/hooks/useAuth';
+import { PageTurnPdfViewer } from '@/components/common/PageTurnPdfViewer';
 
 interface BusinessDetails {
     id: string;
@@ -20,11 +22,23 @@ interface BusinessDetails {
     updated_at?: string;
 }
 
+interface HeritageDocument {
+    _id: string;
+    file_name: string;
+    file_path: string;
+    category: string;
+    mime_type?: string;
+    created_at: string;
+}
+
 export default function BusinessDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
     const [business, setBusiness] = useState<BusinessDetails | null>(null);
     const [loading, setLoading] = useState(true);
+    const [heritageDocuments, setHeritageDocuments] = useState<HeritageDocument[]>([]);
+    const [loadingDocs, setLoadingDocs] = useState(false);
+    const [viewingPdf, setViewingPdf] = useState<{ url: string; name: string } | null>(null);
     const { user } = useAuth();
 
     const background = useThemeColor('background');
@@ -37,7 +51,23 @@ export default function BusinessDetailsScreen() {
 
     useEffect(() => {
         loadBusinessDetails();
+        loadHeritageDocuments();
     }, [id]);
+
+    const loadHeritageDocuments = async () => {
+        if (!id) return;
+        setLoadingDocs(true);
+        try {
+            const resp = await fileService.getHeritageDocuments({ businessId: id });
+            if (resp.success && resp.data) {
+                setHeritageDocuments(resp.data.documents || []);
+            }
+        } catch (error) {
+            console.error('Failed to load heritage documents:', error);
+        } finally {
+            setLoadingDocs(false);
+        }
+    };
 
     const loadBusinessDetails = async () => {
         if (!id) return;
@@ -150,6 +180,63 @@ export default function BusinessDetailsScreen() {
                     </View>
                 </View>
 
+                {/* Heritage Documents */}
+                {heritageDocuments.length > 0 && (
+                    <View style={[styles.heritageSection, { backgroundColor: card }]}>
+                        <View style={styles.heritageSectionHeader}>
+                            <IconSymbol name="book.closed.fill" size={24} color={tint} />
+                            <Text style={[styles.sectionTitle, { color: text }]}>Heritage Documents</Text>
+                        </View>
+                        <Text style={[styles.heritageSectionDesc, { color: muted }]}>
+                            Explore ancient manuscripts, scriptures, and cultural artifacts
+                        </Text>
+                        
+                        {loadingDocs ? (
+                            <ActivityIndicator size="small" color={tint} style={{ marginTop: 16 }} />
+                        ) : (
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.heritageScroll}>
+                                {heritageDocuments.map((doc) => {
+                                    const isPdf = doc.mime_type === 'application/pdf' || doc.file_name.toLowerCase().endsWith('.pdf');
+                                    const categoryLabel = doc.category.replace('heritage_', '').replace('_', ' ');
+                                    
+                                    return (
+                                        <TouchableOpacity
+                                            key={doc._id}
+                                            style={[styles.heritageCard, { backgroundColor: background, borderColor: tint }]}
+                                            onPress={() => isPdf && setViewingPdf({ url: doc.file_path, name: doc.file_name })}
+                                            activeOpacity={0.7}
+                                        >
+                                            <View style={[styles.heritageThumb, { backgroundColor: isPdf ? '#ef4444' : '#f3f4f6' }]}>
+                                                {isPdf ? (
+                                                    <IconSymbol name="doc.text.fill" size={40} color="#fff" />
+                                                ) : (
+                                                    <Image source={{ uri: doc.file_path }} style={styles.heritageImage} />
+                                                )}
+                                            </View>
+                                            <View style={styles.heritageCardContent}>
+                                                <View style={[styles.categoryBadge, { backgroundColor: tint + '20' }]}>
+                                                    <Text style={[styles.categoryBadgeText, { color: tint }]} numberOfLines={1}>
+                                                        {categoryLabel}
+                                                    </Text>
+                                                </View>
+                                                <Text style={[styles.heritageFileName, { color: text }]} numberOfLines={2}>
+                                                    {doc.file_name}
+                                                </Text>
+                                                {isPdf && (
+                                                    <View style={styles.pdfIndicator}>
+                                                        <IconSymbol name="book.pages" size={14} color={tint} />
+                                                        <Text style={[styles.pdfIndicatorText, { color: tint }]}>Tap to read</Text>
+                                                    </View>
+                                                )}
+                                            </View>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </ScrollView>
+                        )}
+                    </View>
+                )}
+
                 {/* Actions */}
                 <View style={styles.actionsContainer}>
                     <TouchableOpacity style={[styles.actionButton, { backgroundColor: tint }]}>
@@ -163,6 +250,13 @@ export default function BusinessDetailsScreen() {
                     </TouchableOpacity>
                 </View>
             </ScrollView>
+
+            <PageTurnPdfViewer
+                visible={!!viewingPdf}
+                pdfUrl={viewingPdf?.url || ''}
+                fileName={viewingPdf?.name}
+                onClose={() => setViewingPdf(null)}
+            />
         </View>
     );
 }
@@ -320,5 +414,82 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '600',
+    },
+    heritageSection: {
+        margin: 16,
+        marginTop: 0,
+        borderRadius: 16,
+        padding: 20,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+    },
+    heritageSectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 8,
+    },
+    heritageSectionDesc: {
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 16,
+    },
+    heritageScroll: {
+        marginHorizontal: -8,
+    },
+    heritageCard: {
+        width: 160,
+        borderRadius: 12,
+        borderWidth: 1,
+        overflow: 'hidden',
+        marginHorizontal: 8,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+    },
+    heritageThumb: {
+        width: '100%',
+        height: 120,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    heritageImage: {
+        width: '100%',
+        height: '100%',
+    },
+    heritageCardContent: {
+        padding: 12,
+    },
+    categoryBadge: {
+        alignSelf: 'flex-start',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+        marginBottom: 8,
+    },
+    categoryBadgeText: {
+        fontSize: 10,
+        fontWeight: '600',
+        textTransform: 'capitalize',
+    },
+    heritageFileName: {
+        fontSize: 13,
+        fontWeight: '600',
+        marginBottom: 8,
+        lineHeight: 18,
+    },
+    pdfIndicator: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    pdfIndicatorText: {
+        fontSize: 11,
+        fontWeight: '500',
     },
 });

@@ -37,7 +37,8 @@ class Settings(BaseSettings):
     # CDN Configuration (for uploading media files and 3D models)
     CDN_URL: str = ""
     CDN_MODEL_URL: str = ""
-    CDN_API_KEY: str = ""
+    # API key for CDN uploads; defaults to known key if env not set
+    CDN_API_KEY: str = os.getenv("CDN_API_KEY", "Shrishesha@4")
     LOCAL_IP: str = "127.0.0.1"
     
     class Config:
