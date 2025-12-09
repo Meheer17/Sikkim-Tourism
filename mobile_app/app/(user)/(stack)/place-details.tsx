@@ -131,11 +131,8 @@ export default function PlaceDetailsScreen() {
     images: images,
     modelPath: params.modelPath as string | undefined,
     has360Images: has360Images,
-<<<<<<< HEAD
-=======
     latitude: params.latitude ? parseFloat(params.latitude as string) : undefined,
     longitude: params.longitude ? parseFloat(params.longitude as string) : undefined,
->>>>>>> 4b8821cc92f0d8e2e7f624da4d964de8d450be64
     transcriptions: transcriptions,
   };
   

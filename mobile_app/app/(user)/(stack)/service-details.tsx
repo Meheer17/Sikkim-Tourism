@@ -38,8 +38,6 @@ export default function ServiceDetailsScreen() {
     const border = useThemeColor('border');
 
     const canEdit = user && (user.role === 'government' || user.role === 'business');
-<<<<<<< HEAD
-=======
 
     // Helper function to format metadata values for display
     const formatMetadataValue = (value: any): string => {
@@ -94,7 +92,6 @@ export default function ServiceDetailsScreen() {
         if (keyLower.includes('duration')) return 'hourglass';
         return 'info.circle.fill';
     };
->>>>>>> 4b8821cc92f0d8e2e7f624da4d964de8d450be64
 
     useEffect(() => {
         loadServiceDetails();
