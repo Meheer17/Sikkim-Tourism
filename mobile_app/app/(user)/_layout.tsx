@@ -1,4 +1,5 @@
 import { Stack, usePathname, useRouter } from 'expo-router';
+import { networkService } from '@/services/network.service';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, { Easing, FadeInDown, SlideInUp, SlideOutDown } from 'react-native-reanimated';
@@ -18,6 +19,7 @@ export default function UserLayout() {
     const t = getLanguageTranslations(language);
     const tint = useThemeColor('tint');
     const icon = useThemeColor('icon');
+    const muted = useThemeColor('mutedText');
     const cardBg = useThemeColor('card');
     const border = useThemeColor('border');
     const activeTabBg = useThemeColor('activeTabBg');
@@ -53,9 +55,6 @@ export default function UserLayout() {
         return routePage === currentPage || pathname === route;
     };
 
-<<<<<<< HEAD
-    const shouldShowTabBar = !pathname.includes('/community-chat') && !pathname.includes('/(user)/3d') && !pathname.includes('/immersive-experience') && !pathname.includes('/friends-list') && !pathname.includes('/ai-planner-chat') && !pathname.includes('/create-event') && !pathname.includes('/3d');
-=======
     // Hide tab bar on certain immersive/deep screens so it doesn't overlap UI like chat input.
     // Show tab bar on top-level pages (home, services, explore, bookings) but keep chat as a full-screen view.
     const currentPage = pathname.split('/').pop() || '';
@@ -65,7 +64,15 @@ export default function UserLayout() {
     const shouldShowTabBar = isTopLevel && currentPage !== 'community-chat';
 
     // Back arrow overlay removed per request; only tab visibility logic retained.
->>>>>>> 9b25bfd58abe9653597af64277c15cecb9396457
+
+    const [isOffline, setIsOffline] = React.useState(false);
+
+    React.useEffect(() => {
+        const unsub = networkService.subscribe((offline) => {
+            setIsOffline(offline);
+        });
+        return () => unsub();
+    }, []);
 
     return (
         <View style={styles.container}>
@@ -102,26 +109,27 @@ export default function UserLayout() {
                 >
                     {tabs.map((tab, index) => {
                         const isActive = isActiveRoute(tab.route);
+                        const isDisabled = isOffline && tab.route !== '/(user)/explore';
                         return (
                             <AnimatedTouchableOpacity
                                 key={index}
-                                style={[styles.tab, isActive && [styles.activeTab, { backgroundColor: activeTabBg }]]}
-                                onPress={() => handleTabPress(tab.route)}
+                                style={[styles.tab, isActive && [styles.activeTab, { backgroundColor: activeTabBg }], isDisabled && { opacity: 0.45 }]}
+                                onPress={() => { if (!isDisabled) handleTabPress(tab.route) }}
                                 activeOpacity={0.7}
-                                disabled={isActive}
+                                disabled={isActive || isDisabled}
                                 entering={FadeInDown.delay(index * 50).duration(400).easing(Easing.out(Easing.cubic))}
                             >
                                 {isActive && <View style={[styles.activeIndicator, { backgroundColor: tint }]} />}
                                 <IconSymbol
                                     size={24}
                                     name={tab.icon as any}
-                                    color={isActive ? tint : icon}
+                                    color={isActive ? tint : (isDisabled ? muted : icon)}
                                 />
                                 <ThemedText
                                     style={[
                                         styles.tabLabel,
                                         { 
-                                            color: isActive ? tint : icon,
+                                            color: isActive ? tint : (isDisabled ? muted : icon),
                                             fontWeight: isActive ? '600' : '500',
                                         },
                                     ]}
