@@ -142,7 +142,7 @@ class MonasteryArtifactService:
     async def get_by_id(self, artifact_id: str, user_id: str) -> MonasteryArtifact:
         """Get artifact by ID"""
         monastery_id = await self._get_monastery_id(user_id)
-        
+        print(artifact_id)
         db = get_database()
         if db is None:
             raise HTTPException(
@@ -292,8 +292,8 @@ class MonasteryArtifactService:
 
     async def get_statistics(self, user_id: str) -> dict:
         """Get artifact statistics for monastery"""
+        print("user_id:", user_id)
         monastery_id = await self._get_monastery_id(user_id)
-        
         db = get_database()
         if db is None:
             raise HTTPException(
@@ -306,7 +306,7 @@ class MonasteryArtifactService:
             
             # Count by category
             pipeline = [
-                {"$match": {"monastery_id": monastery_id}},
+                {"$match": {"monastery_id": ObjectId(monastery_id)}},
                 {"$group": {
                     "_id": "$category",
                     "count": {"$sum": 1}

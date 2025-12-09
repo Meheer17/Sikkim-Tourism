@@ -78,9 +78,9 @@ export default function MonasteryDashboard() {
     };
 
     const StatCard = ({ title, value, icon, color, bg }: any) => (
-        <View style={[styles.statCard, { backgroundColor: bg }]}>
-            <View style={[styles.statIconContainer, { backgroundColor: color + '20' }]}>
-                <IconSymbol size={24} name={icon} color={color} />
+        <View style={[styles.statCard, { backgroundColor: card }]}>
+            <View style={[styles.statIconContainer, { backgroundColor: color }]}>
+                <IconSymbol size={24} name={icon} color="#fff" />
             </View>
             <View style={styles.statContent}>
                 <Text style={[styles.statTitle, { color: muted }]}>{title}</Text>
@@ -129,7 +129,7 @@ export default function MonasteryDashboard() {
                         value={stats?.total || 0}
                         icon="photo.fill"
                         color="#3b82f6"
-                        bg="#dbeafe"
+                        bg={card}
                     />
 
                     <StatCard
@@ -137,7 +137,7 @@ export default function MonasteryDashboard() {
                         value={`${formatBytes(stats?.storage_used || 0)} / ${formatBytes(stats?.storage_limit || 0)}`}
                         icon="externaldrive.fill"
                         color="#10b981"
-                        bg="#d1fae5"
+                        bg={card}
                     />
                 </View>
 

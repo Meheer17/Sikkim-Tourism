@@ -93,6 +93,12 @@ async def get_artifacts(
     }
 
 
+@router.get("/artifacts/stats")
+async def get_artifact_stats(current_user_id: str = Depends(get_current_user_id)):
+    """Get artifact statistics"""
+    return await monastery_artifact_service.get_statistics(current_user_id)
+
+
 @router.get("/artifacts/{artifact_id}")
 async def get_artifact(
     artifact_id: str,
@@ -119,12 +125,6 @@ async def delete_artifact(
 ):
     """Delete an artifact"""
     await monastery_artifact_service.delete(artifact_id, current_user_id)
-
-
-@router.get("/artifacts/stats")
-async def get_artifact_stats(current_user_id: str = Depends(get_current_user_id)):
-    """Get artifact statistics"""
-    return await monastery_artifact_service.get_statistics(current_user_id)
 
 
 @router.post("/artifacts/bulk-upload", status_code=status.HTTP_201_CREATED)

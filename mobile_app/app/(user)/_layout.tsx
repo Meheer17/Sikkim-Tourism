@@ -71,13 +71,15 @@ export default function UserLayout() {
         const unsub = networkService.subscribe((offline) => {
             setIsOffline(offline);
         });
-        return () => unsub();
+        return () => {
+            unsub();
+        };
     }, []);
 
     return (
         <View style={styles.container}>
-            <Stack screenOptions={{ 
-                headerShown: false, 
+            <Stack screenOptions={{
+                headerShown: false,
                 gestureEnabled: false,
                 animation: 'fade',
                 animationDuration: 200,
@@ -102,7 +104,7 @@ export default function UserLayout() {
             </Stack>
 
             {shouldShowTabBar && (
-                <Animated.View 
+                <Animated.View
                     style={[styles.tabBar, { backgroundColor: cardBg, borderTopColor: border }]}
                     entering={SlideInUp.duration(300).easing(Easing.out(Easing.cubic))}
                     exiting={SlideOutDown.duration(200).easing(Easing.in(Easing.cubic))}
@@ -128,7 +130,7 @@ export default function UserLayout() {
                                 <ThemedText
                                     style={[
                                         styles.tabLabel,
-                                        { 
+                                        {
                                             color: isActive ? tint : (isDisabled ? muted : icon),
                                             fontWeight: isActive ? '600' : '500',
                                         },

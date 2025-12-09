@@ -50,6 +50,7 @@ async def get_current_user_id(
     token = credentials.credentials
     payload = decode_access_token(token)
     user_id: str = payload.get("sub")
+    print(f"[DEBUG] Decoded token payload: {payload}")
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
