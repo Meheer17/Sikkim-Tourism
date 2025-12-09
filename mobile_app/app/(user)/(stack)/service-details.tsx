@@ -387,21 +387,7 @@ export default function ServiceDetailsScreen() {
                             numberOfLines={3}
                         />
                         
-                        {/* Rating Stars */}
-                        <View style={styles.ratingRow}>
-                            <Text style={[styles.ratingLabel, { color: muted }]}>Rating:</Text>
-                            <View style={styles.stars}>
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                    <TouchableOpacity key={star} onPress={() => setCommentRating(star)}>
-                                        <IconSymbol
-                                            name={star <= commentRating ? "star.fill" : "star"}
-                                            size={24}
-                                            color={star <= commentRating ? "#FFD700" : muted}
-                                        />
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        </View>
+
 
                         <TouchableOpacity
                             style={[styles.submitButton, { backgroundColor: tint }]}

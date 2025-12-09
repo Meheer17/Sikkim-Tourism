@@ -1,4 +1,5 @@
 import { BaseService } from './base.service';
+import { apiClient } from './api.client';
 
 export interface CommentModel {
     id: string;
@@ -24,18 +25,13 @@ class CommentsService extends BaseService<CommentModel> {
     }
 
     async getByService(serviceId: string, skip = 0, limit = 50) {
-        return this.request<CommentModel[]>({
-            method: 'GET',
-            endpoint: `${this.baseEndpoint}/service/${serviceId}?skip=${skip}&limit=${limit}`,
-        });
+        return apiClient.get<CommentModel[]>(
+            `${this.baseUrl}/service/${serviceId}?skip=${skip}&limit=${limit}`
+        );
     }
 
     async createComment(data: CommentCreate) {
-        return this.request<CommentModel>({
-            method: 'POST',
-            endpoint: this.baseEndpoint,
-            data,
-        });
+        return apiClient.post<CommentModel>(this.baseUrl, data);
     }
 }
 
