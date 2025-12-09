@@ -38,6 +38,12 @@ export default function GeminiPopup() {
         return;
       }
 
+      const now = Date.now();
+      if (cooldownUntil.current && now < cooldownUntil.current.getTime()) {
+        console.log('GeminiPopup suppressed due to cooldown until', cooldownUntil.current.toISOString());
+        return;
+      }
+
       // normalize backend shapes into our GeminiPayload shape
       console.log('GeminiPopup received raw payload', p);
       const normalized: any = {

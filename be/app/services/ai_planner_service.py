@@ -381,13 +381,11 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
         Later this should construct a Gemini prompt and invoke the model.
         """
         try:
-<<<<<<< HEAD
-            print(f"Trigger from user={user_id}: type={trigger.type}")
-=======
             print(f"🔔 Trigger received from user={user_id}: type={trigger.type}, time={trigger.time}, position={trigger.position}")
 
             # Admin check: skip AI suggestions for admin users
             try:
+                from app.services.user_service import user_service
                 usr = await user_service.get_by_id(user_id)
                 if usr and getattr(usr, 'role', None) == 'admin':
                     print(f"[AIPlannerService] Admin user {user_id} - skipping AI suggestions")
@@ -401,7 +399,6 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
                 print(f"[AIPlannerService] Warning: failed to check user role for {user_id}: {e}")
 
             # Normalize incoming trigger time to IST (Asia/Kolkata), using self.ist_zone which has a safe fallback
->>>>>>> 9b25bfd58abe9653597af64277c15cecb9396457
             try:
                 if trigger.time:
                     if trigger.time.tzinfo is None:
@@ -439,10 +436,7 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
             except Exception as e:
                 print(f"Could not fetch recent triggers from DB: {e}")
 
-<<<<<<< HEAD
-=======
             # Prepare prompt context values
->>>>>>> 9b25bfd58abe9653597af64277c15cecb9396457
             try:
                 trigger_time_iso = trigger_time_ist.isoformat()
                 hour = trigger_time_ist.hour
@@ -520,11 +514,8 @@ Remember
                     gemini_result.setdefault('nearby_url', nearby_url)
                 except Exception:
                     pass
-<<<<<<< HEAD
-=======
 
                 # If model suggests no_action, suppress popups on the client by removing message/buttons and setting a flag
->>>>>>> 9b25bfd58abe9653597af64277c15cecb9396457
                 try:
                     if isinstance(gemini_result, dict) and gemini_result.get('type') == 'no_action':
                         gemini_result.pop('agent_message', None)
@@ -591,8 +582,6 @@ Remember
                     "buttons": {"positive": positive, "negative": negative}
                 }
 
-<<<<<<< HEAD
-=======
                 try:
                     lat = float(trigger.position.y)
                     lng = float(trigger.position.x)
@@ -601,7 +590,6 @@ Remember
                 except Exception:
                     pass
 
->>>>>>> 9b25bfd58abe9653597af64277c15cecb9396457
                 try:
                     if isinstance(gemini_result, dict) and gemini_result.get('type') == 'no_action':
                         gemini_result.pop('agent_message', None)

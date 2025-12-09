@@ -8,6 +8,7 @@ import { getLanguageTranslations } from '@/constants/translations';
 import { useAuth } from '@/hooks/useAuth';
 import { messageService, MessageWithUser } from '@/services/message.service';
 import { communityService, CommunityModel, getCommunityId } from '@/services/community.service';
+import { chatWebSocket } from '@/services/websocket.service';
 import Toast from 'react-native-toast-message';
 
 // Default community for the main Sikkim Tourism chat
@@ -31,6 +32,8 @@ export default function CommunityChatScreen() {
     const [communityId, setCommunityId] = useState<string | null>(null);
     const [community, setCommunity] = useState<CommunityModel | null>(null);
     const [keyboardHeight, setKeyboardHeight] = useState(0);
+    const [hasEarlierMessages, setHasEarlierMessages] = useState(true);
+    const [loadingEarlier, setLoadingEarlier] = useState(false);
     
     const scrollViewRef = useRef<ScrollView>(null);
 
@@ -99,36 +102,60 @@ export default function CommunityChatScreen() {
     }, [communityId]);
 
     // Load messages - use ref for communityId to avoid stale closure in interval
-    const loadMessages = useCallback(async (showLoader = true) => {
+    const loadMessages = useCallback(async (showLoader = true, loadEarlier = false) => {
         const cid = communityIdRef.current;
         if (!cid) return;
         
-        if (showLoader) setLoading(true);
+        if (loadEarlier) {
+            setLoadingEarlier(true);
+        } else if (showLoader) {
+            setLoading(true);
+        }
+        
         try {
-            const response = await messageService.getChatMessages(cid, { limit: 100 });
+            // Get oldest message ID if loading earlier
+            const params: any = { limit: 50 };
+            if (loadEarlier && messages.length > 0) {
+                params.before = messages[0].id; // Load messages before the oldest one
+            }
+            
+            const response = await messageService.getChatMessages(cid, params);
             if (response.success && response.data) {
-                setMessages(prevMessages => {
-                    // Only update if messages actually changed (compare by length and last message id)
-                    const newMessages = response.data!;
-                    if (prevMessages.length !== newMessages.length || 
-                        (newMessages.length > 0 && prevMessages.length > 0 && 
-                         prevMessages[prevMessages.length - 1]?.id !== newMessages[newMessages.length - 1]?.id)) {
-                        // Scroll to bottom when new messages arrive
-                        setTimeout(() => {
-                            scrollViewRef.current?.scrollToEnd({ animated: true });
-                        }, 100);
-                        return newMessages;
+                const newMessages = response.data!;
+                
+                if (loadEarlier) {
+                    // Prepend earlier messages
+                    if (newMessages.length > 0) {
+                        setMessages(prev => [...newMessages, ...prev]);
+                        setHasEarlierMessages(newMessages.length === 50);
+                    } else {
+                        setHasEarlierMessages(false);
                     }
-                    return prevMessages;
-                });
+                } else {
+                    setMessages(prevMessages => {
+                        // Only update if messages actually changed (compare by length and last message id)
+                        if (prevMessages.length !== newMessages.length || 
+                            (newMessages.length > 0 && prevMessages.length > 0 && 
+                             prevMessages[prevMessages.length - 1]?.id !== newMessages[newMessages.length - 1]?.id)) {
+                            // Scroll to bottom when new messages arrive (but not when loading earlier)
+                            setTimeout(() => {
+                                scrollViewRef.current?.scrollToEnd({ animated: true });
+                            }, 100);
+                            return newMessages;
+                        }
+                        return prevMessages;
+                    });
+                    setHasEarlierMessages(newMessages.length === 50);
+                }
             }
         } catch (error) {
             console.error('Error loading messages:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
+            setLoadingEarlier(false);
         }
-    }, []); // No dependencies - uses ref
+    }, [messages]); // Dependencies include messages for accessing oldest message
 
     // Load online count
     const loadOnlineCount = useCallback(async () => {
@@ -157,22 +184,76 @@ export default function CommunityChatScreen() {
         if (!communityId) return;
         
         // Initial load
+        // Initial load
         loadMessages();
         loadOnlineCount();
         
-        // Poll for new messages every 3 seconds for more real-time feel
-        const interval = setInterval(() => {
+        // Use polling for now - WebSocket is optional enhancement
+        // Start with polling fallback to ensure chat always works
+        let pollInterval: any = null;
+        let onlineInterval: any = null;
+        let wsCleanup: (() => void) | null = null;
+
+        // Set up polling as primary mechanism
+        pollInterval = setInterval(() => {
             loadMessages(false);
-        }, 3000);
+        }, 15000);
         
-        // Poll online count less frequently (every 10 seconds)
-        const onlineInterval = setInterval(() => {
+        onlineInterval = setInterval(() => {
             loadOnlineCount();
-        }, 10000);
+        }, 30000);
+
+        // Try WebSocket as enhancement (won't crash if it fails)
+        const tryWebSocket = async () => {
+            try {
+                console.log('[CommunityChat] Attempting WebSocket connection...');
+                await chatWebSocket.connectToChatRoom(communityId);
+                console.log('[CommunityChat] WebSocket connected successfully');
+                
+                // Listen for new messages via WebSocket
+                wsCleanup = chatWebSocket.onMessage((data) => {
+                    try {
+                        console.log('[CommunityChat] WebSocket message received:', data);
+                        
+                        // Handle different message types
+                        if (data.type === 'new_message' && data.message) {
+                            setMessages(prev => [...prev, data.message]);
+                            setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+                        } else if (data.type === 'online_count' && typeof data.count === 'number') {
+                            setOnlineCount(data.count);
+                        } else if (data.type === 'message_deleted' && data.messageId) {
+                            setMessages(prev => prev.filter(m => m.id !== data.messageId));
+                        }
+                    } catch (err) {
+                        console.error('[CommunityChat] Error handling WebSocket message:', err);
+                    }
+                });
+            } catch (error) {
+                console.log('[CommunityChat] WebSocket not available, continuing with polling:', error);
+            }
+        };
+
+        // Try WebSocket but don't await it - let it fail silently
+        tryWebSocket().catch(err => {
+            console.log('[CommunityChat] WebSocket enhancement failed, using polling only:', err);
+        });
         
         return () => {
-            clearInterval(interval);
-            clearInterval(onlineInterval);
+            console.log('[CommunityChat] Cleaning up chat connections');
+            try {
+                chatWebSocket.disconnect();
+            } catch (e) {
+                console.log('[CommunityChat] WebSocket cleanup error (ignored):', e);
+            }
+            if (wsCleanup) {
+                try {
+                    wsCleanup();
+                } catch (e) {
+                    console.log('[CommunityChat] WebSocket handler cleanup error (ignored):', e);
+                }
+            }
+            if (pollInterval) clearInterval(pollInterval);
+            if (onlineInterval) clearInterval(onlineInterval);
         };
     }, [communityId, loadMessages, loadOnlineCount]);
 
@@ -379,10 +460,26 @@ export default function CommunityChatScreen() {
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                     keyboardDismissMode="interactive"
+                    scrollEventThrottle={16}
+                    onScroll={(e) => {
+                        const { contentOffset } = e.nativeEvent;
+                        // Load earlier messages when scrolled near the top
+                        if (contentOffset.y < 100 && !loadingEarlier && hasEarlierMessages) {
+                            loadMessages(false, true);
+                        }
+                    }}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={tint as string} />
                     }
                 >
+                    {loadingEarlier && (
+                        <View style={styles.loadingEarlier}>
+                            <ActivityIndicator size="small" color={tint as string} />
+                            <Text style={[styles.loadingEarlierText, { color: mutedText }]}>
+                                {t.loadingEarlier || 'Loading earlier messages...'}
+                            </Text>
+                        </View>
+                    )}
                     {messages.length === 0 ? (
                         <View style={styles.emptyContainer}>
                             <IconSymbol name="bubble.left.and.bubble.right" size={48} color={mutedText as string} />
@@ -704,5 +801,15 @@ const styles = StyleSheet.create({
     sendButtonInactive: {
         backgroundColor: 'transparent',
         borderWidth: 0,
+    },
+    loadingEarlier: {
+        paddingVertical: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        gap: 8,
+    },
+    loadingEarlierText: {
+        fontSize: 14,
     },
 });

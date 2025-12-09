@@ -25,6 +25,9 @@ export default function AdminBusinessesScreen() {
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [selectedStatus, setSelectedStatus] = useState('All');
     const [showFilters, setShowFilters] = useState(false);
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const { put: updateBusiness } = useApi();
     const { delete: deleteBusiness } = useApi();
     const background = useThemeColor('background');
@@ -64,10 +67,16 @@ export default function AdminBusinessesScreen() {
 
     // Load businesses from backend
     useEffect(() => {
-        const loadBusinesses = async () => {
-            setLoading(true);
+        const loadBusinesses = async (loadMore = false) => {
             try {
-                const resp = await businessService.list({ skip: 0, limit: 100 });
+                if (loadMore) {
+                    setLoadingMore(true);
+                } else {
+                    setLoading(true);
+                    setPage(0);
+                }
+                const currentPage = loadMore ? page + 1 : 0;
+                const resp = await businessService.list({ skip: currentPage * 20, limit: 20 });
                 if (resp.success && resp.data) {
                     const mapped: Business[] = resp.data.map((b: BusinessModel) => ({
                         id: b.id,
@@ -88,16 +97,30 @@ export default function AdminBusinessesScreen() {
                         createdAt: b.created_at || '',
                         updatedAt: b.updated_at || '',
                     }));
-                    setBusinesses(mapped);
-                    setFilteredBusinesses(mapped);
+                    if (loadMore) {
+                        setBusinesses(prev => [...prev, ...mapped]);
+                        setPage(currentPage);
+                        setHasMore(mapped.length === 20);
+                    } else {
+                        setBusinesses(mapped);
+                        setHasMore(mapped.length === 20);
+                    }
                 }
             } catch (e) {
                 console.warn('Failed to load businesses:', e);
+            } finally {
+                if (loadMore) {
+                    setLoadingMore(false);
+                } else {
+                    setLoading(false);
+                }
             }
-            setLoading(false);
         };
         loadBusinesses();
-    }, []);
+        
+        // Expose loadBusinesses for pagination
+        (window as any).loadMoreBusinesses = () => loadBusinesses(true);
+    }, [page]);
 
     const handleBusinessPress = (business: Business) => {
         router.push(`/(admin)/(stack)/business-details?id=${business.id}` as any);
@@ -277,6 +300,15 @@ export default function AdminBusinessesScreen() {
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                scrollEventThrottle={16}
+                onScroll={(e) => {
+                    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+                    const paddingToBottom = 100;
+                    const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+                    if (isCloseToBottom && !loadingMore && hasMore && !loading) {
+                        (window as any).loadMoreBusinesses?.();
+                    }
+                }}
             >
                 {loading && (
                     <View style={styles.emptyState}>
@@ -388,6 +420,13 @@ export default function AdminBusinessesScreen() {
                         </Text>
                     </View>
                 ))}
+                {loadingMore && (
+                    <View style={styles.loadingMore}>
+                        <Text style={[styles.loadingMoreText, { color: muted }]}>
+                            Loading more businesses...
+                        </Text>
+                    </View>
+                )}
             </ScrollView>
         </View>
     );
@@ -593,5 +632,11 @@ const styles = StyleSheet.create({
     emptySubtitle: {
         fontSize: 14,
         textAlign: 'center',
+    },    loadingMore: {
+        padding: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-});
+    loadingMoreText: {
+        fontSize: 14,
+    },});

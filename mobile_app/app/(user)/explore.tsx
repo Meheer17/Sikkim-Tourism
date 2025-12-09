@@ -44,8 +44,8 @@ const MODAL_MAX_HEIGHT = SCREEN_HEIGHT * 0.7;
 const SIKKIM_REGION = {
   latitude: 27.3389,
   longitude: 88.6065,
-  latitudeDelta: 0.5,
-  longitudeDelta: 0.5,
+  latitudeDelta: 0.8,
+  longitudeDelta: 0.8,
 };
 
 // Map boundaries for Sikkim and adjacent areas
@@ -86,6 +86,10 @@ export default function ExploreScreen() {
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFiltering, setIsFiltering] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [totalPlacesCount, setTotalPlacesCount] = useState(0);
   const [selectedMarker, setSelectedMarker] = useState<Place | null>(null);
   const [showMarkerActions, setShowMarkerActions] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
@@ -177,10 +181,16 @@ export default function ExploreScreen() {
     }
   };
 
-  const fetchAndLoadLocations = async () => {
+  const fetchAndLoadLocations = async (loadMore = false) => {
     try {
-      setLoading(true);
-      const params: any = { skip: 0, limit: 150 };
+      if (loadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+        setPage(0);
+      }
+      const currentPage = loadMore ? page + 1 : 0;
+      const params: any = { skip: currentPage * 20, limit: 20 };
       const radiusMeters = getRadiusMeters(selectedDistance);
       if (radiusMeters !== undefined && userLocation) {
         params.position_lat = userLocation.coords.latitude;
@@ -191,6 +201,19 @@ export default function ExploreScreen() {
       // Fetch locations (server can optionally filter by radius if params provided)
       const response = await locationService.list(params);
       const locations = response.data || [];
+      
+      // On initial load, also fetch total count by requesting a large skip to estimate total
+      if (!loadMore) {
+        try {
+          const countResponse = await locationService.list({ skip: 0, limit: 1000 });
+          if (countResponse.success && countResponse.data) {
+            setTotalPlacesCount(countResponse.data.length);
+          }
+        } catch (e) {
+          // If count fetch fails, just use what we have
+          console.warn('Failed to fetch total count', e);
+        }
+      }
 
 
       // Map backend locations to Place format
@@ -236,7 +259,14 @@ export default function ExploreScreen() {
         return distA - distB;
       });
 
-      setAllPlaces(updatedPlaces);
+      if (loadMore) {
+        setAllPlaces(prev => [...prev, ...updatedPlaces]);
+        setPage(currentPage);
+        setHasMore(updatedPlaces.length === 20);
+      } else {
+        setAllPlaces(updatedPlaces);
+        setHasMore(updatedPlaces.length === 20);
+      }
 
       // Apply client-side filters (category & distance) after fetch
       applyFilters();
@@ -244,42 +274,123 @@ export default function ExploreScreen() {
     } catch (error) {
       console.error('Failed to load locations:', error);
     } finally {
-      setLoading(false);
+      if (loadMore) {
+        setLoadingMore(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
   // Apply filters to places
-  const applyFilters = () => {
+  const applyFilters = async () => {
     setIsFiltering(true);
 
-    let filtered = [...allPlaces];
-
-    // Filter by search query
+    // If there's a search query, fetch matching places from backend
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(place =>
-        place.name.toLowerCase().includes(query) ||
-        place.description.toLowerCase().includes(query) ||
-        place.category.toLowerCase().includes(query)
-      );
+      try {
+        const query = searchQuery.toLowerCase();
+        // Fetch all places with search term to get complete results
+        const response = await locationService.list({ skip: 0, limit: 1000 });
+        const allLocations = response.data || [];
+        
+        // Map and filter backend locations
+        const mappedPlaces: Place[] = allLocations
+          .filter((loc: any) => 
+            (loc.name || '').toLowerCase().includes(query) ||
+            (loc.description || '').toLowerCase().includes(query) ||
+            (loc.type || '').toLowerCase().includes(query)
+          )
+          .map((loc: any) => {
+            const rawImages: string[] = loc.metadata?.images || [];
+            const images = rawImages.map((f: string) => buildImageUrl(f)).filter(Boolean) as string[];
+            const firstImage = images[0];
+            
+            return {
+              id: loc.id,
+              name: loc.name,
+              description: loc.description || loc.short_description || 'Explore this amazing location',
+              category: loc.type || 'Place',
+              rating: 4.5,
+              distance: '0 km',
+              imageUrl: firstImage || undefined,
+              images: images,
+              modelPath: loc.metadata?.models || undefined,
+              has360Images: !!loc.metadata?.panorama_360,
+              panorama360Url: buildImageUrl(loc.metadata?.panorama_360) || undefined,
+              latitude: loc.position?.y || 27.3389,
+              longitude: loc.position?.x || 88.6065,
+            };
+          });
+        
+        // Calculate distances and apply additional filters
+        const refLat = userLocation ? userLocation.coords.latitude : SIKKIM_REGION.latitude;
+        const refLon = userLocation ? userLocation.coords.longitude : SIKKIM_REGION.longitude;
+        
+        let filtered = mappedPlaces.map(place => {
+          if (place.latitude && place.longitude) {
+            const dist = calculateDistance(refLat, refLon, place.latitude, place.longitude);
+            const distanceText = (userLocation && isUserInRegion) ? `${dist} km` : `${dist} km`;
+            return { ...place, distance: distanceText };
+          }
+          return place;
+        });
+        
+        // Apply category filter
+        if (selectedCategory !== 'all') {
+          filtered = filtered.filter(place => place.category === selectedCategory);
+        }
+        
+        // Apply distance filter
+        if (selectedDistance !== 'all' && userLocation) {
+          const maxDistance = parseFloat(selectedDistance);
+          filtered = filtered.filter(place => {
+            const distanceStr = place.distance.replace(' km', '');
+            const distance = parseFloat(distanceStr);
+            return !isNaN(distance) && distance <= maxDistance;
+          });
+        }
+        
+        // Sort by distance
+        filtered.sort((a: Place, b: Place) => {
+          const distA = parseFloat(String(a.distance).replace(/[^0-9.]/g, '')) || 0;
+          const distB = parseFloat(String(b.distance).replace(/[^0-9.]/g, '')) || 0;
+          return distA - distB;
+        });
+        
+        setNearbyPlaces(filtered);
+      } catch (error) {
+        console.error('Search failed:', error);
+        // Fallback to filtering loaded places
+        let filtered = [...allPlaces].filter(place =>
+          place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          place.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          place.category.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setNearbyPlaces(filtered);
+      }
+    } else {
+      // No search query - filter from loaded places
+      let filtered = [...allPlaces];
+
+      // Filter by category
+      if (selectedCategory !== 'all') {
+        filtered = filtered.filter(place => place.category === selectedCategory);
+      }
+
+      // Filter by distance (if user location available)
+      if (selectedDistance !== 'all' && userLocation) {
+        const maxDistance = parseFloat(selectedDistance);
+        filtered = filtered.filter(place => {
+          const distanceStr = place.distance.replace(' km', '');
+          const distance = parseFloat(distanceStr);
+          return !isNaN(distance) && distance <= maxDistance;
+        });
+      }
+
+      setNearbyPlaces(filtered);
     }
 
-    // Filter by category
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(place => place.category === selectedCategory);
-    }
-
-    // Filter by distance (if user location available)
-    if (selectedDistance !== 'all' && userLocation) {
-      const maxDistance = parseFloat(selectedDistance);
-      filtered = filtered.filter(place => {
-        const distanceStr = place.distance.replace(' km', '');
-        const distance = parseFloat(distanceStr);
-        return !isNaN(distance) && distance <= maxDistance;
-      });
-    }
-
-    setNearbyPlaces(filtered);
     setIsFiltering(false);
   };
 
@@ -813,7 +924,7 @@ export default function ExploreScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[styles.modalTitle, { color: text }]}>{t.nearbyPlaces || 'Nearby Places'}</Text>
               <Text style={[styles.modalSubtitle, { color: muted }]}>
-                {nearbyPlaces.length} places found
+                {loading ? 'Loading...' : `${totalPlacesCount} places`}
               </Text>
             </View>
             <TouchableOpacity
@@ -859,7 +970,15 @@ export default function ExploreScreen() {
           scrollEnabled={scrollEnabled && isExpanded}
           bounces={true}
           scrollEventThrottle={16}
-          onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+          onScroll={(e) => {
+            setScrollY(e.nativeEvent.contentOffset.y);
+            const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+            const paddingToBottom = 100;
+            const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+            if (isCloseToBottom && !loadingMore && hasMore && !loading) {
+              fetchAndLoadLocations(true);
+            }
+          }}
         >
           {loading ? (
             <View style={{ padding: 20, alignItems: 'center' }}>
@@ -871,13 +990,23 @@ export default function ExploreScreen() {
               <Text style={[{ color: muted }]}>{t.noResults || 'No places found'}</Text>
             </View>
           ) : (
-            nearbyPlaces.map((place, index) => (
-              <PlaceCard
-                key={`place-${place.id}-${index}`}
-                place={place}
-                onPress={handlePlacePress}
-              />
-            ))
+            <>
+              {nearbyPlaces.map((place, index) => (
+                <PlaceCard
+                  key={`place-${place.id}-${index}`}
+                  place={place}
+                  onPress={handlePlacePress}
+                />
+              ))}
+              {loadingMore && (
+                <View style={styles.loadingMore}>
+                  <ActivityIndicator size="small" color={tint as string} />
+                  <Text style={[styles.loadingMoreText, { color: muted }]}>
+                    {t.loading_more || 'Loading more...'}
+                  </Text>
+                </View>
+              )}
+            </>
           )}
         </ScrollView>
         </Animated.View>
@@ -1083,99 +1212,6 @@ const styles = StyleSheet.create({
   },
   controlButtonDisabled: {
     opacity: 0.6,
-  },
-  markerActionsContainer: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    top: 96,
-    alignItems: 'center',
-    zIndex: 50,
-  },
-  markerActionsCard: {
-    width: '100%',
-    borderRadius: 12,
-    padding: 12,
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-  },
-  markerActionsTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  markerActionsButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  viewMoreButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  viewMoreText: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-  directionsButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: '#e6e6e6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  downloadText: {
-    color: '#333',
-    fontWeight: '700',
-  },
-  directionsTopBar: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 60 : 40,
-    left: 16,
-    right: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    zIndex: 60,
-  },
-  directionsTopClose: {
-    padding: 6,
-    marginRight: 8,
-  },
-  directionsTopTitle: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  floatingDownloadButton: {
-    position: 'absolute',
-    right: 16,
-    bottom: 180,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    zIndex: 70,
   },
   modalContainer: {
     position: 'absolute',
