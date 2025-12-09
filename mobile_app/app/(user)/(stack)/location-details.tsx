@@ -4,11 +4,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { locationService } from '@/services/location.service';
+import { fileService } from '@/services';
 import { useAuth } from '@/hooks/useAuth';
 import AudioNarration from '@/components/immersive/AudioNarration';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
 import { buildImageUrl } from '@/utils/image-url';
+import { PageTurnPdfViewer } from '@/components/common/PageTurnPdfViewer';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -24,6 +26,15 @@ interface LocationDetails {
     updated_at?: string;
 }
 
+interface HeritageDocument {
+    _id: string;
+    file_name: string;
+    file_path: string;
+    category: string;
+    mime_type?: string;
+    created_at: string;
+}
+
 export default function LocationDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
@@ -32,6 +43,9 @@ export default function LocationDetailsScreen() {
     const [location, setLocation] = useState<LocationDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [heritageDocuments, setHeritageDocuments] = useState<HeritageDocument[]>([]);
+    const [loadingDocs, setLoadingDocs] = useState(false);
+    const [viewingPdf, setViewingPdf] = useState<{ url: string; name: string } | null>(null);
     const { user } = useAuth();
 
     const background = useThemeColor('background');
@@ -44,7 +58,23 @@ export default function LocationDetailsScreen() {
 
     useEffect(() => {
         loadLocationDetails();
+        loadHeritageDocuments();
     }, [id]);
+
+    const loadHeritageDocuments = async () => {
+        if (!id) return;
+        setLoadingDocs(true);
+        try {
+            const resp = await fileService.getHeritageDocuments({ locationId: id });
+            if (resp.success && resp.data) {
+                setHeritageDocuments(resp.data.documents || []);
+            }
+        } catch (error) {
+            console.error('Failed to load heritage documents:', error);
+        } finally {
+            setLoadingDocs(false);
+        }
+    };
 
     const loadLocationDetails = async () => {
         if (!id) return;
@@ -247,6 +277,13 @@ export default function LocationDetailsScreen() {
                 </View>
             </ScrollView>
 
+            <PageTurnPdfViewer
+                visible={!!viewingPdf}
+                pdfUrl={viewingPdf?.url || ''}
+                fileName={viewingPdf?.name}
+                onClose={() => setViewingPdf(null)}
+            />
+
             {/* Audio Narration with Proximity Detection */}
             {location.description && (
                 <AudioNarration
@@ -439,5 +476,82 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '600',
+    },
+    heritageSection: {
+        margin: 16,
+        marginTop: 0,
+        borderRadius: 16,
+        padding: 20,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+    },
+    heritageSectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 8,
+    },
+    heritageSectionDesc: {
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 16,
+    },
+    heritageScroll: {
+        marginHorizontal: -8,
+    },
+    heritageCard: {
+        width: 160,
+        borderRadius: 12,
+        borderWidth: 1,
+        overflow: 'hidden',
+        marginHorizontal: 8,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+    },
+    heritageThumb: {
+        width: '100%',
+        height: 120,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    heritageImage: {
+        width: '100%',
+        height: '100%',
+    },
+    heritageCardContent: {
+        padding: 12,
+    },
+    categoryBadge: {
+        alignSelf: 'flex-start',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+        marginBottom: 8,
+    },
+    categoryBadgeText: {
+        fontSize: 10,
+        fontWeight: '600',
+        textTransform: 'capitalize',
+    },
+    heritageFileName: {
+        fontSize: 13,
+        fontWeight: '600',
+        marginBottom: 8,
+        lineHeight: 18,
+    },
+    pdfIndicator: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    pdfIndicatorText: {
+        fontSize: 11,
+        fontWeight: '500',
     },
 });
