@@ -32,7 +32,7 @@ export default function BusinessDetailsScreen() {
     const loadBusinessDetails = async () => {
         try {
             setLoading(true);
-            
+
             // Load business details
             const businessResp = await businessService.get(businessId);
             if (businessResp.success && businessResp.data) {
@@ -188,10 +188,10 @@ export default function BusinessDetailsScreen() {
                 <View style={[styles.statusCard, { backgroundColor: card }]}>
                     <View style={styles.statusRow}>
                         <View style={[styles.statusBadge, { backgroundColor: business.approved ? '#10b981' : '#f59e0b' }]}>
-                            <IconSymbol 
-                                name={business.approved ? "checkmark.circle.fill" : "clock.fill"} 
-                                size={16} 
-                                color="#fff" 
+                            <IconSymbol
+                                name={business.approved ? "checkmark.circle.fill" : "clock.fill"}
+                                size={16}
+                                color="#fff"
                             />
                             <Text style={styles.statusText}>
                                 {business.approved ? 'Approved' : 'Pending Approval'}

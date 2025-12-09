@@ -28,7 +28,7 @@ class Position(BaseModel):
     x: float
     y: float
 
-    model_config = ConfigDict()
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def dict(self, *args, **kwargs):
         # ensure same representation as previous implementation
@@ -42,6 +42,8 @@ class LocationBase(BaseModel):
     position: Position
     metadata: dict
     type: LocationType
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class LocationCreate(LocationBase):

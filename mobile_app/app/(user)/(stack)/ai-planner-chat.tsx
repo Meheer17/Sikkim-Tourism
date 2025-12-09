@@ -137,7 +137,7 @@ export default function AIPlannerChatScreen() {
 
     setIsLoading(true);
     setIsTyping(true);
-    
+
     const loadingMessage: ChatMessage = {
       role: 'assistant',
       content: '🎨 Creating your personalized travel plans... This may take 10-15 seconds.',
@@ -160,9 +160,9 @@ export default function AIPlannerChatScreen() {
       });
     } catch (error: any) {
       console.error('❌ Failed to generate plans:', error);
-      
+
       let errorText = '❌ Failed to generate travel plans. ';
-      
+
       if (error.message?.includes('Network Error')) {
         errorText += 'Backend server is not running. Please start the backend server and try again.';
       } else if (error.response?.status === 404) {
@@ -172,7 +172,7 @@ export default function AIPlannerChatScreen() {
       } else {
         errorText += 'Please try again or start a new conversation.';
       }
-      
+
       const errorMessage: ChatMessage = {
         role: 'assistant',
         content: errorText,
@@ -224,101 +224,101 @@ export default function AIPlannerChatScreen() {
           contentContainerStyle={styles.messagesContent}
           keyboardShouldPersistTaps="handled"
         >
-        {messages.map((msg, index) => (
-          <View
-            key={index}
-            style={[
-              styles.messageBubble,
-              msg.role === 'user' ? [styles.userBubble, { backgroundColor: tint }] : [styles.assistantBubble, { backgroundColor: card, borderColor: border }],
-            ]}
-          >
-            <Text
+          {messages.map((msg, index) => (
+            <View
+              key={index}
               style={[
-                styles.messageText,
-                msg.role === 'user' ? styles.userText : { color: text },
+                styles.messageBubble,
+                msg.role === 'user' ? [styles.userBubble, { backgroundColor: tint }] : [styles.assistantBubble, { backgroundColor: card, borderColor: border }],
               ]}
             >
-              {msg.content}
-            </Text>
-          </View>
-        ))}
+              <Text
+                style={[
+                  styles.messageText,
+                  msg.role === 'user' ? styles.userText : { color: text },
+                ]}
+              >
+                {msg.content}
+              </Text>
+            </View>
+          ))}
 
-        {isTyping && (
-          <View style={[styles.messageBubble, styles.assistantBubble, { backgroundColor: card, borderColor: border }]}>
-            <Text style={[styles.typingText, { color: mutedText }]}>{t.aiTyping || 'AI is typing...'}</Text>
-          </View>
-        )}
+          {isTyping && (
+            <View style={[styles.messageBubble, styles.assistantBubble, { backgroundColor: card, borderColor: border }]}>
+              <Text style={[styles.typingText, { color: mutedText }]}>{t.aiTyping || 'AI is typing...'}</Text>
+            </View>
+          )}
 
-        {/* Preferences Summary (when ready) */}
-        {isReadyToGenerate && (
-          <View style={[styles.preferencesSummary, { backgroundColor: card, borderColor: tint }]}>
-            <Text style={[styles.preferencesTitle, { color: tint }]}>{t.readyToGenerate || '✅ Ready to generate plans!'}</Text>
-            <Text style={[styles.preferencesText, { color: text }]}>
-              {t.basedOnPreferences || 'Based on your preferences:'}
-            </Text>
-            {Object.entries(extractedPreferences).map(([key, value]) => {
-              if (value && value !== null && (!Array.isArray(value) || value.length > 0)) {
-                return (
-                  <Text key={key} style={[styles.preferenceItem, { color: mutedText }]}>
-                    • {key.replace(/_/g, ' ')}: {Array.isArray(value) ? value.join(', ') : String(value)}
-                  </Text>
-                );
-              }
-              return null;
-            })}
-          </View>
-        )}
-      </ScrollView>
+          {/* Preferences Summary (when ready) */}
+          {isReadyToGenerate && (
+            <View style={[styles.preferencesSummary, { backgroundColor: card, borderColor: tint }]}>
+              <Text style={[styles.preferencesTitle, { color: tint }]}>{t.readyToGenerate || '✅ Ready to generate plans!'}</Text>
+              <Text style={[styles.preferencesText, { color: text }]}>
+                {t.basedOnPreferences || 'Based on your preferences:'}
+              </Text>
+              {Object.entries(extractedPreferences).map(([key, value]) => {
+                if (value && value !== null && (!Array.isArray(value) || value.length > 0)) {
+                  return (
+                    <Text key={key} style={[styles.preferenceItem, { color: mutedText }]}>
+                      • {key.replace(/_/g, ' ')}: {Array.isArray(value) ? value.join(', ') : String(value)}
+                    </Text>
+                  );
+                }
+                return null;
+              })}
+            </View>
+          )}
+        </ScrollView>
 
-      {/* Input Area */}
-      <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 10), backgroundColor: card, borderTopColor: border }]}>
-        {isReadyToGenerate ? (
-          <TouchableOpacity
-            style={[styles.generateButton, { backgroundColor: tint }, isLoading && styles.buttonDisabled]}
-            onPress={generatePlans}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="sparkles" size={20} color="#fff" />
-                <Text style={styles.generateButtonText}>Show Plan</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        ) : (
-          <>
-            <TextInput
-              style={[styles.input, { backgroundColor: background, color: text }]}
-              placeholder="Type your message..."
-              placeholderTextColor={mutedText}
-              value={inputMessage}
-              onChangeText={setInputMessage}
-              multiline
-              maxLength={500}
-              editable={!isLoading}
-              onSubmitEditing={sendMessage}
-              blurOnSubmit={false}
-            />
+        {/* Input Area */}
+        <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 10), backgroundColor: card, borderTopColor: border }]}>
+          {isReadyToGenerate ? (
             <TouchableOpacity
-              style={[styles.sendButton, { backgroundColor: tint }, (!inputMessage.trim() || isLoading) && styles.buttonDisabled]}
-              onPress={sendMessage}
-              disabled={!inputMessage.trim() || isLoading}
+              style={[styles.generateButton, { backgroundColor: tint }, isLoading && styles.buttonDisabled]}
+              onPress={generatePlans}
+              disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color="#fff" />
               ) : (
-                <Ionicons name="send" size={20} color="#fff" />
+                <>
+                  <Ionicons name="sparkles" size={20} color="#fff" />
+                  <Text style={styles.generateButtonText}>Show Plan</Text>
+                </>
               )}
             </TouchableOpacity>
-          </>
+          ) : (
+            <>
+              <TextInput
+                style={[styles.input, { backgroundColor: background, color: text }]}
+                placeholder="Type your message..."
+                placeholderTextColor={mutedText}
+                value={inputMessage}
+                onChangeText={setInputMessage}
+                multiline
+                maxLength={500}
+                editable={!isLoading}
+                onSubmitEditing={sendMessage}
+                blurOnSubmit={false}
+              />
+              <TouchableOpacity
+                style={[styles.sendButton, { backgroundColor: tint }, (!inputMessage.trim() || isLoading) && styles.buttonDisabled]}
+                onPress={sendMessage}
+                disabled={!inputMessage.trim() || isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Ionicons name="send" size={20} color="#fff" />
+                )}
+              </TouchableOpacity>
+            </>
           )}
         </View>
       </KeyboardAvoidingView>
     </View>
   );
-}const styles = StyleSheet.create({
+} const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',

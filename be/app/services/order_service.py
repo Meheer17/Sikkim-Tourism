@@ -90,21 +90,39 @@ class OrderService:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
         collection = db.orders
         
+        print(f"[ORDER_CREATE] user_id: {current_user_id}, service_id: {order_data.service_id}, business_id: {order_data.business_id}")
+        
         # Verify that the service exists
-        service = await db.services.find_one({"_id": ObjectId(order_data.service_id)})
-        if not service:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Service not found"
-            )
+        try:
+            service = await db.services.find_one({"_id": ObjectId(order_data.service_id)})
+            if not service:
+                print(f"[ORDER_CREATE] Service not found: {order_data.service_id}")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Service not found"
+                )
+        except Exception as e:
+            print(f"[ORDER_CREATE] Error finding service: {str(e)}")
+            raise
         
         # Verify that the business exists
-        business = await db.business.find_one({"_id": ObjectId(order_data.business_id)})
-        if not business:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Business not found"
-            )
+        try:
+            business = await db.business.find_one({"_id": ObjectId(order_data.business_id)})
+            if not business:
+                print(f"[ORDER_CREATE] Business not found: {order_data.business_id}")
+                # List all businesses in database for debugging
+                all_businesses = await db.business.find({}).to_list(10)
+                print(f"[ORDER_CREATE] Available businesses in DB: {[str(b['_id']) for b in all_businesses]}")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Business not found: {order_data.business_id}"
+                )
+            print(f"[ORDER_CREATE] Business found: {str(business['_id'])}")
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"[ORDER_CREATE] Error finding business: {str(e)}")
+            raise
         
         order_dict = {
             "service_id": order_data.service_id,

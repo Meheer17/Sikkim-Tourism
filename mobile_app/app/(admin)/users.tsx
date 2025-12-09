@@ -103,11 +103,11 @@ export default function AdminUsersScreen() {
     }, []);
 
     const handleUserPress = (user: AdminUser) => {
-        router.push(`/(government)/(stack)/user-details?id=${user.id}` as any);
+        router.push(`/(admin)/(stack)/user-details?id=${user.id}` as any);
     };
 
     const handleSuspendUser = async (userId: string) => {
-        const result = await updateUser(`/government/users/${userId}`, { status: 'suspended' });
+        const result = await updateUser(`/admin/users/${userId}`, { status: 'suspended' });
         if (result) {
             setUsers(prev =>
                 prev.map(u => (u.id === userId ? { ...u, status: 'suspended' } : u))
@@ -127,7 +127,7 @@ export default function AdminUsersScreen() {
     };
 
     const handleDeleteUser = async (userId: string) => {
-        const result = await deleteUserApi(`/government/users/${userId}`);
+        const result = await deleteUserApi(`/admin/users/${userId}`);
         if (result) {
             setUsers(prev => prev.filter(u => u.id !== userId));
         }
@@ -396,7 +396,7 @@ export default function AdminUsersScreen() {
                                     )}
                                     <TouchableOpacity
                                         style={[styles.actionButton, styles.roleButton]}
-                                        onPress={() => router.push(`/(government)/roles?userId=${user.id}` as any)}
+                                        onPress={() => router.push(`/(admin)/roles?userId=${user.id}` as any)}
                                     >
                                         <IconSymbol name="person.badge.key.fill" size={14} color="#fff" />
                                         <Text style={styles.actionButtonText}>Change Role</Text>

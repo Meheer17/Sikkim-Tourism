@@ -226,7 +226,7 @@ export default function LocationDetailsScreen() {
                 {/* Action Buttons */}
                 <View style={styles.actionsContainer}>
                     {location.metadata?.panorama_360 && (
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: '#10b981' }]}
                             onPress={handleOpen360View}
                         >

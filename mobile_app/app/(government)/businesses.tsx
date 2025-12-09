@@ -117,7 +117,7 @@ export default function AdminBusinessesScreen() {
             }
         };
         loadBusinesses();
-        
+
         // Expose loadBusinesses for pagination
         (window as any).loadMoreBusinesses = () => loadBusinesses(true);
     }, [page]);
@@ -632,11 +632,12 @@ const styles = StyleSheet.create({
     emptySubtitle: {
         fontSize: 14,
         textAlign: 'center',
-    },    loadingMore: {
+    }, loadingMore: {
         padding: 20,
         alignItems: 'center',
         justifyContent: 'center',
     },
     loadingMoreText: {
         fontSize: 14,
-    },});
+    },
+});

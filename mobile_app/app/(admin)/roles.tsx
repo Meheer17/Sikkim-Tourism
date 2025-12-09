@@ -63,7 +63,7 @@ const ROLE_OPTIONS: RoleOption[] = [
     },
 ];
 
-export default function GovernmentRolesScreen() {
+export default function AdminRolesScreen() {
     const { language } = useLanguage();
     const t = getLanguageTranslations(language);
     const [users, setUsers] = useState<AdminUser[]>([]);

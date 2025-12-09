@@ -63,6 +63,26 @@ async def get_current_user_id(
     return user_id
 
 
+async def get_current_user_id_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
+) -> Optional[str]:
+    """Optional authentication - returns None if no credentials provided"""
+    if not credentials:
+        return None
+    
+    try:
+        token = credentials.credentials
+        payload = decode_access_token(token)
+        user_id: str = payload.get("sub")
+        if user_id:
+            print(f"[DEBUG] Authenticated user_id (optional): {user_id}")
+            return user_id
+    except Exception as e:
+        print(f"[DEBUG] Optional auth failed: {str(e)}")
+    
+    return None
+
+
 async def get_current_government_user(
     current_user_id: str = Depends(get_current_user_id)
 ) -> str:

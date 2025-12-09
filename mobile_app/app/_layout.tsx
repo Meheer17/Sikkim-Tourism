@@ -23,6 +23,7 @@ function RootNavigator() {
         <Stack.Screen name="(user)" />
         <Stack.Screen name="(government)" />
         <Stack.Screen name="(business)" />
+        <Stack.Screen name="(monastery)" />
 
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal', headerShown: true }} />
       </Stack>
