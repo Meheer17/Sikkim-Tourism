@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, users, profile, location, business, event, community, message, compression, upload, friends, cdn, admin, ai_planner, services, orders, bookings,comments, websocket, monastery
+from app.api.v1.endpoints import auth, users, profile, location, business, event, community, message, compression, upload, friends, cdn, government, ai_planner, services, orders, bookings,comments, websocket, monastery
 
 
 api_router = APIRouter()

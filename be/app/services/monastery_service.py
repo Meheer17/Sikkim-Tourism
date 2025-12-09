@@ -48,6 +48,7 @@ class MonasteryService:
                 name=monastery_data.name,
                 address=monastery_data.address,
                 gender="other",
+                role="monastery",
                 email=monastery_data.email,
                 password=monastery_data.password
             )

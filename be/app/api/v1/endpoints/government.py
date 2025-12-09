@@ -39,6 +39,20 @@ async def get_government_stats(
         pending_approvals = await db.business.count_documents({
             "status": "pending"
         })
+
+        # Count total bookings/orders from last month
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        total_bookings = await db.orders.count_documents({
+            "created_at": {"$gte": thirty_days_ago}
+        })
+
+        # Sum all amounts from orders in last month
+        revenue_result = await db.orders.aggregate([
+            {"$match": {"created_at": {"$gte": thirty_days_ago}}},
+            {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+        ]).to_list(length=1)
+
+        revenue = revenue_result[0]["total"] if revenue_result else 0
         
         return {
             "total_users": total_users,
@@ -46,8 +60,8 @@ async def get_government_stats(
             "total_locations": total_locations + total_businesses,
             "active_users": active_users if active_users else total_users,  # Fallback to total if no last_login field
             "pending_approvals": pending_approvals,
-            "total_bookings": 0,  # Placeholder for future bookings feature
-            "revenue": 0,  # Placeholder for future revenue feature
+            "total_bookings": total_bookings,  # Placeholder for future bookings feature
+            "revenue": revenue,  # Placeholder for future revenue feature
         }
     except Exception as e:
         print(f"Error fetching government stats: {e}")

@@ -156,6 +156,8 @@ class businessService:
         async for ub in cursor:
             business_ids.append(ObjectId(ub["bid"]))
         
+        print(f"[DEBUG] get_by_owner: user_id={user_id}, found {len(business_ids)} business_ids: {business_ids}")
+        
         if not business_ids:
             return []
         

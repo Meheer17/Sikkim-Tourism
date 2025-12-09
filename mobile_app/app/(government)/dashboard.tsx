@@ -50,13 +50,14 @@ export default function AdminDashboardScreen() {
             // Load stats (endpoint may not exist yet)
             try {
                 const raw: any = await getStats('/government/stats');
+                console.log(raw.revenue)
                 if (raw) {
                     const mapped: DashboardStats = {
                         totalUsers: raw.total_users || 0,
                         totalBusinesses: raw.total_businesses || 0,
                         totalPlaces: raw.total_locations || 0,
-                        totalBookings: 0,
-                        revenue: 0,
+                        totalBookings: raw.total_bookings || 0,
+                        revenue: raw.revenue || 0,
                         activeUsers: raw.active_users || 0,
                         pendingApprovals: raw.pending_approvals || 0,
                     };
@@ -137,7 +138,7 @@ export default function AdminDashboardScreen() {
         },
         {
             title: t.revenue || 'Revenue',
-            value: `₹${(stats.revenue / 100000).toFixed(1)}L`,
+            value: `₹${(stats.revenue / 1000).toFixed(1)}T`,
             icon: 'indianrupeesign.circle.fill',
             color: '#ef4444',
             bgColor: '#fee2e2',
