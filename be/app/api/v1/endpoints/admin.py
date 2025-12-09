@@ -27,7 +27,7 @@ async def get_admin_stats(
         total_businesses = await db.business.count_documents({})
         
         # Count total locations
-        total_locations = await db.location.count_documents({})
+        total_locations = await db.locations.count_documents({})
         
         # Count active users (users who logged in within last 30 days)
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
@@ -43,7 +43,7 @@ async def get_admin_stats(
         return {
             "total_users": total_users,
             "total_businesses": total_businesses,
-            "total_locations": total_locations,
+            "total_locations": total_locations + total_businesses,
             "active_users": active_users if active_users else total_users,  # Fallback to total if no last_login field
             "pending_approvals": pending_approvals,
             "total_bookings": 0,  # Placeholder for future bookings feature

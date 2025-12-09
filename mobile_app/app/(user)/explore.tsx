@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder, ActivityIndicator, Platform, Modal, Alert, TextInput } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
+import { AppStorage } from '@/utils/storage';
 import * as Location from 'expo-location';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { networkService } from '@/services/network.service';
 import PlaceCard, { Place } from '@/components/explore/PlaceCard';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -72,6 +74,7 @@ export default function ExploreScreen() {
   const [scrollY, setScrollY] = useState(0);
   const mapRef = useRef<MapView>(null);
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { permissions, requestLocationPermission, getCurrentLocation } = usePermissions();
   const { language } = useLanguage();
   const t = getLanguageTranslations(language);
@@ -87,6 +90,11 @@ export default function ExploreScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalPlacesCount, setTotalPlacesCount] = useState(0);
+  const [selectedMarker, setSelectedMarker] = useState<Place | null>(null);
+  const [showMarkerActions, setShowMarkerActions] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [routeCoords, setRouteCoords] = useState<Array<{latitude: number; longitude: number}>>([]);
+  const [routeLoading, setRouteLoading] = useState(false);
 
   // Theming
   const screenBg = useThemeColor('background');
@@ -605,9 +613,89 @@ export default function ExploreScreen() {
         longitudeDelta: 0.1,
       }, 1000);
     }
-    // Open place details
-    handlePlacePress(place);
+    // Show action buttons instead of immediately navigating
+    setSelectedMarker(place);
+    setShowMarkerActions(true);
   };
+
+  const fetchRoute = async (userLat: number, userLon: number, destLat: number, destLon: number) => {
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${userLon},${userLat};${destLon},${destLat}?overview=full&geometries=geojson`;
+      const res = await fetch(url);
+      const json = await res.json();
+      const coords: any[] = json?.routes?.[0]?.geometry?.coordinates || [];
+      const mapped = coords.map((c: any) => ({ latitude: c[1], longitude: c[0] }));
+      // include origin at start so polyline begins from user's location
+      const coordsWithOrigin = [{ latitude: userLat, longitude: userLon }, ...mapped];
+      setRouteCoords(coordsWithOrigin);
+      if (coordsWithOrigin.length > 0) {
+        // fit map to include origin and route
+        mapRef.current?.fitToCoordinates(coordsWithOrigin, { edgePadding: { top: 120, left: 40, right: 40, bottom: 240 }, animated: true });
+      }
+    } catch (err) {
+      console.error('Failed to fetch route', err);
+      Alert.alert('Directions', 'Unable to fetch directions.');
+    }
+  };
+
+  const handleGetDirections = async () => {
+    if (!selectedMarker) return;
+    setRouteLoading(true);
+    try {
+      let origin = userLocation;
+      if (!origin) {
+        // try to get current position directly
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setUserLocation(loc);
+        origin = loc;
+      }
+
+      if (!origin) {
+        Alert.alert('Location required', 'Please enable location to get directions.');
+        return;
+      }
+
+      const uLat = origin.coords.latitude;
+      const uLon = origin.coords.longitude;
+      const dLat = selectedMarker.latitude!;
+      const dLon = selectedMarker.longitude!;
+
+      await fetchRoute(uLat, uLon, dLat, dLon);
+      setShowMarkerActions(false);
+    } finally {
+      setRouteLoading(false);
+    }
+  };
+
+  // Listen for saved_route_id param to load saved routes when navigated from Offline modal
+  useEffect(() => {
+    const savedId = params?.saved_route_id as string | undefined;
+    if (!savedId) return;
+
+    (async () => {
+      try {
+        const savedRoutes = await AppStorage.getItem<any[]>('saved_routes', []);
+        const match = (savedRoutes || []).find(r => r.id === savedId);
+        if (match && Array.isArray(match.coords) && match.coords.length > 0) {
+          setRouteCoords(match.coords);
+          if (match.destination) {
+            setSelectedMarker({ id: match.id, name: match.name, description: '', latitude: match.destination.latitude, longitude: match.destination.longitude } as Place);
+          }
+          // Fit map
+          mapRef.current?.fitToCoordinates(match.coords, { edgePadding: { top: 120, left: 40, right: 40, bottom: 240 }, animated: true });
+        }
+      } catch (e) {
+        console.error('Failed to load saved route', e);
+      }
+    })();
+  }, [params]);
+
+  useEffect(() => {
+    const unsub = networkService.subscribe((offline) => {
+      setIsOffline(offline);
+    });
+    return () => unsub();
+  }, []);
 
   const handleZoomIn = () => {
     const newRegion = clampRegion({
@@ -676,23 +764,103 @@ export default function ExploreScreen() {
               minZoomLevel={8}
               maxZoomLevel={15}
             // onError={() => setMapError(true)}
+              onPress={() => {
+                // dismiss marker actions when tapping empty map
+                setSelectedMarker(null);
+                setShowMarkerActions(false);
+              }}
             >
-              {nearbyPlaces
-                .filter(place => place.latitude !== undefined && place.longitude !== undefined)
-                .map((place, index) => (
-                  <Marker
-                    key={`marker-${place.id}-${index}`}
-                    coordinate={{
-                      latitude: place.latitude!,
-                      longitude: place.longitude!,
-                    }}
-                    title={place.name}
-                    description={place.description}
-                    onPress={() => handleMarkerPress(place)}
-                    pinColor={tint as string}
+              {routeCoords.length > 0 && selectedMarker ? (
+                // When a route is active, show only the selected marker highlighted in red
+                <Marker
+                  key={`marker-selected-${selectedMarker.id}`}
+                  coordinate={{ latitude: selectedMarker.latitude!, longitude: selectedMarker.longitude! }}
+                  title={selectedMarker.name}
+                  description={selectedMarker.description}
+                  pinColor={"red"}
+                />
+              ) : (
+                nearbyPlaces
+                  .filter(place => place.latitude !== undefined && place.longitude !== undefined)
+                  .map((place, index) => (
+                    <Marker
+                      key={`marker-${place.id}-${index}`}
+                      coordinate={{
+                        latitude: place.latitude!,
+                        longitude: place.longitude!,
+                      }}
+                      title={place.name}
+                      description={place.description}
+                      onPress={() => handleMarkerPress(place)}
+                      pinColor={tint as string}
+                    />
+                  ))
+              )}
+                {routeCoords.length > 0 && (
+                  <Polyline
+                    coordinates={routeCoords}
+                    strokeColor={tint as string}
+                    strokeWidth={4}
                   />
-                ))}
+                )}
             </MapView>
+
+                {routeCoords.length > 0 && selectedMarker && (
+                  <View style={[styles.directionsTopBar, { backgroundColor: cardBg }]} pointerEvents="box-none">
+                    <TouchableOpacity
+                      style={styles.directionsTopClose}
+                      onPress={() => {
+                        // If in offline mode, open saved routes list instead
+                        if (isOffline) {
+                          // Ask RootLayout to show offline saved routes modal
+                          networkService.requestOpenSavedRoutes();
+                          return;
+                        }
+                        // Clear directions and restore markers
+                        setRouteCoords([]);
+                        setSelectedMarker(null);
+                        setShowMarkerActions(false);
+                      }}
+                    >
+                      <IconSymbol name="xmark" size={22} color={text} />
+                    </TouchableOpacity>
+                    <Text style={[styles.directionsTopTitle, { color: text }]} numberOfLines={1}>
+                      {selectedMarker.name}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Floating Download button (moved below modal to stay above it) */}
+
+              {showMarkerActions && selectedMarker && (
+                <View style={styles.markerActionsContainer} pointerEvents="box-none">
+                  <View style={[styles.markerActionsCard, { backgroundColor: cardBg }]}> 
+                    <Text style={[styles.markerActionsTitle, { color: text }]} numberOfLines={1}>{selectedMarker.name}</Text>
+                    <View style={styles.markerActionsButtons}>
+                      <TouchableOpacity
+                        style={[styles.viewMoreButton, { backgroundColor: tint as string }]}
+                        onPress={() => {
+                          handlePlacePress(selectedMarker);
+                          setShowMarkerActions(false);
+                        }}
+                      >
+                        <Text style={styles.viewMoreText}>View more</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.directionsButton, routeLoading && styles.controlButtonDisabled]}
+                        onPress={handleGetDirections}
+                        disabled={routeLoading}
+                      >
+                        {routeLoading ? (
+                          <ActivityIndicator size="small" color="#555" />
+                        ) : (
+                          <Text style={styles.downloadText}>Directions</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              )}
           </>
         ) : (
           <View style={styles.mapPlaceholder}>
@@ -732,12 +900,13 @@ export default function ExploreScreen() {
       </View>
 
       {/* Sliding Modal for Nearby Places */}
-      <Animated.View
-        style={[
-          styles.modalContainer,
-          { height: modalHeight, backgroundColor: cardBg }
-        ]}
-      >
+      {!isOffline ? (
+        <Animated.View
+          style={[
+            styles.modalContainer,
+            { height: modalHeight, backgroundColor: cardBg }
+          ]}
+        >
         {/* Handle and Header - Combined Draggable Area */}
         <View {...panResponder.panHandlers}>
           <View style={styles.modalHandle}>
@@ -840,7 +1009,37 @@ export default function ExploreScreen() {
             </>
           )}
         </ScrollView>
-      </Animated.View>
+        </Animated.View>
+      ) : null}
+
+      {/* Floating Download button rendered after modal so it appears above the sliding panel */}
+      {routeCoords.length > 0 && selectedMarker && (
+        <TouchableOpacity
+          style={[styles.floatingDownloadButton, { backgroundColor: tint as string }]}
+          onPress={async () => {
+            // Save route to local storage
+            try {
+              const existing = (await AppStorage.getItem<any[]>('saved_routes', [])) || [];
+              const newRoute = {
+                id: `route_${Date.now()}`,
+                name: selectedMarker.name,
+                createdAt: new Date().toISOString(),
+                origin: routeCoords[0] || null,
+                destination: { latitude: selectedMarker.latitude, longitude: selectedMarker.longitude },
+                coords: routeCoords,
+              };
+              existing.push(newRoute);
+              await AppStorage.setItem('saved_routes', existing);
+              Alert.alert('Saved', 'Route saved locally.');
+            } catch (err) {
+              console.error('Failed to save route', err);
+              Alert.alert('Error', 'Unable to save route locally.');
+            }
+          }}
+        >
+          <IconSymbol name="arrow.down.circle" size={22} color="#fff" />
+        </TouchableOpacity>
+      )}
 
       {/* Filter Modal */}
       <Modal
@@ -1013,15 +1212,6 @@ const styles = StyleSheet.create({
   },
   controlButtonDisabled: {
     opacity: 0.6,
-  },
-  loadingMore: {
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingMoreText: {
-    marginTop: 8,
-    fontSize: 14,
   },
   modalContainer: {
     position: 'absolute',

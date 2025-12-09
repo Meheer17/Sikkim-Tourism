@@ -3,6 +3,7 @@ import { ApiResponse } from '../types/api.types';
 import { AuthUtils } from '../utils/auth';
 import { config as appConfig } from '../config/api.config';
 import Toast from 'react-native-toast-message';
+import { networkService } from './network.service';
 
 class ApiClient {
     private client: AxiosInstance;
@@ -54,6 +55,8 @@ class ApiClient {
         // Response interceptor
         this.client.interceptors.response.use(
             (response: AxiosResponse) => {
+                // Connection is fine
+                networkService.setOffline(false);
                 // Log responses in development
                 if (__DEV__ && appConfig.api.enableLogs) {
                     console.log('✅ API Response:', {
@@ -82,6 +85,10 @@ class ApiClient {
 
                 // Handle other errors
                 this.handleError(error);
+                // If it's a network error, mark offline
+                if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+                    networkService.setOffline(true);
+                }
                 return Promise.reject(error);
             }
         );
