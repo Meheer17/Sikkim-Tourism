@@ -50,14 +50,9 @@ export default function LoginScreen() {
             const result = await login({ email, password });
 
             // Check if result contains monastery information
-            if (typeof result === 'object' && result.success) {
-                if (result.isMonastery) {
-                    // Navigate to monastery dashboard
-                    router.replace('/(monastery)/dashboard' as any);
-                } else {
-                    // Navigate to regular user home
-                    router.replace('/' as any);
-                }
+            if (typeof result === 'object') {
+                // Navigate to regular user home
+                router.replace('/' as any);
             } else if (result === true) {
                 // Fallback for boolean return (backward compatibility)
                 router.replace('/' as any);
