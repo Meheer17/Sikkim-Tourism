@@ -92,7 +92,9 @@ export default function ExploreScreen() {
   const [totalPlacesCount, setTotalPlacesCount] = useState(0);
   const [selectedMarker, setSelectedMarker] = useState<Place | null>(null);
   const [showMarkerActions, setShowMarkerActions] = useState(false);
+  const [markerPopupPos, setMarkerPopupPos] = useState<{ x: number; y: number } | null>(null);
   const [isOffline, setIsOffline] = useState(false);
+  const [viewingSavedRoute, setViewingSavedRoute] = useState(false);
   const [routeCoords, setRouteCoords] = useState<Array<{latitude: number; longitude: number}>>([]);
   const [routeLoading, setRouteLoading] = useState(false);
 
@@ -627,7 +629,7 @@ export default function ExploreScreen() {
   };
 
   const handleMarkerPress = (place: Place) => {
-    // Animate to marker location
+    // Animate to marker location and compute screen point for popup
     if (place.latitude && place.longitude) {
       mapRef.current?.animateToRegion({
         latitude: place.latitude,
@@ -635,7 +637,26 @@ export default function ExploreScreen() {
         latitudeDelta: 0.1,
         longitudeDelta: 0.1,
       }, 1000);
+
+      // Compute screen point after a short delay to allow map to center
+      setTimeout(async () => {
+        try {
+          // pointForCoordinate returns {x, y} relative to the MapView
+          // Some platforms may not support it; wrap in try/catch
+          // @ts-ignore
+          const pt = await mapRef.current?.pointForCoordinate({ latitude: place.latitude!, longitude: place.longitude! });
+          if (pt && typeof pt.x === 'number' && typeof pt.y === 'number') {
+            setMarkerPopupPos({ x: pt.x, y: pt.y });
+          } else {
+            setMarkerPopupPos(null);
+          }
+        } catch (e) {
+          console.warn('pointForCoordinate failed', e);
+          setMarkerPopupPos(null);
+        }
+      }, 350);
     }
+
     // Show action buttons instead of immediately navigating
     setSelectedMarker(place);
     setShowMarkerActions(true);
@@ -685,6 +706,7 @@ export default function ExploreScreen() {
 
       await fetchRoute(uLat, uLon, dLat, dLon);
       setShowMarkerActions(false);
+      setMarkerPopupPos(null);
     } finally {
       setRouteLoading(false);
     }
@@ -693,7 +715,11 @@ export default function ExploreScreen() {
   // Listen for saved_route_id param to load saved routes when navigated from Offline modal
   useEffect(() => {
     const savedId = params?.saved_route_id as string | undefined;
-    if (!savedId) return;
+    if (!savedId) {
+      // not viewing a saved route
+      setViewingSavedRoute(false);
+      return;
+    }
 
     (async () => {
       try {
@@ -706,6 +732,8 @@ export default function ExploreScreen() {
           }
           // Fit map
           mapRef.current?.fitToCoordinates(match.coords, { edgePadding: { top: 120, left: 40, right: 40, bottom: 240 }, animated: true });
+          // Mark that we are viewing a saved/offline route so UI can adapt (hide nearby modal, show back-to-offline list)
+          setViewingSavedRoute(true);
         }
       } catch (e) {
         console.error('Failed to load saved route', e);
@@ -717,6 +745,7 @@ export default function ExploreScreen() {
     const unsub = networkService.subscribe((offline) => {
       setIsOffline(offline);
     });
+    
     return () => {
       unsub();
     };
@@ -788,26 +817,39 @@ export default function ExploreScreen() {
               loadingBackgroundColor={soft as string}
               minZoomLevel={8}
               maxZoomLevel={15}
+              // Ensure gestures are explicitly enabled so users can pan/zoom freely
+              zoomEnabled={true}
+              scrollEnabled={true}
+              rotateEnabled={true}
+              pitchEnabled={true}
             // onError={() => setMapError(true)}
               onPress={() => {
-                // dismiss marker actions when tapping empty map
-                setSelectedMarker(null);
-                setShowMarkerActions(false);
-              }}
+                  // dismiss marker actions when tapping empty map
+                  setSelectedMarker(null);
+                  setShowMarkerActions(false);
+                  setMarkerPopupPos(null);
+                }}
             >
-              {routeCoords.length > 0 && selectedMarker ? (
-                // When a route is active, show only the selected marker highlighted in red
-                <Marker
-                  key={`marker-selected-${selectedMarker.id}`}
-                  coordinate={{ latitude: selectedMarker.latitude!, longitude: selectedMarker.longitude! }}
-                  title={selectedMarker.name}
-                  description={selectedMarker.description}
-                  pinColor={"red"}
-                />
-              ) : (
-                nearbyPlaces
-                  .filter(place => place.latitude !== undefined && place.longitude !== undefined)
-                  .map((place, index) => (
+              {nearbyPlaces
+                .filter(place => place.latitude !== undefined && place.longitude !== undefined)
+                .map((place, index) => {
+                  // When a route is active, highlight destination (gold) and source (dark green).
+                  // Other markers are pink in offline mode, but are dimmed in online mode to emphasize the route.
+                  const isDestination = routeCoords.length > 0 && selectedMarker && selectedMarker.id === place.id;
+                  // Determine if this place matches origin coordinate (approx match)
+                  const origin = routeCoords.length > 0 ? routeCoords[0] : null;
+                  const isSource = origin && Math.abs((place.latitude! - origin.latitude)) < 0.0005 && Math.abs((place.longitude! - origin.longitude)) < 0.0005;
+
+                  let pinColor: string;
+                  if (routeCoords.length > 0) {
+                    if (isDestination) pinColor = '#FFD700'; // gold
+                    else if (isSource) pinColor = '#006400'; // dark green
+                    else pinColor = isOffline ? '#FF69B4' : '#D1D5DB'; // pink when offline, dim gray when online
+                  } else {
+                    pinColor = tint as string;
+                  }
+
+                  return (
                     <Marker
                       key={`marker-${place.id}-${index}`}
                       coordinate={{
@@ -817,10 +859,10 @@ export default function ExploreScreen() {
                       title={place.name}
                       description={place.description}
                       onPress={() => handleMarkerPress(place)}
-                      pinColor={tint as string}
+                      pinColor={pinColor}
                     />
-                  ))
-              )}
+                  );
+                })}
                 {routeCoords.length > 0 && (
                   <Polyline
                     coordinates={routeCoords}
@@ -828,63 +870,131 @@ export default function ExploreScreen() {
                     strokeWidth={4}
                   />
                 )}
+                {/* Render source marker (green) if origin does not match any place */}
+                {routeCoords.length > 0 && (() => {
+                  const origin = routeCoords[0];
+                  if (!origin) return null;
+                  const matchesPlace = nearbyPlaces.some(p => p.latitude && p.longitude && Math.abs(p.latitude - origin.latitude) < 0.0005 && Math.abs(p.longitude - origin.longitude) < 0.0005);
+                  if (matchesPlace) return null;
+                  return (
+                    <Marker
+                      key={`origin-marker`}
+                      coordinate={{ latitude: origin.latitude, longitude: origin.longitude }}
+                      title={'Origin'}
+                      description={'Route origin'}
+                      pinColor={'#006400'}
+                    />
+                  );
+                })()}
+                {/* Ensure destination marker is visible (gold) */}
+                {routeCoords.length > 0 && selectedMarker && (
+                  <Marker
+                    key={`destination-marker`}
+                    coordinate={{ latitude: selectedMarker.latitude!, longitude: selectedMarker.longitude! }}
+                    title={'Destination'}
+                    description={selectedMarker.name}
+                    pinColor={'#FFD700'}
+                  />
+                )}
             </MapView>
 
                 {routeCoords.length > 0 && selectedMarker && (
                   <View style={[styles.directionsTopBar, { backgroundColor: cardBg }]} pointerEvents="box-none">
-                    <TouchableOpacity
-                      style={styles.directionsTopClose}
-                      onPress={() => {
-                        // If in offline mode, open saved routes list instead
-                        if (isOffline) {
-                          // Ask RootLayout to show offline saved routes modal
-                          networkService.requestOpenSavedRoutes();
-                          return;
-                        }
-                        // Clear directions and restore markers
-                        setRouteCoords([]);
-                        setSelectedMarker(null);
-                        setShowMarkerActions(false);
-                      }}
-                    >
-                      <IconSymbol name="xmark" size={22} color={text} />
-                    </TouchableOpacity>
                     <Text style={[styles.directionsTopTitle, { color: text }]} numberOfLines={1}>
                       {selectedMarker.name}
                     </Text>
+                    {/* Prominent centered back button to open saved routes list (not in corner) */}
+                    <TouchableOpacity
+                      style={[styles.directionsBackButton, { backgroundColor: tint as string }]}
+                      onPress={() => {
+                        // Open offline saved routes list and clear viewing state
+                        networkService.requestOpenSavedRoutes();
+                        setViewingSavedRoute(false);
+                      }}
+                    >
+                      <IconSymbol name="arrow.left" size={18} color="#fff" />
+                      <Text style={styles.directionsBackText}>Saved Routes</Text>
+                    </TouchableOpacity>
                   </View>
                 )}
 
                 {/* Floating Download button (moved below modal to stay above it) */}
 
               {showMarkerActions && selectedMarker && (
-                <View style={styles.markerActionsContainer} pointerEvents="box-none">
-                  <View style={[styles.markerActionsCard, { backgroundColor: cardBg }]}> 
-                    <Text style={[styles.markerActionsTitle, { color: text }]} numberOfLines={1}>{selectedMarker.name}</Text>
-                    <View style={styles.markerActionsButtons}>
-                      <TouchableOpacity
-                        style={[styles.viewMoreButton, { backgroundColor: tint as string }]}
-                        onPress={() => {
-                          handlePlacePress(selectedMarker);
-                          setShowMarkerActions(false);
-                        }}
-                      >
-                        <Text style={styles.viewMoreText}>View more</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.directionsButton, routeLoading && styles.controlButtonDisabled]}
-                        onPress={handleGetDirections}
-                        disabled={routeLoading}
-                      >
-                        {routeLoading ? (
-                          <ActivityIndicator size="small" color="#555" />
-                        ) : (
-                          <Text style={styles.downloadText}>Directions</Text>
-                        )}
-                      </TouchableOpacity>
+                // Anchor the popup above the selected marker using computed screen coordinates
+                markerPopupPos ? (
+                  <View
+                    style={[
+                      styles.markerPopup,
+                      {
+                        left: Math.max(8, Math.min(markerPopupPos.x - 120, Dimensions.get('window').width - 248)),
+                        top: Math.max(64, markerPopupPos.y - 110),
+                      }
+                    ]}
+                    pointerEvents="box-none"
+                  >
+                    <View style={[styles.markerActionsCard, { backgroundColor: cardBg }]}> 
+                      <Text style={[styles.markerActionsTitle, { color: text }]} numberOfLines={1}>{selectedMarker.name}</Text>
+                      <View style={styles.markerActionsButtons}>
+                        <TouchableOpacity
+                          style={[styles.viewMoreButton, { backgroundColor: tint as string }]}
+                          onPress={() => {
+                            handlePlacePress(selectedMarker);
+                            setShowMarkerActions(false);
+                            setMarkerPopupPos(null);
+                          }}
+                        >
+                          <Text style={styles.viewMoreText}>View more</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.directionsButton, { borderColor: tint as string, backgroundColor: 'transparent' }]}
+                          onPress={async () => {
+                            await handleGetDirections();
+                          }}
+                          disabled={routeLoading}
+                        >
+                          {routeLoading ? (
+                            <ActivityIndicator size="small" color={tint as string} />
+                          ) : (
+                            <Text style={{ color: tint as string, fontWeight: '700' }}>Directions</Text>
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View style={[styles.markerPopupArrow, { borderTopColor: cardBg }]} />
+                  </View>
+                ) : (
+                  // Fallback: render centered card near top if we couldn't calculate screen point
+                  <View style={styles.markerActionsContainer} pointerEvents="box-none">
+                    <View style={[styles.markerActionsCard, { backgroundColor: cardBg }]}> 
+                      <Text style={[styles.markerActionsTitle, { color: text }]} numberOfLines={1}>{selectedMarker.name}</Text>
+                      <View style={styles.markerActionsButtons}>
+                        <TouchableOpacity
+                          style={[styles.viewMoreButton, { backgroundColor: tint as string }]}
+                          onPress={() => {
+                            handlePlacePress(selectedMarker);
+                            setShowMarkerActions(false);
+                          }}
+                        >
+                          <Text style={styles.viewMoreText}>View more</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.directionsButton, { borderColor: tint as string, backgroundColor: 'transparent' }]}
+                          onPress={async () => {
+                            await handleGetDirections();
+                          }}
+                          disabled={routeLoading}
+                        >
+                          {routeLoading ? (
+                            <ActivityIndicator size="small" color={tint as string} />
+                          ) : (
+                            <Text style={{ color: tint as string, fontWeight: '700' }}>Directions</Text>
+                          )}
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
-                </View>
+                )
               )}
           </>
         ) : (
@@ -925,7 +1035,7 @@ export default function ExploreScreen() {
       </View>
 
       {/* Sliding Modal for Nearby Places */}
-      {!isOffline ? (
+      {!isOffline && !viewingSavedRoute ? (
         <Animated.View
           style={[
             styles.modalContainer,
@@ -1330,6 +1440,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 100,
   },
+  loadingMore: {
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingMoreText: {
+    marginTop: 8,
+    fontSize: 14,
+  },
   // Filter Modal Styles
   filterModalOverlay: {
     flex: 1,
@@ -1430,108 +1549,114 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  loadingMore: {
-    paddingVertical: 20,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  loadingMoreText: {
-    fontSize: 14,
-  },
-  floatingDownloadButton: {
+  // Marker popup styles
+  markerPopup: {
     position: 'absolute',
-    bottom: MODAL_MIN_HEIGHT + 20,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
+    width: 240,
     alignItems: 'center',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
+    zIndex: 1000,
+    elevation: 12,
+    pointerEvents: 'box-none',
   },
-  directionsTopBar: {
-    position: 'absolute',
-    top: 60,
-    left: 16,
-    right: 80,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    gap: 10,
-  },
-  directionsTopClose: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  directionsTopTitle: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
+  markerPopupArrow: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    // borderTopColor set inline to match cardBg
+    marginTop: -2,
   },
   markerActionsContainer: {
     position: 'absolute',
-    bottom: MODAL_MIN_HEIGHT + 20,
-    left: 20,
-    right: 20,
+    top: 80,
+    left: 16,
+    right: 16,
+    alignItems: 'center',
+    zIndex: 100,
   },
   markerActionsCard: {
-    borderRadius: 16,
-    padding: 16,
-    elevation: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    minWidth: 200,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 6,
   },
   markerActionsTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   markerActionsButtons: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'flex-start',
+    gap: 8,
   },
   viewMoreButton: {
-    flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+  },
+  directionsButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#fff',
   },
   viewMoreText: {
     color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  directionsButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
+  floatingDownloadButton: {
+    position: 'absolute',
+    right: 16,
+    bottom: MODAL_MIN_HEIGHT + 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
+    zIndex: 1200,
+    elevation: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
-  downloadText: {
-    color: '#555',
-    fontSize: 15,
-    fontWeight: '600',
+  directionsTopBar: {
+    position: 'absolute',
+    top: 12,
+    left: 16,
+    right: 16,
+    alignItems: 'center',
+    zIndex: 1100,
+    elevation: 10,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  directionsTopTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  directionsBackButton: {
+    marginTop: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  directionsBackText: {
+    color: '#fff',
+    fontWeight: '700',
+    marginLeft: 8,
   },
 });
