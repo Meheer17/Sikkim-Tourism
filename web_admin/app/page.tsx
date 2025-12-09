@@ -1,3 +1,5 @@
+'use client';
+
 import Sidebar from '@/components/Sidebar';
 import InfoCards from '@/components/InfoCards';
 import VisitsLineGraph from '@/components/VisitsLineGraph';

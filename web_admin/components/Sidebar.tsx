@@ -1,11 +1,29 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartLine, faGauge } from '@fortawesome/free-solid-svg-icons';
+import { faChartLine, faGauge, faRightFromBracket, faUser } from '@fortawesome/free-solid-svg-icons';
+import { authService } from '@/lib/auth';
+import { useEffect, useState } from 'react';
 
 export default function Sidebar() {
+  const router = useRouter();
+  const [userName, setUserName] = useState('Admin');
+
+  useEffect(() => {
+    const user = authService.getUser();
+    if (user) {
+      setUserName(user.name);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    authService.logout();
+    router.push('/login');
+  };
+
   return (
-    <div className="w-64 h-screen bg-gray-900 fixed left-0 top-0 p-6">
+    <div className="w-64 h-screen bg-gray-900 fixed left-0 top-0 p-6 flex flex-col">
       <div className="mb-8">
         <h1 className="text-white text-2xl font-bold flex items-center gap-2">
           <FontAwesomeIcon icon={faGauge} />
@@ -13,12 +31,31 @@ export default function Sidebar() {
         </h1>
       </div>
       
-      <nav>
+      <nav className="flex-1">
         <button className="w-full text-left px-4 py-3 text-white bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-3">
           <FontAwesomeIcon icon={faChartLine} />
           Dashboard
         </button>
       </nav>
+
+      <div className="border-t border-gray-700 pt-4">
+        <div className="flex items-center gap-3 text-white mb-4 px-2">
+          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+            <FontAwesomeIcon icon={faUser} />
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <p className="font-medium truncate">{userName}</p>
+            <p className="text-xs text-gray-400">Administrator</p>
+          </div>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="w-full px-4 py-3 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-3"
+        >
+          <FontAwesomeIcon icon={faRightFromBracket} />
+          Logout
+        </button>
+      </div>
     </div>
   );
 }
