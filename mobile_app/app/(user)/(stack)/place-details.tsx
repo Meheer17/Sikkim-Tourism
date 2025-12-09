@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking, FlatList, Dimensions, Modal, StatusBar, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking, FlatList, Dimensions, Modal, StatusBar, Platform, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -96,6 +97,8 @@ export default function PlaceDetailsScreen() {
   const border = useThemeColor('border');
   const soft = useThemeColor('tintSoftBg');
 
+  console.log('Place Details Params:', params);
+
   // Parse the place data from params
   const imagesParam = params.images as string;
   let images: string[] = [];
@@ -125,6 +128,47 @@ export default function PlaceDetailsScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [fullScreenVisible, setFullScreenVisible] = useState(false);
   const [fullScreenImageIndex, setFullScreenImageIndex] = useState(0);
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  // Check if place is favorited on mount
+  useEffect(() => {
+    checkFavoriteStatus();
+  }, [place.id]);
+
+  const checkFavoriteStatus = async () => {
+    try {
+      const favoritesData = await AsyncStorage.getItem('favorites');
+      const favorites = favoritesData ? JSON.parse(favoritesData) : [];
+      setIsFavorite(favorites.includes(place.id));
+    } catch (error) {
+      console.error('Error checking favorite status:', error);
+    }
+  };
+
+  const toggleFavorite = async () => {
+    try {
+      const favoritesData = await AsyncStorage.getItem('favorites');
+      let favorites = favoritesData ? JSON.parse(favoritesData) : [];
+
+      if (isFavorite) {
+        // Remove from favorites
+        favorites = favorites.filter((id: string) => id !== place.id);
+        setIsFavorite(false);
+      } else {
+        // Add to favorites
+        if (!favorites.includes(place.id)) {
+          favorites.push(place.id);
+        }
+        setIsFavorite(true);
+        Alert.alert('Success', 'This place is added to your favourites');
+      }
+
+      await AsyncStorage.setItem('favorites', JSON.stringify(favorites));
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      Alert.alert('Error', 'Failed to update favorites');
+    }
+  };
 
   const handleImagePress = (index: number) => {
     setFullScreenImageIndex(index);
@@ -137,7 +181,10 @@ export default function PlaceDetailsScreen() {
       const url = place.modelPath.startsWith('http') 
         ? place.modelPath 
         : `https://models.shrishesha.space/viewer/${place.modelPath}`;
-      Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
+      router.push({
+        pathname: '/(user)/3d',
+        params: { url, name: place.name }
+      } as any);
     }
   };
 
@@ -239,12 +286,31 @@ export default function PlaceDetailsScreen() {
 
         {/* Place Details */}
         <View style={styles.content}>
-          {/* Title and Rating */}
+          {/* Title and Favorite */}
           <View style={styles.header}>
-            <Text style={[styles.name, { color: text }]}>{place.name}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.name, { color: text }]}>{place.name}</Text>
+              <TouchableOpacity 
+                style={[
+                  styles.favoriteButtonInline,
+                  { 
+                    backgroundColor: isFavorite ? '#fee2e2' : soft,
+                    borderWidth: 1,
+                    borderColor: isFavorite ? '#ef4444' : border,
+                  }
+                ]}
+                onPress={toggleFavorite}
+                activeOpacity={0.7}
+              >
+                <IconSymbol name="heart.fill" size={18} color={isFavorite ? '#ef4444' : muted} />
+                <Text style={[styles.favoriteText, { color: isFavorite ? '#ef4444' : text }]}>
+                  {isFavorite ? 'Favorited' : 'Add to Favorites'}
+                </Text>
+              </TouchableOpacity>
+            </View>
             {place.rating && (
-              <View style={styles.ratingContainer}>
-                <IconSymbol name="star.fill" size={20} color="#fbbf24" />
+              <View style={styles.ratingContainerTop}>
+                <IconSymbol name="star.fill" size={24} color="#fbbf24" />
                 <Text style={[styles.rating, { color: text }]}>{place.rating}</Text>
               </View>
             )}
@@ -512,6 +578,34 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     marginRight: 12,
+    marginBottom: 8,
+  },
+  favoriteButtonInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
+  favoriteText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  ratingContainerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fff7ed',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -683,5 +777,12 @@ const styles = StyleSheet.create({
   },
   fullScreenDot: {
     borderRadius: 5,
+  },
+  favoriteButtonPlaceDetails: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

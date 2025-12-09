@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
@@ -25,16 +26,58 @@ interface PlaceCardProps {
 }
 
 export default function PlaceCard({ place, onPress }: PlaceCardProps) {
+    const [isFavorite, setIsFavorite] = useState(false);
     const text = useThemeColor('text');
     const muted = useThemeColor('mutedText');
     const card = useThemeColor('card');
     const tint = useThemeColor('tint');
     const soft = useThemeColor('tintSoftBg');
     
+    // Check if place is favorited on mount
+    useEffect(() => {
+        checkFavoriteStatus();
+    }, [place.id]);
+    
     // Debug logging
     React.useEffect(() => {
         console.log(`🎴 PlaceCard [${place.name}]: imageUrl =`, place.imageUrl || 'NO IMAGE');
     }, [place.imageUrl]);
+
+    const checkFavoriteStatus = async () => {
+        try {
+            const favoritesData = await AsyncStorage.getItem('favorites');
+            const favorites = favoritesData ? JSON.parse(favoritesData) : [];
+            setIsFavorite(favorites.includes(place.id));
+        } catch (error) {
+            console.error('Error checking favorite status:', error);
+        }
+    };
+
+    const toggleFavorite = async (e: any) => {
+        e.stopPropagation();
+        try {
+            const favoritesData = await AsyncStorage.getItem('favorites');
+            let favorites = favoritesData ? JSON.parse(favoritesData) : [];
+
+            if (isFavorite) {
+                // Remove from favorites
+                favorites = favorites.filter((id: string) => id !== place.id);
+                setIsFavorite(false);
+            } else {
+                // Add to favorites
+                if (!favorites.includes(place.id)) {
+                    favorites.push(place.id);
+                }
+                setIsFavorite(true);
+                Alert.alert('Success', 'This place is added to your favourites');
+            }
+
+            await AsyncStorage.setItem('favorites', JSON.stringify(favorites));
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            Alert.alert('Error', 'Failed to update favorites');
+        }
+    };
     
     const handleDirections = (e: any) => {
         // Stop propagation to prevent card press
@@ -120,6 +163,13 @@ export default function PlaceCard({ place, onPress }: PlaceCardProps) {
                         </TouchableOpacity>
                     )}
                 </View>
+                {/* <TouchableOpacity 
+                    style={styles.favoriteButton}
+                    onPress={toggleFavorite}
+                    activeOpacity={0.7}
+                >
+                    <IconSymbol name="heart.fill" size={16} color={isFavorite ? '#ef4444' : muted} />
+                </TouchableOpacity> */}
             </View>
         </TouchableOpacity>
     );
@@ -225,5 +275,21 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#0a7ea4',
         fontWeight: '600',
+    },
+    favoriteButton: {
+        position: 'absolute',
+        bottom: 8,
+        right: 8,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
     },
 });

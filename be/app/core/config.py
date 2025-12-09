@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 # Load from root .env file
-ROOT_DIR = Path(__file__).parent.parent.parent.parent
+ROOT_DIR = Path(__file__).resolve().parents[3]   # points to project root (one level up from /be)
 ENV_FILE = ROOT_DIR / ".env"
 
 
@@ -35,10 +35,10 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str
     
     # CDN Configuration (for uploading media files and 3D models)
-    CDN_URL: str
-    CDN_MODEL_URL: str
-    CDN_API_KEY: str
-    LOCAL_IP: str
+    CDN_URL: str = ""
+    CDN_MODEL_URL: str = ""
+    CDN_API_KEY: str = ""
+    LOCAL_IP: str = "127.0.0.1"
     
     class Config:
         env_file = str(ENV_FILE)

@@ -131,6 +131,7 @@ export default function CreateEventScreen() {
             const scheduledDate = new Date(selectedDate!);
             scheduledDate.setHours(0, 0, 0, 0);
 
+            // Build payload matching required event create format
             const eventData: EventCreateData = {
                 name: name.trim(),
                 description: description.trim(),
@@ -139,12 +140,12 @@ export default function CreateEventScreen() {
                     start: startTime,
                     end: endTime,
                 },
-                type_id: "6927dd74c83ad21b47926941",  // Event type ID
+                type_id: "6927dd74c83ad21b47926941",
                 position: {
-                    x: "27.3333",  // Sikkim latitude
-                    y: "88.6167"   // Sikkim longitude
+                    x: "88.6167",
+                    y: "27.3333",
                 },
-                scheduled_at: scheduledDate.toISOString()
+                scheduled_at: scheduledDate.toISOString(),
             };
 
             console.log('Creating event with data:', JSON.stringify(eventData, null, 2));

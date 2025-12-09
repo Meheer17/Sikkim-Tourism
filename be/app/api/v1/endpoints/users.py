@@ -4,6 +4,7 @@ from app.core.security import get_current_user_id, get_current_admin_user
 from app.services.user_service import user_service
 from app.models.user import User, UserUpdate
 from app.schemas.auth import MessageResponse
+from app.utils.encryption import decrypt_text
 from typing import List
 
 router = APIRouter()
@@ -26,12 +27,17 @@ async def get_current_user(current_user_id: str = Depends(get_current_user_id)):
     """Get current user profile"""
     user_db = await user_service.get_by_id(current_user_id)
     
+    # Decrypt fields
+    decrypted_name = await decrypt_text(current_user_id, user_db.name)
+    decrypted_address = await decrypt_text(current_user_id, user_db.address)
+    decrypted_email = await decrypt_text(current_user_id, user_db.email)
+    
     return User(
         id=str(user_db.id),
-        name=user_db.name,
-        address=user_db.address,
+        name=decrypted_name,
+        address=decrypted_address,
         gender=user_db.gender,
-        email=user_db.email,
+        email=decrypted_email,
         role=user_db.role,
         approved=user_db.approved,
         last_synced_at=user_db.last_synced_at,

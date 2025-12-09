@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, A
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { businessService, BusinessModel } from '@/services/business.service';
+import businessService, { BusinessModel } from '@/services/business.service';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
 

@@ -61,9 +61,16 @@ class UserUpdate(BaseModel):
     approved: Optional[bool] = None
 
 
-class UserInDB(UserBase):
+class UserInDB(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    hashed_password: str
+    name: str  # Can be encrypted
+    address: str  # Can be encrypted
+    gender: Optional[str] = None
+    email: str  # Can be encrypted (EmailStr validation removed)
+    role: Optional[UserRole] = UserRole.user
+    approved: Optional[bool] = False
+    hashed_password: str  # Can be encrypted
+    userhash: Optional[str] = None
     last_synced_at: Optional[LastSyncedAt] = None
     secret: Optional[Secret] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
