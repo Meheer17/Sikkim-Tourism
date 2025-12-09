@@ -64,7 +64,7 @@ export default function AddBusinessScreen() {
             let uploadedIdentifiers: string[] = [];
             if (pickedFiles && pickedFiles.length > 0) {
                 try {
-                    console.log('📁 pickedFiles before upload (admin):', pickedFiles);
+                    console.log('📁 pickedFiles before upload (government):', pickedFiles);
                     for (const image of pickedFiles) {
                         const ext = FilePicker.getFileExtension(image.name) || 'jpg';
                         const newFileName = `img_${Date.now()}_${Math.floor(Math.random() * 1000)}.${ext}`;

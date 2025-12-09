@@ -33,7 +33,7 @@ export default function BusinessDetailsScreen() {
     const muted = useThemeColor('mutedText');
     const tint = useThemeColor('tint');
 
-    const canEdit = user && (user.role === 'admin' || user.role === 'business');
+    const canEdit = user && (user.role === 'government' || user.role === 'business');
 
     useEffect(() => {
         loadBusinessDetails();

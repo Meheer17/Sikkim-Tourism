@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, users, profile, location, business, event, community, message, compression, upload, friends, cdn, admin, ai_planner, services, orders, bookings, comments, websocket
+from app.api.v1.endpoints import auth, users, profile, location, business, event, community, message, compression, upload, friends, cdn, government, ai_planner, services, orders, bookings, comments, websocket
 
 
 api_router = APIRouter()
@@ -23,7 +23,7 @@ api_router.include_router(message.router, prefix="/message", tags=["Message"])
 api_router.include_router(upload.router, prefix="/upload", tags=["Upload"])
 api_router.include_router(friends.router, prefix="/friends", tags=["Friends"])
 api_router.include_router(cdn.router, tags=["CDN"])
-api_router.include_router(admin.router, prefix="/admin", tags=["Admin"])
+api_router.include_router(government.router, prefix="/government", tags=["Government"])
 api_router.include_router(ai_planner.router, prefix="/ai-planner", tags=["AI Planner"])
 api_router.include_router(comments.router, prefix="/comments", tags=["Comments"])
 

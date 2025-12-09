@@ -31,7 +31,7 @@ export default function ServiceDetailsScreen() {
     const tint = useThemeColor('tint');
     const border = useThemeColor('border');
 
-    const canEdit = user && (user.role === 'admin' || user.role === 'business');
+    const canEdit = user && (user.role === 'government' || user.role === 'business');
 
     useEffect(() => {
         loadServiceDetails();

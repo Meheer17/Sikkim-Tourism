@@ -123,11 +123,11 @@ export default function AdminBusinessesScreen() {
     }, [page]);
 
     const handleBusinessPress = (business: Business) => {
-        router.push(`/(admin)/(stack)/business-details?id=${business.id}` as any);
+        router.push(`/(government)/(stack)/business-details?id=${business.id}` as any);
     };
 
     const handleStatusChange = async (businessId: string, newStatus: Business['status']) => {
-        const result = await updateBusiness(`/admin/businesses/${businessId}`, { status: newStatus });
+        const result = await updateBusiness(`/government/businesses/${businessId}`, { status: newStatus });
         if (result) {
             setBusinesses(prev =>
                 prev.map(b => (b.id === businessId ? { ...b, status: newStatus } : b))
@@ -199,7 +199,7 @@ export default function AdminBusinessesScreen() {
                 </View>
                 <TouchableOpacity
                     style={styles.addButton}
-                    onPress={() => router.push('/(admin)/(stack)/add-business' as any)}
+                    onPress={() => router.push('/(government)/(stack)/add-business' as any)}
                 >
                     <IconSymbol name="plus" size={24} color="#fff" />
                 </TouchableOpacity>

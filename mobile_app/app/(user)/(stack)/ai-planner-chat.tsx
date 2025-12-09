@@ -33,7 +33,7 @@ export default function AIPlannerChatScreen() {
 
   // If the logged in user is an admin, block access to AI planner
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (user?.role === 'government') {
       // Notify and navigate back — keep behavior minimal and non-destructive
       Toast.show({ type: 'info', text1: t.error || 'Notice', text2: t.aiDisabledForAdmin || 'AI suggestions are disabled for admin accounts.' });
       setTimeout(() => {

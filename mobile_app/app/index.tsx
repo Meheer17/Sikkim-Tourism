@@ -15,8 +15,8 @@ export default function Index() {
         if (isAuthenticated && user) {
             // Route to role-specific section
             switch (user.role) {
-                case UserRole.ADMIN:
-                    router.replace('/(admin)' as any);
+                case UserRole.GOVERNMENT:
+                    router.replace('/(government)' as any);
                     break;
                 case UserRole.BUSINESS:
                     router.replace('/(business)' as any);

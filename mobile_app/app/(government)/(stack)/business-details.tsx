@@ -122,7 +122,7 @@ export default function BusinessDetailsScreen() {
 
     const handleUploadHeritage = () => {
         router.push({
-            pathname: '/(admin)/(stack)/upload-heritage',
+            pathname: '/(government)/(stack)/upload-heritage',
             params: { businessId, businessName: business?.name || 'Business' }
         } as any);
     };
@@ -174,7 +174,7 @@ export default function BusinessDetailsScreen() {
                     <IconSymbol name="chevron.left" size={24} color={text} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: text }]}>Business Details</Text>
-                <TouchableOpacity style={styles.headerAction} onPress={() => router.push(`/(admin)/(stack)/business-details?id=${businessId}` as any)}>
+                <TouchableOpacity style={styles.headerAction} onPress={() => router.push(`/(government)/(stack)/business-details?id=${businessId}` as any)}>
                     <IconSymbol name="arrow.clockwise" size={20} color={tint} />
                 </TouchableOpacity>
             </View>

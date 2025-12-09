@@ -38,6 +38,14 @@ const ROLE_OPTIONS: RoleOption[] = [
         bgColor: '#d1fae5',
     },
     {
+        role: UserRole.MONASTERY,
+        title: 'Monastery',
+        description: 'Can manage monastery services, events, and visitor information',
+        icon: 'building.columns.fill',
+        color: '#f59e0b',
+        bgColor: '#fef3c7',
+    },
+    {
         role: UserRole.BUSINESS,
         title: 'Business',
         description: 'Can create and manage business services, view bookings and revenue',
@@ -46,8 +54,8 @@ const ROLE_OPTIONS: RoleOption[] = [
         bgColor: '#ede9fe',
     },
     {
-        role: UserRole.ADMIN,
-        title: 'Admin',
+        role: UserRole.GOVERNMENT,
+        title: 'Government',
         description: 'Full system access including user management and platform settings',
         icon: 'shield.fill',
         color: '#ef4444',
@@ -55,7 +63,7 @@ const ROLE_OPTIONS: RoleOption[] = [
     },
 ];
 
-export default function AdminRolesScreen() {
+export default function GovernmentRolesScreen() {
     const { language } = useLanguage();
     const t = getLanguageTranslations(language);
     const [users, setUsers] = useState<AdminUser[]>([]);

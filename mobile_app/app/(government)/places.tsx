@@ -170,7 +170,7 @@ export default function AdminPlacesScreen() {
             }, 1000);
         }
         // Navigate to place details
-        router.push(`/(admin)/(stack)/place-details?id=${place.id}` as any);
+        router.push(`/(government)/(stack)/place-details?id=${place.id}` as any);
     };
 
     const handleEditPlace = (place: Place) => {
@@ -180,7 +180,7 @@ export default function AdminPlacesScreen() {
             return;
         }
         console.log('Editing place with ID:', place.id);
-        router.push(`/(admin)/(stack)/edit-place?id=${place.id}` as any);
+        router.push(`/(government)/(stack)/edit-place?id=${place.id}` as any);
     };
 
     const handleDeletePlace = (placeId: string) => {
@@ -304,7 +304,7 @@ export default function AdminPlacesScreen() {
                 </View>
                 <TouchableOpacity
                     style={styles.addButton}
-                    onPress={() => router.push('/(admin)/(stack)/add-place' as any)}
+                    onPress={() => router.push('/(government)/(stack)/add-place' as any)}
                 >
                     <IconSymbol name="plus" size={24} color={card} />
                 </TouchableOpacity>

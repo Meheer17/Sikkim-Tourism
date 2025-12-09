@@ -11,7 +11,7 @@ import { getLanguageTranslations } from '@/constants/translations';
 
 // Removed static mock users. Data now sourced only from backend.
 
-const ROLES = ['All', 'User', 'Business', 'Admin'];
+const ROLES = ['All', 'User', 'Monastery', 'Business', 'Government'];
 const STATUSES = ['All', 'Active', 'Suspended'];
 
 export default function AdminUsersScreen() {
@@ -103,11 +103,11 @@ export default function AdminUsersScreen() {
     }, []);
 
     const handleUserPress = (user: AdminUser) => {
-        router.push(`/(admin)/(stack)/user-details?id=${user.id}` as any);
+        router.push(`/(government)/(stack)/user-details?id=${user.id}` as any);
     };
 
     const handleSuspendUser = async (userId: string) => {
-        const result = await updateUser(`/admin/users/${userId}`, { status: 'suspended' });
+        const result = await updateUser(`/government/users/${userId}`, { status: 'suspended' });
         if (result) {
             setUsers(prev =>
                 prev.map(u => (u.id === userId ? { ...u, status: 'suspended' } : u))
@@ -127,7 +127,7 @@ export default function AdminUsersScreen() {
     };
 
     const handleDeleteUser = async (userId: string) => {
-        const result = await deleteUserApi(`/admin/users/${userId}`);
+        const result = await deleteUserApi(`/government/users/${userId}`);
         if (result) {
             setUsers(prev => prev.filter(u => u.id !== userId));
         }
@@ -135,8 +135,10 @@ export default function AdminUsersScreen() {
 
     const getRoleColor = (role: UserRole) => {
         switch (role) {
-            case UserRole.ADMIN:
+            case UserRole.GOVERNMENT:
                 return '#ef4444';
+            case UserRole.MONASTERY:
+                return '#f59e0b';
             case UserRole.BUSINESS:
                 return '#8b5cf6';
             case UserRole.USER:
@@ -148,8 +150,10 @@ export default function AdminUsersScreen() {
 
     const getRoleBgColor = (role: UserRole) => {
         switch (role) {
-            case UserRole.ADMIN:
+            case UserRole.GOVERNMENT:
                 return '#fee2e2';
+            case UserRole.MONASTERY:
+                return '#fef3c7';
             case UserRole.BUSINESS:
                 return '#ede9fe';
             case UserRole.USER:
@@ -372,7 +376,7 @@ export default function AdminUsersScreen() {
                             </View>
 
                             <View style={styles.userActions}>
-                                {user.status === 'active' && user.role !== UserRole.ADMIN && (
+                                {user.status === 'active' && user.role !== UserRole.GOVERNMENT && (
                                     <TouchableOpacity
                                         style={[styles.actionButton, styles.suspendButton]}
                                         onPress={() => handleSuspendUser(user.id)}
@@ -392,12 +396,12 @@ export default function AdminUsersScreen() {
                                 )}
                                 <TouchableOpacity
                                     style={[styles.actionButton, styles.roleButton]}
-                                    onPress={() => router.push(`/(admin)/roles?userId=${user.id}` as any)}
+                                    onPress={() => router.push(`/(government)/roles?userId=${user.id}` as any)}
                                 >
                                     <IconSymbol name="person.badge.key.fill" size={14} color="#fff" />
                                     <Text style={styles.actionButtonText}>Change Role</Text>
                                 </TouchableOpacity>
-                                {user.role !== UserRole.ADMIN && (
+                                {user.role !== UserRole.GOVERNMENT && (
                                     <TouchableOpacity
                                         style={[styles.actionButton, styles.deleteButton]}
                                         onPress={() => handleDeleteUser(user.id)}

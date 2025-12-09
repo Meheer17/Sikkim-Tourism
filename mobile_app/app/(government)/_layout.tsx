@@ -19,10 +19,10 @@ export default function AdminLayout() {
     const activeTabBg = useThemeColor('activeTabBg');
 
     const tabs = [
-        { name: 'Dashboard', icon: 'chart.bar.fill', route: '/(admin)/dashboard' },
-        { name: 'Manage', icon: 'rectangle.3.offgrid.fill', route: '/(admin)/manage' },
-        { name: 'Places', icon: 'map.fill', route: '/(admin)/places' },
-        { name: 'Roles', icon: 'person.badge.key.fill', route: '/(admin)/roles' },
+        { name: 'Dashboard', icon: 'chart.bar.fill', route: '/(government)/dashboard' },
+        { name: 'Manage', icon: 'rectangle.3.offgrid.fill', route: '/(government)/manage' },
+        { name: 'Places', icon: 'map.fill', route: '/(government)/places' },
+        { name: 'Roles', icon: 'person.badge.key.fill', route: '/(government)/roles' },
     ];
 
     const handleTabPress = (route: string) => {
@@ -41,11 +41,11 @@ export default function AdminLayout() {
         return routePage === currentPage || pathname === route;
     };
 
-    // Show admin tab bar on top-level admin pages (dashboard, manage, places, roles)
-    const adminCurrentPage = pathname.split('/').pop() || '';
-    const adminTopLevelPages = tabs.map(tab => tab.route.split('/').pop() || '');
-    const isAdminTopLevel = adminTopLevelPages.includes(adminCurrentPage) && !pathname.includes('/(stack)');
-    const shouldShowTabBar = isAdminTopLevel;
+    // Show government tab bar on top-level government pages (dashboard, manage, places, roles)
+    const governmentCurrentPage = pathname.split('/').pop() || '';
+    const governmentTopLevelPages = tabs.map(tab => tab.route.split('/').pop() || '');
+    const isGovernmentTopLevel = governmentTopLevelPages.includes(governmentCurrentPage) && !pathname.includes('/(stack)');
+    const shouldShowTabBar = isGovernmentTopLevel;
 
     // Back arrow overlay removed per request; only tab visibility logic retained.
 
