@@ -15,7 +15,7 @@ export default function MonasteryLayout() {
 
     // Check if user is monastery, if not redirect
     React.useEffect(() => {
-        if (user && user.role !== 'business') {
+        if (user && user.role !== 'monastery') {
             router.replace('/(user)/' as any);
         }
     }, [user]);

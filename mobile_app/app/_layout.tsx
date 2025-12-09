@@ -88,7 +88,9 @@ export default function RootLayout() {
       }
     });
 
-    return () => unsub();
+    return () => {
+      unsub();
+    };
   }, [isLoading, isAuthenticated, offlineModalIgnored]);
 
   // Listen for explicit open saved routes requests from other parts of the app
@@ -99,7 +101,9 @@ export default function RootLayout() {
         setShowOfflineModal(true);
       }
     });
-    return () => unsubOpen();
+    return () => {
+      unsubOpen();
+    };
   }, [isLoading, isAuthenticated]);
 
   React.useEffect(() => {

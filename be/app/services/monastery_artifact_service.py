@@ -6,10 +6,14 @@ import json
 
 from app.core.database import get_database
 from app.models.monastery_artifact import MonasteryArtifactCreate, MonasteryArtifact
+īfrom app.services.upload_service import upload_service
 
 
 class MonasteryArtifactService:
     """Service for managing monastery artifacts"""
+    
+    def __init__(self):
+        self.upload_service = upload_service
 
     async def _get_monastery_id(self, user_id: str) -> str:
         """Get monastery ID from user ID"""
@@ -23,6 +27,48 @@ class MonasteryArtifactService:
             )
         
         return str(user_business["bid"])
+
+    async def _upload_artifact_file(
+        self,
+        file: UploadFile,
+        category: str,
+        user_id: str,
+        monastery_id: str
+    ) -> dict:
+        """Upload artifact file using appropriate upload service method"""
+        content_type = file.content_type or ""
+        
+        # Map monastery artifact categories to heritage categories
+        heritage_category_mapping = {
+            "manuscript": "heritage_manuscript",
+            "scripture": "heritage_scripture", 
+            "artifact": "heritage_artifact",
+            "document": "heritage_document",
+            "image": "heritage_image",
+            "painting": "heritage_painting",
+            "sculpture": "heritage_sculpture",
+            "textile": "heritage_textile",
+            "other": "heritage_artifact"
+        }
+        
+        heritage_category = heritage_category_mapping.get(category, "heritage_artifact")
+        
+        # For heritage artifacts, always use document upload for proper categorization
+        if content_type.startswith('image/') or content_type == 'application/pdf':
+            return await self.upload_service.upload_document(
+                file=file,
+                category=heritage_category,
+                user_id=user_id,
+                business_id=monastery_id,
+                location_id=None
+            )
+        else:
+            # For other file types, use general image upload
+            return await self.upload_service.upload_image(
+                file=file,
+                location_id=None,
+                user_id=user_id
+            )
 
     async def upload_artifact(
         self,
@@ -48,10 +94,17 @@ class MonasteryArtifactService:
             )
 
         try:
-            # In a real scenario, upload file to storage service
-            # For now, we'll create a placeholder file reference
-            file_id = str(ObjectId())
-            file_url = f"/artifacts/{file_id}/{file.filename}"
+            # Upload file using specialized artifact upload method
+            upload_result = await self._upload_artifact_file(
+                file=file,
+                category=category,
+                user_id=user_id,
+                monastery_id=monastery_id
+            )
+            
+            # Extract file information from upload result
+            file_id = upload_result.get("file_id", str(ObjectId()))
+            file_url = upload_result.get("cdn_url", "")
             
             # Parse tags
             tags_list = []
@@ -71,6 +124,16 @@ class MonasteryArtifactService:
                 metadata["dimensions"] = dimensions
             if historical_period:
                 metadata["historical_period"] = historical_period
+            
+            # Add upload information to metadata
+            metadata["upload_info"] = {
+                "original_filename": file.filename,
+                "mime_type": file.content_type,
+                "upload_timestamp": dt.utcnow().isoformat(),
+                "cdn_response": upload_result.get("cdn_response", {}),
+                "file_size": upload_result.get("size", 0),
+                "compression_ratio": upload_result.get("compression_ratio", "0%")
+            }
 
             artifact_data = MonasteryArtifactCreate(
                 monastery_id=monastery_id,
@@ -97,21 +160,39 @@ class MonasteryArtifactService:
         user_id: str,
         files: List[UploadFile],
         categories: Optional[List[str]] = None
-    ) -> List[MonasteryArtifact]:
-        """Bulk upload multiple artifacts"""
+    ) -> dict:
+        """Bulk upload multiple artifacts with detailed results"""
         monastery_id = await self._get_monastery_id(user_id)
-        artifacts = []
+        successful_uploads = []
+        failed_uploads = []
         
         for idx, file in enumerate(files):
-            category = categories[idx] if categories and idx < len(categories) else "other"
-            artifact = await self.upload_artifact(
-                user_id,
-                file,
-                category
-            )
-            artifacts.append(artifact)
+            try:
+                category = categories[idx] if categories and idx < len(categories) else "other"
+                artifact = await self.upload_artifact(
+                    user_id,
+                    file,
+                    category
+                )
+                successful_uploads.append({
+                    "file_index": idx,
+                    "filename": file.filename,
+                    "artifact": artifact
+                })
+            except Exception as e:
+                failed_uploads.append({
+                    "file_index": idx,
+                    "filename": file.filename,
+                    "error": str(e)
+                })
         
-        return artifacts
+        return {
+            "total_files": len(files),
+            "successful_count": len(successful_uploads),
+            "failed_count": len(failed_uploads),
+            "successful_uploads": successful_uploads,
+            "failed_uploads": failed_uploads
+        }
 
     async def create(self, monastery_id: str, artifact_data: MonasteryArtifactCreate) -> MonasteryArtifact:
         """Create a new artifact"""
@@ -142,7 +223,7 @@ class MonasteryArtifactService:
     async def get_by_id(self, artifact_id: str, user_id: str) -> MonasteryArtifact:
         """Get artifact by ID"""
         monastery_id = await self._get_monastery_id(user_id)
-        
+        print(artifact_id)
         db = get_database()
         if db is None:
             raise HTTPException(
@@ -292,8 +373,8 @@ class MonasteryArtifactService:
 
     async def get_statistics(self, user_id: str) -> dict:
         """Get artifact statistics for monastery"""
+        print("user_id:", user_id)
         monastery_id = await self._get_monastery_id(user_id)
-        
         db = get_database()
         if db is None:
             raise HTTPException(
@@ -306,7 +387,7 @@ class MonasteryArtifactService:
             
             # Count by category
             pipeline = [
-                {"$match": {"monastery_id": monastery_id}},
+                {"$match": {"monastery_id": ObjectId(monastery_id)}},
                 {"$group": {
                     "_id": "$category",
                     "count": {"$sum": 1}
@@ -331,6 +412,47 @@ class MonasteryArtifactService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error retrieving statistics: {str(e)}"
+            )
+
+    async def get_artifact_files(
+        self,
+        user_id: str,
+        category: Optional[str] = None
+    ) -> List[dict]:
+        """Get uploaded files for monastery artifacts from upload service"""
+        monastery_id = await self._get_monastery_id(user_id)
+        
+        try:
+            # Get documents from upload service filtered by heritage categories
+            if category:
+                # Map monastery category to heritage category
+                heritage_category_mapping = {
+                    "manuscript": "heritage_manuscript",
+                    "scripture": "heritage_scripture", 
+                    "artifact": "heritage_artifact",
+                    "document": "heritage_document",
+                    "image": "heritage_image",
+                    "painting": "heritage_painting",
+                    "sculpture": "heritage_sculpture",
+                    "textile": "heritage_textile",
+                    "other": "heritage_artifact"
+                }
+                heritage_category = heritage_category_mapping.get(category, f"heritage_{category}")
+            else:
+                heritage_category = None
+            
+            # Get documents from upload service
+            documents = await self.upload_service.get_documents(
+                category=heritage_category,
+                business_id=monastery_id,
+                user_id=user_id
+            )
+            
+            return documents
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error retrieving artifact files: {str(e)}"
             )
 
     def _to_artifact(self, doc: dict) -> MonasteryArtifact:
