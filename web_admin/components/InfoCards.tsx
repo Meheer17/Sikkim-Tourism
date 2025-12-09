@@ -28,7 +28,7 @@ export default function InfoCards() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axiosInstance.get<StatsData>('/api/v1/admin/stats');
+        const response = await axiosInstance.get<StatsData>('/api/v1/government/stats');
         setStats(response.data);
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -45,7 +45,7 @@ export default function InfoCards() {
     { title: 'Total Businesses', value: stats.total_businesses, color: 'bg-purple-500', icon: faBuilding },
     { title: 'Total Places', value: stats.total_places, color: 'bg-green-500', icon: faMapLocationDot },
     { title: 'Total Bookings', value: stats.total_bookings, color: 'bg-yellow-500', icon: faCalendarCheck },
-    { title: 'Total Revenue', value: `₹${stats.total_revenue}`, color: 'bg-red-500', icon: faIndianRupeeSign },
+    { title: 'Total Revenue', value: `₹${stats.total_revenue || 0}`, color: 'bg-red-500', icon: faIndianRupeeSign },
     { title: 'Active Users', value: stats.total_active_users, color: 'bg-indigo-500', icon: faUserCheck }
   ];
 

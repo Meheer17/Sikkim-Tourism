@@ -18,7 +18,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'user' | 'business' | 'admin';
+  role: 'user' | 'business' | 'admin' | 'government';
   approved: boolean;
   created_at: string;
 }
@@ -47,6 +47,14 @@ const ROLE_OPTIONS = [
     icon: faShield,
     color: 'text-red-700',
     bgColor: 'bg-red-100',
+  },
+  {
+    role: 'government',
+    title: 'Government',
+    description: 'Government official with full administrative access and platform oversight',
+    icon: faShield,
+    color: 'text-blue-700',
+    bgColor: 'bg-blue-100',
   },
 ];
 

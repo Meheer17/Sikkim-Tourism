@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartLine, faGauge, faRightFromBracket, faUser, faCheckCircle, faBuilding, faUsersCog, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
+import { faChartLine, faGauge, faRightFromBracket, faUser, faCheckCircle, faBuilding, faUsersCog, faMapMarkerAlt, faComments } from '@fortawesome/free-solid-svg-icons';
 import { authService } from '@/lib/auth';
 import { useEffect, useState } from 'react';
 
@@ -28,6 +28,7 @@ export default function Sidebar() {
     { label: 'Approvals', icon: faCheckCircle, path: '/approvals' },
     { label: 'Businesses', icon: faBuilding, path: '/businesses' },
     { label: 'Places', icon: faMapMarkerAlt, path: '/places' },
+    { label: 'Community Chat', icon: faComments, path: '/community-chat' },
     { label: 'Users & Roles', icon: faUsersCog, path: '/users' },
   ];
 

@@ -28,8 +28,9 @@ export default function LoginPage() {
       // Get user data
       const userData = await authService.getMe();
       
-      // Check if user is admin
-      if (userData.role.toLowerCase() !== 'admin') {
+      // Check if user is admin or government
+      const userRole = userData.role.toLowerCase();
+      if (userRole !== 'admin' && userRole !== 'government') {
         setError('Access denied. Admin privileges required.');
         authService.logout();
         setLoading(false);

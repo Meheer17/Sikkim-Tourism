@@ -20,7 +20,7 @@ export default function ActivityLogs() {
   useEffect(() => {
     const fetchActivities = async () => {
       try {
-        const response = await axiosInstance.get<Activity[]>('/api/v1/admin/activities', {
+        const response = await axiosInstance.get<Activity[]>('/api/v1/government/activities', {
           params: { limit: 6 }
         });
         setLogs(response.data);
