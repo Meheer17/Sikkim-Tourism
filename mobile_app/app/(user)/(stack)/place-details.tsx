@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking, FlatList, Dimensions, Modal, StatusBar, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking, FlatList, Dimensions, Modal, StatusBar, Platform, Alert, Share } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -131,6 +131,11 @@ export default function PlaceDetailsScreen() {
     images: images,
     modelPath: params.modelPath as string | undefined,
     has360Images: has360Images,
+<<<<<<< HEAD
+=======
+    latitude: params.latitude ? parseFloat(params.latitude as string) : undefined,
+    longitude: params.longitude ? parseFloat(params.longitude as string) : undefined,
+>>>>>>> 4b8821cc92f0d8e2e7f624da4d964de8d450be64
     transcriptions: transcriptions,
   };
   
@@ -218,6 +223,58 @@ export default function PlaceDetailsScreen() {
         longitude: params.longitude as string || '',
       },
     } as any);
+  };
+
+  const handleDirections = async () => {
+    if (!place.latitude || !place.longitude) {
+      Alert.alert('Error', 'Location coordinates not available for this place');
+      return;
+    }
+
+    try {
+      const latLng = `${place.latitude},${place.longitude}`;
+      const label = encodeURIComponent(place.name);
+      
+      let url: string | null = null;
+      if (Platform.OS === 'ios') {
+        url = `maps:?q=${label}&ll=${latLng}`;
+      } else {
+        url = `geo:${place.latitude},${place.longitude}?q=${label}`;
+      }
+
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        await Linking.openURL(url);
+      } else {
+        const webUrl = `https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`;
+        const canOpenWeb = await Linking.canOpenURL(webUrl);
+        if (canOpenWeb) {
+          await Linking.openURL(webUrl);
+        } else {
+          Alert.alert('Error', 'Cannot open maps application');
+        }
+      }
+    } catch (error) {
+      console.error('Direction error:', error);
+      Alert.alert('Error', 'Failed to open directions');
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      const shareMessage = `Check out ${place.name}!\n\n${place.description}\n\nCategory: ${place.category}\nRating: ${place.rating || 'N/A'}\n\nLocation: https://www.google.com/maps/search/?api=1&query=${params.latitude},${params.longitude}`;
+      
+      await Share.share({
+        message: shareMessage,
+        title: place.name,
+        url: place.imageUrl || undefined,
+      });
+    } catch (error: any) {
+      console.error('Error sharing:', error);
+      if (error.message !== 'User did not share') {
+        Alert.alert('Error', 'Failed to share location');
+      }
+    }
   };
 
   return (
@@ -463,17 +520,18 @@ export default function PlaceDetailsScreen() {
 
           {/* Action Buttons */}
           <View style={[styles.actionButtons, { borderTopColor: border }] }>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={handleDirections}
+            >
               <IconSymbol name="map.fill" size={22} color={tint} />
               <Text style={[styles.actionButtonText, { color: tint }]}>Directions</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.actionButton}>
-              <IconSymbol name="heart" size={22} color={tint} />
-              <Text style={[styles.actionButtonText, { color: tint }]}>Save</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={handleShare}
+            >
               <IconSymbol name="square.and.arrow.up" size={22} color={tint} />
               <Text style={[styles.actionButtonText, { color: tint }]}>Share</Text>
             </TouchableOpacity>

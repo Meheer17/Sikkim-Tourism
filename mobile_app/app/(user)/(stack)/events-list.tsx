@@ -1,29 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { businessService } from '@/services/business.service';
+import { eventService } from '@/services/event.service';
+import { Event } from '@/services/event.service';
 import { OfflineEventStorage } from '@/utils/offline-storage';
 import { useNetworkStatus } from '@/utils/network';
 import Toast from 'react-native-toast-message';
 
-interface Event {
-    id: string;
-    _id?: string;
-    name: string;
-    description: string;
-    short_description: string;
-    open_hours: { start: string; end: string };
-    scheduled_at?: string;
-    approved?: boolean;
-    created_at?: string;
-    updated_at?: string;
-    uid?: string;
-}
-
 export default function EventsListScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const isOnline = useNetworkStatus();
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
@@ -49,16 +38,14 @@ export default function EventsListScreen() {
             if (isOnline) {
                 // Online: try to fetch from API
                 try {
-                    const resp = await businessService.list({ skip: 0, limit: 50 });
+                    const resp = await eventService.list({ limit: 50 });
                     if (resp.success && resp.data) {
-                        // Filter for events (those with scheduled_at)
-                        const eventItems: Event[] = resp.data.filter(b => b.scheduled_at).map(b => ({ ...b }));
-                        setEvents(eventItems);
+                        setEvents(resp.data);
                         setIsOfflineData(false);
                         setCacheTimestamp(null);
                         
                         // Save to offline cache
-                        await OfflineEventStorage.saveEvents(eventItems);
+                        await OfflineEventStorage.saveEvents(resp.data);
                     } else {
                         setEvents([]);
                     }
@@ -165,7 +152,7 @@ export default function EventsListScreen() {
             onPress={() => handleEventPress(eventId)}
             disabled={isNavigating}
         >
-            <View style={styles.dateContainer}>
+            <View style={[styles.dateContainer, { backgroundColor: `${tint}15` }]}>
                 <Text style={[styles.dateDay, { color: tint }]}>
                     {item.scheduled_at ? new Date(item.scheduled_at).getDate() : '?'}
                 </Text>
@@ -213,10 +200,18 @@ export default function EventsListScreen() {
     return (
         <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: card }]}>
+            <View style={[styles.header, { backgroundColor: card, borderBottomColor: border, paddingTop: Math.max(insets.top, 12) }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <IconSymbol name="chevron.left" size={24} color={text} />
                 </TouchableOpacity>
+                <View style={{ flex: 1 }}>
+                    <Text style={[styles.headerTitle, { color: text }]}>Events</Text>
+                    {isOfflineData && (
+                        <Text style={[styles.headerSubtitle, { color: '#ff6b6b' }]}>
+                            Offline • {cacheTimestamp?.toLocaleString()}
+                        </Text>
+                    )}
+                </View>
                 <View style={{ flex: 1 }}>
                     <Text style={[styles.headerTitle, { color: text }]}>Events</Text>
                     {isOfflineData && (
@@ -262,11 +257,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingTop: 60,
         paddingBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
         gap: 12,
+        borderBottomColor: '#e5e7eb',
     },
     backButton: {
         width: 40,
@@ -303,7 +297,6 @@ const styles = StyleSheet.create({
         width: 60,
         height: 60,
         borderRadius: 12,
-        backgroundColor: '#e8f4f8',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,

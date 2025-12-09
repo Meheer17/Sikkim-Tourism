@@ -150,7 +150,7 @@ export default function StackLayout() {
         name="schedule"
         options={{
           title: 'View Upcoming Events',
-          headerShown: true,
+          headerShown: false,
         }}
       />
       <Stack.Screen

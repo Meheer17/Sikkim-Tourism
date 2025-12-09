@@ -38,6 +38,63 @@ export default function ServiceDetailsScreen() {
     const border = useThemeColor('border');
 
     const canEdit = user && (user.role === 'government' || user.role === 'business');
+<<<<<<< HEAD
+=======
+
+    // Helper function to format metadata values for display
+    const formatMetadataValue = (value: any): string => {
+        if (value === null || value === undefined) return 'N/A';
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+            // Check if it looks like a date/timestamp string
+            if (typeof value === 'string' && (value.includes('T') || value.includes('-') || value.includes('/'))) {
+                try {
+                    const date = new Date(value);
+                    if (!isNaN(date.getTime())) {
+                        // Format as DD/MM/YYYY
+                        return date.toLocaleDateString('en-IN', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric' 
+                        });
+                    }
+                } catch (e) {
+                    // If date parsing fails, return as string
+                }
+            }
+            return String(value);
+        }
+        if (Array.isArray(value)) {
+            return value.join(', ');
+        }
+        if (typeof value === 'object') {
+            // For objects, try to extract meaningful values
+            const entries = Object.entries(value);
+            if (entries.length === 0) return 'N/A';
+            return entries.map(([k, v]) => `${k}: ${String(v)}`).join(' | ');
+        }
+        return String(value);
+    };
+
+    // Helper function to format field names (snake_case to Title Case)
+    const formatFieldName = (key: string): string => {
+        return key
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+    };
+
+    // Helper function to get appropriate icon for metadata field
+    const getMetadataIcon = (key: string): any => {
+        const keyLower = key.toLowerCase();
+        if (keyLower.includes('hour') || keyLower.includes('time')) return 'clock.fill';
+        if (keyLower.includes('phone') || keyLower.includes('contact')) return 'phone.fill';
+        if (keyLower.includes('location') || keyLower.includes('address')) return 'location.fill';
+        if (keyLower.includes('capacity') || keyLower.includes('person')) return 'person.2.fill';
+        if (keyLower.includes('price') || keyLower.includes('cost')) return 'tag.fill';
+        if (keyLower.includes('duration')) return 'hourglass';
+        return 'info.circle.fill';
+    };
+>>>>>>> 4b8821cc92f0d8e2e7f624da4d964de8d450be64
 
     useEffect(() => {
         loadServiceDetails();
@@ -249,30 +306,69 @@ export default function ServiceDetailsScreen() {
                 )}
 
                 {/* Metadata */}
-                {service.metadata && (
+                {service.metadata && Object.keys(service.metadata).length > 0 && (
                     <View style={[styles.card, { backgroundColor: card }]}>
                         <Text style={[styles.sectionTitle, { color: text }]}>Additional Information</Text>
                         {Array.isArray(service.metadata) ? (
                             service.metadata.map((meta: { [s: string]: unknown; } | ArrayLike<unknown>, index: React.Key | null | undefined) => (
-                                <View key={index} style={[styles.metadataItem, { borderBottomColor: border }]}>
+                                <View key={index}>
                                     {Object.entries(meta).map(([key, value]) => (
-                                        <View key={key} style={styles.metadataRow}>
-                                            <Text style={[styles.metadataKey, { color: muted }]}>{key}:</Text>
-                                            <Text style={[styles.metadataValue, { color: text }]}>{String(value)}</Text>
+                                        <View key={key} style={[styles.metadataRow, { borderBottomColor: border }]}>
+                                            <View style={[styles.metadataIcon, { backgroundColor: `${tint}15` }]}>
+                                                <IconSymbol name={getMetadataIcon(key)} size={18} color={tint} />
+                                            </View>
+                                            <View style={styles.metadataContent}>
+                                                <Text style={[styles.metadataLabel, { color: muted }]}>{formatFieldName(key)}</Text>
+                                                <Text style={[styles.metadataValueText, { color: text }]}>
+                                                    {formatMetadataValue(value)}
+                                                </Text>
+                                            </View>
                                         </View>
                                     ))}
                                 </View>
                             ))
                         ) : (
-                            <View style={styles.metadataItem}>
-                                {Object.entries(service.metadata).map(([key, value]) => (
-                                    <View key={key} style={styles.metadataRow}>
-                                        <Text style={[styles.metadataKey, { color: muted }]}>{key}:</Text>
-                                        <Text style={[styles.metadataValue, { color: text }]}>
-                                            {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
-                                        </Text>
-                                    </View>
-                                ))}
+                            <View>
+                                {Object.entries(service.metadata).map(([key, value]) => {
+                                    // Special rendering for open_hours
+                                    if (key.toLowerCase().includes('hour') && typeof value === 'object') {
+                                        return (
+                                            <View key={key}>
+                                                <View style={[styles.metadataRow, { borderBottomColor: border }]}>
+                                                    <View style={[styles.metadataIcon, { backgroundColor: `${tint}15` }]}>
+                                                        <IconSymbol name="clock.fill" size={18} color={tint} />
+                                                    </View>
+                                                    <View style={styles.metadataContent}>
+                                                        <Text style={[styles.metadataLabel, { color: muted }]}>{formatFieldName(key)}</Text>
+                                                    </View>
+                                                </View>
+                                                <View style={styles.hoursContainer}>
+                                                    {Object.entries(value as Record<string, any>).map(([day, hours]) => (
+                                                        <View key={day} style={[styles.hourRow, { backgroundColor: card }]}>
+                                                            <Text style={[styles.dayName, { color: text }]}>{day}</Text>
+                                                            <Text style={[styles.hoursTime, { color: tint }]}>{String(hours)}</Text>
+                                                        </View>
+                                                    ))}
+                                                </View>
+                                            </View>
+                                        );
+                                    }
+                                    
+                                    // Regular metadata rendering
+                                    return (
+                                        <View key={key} style={[styles.metadataRow, { borderBottomColor: border }]}>
+                                            <View style={[styles.metadataIcon, { backgroundColor: `${tint}15` }]}>
+                                                <IconSymbol name={getMetadataIcon(key)} size={18} color={tint} />
+                                            </View>
+                                            <View style={styles.metadataContent}>
+                                                <Text style={[styles.metadataLabel, { color: muted }]}>{formatFieldName(key)}</Text>
+                                                <Text style={[styles.metadataValueText, { color: text }]}>
+                                                    {formatMetadataValue(value)}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    );
+                                })}
                             </View>
                         )}
                     </View>
@@ -485,9 +581,40 @@ const styles = StyleSheet.create({
     },
     metadataRow: {
         flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
+        alignItems: 'flex-start',
+        gap: 12,
+        paddingVertical: 12,
+        paddingBottom: 15,
+        borderBottomWidth: 0.5,
         marginBottom: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+    },
+    metadataIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 2,
+        paddingBottom: 8,
+    },
+    metadataContent: {
+        flex: 1,
+    },
+    metadataLabel: {
+        fontSize: 12,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        marginBottom: 4,
+        letterSpacing: 0.5,
+    },
+    metadataValueText: {
+        fontSize: 16,
+        fontWeight: '500',
+        lineHeight: 22,
     },
     metadataKey: {
         fontSize: 14,
@@ -497,6 +624,30 @@ const styles = StyleSheet.create({
     metadataValue: {
         fontSize: 14,
         flex: 1,
+    },
+    hoursContainer: {
+        marginLeft: 52,
+        marginTop: 8,
+        marginBottom: 8,
+        borderRadius: 12,
+        overflow: 'hidden',
+    },
+    hourRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(0,0,0,0.05)',
+    },
+    dayName: {
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    hoursTime: {
+        fontSize: 14,
+        fontWeight: '600',
     },
     bottomPadding: {
         height: 100,

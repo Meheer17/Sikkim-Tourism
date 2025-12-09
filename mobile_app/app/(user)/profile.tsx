@@ -172,7 +172,7 @@ export default function ProfileScreen() {
         { id: 'about', label: t.about || 'About', icon: 'info.circle.fill', route: '/(user)/(stack)/about' },
     ];
 
-    // Theme colors
+    // Themes
     const screenBg = useThemeColor('background');
     const cardBg = useThemeColor('card');
     const text = useThemeColor('text');
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        paddingBottom: 100,
+        paddingBottom: 20,
     },
     profileHeader: {
         paddingTop: 60,
@@ -461,6 +461,7 @@ const styles = StyleSheet.create({
     versionText: {
         fontSize: 12,
         textAlign: 'center',
-        marginTop: 24,
+        marginTop: 8,
+        marginBottom: 5,
     },
 });

@@ -524,6 +524,8 @@ export default function ExploreScreen() {
         modelPath: place.modelPath || '',
         has360Images: (place.has360Images || false).toString(),
         panorama360Url: place.panorama360Url || '',
+        latitude: place.latitude?.toString() || '',
+        longitude: place.longitude?.toString() || '',
         transcriptions: JSON.stringify(place.transcriptions || []),
       },
     });

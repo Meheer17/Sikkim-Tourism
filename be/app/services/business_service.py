@@ -37,12 +37,21 @@ class businessService:
         if db is None:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database not connected")
         collection = db.business
-        if not ObjectId.is_valid(business_id):
-            return None
         
-        business = await collection.find_one({"_id": ObjectId(business_id)})
+        # Try to find business first without strict ObjectId validation
+        try:
+            if ObjectId.is_valid(business_id):
+                business = await collection.find_one({"_id": ObjectId(business_id)})
+                if business:
+                    return businessInDB(**business)
+        except Exception as e:
+            print(f"Error validating ObjectId {business_id}: {e}")
+        
+        # If ObjectId validation failed, try string match (for backward compatibility)
+        business = await collection.find_one({"_id": business_id})
         if business:
             return businessInDB(**business)
+        
         return None
     
     async def get_all(
