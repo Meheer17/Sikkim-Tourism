@@ -4,13 +4,23 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { locationService } from '@/services/location.service';
+import { fileService } from '@/services';
 import { useAuth } from '@/hooks/useAuth';
 import AudioNarration from '@/components/immersive/AudioNarration';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
 import { buildImageUrl } from '@/utils/image-url';
+import { PageTurnPdfViewer } from '@/components/common/PageTurnPdfViewer';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+
+interface TranscriptionSummary {
+    id: string;
+    text: string;
+    avg_confidence?: number;
+    file_name?: string;
+    created_at: string;
+}
 
 interface LocationDetails {
     id: string;
@@ -22,6 +32,16 @@ interface LocationDetails {
     type: string;
     created_at?: string;
     updated_at?: string;
+    transcriptions?: TranscriptionSummary[];
+}
+
+interface HeritageDocument {
+    _id: string;
+    file_name: string;
+    file_path: string;
+    category: string;
+    mime_type?: string;
+    created_at: string;
 }
 
 export default function LocationDetailsScreen() {
@@ -32,6 +52,9 @@ export default function LocationDetailsScreen() {
     const [location, setLocation] = useState<LocationDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [heritageDocuments, setHeritageDocuments] = useState<HeritageDocument[]>([]);
+    const [loadingDocs, setLoadingDocs] = useState(false);
+    const [viewingPdf, setViewingPdf] = useState<{ url: string; name: string } | null>(null);
     const { user } = useAuth();
 
     const background = useThemeColor('background');
@@ -39,23 +62,47 @@ export default function LocationDetailsScreen() {
     const text = useThemeColor('text');
     const muted = useThemeColor('mutedText');
     const tint = useThemeColor('tint');
+    const border = useThemeColor('border');
 
-    const canEdit = user && (user.role === 'admin' || user.role === 'business');
+    const canEdit = user && (user.role === 'government' || user.role === 'business');
 
     useEffect(() => {
         loadLocationDetails();
+        loadHeritageDocuments();
     }, [id]);
+
+    const loadHeritageDocuments = async () => {
+        if (!id) return;
+        setLoadingDocs(true);
+        try {
+            const resp = await fileService.getHeritageDocuments({ locationId: id });
+            if (resp.success && resp.data) {
+                setHeritageDocuments(resp.data.documents || []);
+            }
+        } catch (error) {
+            console.error('Failed to load heritage documents:', error);
+        } finally {
+            setLoadingDocs(false);
+        }
+    };
 
     const loadLocationDetails = async () => {
         if (!id) return;
+        console.log(`[LocationDetails] Loading location details for id: ${id}`);
         setLoading(true);
         try {
             const resp = await locationService.get(id);
+            console.log(`[LocationDetails] API Response:`, resp);
             if (resp.success && resp.data) {
+                console.log(`[LocationDetails] Location data:`, resp.data);
+                console.log(`[LocationDetails] Transcriptions:`, resp.data.transcriptions);
+                console.log(`[LocationDetails] Transcriptions count:`, resp.data.transcriptions?.length || 0);
                 setLocation(resp.data);
+            } else {
+                console.warn(`[LocationDetails] API call failed or no data:`, resp);
             }
         } catch (error) {
-            console.error('Failed to load location:', error);
+            console.error('[LocationDetails] Failed to load location:', error);
         } finally {
             setLoading(false);
         }
@@ -221,12 +268,42 @@ export default function LocationDetailsScreen() {
                                 ))}
                         </View>
                     )}
+
+                    {/* Manuscript Transcriptions */}
+                    {location.transcriptions && location.transcriptions.length > 0 && (
+                        <View style={styles.section}>
+                            <Text style={[styles.sectionTitle, { color: text }]}>Manuscript Transcriptions</Text>
+                            <Text style={[styles.sectionSubtitle, { color: muted }]}>
+                                Ancient texts digitized from historical manuscripts
+                            </Text>
+                            {location.transcriptions.map((transcription, index) => (
+                                <View key={transcription.id} style={[styles.transcriptionCard, { backgroundColor: card, borderColor: border }]}>
+                                    <View style={styles.transcriptionHeader}>
+                                        <Text style={[styles.transcriptionFileName, { color: text }]}>
+                                            {transcription.file_name || `Manuscript ${index + 1}`}
+                                        </Text>
+                                        {transcription.avg_confidence && (
+                                            <Text style={[styles.confidenceText, { color: muted }]}>
+                                                {Math.round(transcription.avg_confidence * 100)}% accuracy
+                                            </Text>
+                                        )}
+                                    </View>
+                                    <Text style={[styles.transcriptionText, { color: text }]}>
+                                        {transcription.text}
+                                    </Text>
+                                    <Text style={[styles.transcriptionDate, { color: muted }]}>
+                                        Transcribed: {new Date(transcription.created_at).toLocaleDateString()}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
+                    )}
                 </View>
 
                 {/* Action Buttons */}
                 <View style={styles.actionsContainer}>
                     {location.metadata?.panorama_360 && (
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: '#10b981' }]}
                             onPress={handleOpen360View}
                         >
@@ -246,6 +323,13 @@ export default function LocationDetailsScreen() {
                     </TouchableOpacity>
                 </View>
             </ScrollView>
+
+            <PageTurnPdfViewer
+                visible={!!viewingPdf}
+                pdfUrl={viewingPdf?.url || ''}
+                fileName={viewingPdf?.name}
+                onClose={() => setViewingPdf(null)}
+            />
 
             {/* Audio Narration with Proximity Detection */}
             {location.description && (
@@ -383,8 +467,13 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 18,
-        fontWeight: '700',
-        marginBottom: 12,
+        fontWeight: '600',
+        marginBottom: 8,
+    },
+    sectionSubtitle: {
+        fontSize: 14,
+        marginBottom: 16,
+        fontStyle: 'italic',
     },
     description: {
         fontSize: 15,
@@ -403,6 +492,38 @@ const styles = StyleSheet.create({
     metadataValue: {
         fontSize: 14,
         flex: 1,
+    },
+    transcriptionCard: {
+        marginBottom: 16,
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+    },
+    transcriptionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+        flexWrap: 'wrap',
+    },
+    transcriptionFileName: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginLeft: 8,
+        flex: 1,
+    },
+    confidenceText: {
+        fontSize: 12,
+        fontStyle: 'italic',
+        marginLeft: 8,
+    },
+    transcriptionText: {
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 8,
+    },
+    transcriptionDate: {
+        fontSize: 12,
+        fontStyle: 'italic',
     },
     actionsContainer: {
         flexDirection: 'row',
@@ -439,5 +560,82 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '600',
+    },
+    heritageSection: {
+        margin: 16,
+        marginTop: 0,
+        borderRadius: 16,
+        padding: 20,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+    },
+    heritageSectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 8,
+    },
+    heritageSectionDesc: {
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 16,
+    },
+    heritageScroll: {
+        marginHorizontal: -8,
+    },
+    heritageCard: {
+        width: 160,
+        borderRadius: 12,
+        borderWidth: 1,
+        overflow: 'hidden',
+        marginHorizontal: 8,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+    },
+    heritageThumb: {
+        width: '100%',
+        height: 120,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    heritageImage: {
+        width: '100%',
+        height: '100%',
+    },
+    heritageCardContent: {
+        padding: 12,
+    },
+    categoryBadge: {
+        alignSelf: 'flex-start',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+        marginBottom: 8,
+    },
+    categoryBadgeText: {
+        fontSize: 10,
+        fontWeight: '600',
+        textTransform: 'capitalize',
+    },
+    heritageFileName: {
+        fontSize: 13,
+        fontWeight: '600',
+        marginBottom: 8,
+        lineHeight: 18,
+    },
+    pdfIndicator: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    pdfIndicatorText: {
+        fontSize: 11,
+        fontWeight: '500',
     },
 });

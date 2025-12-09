@@ -10,14 +10,10 @@ class ProfanityFilter:
     # List of offensive words to block (add more as needed)
     OFFENSIVE_WORDS = {
         # Common profanity
-        "fuck", "shit", "ass", "bitch", "damn", "hell", "bastard", "crap",
+        "fuck", "shit", "bitch", "bastard", "crap",
         "piss", "dick", "cock", "pussy", "cunt", "whore", "slut", "fag",
         # Variations with special characters
-        "f*ck", "sh*t", "b*tch", "a$$", "d*mn", "h*ll",
-        # Common offensive terms
-        "idiot", "stupid", "moron", "retard", "dumb", "loser",
-        # Hate speech indicators (basic)
-        "hate", "kill", "die", "murder", "racist", "sexist",
+        "f*ck", "sh*t", "b*tch", "a$$",
         # Add language-specific offensive words as needed
     }
     
@@ -26,6 +22,8 @@ class ProfanityFilter:
         "assassin", "bass", "class", "grass", "pass", "glass", "mass",
         "classic", "assistant", "assignment", "assume", "assumption",
         "cassette", "compass", "harass", "embassy", "passionate",
+        "hello", "shell", "hell", "bells", "yell", "sell", "tell", "well",
+        "assess", "asset", "assess", "message", "passenger", "passage",
     }
     
     @classmethod
@@ -58,14 +56,16 @@ class ProfanityFilter:
             if word in cls.WHITELIST:
                 continue
             
-            # Direct match
+            # Direct match only - more precise filtering
             if word in cls.OFFENSIVE_WORDS:
                 found_offensive.append(word)
                 continue
             
-            # Check if offensive word is substring (for bypassing with extra letters)
+            # Check for exact offensive words with minor obfuscation (e.g., "f***" instead of substring matching)
+            # Only flag if the word is very similar to an offensive word
             for offensive in cls.OFFENSIVE_WORDS:
-                if offensive in word and word not in cls.WHITELIST:
+                # Only match if word is offensive word with 1-2 extra chars or substitutions
+                if len(word) == len(offensive) and word.replace('*', offensive[0]) == offensive:
                     found_offensive.append(word)
                     break
         

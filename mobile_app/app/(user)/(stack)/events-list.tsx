@@ -1,29 +1,24 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { businessService } from '@/services/business.service';
-
-interface Event {
-    id: string;
-    _id?: string;
-    name: string;
-    description: string;
-    short_description: string;
-    open_hours: { start: string; end: string };
-    scheduled_at?: string;
-    approved?: boolean;
-    created_at?: string;
-    updated_at?: string;
-    uid?: string;
-}
+import { eventService } from '@/services/event.service';
+import { Event } from '@/services/event.service';
+import { OfflineEventStorage } from '@/utils/offline-storage';
+import { useNetworkStatus } from '@/utils/network';
+import Toast from 'react-native-toast-message';
 
 export default function EventsListScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
+    const isOnline = useNetworkStatus();
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [navigatingEventId, setNavigatingEventId] = useState<string | null>(null);
+    const [isOfflineData, setIsOfflineData] = useState(false);
+    const [cacheTimestamp, setCacheTimestamp] = useState<Date | null>(null);
     const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const background = useThemeColor('background');
@@ -40,15 +35,75 @@ export default function EventsListScreen() {
     const loadEvents = async () => {
         setLoading(true);
         try {
-            // Events are businesses with scheduled_at
-            const resp = await businessService.list({ skip: 0, limit: 50 });
-            if (resp.success && resp.data) {
-                // Filter for events (those with scheduled_at)
-                const eventItems: Event[] = resp.data.filter(b => b.scheduled_at).map(b => ({ ...b }));
-                setEvents(eventItems);
+            if (isOnline) {
+                // Online: try to fetch from API
+                try {
+                    const resp = await eventService.list({ limit: 50 });
+                    if (resp.success && resp.data) {
+                        setEvents(resp.data);
+                        setIsOfflineData(false);
+                        setCacheTimestamp(null);
+                        
+                        // Save to offline cache
+                        await OfflineEventStorage.saveEvents(resp.data);
+                    } else {
+                        setEvents([]);
+                    }
+                } catch (apiError: any) {
+                    console.error('Failed to load events from API:', apiError);
+                    
+                    // Fall back to offline cache
+                    const cachedEvents = await OfflineEventStorage.getEvents();
+                    if (cachedEvents && cachedEvents.length > 0) {
+                        setEvents(cachedEvents);
+                        setIsOfflineData(true);
+                        const timestamp = await OfflineEventStorage.getCacheTimestamp();
+                        setCacheTimestamp(timestamp);
+                        
+                        Toast.show({
+                            type: 'info',
+                            text1: 'Using cached events',
+                            text2: `Last updated: ${timestamp?.toLocaleString()}`,
+                            position: 'bottom',
+                        });
+                    } else {
+                        setEvents([]);
+                        Toast.show({
+                            type: 'error',
+                            text1: 'Failed to load events',
+                            text2: 'No cached events available',
+                            position: 'bottom',
+                        });
+                    }
+                }
+            } else {
+                // Offline: load from cache only
+                const cachedEvents = await OfflineEventStorage.getEvents();
+                if (cachedEvents && cachedEvents.length > 0) {
+                    setEvents(cachedEvents);
+                    setIsOfflineData(true);
+                    const timestamp = await OfflineEventStorage.getCacheTimestamp();
+                    setCacheTimestamp(timestamp);
+                    
+                    Toast.show({
+                        type: 'info',
+                        text1: 'Offline Mode',
+                        text2: `Showing cached events from ${timestamp?.toLocaleString()}`,
+                        position: 'bottom',
+                    });
+                } else {
+                    setEvents([]);
+                    Toast.show({
+                        type: 'error',
+                        text1: 'No offline data',
+                        text2: 'No cached events available',
+                        position: 'bottom',
+                    });
+                }
             }
         } catch (error) {
-            console.error('Failed to load events:', error);
+            console.error('Error loading events:', error);
+            setEvents([]);
         } finally {
             setLoading(false);
         }
@@ -97,7 +152,7 @@ export default function EventsListScreen() {
             onPress={() => handleEventPress(eventId)}
             disabled={isNavigating}
         >
-            <View style={styles.dateContainer}>
+            <View style={[styles.dateContainer, { backgroundColor: `${tint}15` }]}>
                 <Text style={[styles.dateDay, { color: tint }]}>
                     {item.scheduled_at ? new Date(item.scheduled_at).getDate() : '?'}
                 </Text>
@@ -145,11 +200,26 @@ export default function EventsListScreen() {
     return (
         <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: card }]}>
+            <View style={[styles.header, { backgroundColor: card, borderBottomColor: border, paddingTop: Math.max(insets.top, 12) }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <IconSymbol name="chevron.left" size={24} color={text} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: text }]}>Events</Text>
+                <View style={{ flex: 1 }}>
+                    <Text style={[styles.headerTitle, { color: text }]}>Events</Text>
+                    {isOfflineData && (
+                        <Text style={[styles.headerSubtitle, { color: '#ff6b6b' }]}>
+                            Offline • {cacheTimestamp?.toLocaleString()}
+                        </Text>
+                    )}
+                </View>
+                <View style={{ flex: 1 }}>
+                    <Text style={[styles.headerTitle, { color: text }]}>Events</Text>
+                    {isOfflineData && (
+                        <Text style={[styles.headerSubtitle, { color: '#ff6b6b' }]}>
+                            Offline • {cacheTimestamp?.toLocaleString()}
+                        </Text>
+                    )}
+                </View>
                 <TouchableOpacity onPress={loadEvents}>
                     <IconSymbol name="arrow.clockwise" size={24} color={tint} />
                 </TouchableOpacity>
@@ -187,9 +257,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingTop: 60,
         paddingBottom: 16,
         borderBottomWidth: 1,
+        gap: 12,
         borderBottomColor: '#e5e7eb',
     },
     backButton: {
@@ -202,8 +272,11 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 24,
         fontWeight: '700',
-        flex: 1,
-        textAlign: 'center',
+        marginBottom: 4,
+    },
+    headerSubtitle: {
+        fontSize: 12,
+        fontWeight: '500',
     },
     listContent: {
         padding: 16,
@@ -224,7 +297,6 @@ const styles = StyleSheet.create({
         width: 60,
         height: 60,
         borderRadius: 12,
-        backgroundColor: '#e8f4f8',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,

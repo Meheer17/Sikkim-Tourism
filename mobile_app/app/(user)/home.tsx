@@ -27,7 +27,7 @@ export default function HomeScreen() {
     const { language } = useLanguage();
     const t = getLanguageTranslations(language);
     const { user } = useAuth();
-    const isAdmin = user?.role === 'admin';
+    const isGovernment = user?.role === 'government';
     const background = useThemeColor('background');
     const card = useThemeColor('card');
     const text = useThemeColor('text');
@@ -226,6 +226,7 @@ export default function HomeScreen() {
                     latitude: loc?.position?.y ? String(loc.position.y) : '',
                     longitude: loc?.position?.x ? String(loc.position.x) : '',
                     shortDescription: (loc?.short_description as string) || '',
+                    transcriptions: JSON.stringify(loc?.transcriptions || []),
                 };
 
                 router.push({ pathname: '/(user)/(stack)/place-details', params } as any);
@@ -339,8 +340,8 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {/* AI Planner Banner - hidden for admin users */}
-                {!isAdmin && (
+                {/* AI Planner Banner - hidden for government users */}
+                {!isGovernment && (
                     <TouchableOpacity
                         style={styles.aiPlannerBanner}
                         onPress={() => router.push('/(user)/(stack)/ai-planner-chat' as any)}

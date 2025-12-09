@@ -50,13 +50,26 @@ async def get_location(
     current_user_id: str = Depends(get_current_user_id)
 ):
     """Get location by id"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"GET /location/{l_id} - requested by user: {current_user_id}")
+    
     location = await location_service.get_by_id(l_id)
     if not location:
+        logger.warning(f"Location not found: {l_id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Location not found"
         )
-    return Location(
+    
+    logger.info(f"Found location: {location.name} (id: {location.id})")
+    
+    # Fetch transcriptions for this location
+    transcriptions = await location_service.get_transcriptions_for_location(l_id)
+    logger.info(f"Fetched {len(transcriptions)} transcriptions for location {l_id}")
+    
+    response = Location(
         id=str(location.id),
         name=location.name,
         description=location.description,
@@ -65,8 +78,12 @@ async def get_location(
         metadata=location.metadata,
         type=location.type,
         created_at=location.created_at,
-        updated_at=location.updated_at
+        updated_at=location.updated_at,
+        transcriptions=transcriptions
     )
+    
+    logger.info(f"Returning location response with {len(response.transcriptions or [])} transcriptions")
+    return response
 
 
 @router.put("/{l_id}", response_model=Location)

@@ -9,6 +9,53 @@ from app.schemas.auth import MessageResponse
 router = APIRouter()
 
 
+# CREATE - must come first before GET
+@router.post("/", response_model=Order, status_code=status.HTTP_201_CREATED)
+async def create_order(
+    order_data: OrderCreate,
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """Create a new order for a service
+    
+    Parameters:
+    - service_id: ID of the service to order
+    - business_id: ID of the business providing the service
+    - amount: Order amount
+    - metadata: Optional metadata (e.g., from_time, to_time, quantity, etc.)
+    """
+    try:
+        order = await order_service.create(order_data, current_user_id)
+        return order
+    except Exception as e:
+        print(f"[ERROR] Failed to create order: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+# READ LIST - specific routes before generic ones
+@router.get("/me", response_model=List[Order])
+async def get_my_orders(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1),
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """Get orders for authenticated user"""
+    orders = await order_service.get_by_user(current_user_id, skip, limit)
+    return orders
+
+
+@router.get("/business/{business_id}", response_model=List[Order])
+async def get_business_orders(
+    business_id: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1),
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """Get all orders for a specific business"""
+    orders = await order_service.get_by_business(business_id, skip, limit)
+    return orders
+
+
+# Generic GET - comes last
 @router.get("/", response_model=List[Order])
 async def list_orders(
     skip: int = Query(0, ge=0),
@@ -30,34 +77,6 @@ async def list_orders(
         payment_status=payment_status,
         order_status=order_status
     )
-    return orders
-
-
-@router.post("/", response_model=Order, status_code=status.HTTP_201_CREATED)
-async def create_order(
-    order_data: OrderCreate,
-    current_user_id: str = Depends(get_current_user_id)
-):
-    """Create a new order for a service
-    
-    Parameters:
-    - service_id: ID of the service to order
-    - business_id: ID of the business providing the service
-    - amount: Order amount
-    - metadata: Optional metadata (e.g., from_time, to_time, quantity, etc.)
-    """
-    order = await order_service.create(order_data, current_user_id)
-    return order
-
-
-@router.get("/me", response_model=List[Order])
-async def get_my_orders(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1),
-    current_user_id: str = Depends(get_current_user_id)
-):
-    """Get orders for authenticated user"""
-    orders = await order_service.get_by_user(current_user_id, skip, limit)
     return orders
 
 
@@ -113,15 +132,3 @@ async def delete_order(
         status_code=status.HTTP_404_NOT_FOUND,
         detail="Order not found"
     )
-
-
-@router.get("/business/{business_id}", response_model=List[Order])
-async def get_business_orders(
-    business_id: str,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1),
-    current_user_id: str = Depends(get_current_user_id)
-):
-    """Get all orders for a specific business"""
-    orders = await order_service.get_by_business(business_id, skip, limit)
-    return orders

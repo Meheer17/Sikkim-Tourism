@@ -19,5 +19,4 @@ async def translate_and_tts(req: TranslateTTSRequest):
         return {"success": True, **result}
     except Exception as e:
         print(f"[Translate-TTS API] Error: {str(e)}")
-        print(f"[Translate-TTS API] Traceback: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=501, detail=f"Translate-TTS disabled (offline mode). Use /api/v1/tts for offline TTS only. Error: {str(e)}")

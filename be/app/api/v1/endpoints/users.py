@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status, HTTPException, Query
 
-from app.core.security import get_current_user_id, get_current_admin_user
+from app.core.security import get_current_user_id, get_current_government_user
 from app.services.user_service import user_service
 from app.models.user import User, UserUpdate
 from app.schemas.auth import MessageResponse
@@ -15,9 +15,9 @@ router = APIRouter()
 async def list_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    current_admin_id: str = Depends(get_current_admin_user)
+    current_government_id: str = Depends(get_current_government_user)
 ):
-    """Get list of all users (Admin only, with pagination)"""
+    """Get list of all users (Government only, with pagination)"""
     users = await user_service.list(skip=skip, limit=limit)
     return users
 
@@ -70,9 +70,9 @@ async def delete_current_user(current_user_id: str = Depends(get_current_user_id
 @router.put("/{user_id}/approve", response_model=MessageResponse)
 async def approve_user(
     user_id: str,
-    current_admin_id: str = Depends(get_current_admin_user)
+    current_government_id: str = Depends(get_current_government_user)
 ):
-    """Approve a user (Admin only)"""
+    """Approve a user (Government only)"""
     # Check if user exists
     user = await user_service.get_by_id(user_id)
     if not user:
@@ -92,9 +92,9 @@ async def approve_user(
 async def update_user_role(
     user_id: str,
     user_update: UserUpdate,
-    current_admin_id: str = Depends(get_current_admin_user)
+    current_government_id: str = Depends(get_current_government_user)
 ):
-    """Update a user's role (Admin only)"""
+    """Update a user's role (Government only)"""
     # Check if user exists
     user = await user_service.get_by_id(user_id)
     if not user:

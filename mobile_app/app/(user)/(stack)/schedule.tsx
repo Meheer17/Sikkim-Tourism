@@ -10,6 +10,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLanguageTranslations } from '@/constants/translations';
 import Toast from 'react-native-toast-message';
+import { OfflineEventStorage } from '@/utils/offline-storage';
+import { useNetworkStatus } from '@/utils/network';
 
 const EVENT_TYPE_ID = '6927dd74c83ad21b47926941';
 
@@ -24,11 +26,15 @@ export default function ScheduleScreen() {
     const tint = useThemeColor('tint');
     const insets = useSafeAreaInsets();
 
+    const isOnline = useNetworkStatus();
+
     const [events, setEvents] = useState<Event[]>([]);
     const [myEvents, setMyEvents] = useState<Event[]>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [navigatingEventId, setNavigatingEventId] = useState<string | null>(null);
+    const [isOfflineData, setIsOfflineData] = useState(false);
+    const [cacheTimestamp, setCacheTimestamp] = useState<Date | null>(null);
     const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
@@ -36,25 +42,99 @@ export default function ScheduleScreen() {
         loadMyEvents();
     }, []);
 
+    // When connectivity changes and we're online, refresh data if we have offline data
+    useEffect(() => {
+        if (isOnline && isOfflineData && !refreshing) {
+            console.log('Network restored, refreshing events...');
+            handleRefresh();
+        }
+    }, [isOnline]);
+
     const loadEvents = async () => {
         try {
             setLoading(true);
-            const response = await eventService.getAll(200);
+            
+            // First, always check if we have cached data on initial load
+            const hasCache = await OfflineEventStorage.getEvents();
+            if (hasCache && hasCache.length > 0 && loading) {
+                // Show cached data immediately while fetching new data
+                setEvents(hasCache);
+                setIsOfflineData(true);
+                const timestamp = await OfflineEventStorage.getCacheTimestamp();
+                setCacheTimestamp(timestamp);
+            }
+            
+            if (isOnline) {
+                // Online: fetch from API
+                try {
+                    const response = await eventService.getAll(200);
 
-            if (response.data) {
-                const eventsList = Array.isArray(response.data) ? response.data : [];
-                setEvents(eventsList);
+                    if (response.data) {
+                        const eventsList = Array.isArray(response.data) ? response.data : [];
+                        setEvents(eventsList);
+                        
+                        // Save to offline cache
+                        await OfflineEventStorage.saveEvents(eventsList);
+                        setIsOfflineData(false);
+                    } else {
+                        setEvents([]);
+                    }
+                } catch (error: any) {
+                    console.error('Failed to load events from API:', error);
+                    
+                    // Fall back to offline cache
+                    const cachedEvents = await OfflineEventStorage.getEvents();
+                    if (cachedEvents) {
+                        setEvents(cachedEvents);
+                        setIsOfflineData(true);
+                        const timestamp = await OfflineEventStorage.getCacheTimestamp();
+                        setCacheTimestamp(timestamp);
+
+                        Toast.show({
+                            type: 'info',
+                            text1: 'Using cached events',
+                            text2: `Last updated: ${timestamp?.toLocaleString()}`,
+                            position: 'bottom',
+                        });
+                    } else {
+                        setEvents([]);
+                        Toast.show({
+                            type: 'error',
+                            text1: 'Failed to load events',
+                            text2: error?.message || 'Please try again later',
+                            position: 'bottom',
+                        });
+                    }
+                }
             } else {
-                setEvents([]);
+                // Offline: load from cache only
+                console.log('Offline mode - loading events from cache');
+                const cachedEvents = await OfflineEventStorage.getEvents();
+                
+                if (cachedEvents && cachedEvents.length > 0) {
+                    setEvents(cachedEvents);
+                    setIsOfflineData(true);
+                    const timestamp = await OfflineEventStorage.getCacheTimestamp();
+                    setCacheTimestamp(timestamp);
+                    
+                    Toast.show({
+                        type: 'info',
+                        text1: 'Offline Mode',
+                        text2: `Showing cached events from ${timestamp?.toLocaleString()}`,
+                        position: 'bottom',
+                    });
+                } else {
+                    setEvents([]);
+                    Toast.show({
+                        type: 'error',
+                        text1: 'No offline data',
+                        text2: 'No cached events available. Please go online to load events.',
+                        position: 'bottom',
+                    });
+                }
             }
         } catch (error: any) {
-            console.error('Failed to load events:', error);
-            Toast.show({
-                type: 'error',
-                text1: 'Failed to load events',
-                text2: error?.message || 'Please try again later',
-                position: 'bottom',
-            });
+            console.error('Error loading events:', error);
             setEvents([]);
         } finally {
             setLoading(false);
@@ -63,16 +143,53 @@ export default function ScheduleScreen() {
 
     const loadMyEvents = async () => {
         try {
-            const response = await apiClient.get<Event[]>(`/business/me?skip=0&limit=100&type_id=${EVENT_TYPE_ID}`);
+            // First, always check if we have cached data on initial load
+            const hasCache = await OfflineEventStorage.getMyEvents();
+            if (hasCache && hasCache.length > 0 && loading) {
+                // Show cached data immediately while fetching new data
+                setMyEvents(hasCache);
+                setIsOfflineData(true);
+            }
             
-            if (response.data) {
-                const eventsList = Array.isArray(response.data) ? response.data : [];
-                setMyEvents(eventsList);
+            if (isOnline) {
+                // Online: fetch from API
+                try {
+                    const response = await apiClient.get<Event[]>(`/business/me?skip=0&limit=100&type_id=${EVENT_TYPE_ID}`);
+                    
+                    if (response.data) {
+                        const eventsList = Array.isArray(response.data) ? response.data : [];
+                        setMyEvents(eventsList);
+                        
+                        // Save to offline cache
+                        await OfflineEventStorage.saveMyEvents(eventsList);
+                        setIsOfflineData(false);
+                    } else {
+                        setMyEvents([]);
+                    }
+                } catch (error: any) {
+                    console.error('Failed to load my events from API:', error);
+                    
+                    // Fall back to offline cache
+                    const cachedMyEvents = await OfflineEventStorage.getMyEvents();
+                    if (cachedMyEvents) {
+                        setMyEvents(cachedMyEvents);
+                        setIsOfflineData(true);
+                    } else {
+                        setMyEvents([]);
+                    }
+                }
             } else {
-                setMyEvents([]);
+                // Offline: load from cache only
+                const cachedMyEvents = await OfflineEventStorage.getMyEvents();
+                if (cachedMyEvents && cachedMyEvents.length > 0) {
+                    setMyEvents(cachedMyEvents);
+                    setIsOfflineData(true);
+                } else {
+                    setMyEvents([]);
+                }
             }
         } catch (error: any) {
-            console.error('Failed to load my events:', error);
+            console.error('Error loading my events:', error);
             setMyEvents([]);
         }
     };
@@ -131,7 +248,7 @@ export default function ScheduleScreen() {
     return (
         <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
-            <View style={[styles.header, { paddingHorizontal: 20 }]}>
+            <View style={[styles.header, { paddingHorizontal: 20, paddingTop: Math.max(insets.top, 12) }]}>
                 <View style={styles.headerTop}>
                     <View style={[styles.headerIcon, { backgroundColor: `${tint}20` }]}>
                         <IconSymbol name="calendar" size={18} color={tint} />
@@ -139,7 +256,10 @@ export default function ScheduleScreen() {
                     <View style={styles.headerTextBlock}>
                         <Text style={[styles.title, { color: text }]}>Events</Text>
                         <Text style={[styles.subtitle, { color: muted }]}>
-                            Scroll to view all events
+                            {isOfflineData 
+                                ? `Offline • ${cacheTimestamp?.toLocaleString()}`
+                                : 'Scroll to view all events'
+                            }
                         </Text>
                     </View>
                     <TouchableOpacity

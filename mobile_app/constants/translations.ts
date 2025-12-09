@@ -341,7 +341,7 @@ export const translations: TranslationsMap = {
     passwordMismatch: 'Passwords do not match',
     registrationSuccess: 'Registration successful',
 
-    // Admin/Business
+    // Government/Business
     businesses: 'Businesses',
     users: 'Users',
     analytics: 'Analytics',
@@ -652,7 +652,7 @@ export const translations: TranslationsMap = {
     passwordMismatch: 'पासवर्ड मेल नहीं खाते',
     registrationSuccess: 'पंजीकरण सफल',
 
-    // Admin/Business
+    // Government/Business
     businesses: 'व्यवसाय',
     users: 'उपयोगकर्ता',
     analytics: 'विश्लेषण',
@@ -909,7 +909,7 @@ export const translations: TranslationsMap = {
     passwordMismatch: 'கடவுச்சொல்கள் பொருந்தவில்லை',
     registrationSuccess: 'பதிவு வெற்றிகரமாக நிறைவுற்றது',
 
-    // Admin/Business
+    // Government/Business
     businesses: 'வியாபாரங்கள்',
     users: 'பயனாளர்கள்',
     analytics: 'பகுப்பாய்வு',
@@ -1166,7 +1166,7 @@ export const translations: TranslationsMap = {
     passwordMismatch: 'పాస్‌వర్డ్‌లు సరిపోలలేదు',
     registrationSuccess: 'నమోదు విజయవంతంగా పూర్తిచేసిన',
 
-    // Admin/Business
+    // Government/Business
     businesses: 'వ్యాపారాలు',
     users: 'వినియోగదారులు',
     analytics: 'విశ్లేషణ',
@@ -1422,7 +1422,7 @@ export const translations: TranslationsMap = {
     passwordMismatch: 'གསང་གྲངས་མ་མཐུན',
     registrationSuccess: 'ཐོ་འགོད་ལེགས་པ',
 
-    // Admin/Business
+    // Government/Business
     businesses: 'ཚོང་ལས',
     users: 'སྤྱོད་མཁན',
     analytics: 'དཔྱད་ཞིབ',
@@ -1684,7 +1684,7 @@ export const translations: TranslationsMap = {
     passwordMismatch: 'পাছৱৰ্ডসমূহ মিল নগ’ল',
     registrationSuccess: 'নিবন্ধন সফল হৈছে',
 
-    // Admin/Business
+    // Government/Business
     businesses: 'ব্যৱসায়সমূহ',
     users: 'ব্যৱহাৰকাৰীসকল',
     analytics: 'বিশ্লেষণ',
@@ -1954,7 +1954,7 @@ export const translations: TranslationsMap = {
     registrationSuccess: 'रजिस्ट्रेशन सफल',
 
 
-    // Admin/Business (Bodo)
+    // Government/Business (Bodo)
     businesses: 'बेपार',
     users: 'बेफोर',
     analytics: 'विश्लेषण',
@@ -2224,7 +2224,7 @@ export const translations: TranslationsMap = {
     registrationSuccess: 'Registration ka la kham',
 
 
-    // Admin/Business
+    // Government/Business
     businesses: 'Ki kam',
     users: 'Ki user',
     analytics: 'Analytics',
@@ -2495,7 +2495,7 @@ export const translations: TranslationsMap = {
     registrationSuccess: 'नोंदणी यशस्वी झाली',
 
 
-    // Admin/Business (Marathi)
+    // Government/Business (Marathi)
     businesses: 'व्यवसाय',
     users: 'वापरकर्ते',
     analytics: 'विश्लेषण',
@@ -2766,7 +2766,7 @@ export const translations: TranslationsMap = {
     registrationSuccess: 'નોંધણી સફળ',
 
 
-    // Admin/Business
+    // Government/Business
     businesses: 'વ્યવસાયો',
     users: 'વપરાશકર્તાઓ',
     analytics: 'વિશ્લેષણ',
@@ -3037,7 +3037,7 @@ export const translations: TranslationsMap = {
     registrationSuccess: 'ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਸਫਲ ਹੋ ਗਿਆ',
 
 
-    // Admin/Business (Punjabi)
+    // Government/Business (Punjabi)
     businesses: 'ਵਪਾਰ',
     users: 'ਯੂਜ਼ਰ',
     analytics: 'ਵਿਸ਼ਲੇਸ਼ਣ',
@@ -3298,7 +3298,7 @@ export const translations: TranslationsMap = {
     registrationSuccess: 'নিবন্ধন সফল হয়েছে',
 
 
-    // Admin/Business (Bengali)
+    // Government/Business (Bengali)
     businesses: 'ব্যবসাসমূহ',
     users: 'ব্যবহারকারীরা',
     analytics: 'বিশ্লেষণ',
@@ -3554,7 +3554,7 @@ export const translations: TranslationsMap = {
     passwordMismatch: 'पासवर्ड मेल खाँदैन',
     registrationSuccess: 'दर्ता सफल भयो',
 
-    // Admin/Business
+    // Government/Business
     businesses: 'व्यवसायहरू',
     users: 'प्रयोगकर्ताहरू',
     analytics: 'विश्लेषण',
@@ -3812,7 +3812,7 @@ export const translations: TranslationsMap = {
     passwordMismatch: 'ಪಾಸ್‌ವರ್ಡ್ ಹೊಂದಿಲ್ಲ',
     registrationSuccess: 'ನೋಂದಣಿ ಯಶಸ್ವಿಯಾಗಿದೆ',
 
-    // Admin/Business
+    // Government/Business
     businesses: 'ವ್ಯವಹಾರಗಳು',
     users: 'ಬಳಕೆದಾರರು',
     analytics: 'ವಿಶ್ಲೇಷಣೆ',
@@ -4003,7 +4003,7 @@ export const translations: TranslationsMap = {
     passwordMismatch: 'പാസ്‌വേഡ് പൊരുത്തപ്പെടുന്നില്ല',
     registrationSuccess: 'രജിസ്റ്റർ ചെയ്യൽ വിജയിച്ചു',
 
-    // Admin/Business
+    // Government/Business
     businesses: 'ബിസിനസ്സുകൾ',
     users: 'ഉപയോക്താക്കൾ',
     analytics: 'വിവകലനം',
