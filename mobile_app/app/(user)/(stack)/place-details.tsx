@@ -108,6 +108,14 @@ export default function PlaceDetailsScreen() {
     console.error('Failed to parse images:', e);
   }
   
+  const transcriptionsParam = params.transcriptions as string;
+  let transcriptions: Array<{id: string; text: string; avg_confidence?: number; file_name?: string; created_at: string}> = [];
+  try {
+    transcriptions = transcriptionsParam ? JSON.parse(transcriptionsParam) : [];
+  } catch (e) {
+    console.error('Failed to parse transcriptions:', e);
+  }
+  
   const has360Images =
     (typeof params.has360Images === 'string' && params.has360Images === 'true') ||
     (typeof params.has360Images === 'boolean' && params.has360Images === true);
@@ -123,12 +131,15 @@ export default function PlaceDetailsScreen() {
     images: images,
     modelPath: params.modelPath as string | undefined,
     has360Images: has360Images,
+    transcriptions: transcriptions,
   };
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [fullScreenVisible, setFullScreenVisible] = useState(false);
   const [fullScreenImageIndex, setFullScreenImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [selectedTranscription, setSelectedTranscription] = useState<{id: string; text: string; avg_confidence?: number; file_name?: string; created_at: string} | null>(null);
+  const [transcriptionModalVisible, setTranscriptionModalVisible] = useState(false);
 
   // Check if place is favorited on mount
   useEffect(() => {
@@ -173,6 +184,11 @@ export default function PlaceDetailsScreen() {
   const handleImagePress = (index: number) => {
     setFullScreenImageIndex(index);
     setFullScreenVisible(true);
+  };
+
+  const handleTranscriptionPress = (transcription: {id: string; text: string; avg_confidence?: number; file_name?: string; created_at: string}) => {
+    setSelectedTranscription(transcription);
+    setTranscriptionModalVisible(true);
   };
 
   const handleOpenImmersiveView = () => {
@@ -365,6 +381,51 @@ export default function PlaceDetailsScreen() {
             </View>
           )}
 
+          {/* Transcriptions - OCR Extracted Text */}
+          {place.transcriptions && place.transcriptions.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <IconSymbol name="doc.text.fill" size={24} color={tint} />
+                <Text style={[styles.sectionTitle, { color: text }]}>Information from Signboards</Text>
+              </View>
+              <Text style={[styles.sectionSubtitle, { color: muted }]}>
+                Text extracted from photos using OCR technology
+              </Text>
+              {place.transcriptions.map((trans, index) => (
+                <TouchableOpacity
+                  key={trans.id}
+                  style={[
+                    styles.manuscriptItem,
+                    { 
+                      backgroundColor: soft,
+                      borderColor: border,
+                    }
+                  ]}
+                  onPress={() => handleTranscriptionPress(trans)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.manuscriptNumber, { backgroundColor: tint }]}>
+                    <Text style={styles.manuscriptNumberText}>{index + 1}</Text>
+                  </View>
+                  <View style={styles.manuscriptContent}>
+                    <Text style={[styles.manuscriptTitle, { color: text }]} numberOfLines={1}>
+                      {trans.file_name || `Manuscript ${index + 1}`}
+                    </Text>
+                    <Text style={[styles.manuscriptPreview, { color: muted }]} numberOfLines={2}>
+                      {trans.text}
+                    </Text>
+                    {trans.avg_confidence !== undefined && (
+                      <Text style={[styles.manuscriptConfidence, { color: muted }]}>
+                        {Math.round(trans.avg_confidence * 100)}% accuracy
+                      </Text>
+                    )}
+                  </View>
+                  <IconSymbol name="chevron.right" size={20} color={muted} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
           {/* Additional Information */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: text }]}>Details</Text>
@@ -494,6 +555,76 @@ export default function PlaceDetailsScreen() {
             )}
           </View>
         </GestureHandlerRootView>
+      </Modal>
+
+      {/* Transcription Detail Modal */}
+      <Modal
+        visible={transcriptionModalVisible}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => setTranscriptionModalVisible(false)}
+      >
+        <View style={[styles.transcriptionModal, { backgroundColor: background }]}>
+          <StatusBar barStyle={Platform.OS === 'ios' ? 'dark-content' : 'light-content'} />
+          
+          {/* Header */}
+          <View style={[styles.transcriptionModalHeader, { borderBottomColor: border }]}>
+            <TouchableOpacity 
+              style={styles.modalCloseButton}
+              onPress={() => setTranscriptionModalVisible(false)}
+            >
+              <IconSymbol name="xmark" size={24} color={text} />
+            </TouchableOpacity>
+            <Text style={[styles.transcriptionModalTitle, { color: text }]}>Manuscript Details</Text>
+            <View style={{ width: 40 }} />
+          </View>
+
+          {/* Content */}
+          <ScrollView 
+            style={styles.transcriptionModalContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {selectedTranscription && (
+              <>
+                {/* Metadata */}
+                <View style={[styles.transcriptionMetaCard, { backgroundColor: soft, borderColor: border }]}>
+                  {selectedTranscription.file_name && (
+                    <View style={styles.transcriptionMetaRow}>
+                      <IconSymbol name="photo.fill" size={18} color={tint} />
+                      <Text style={[styles.transcriptionMetaLabel, { color: muted }]}>Source:</Text>
+                      <Text style={[styles.transcriptionMetaValue, { color: text }]}>
+                        {selectedTranscription.file_name}
+                      </Text>
+                    </View>
+                  )}
+                  {selectedTranscription.avg_confidence !== undefined && (
+                    <View style={styles.transcriptionMetaRow}>
+                      <IconSymbol name="checkmark.seal.fill" size={18} color={tint} />
+                      <Text style={[styles.transcriptionMetaLabel, { color: muted }]}>Accuracy:</Text>
+                      <Text style={[styles.transcriptionMetaValue, { color: text }]}>
+                        {Math.round(selectedTranscription.avg_confidence * 100)}%
+                      </Text>
+                    </View>
+                  )}
+                  <View style={styles.transcriptionMetaRow}>
+                    <IconSymbol name="calendar" size={18} color={tint} />
+                    <Text style={[styles.transcriptionMetaLabel, { color: muted }]}>Extracted:</Text>
+                    <Text style={[styles.transcriptionMetaValue, { color: text }]}>
+                      {new Date(selectedTranscription.created_at).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Transcription Text */}
+                <View style={styles.transcriptionTextContainer}>
+                  <Text style={[styles.transcriptionFullText, { color: text }]}>
+                    {selectedTranscription.text}
+                  </Text>
+                </View>
+              </>
+            )}
+          </ScrollView>
+        </View>
       </Modal>
     </View>
   );
@@ -785,4 +916,108 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    marginBottom: 16,
+    fontStyle: 'italic',
+  },
+  manuscriptItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    gap: 12,
+  },
+  manuscriptNumber: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  manuscriptNumberText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  manuscriptContent: {
+    flex: 1,
+  },
+  manuscriptTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  manuscriptPreview: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  manuscriptConfidence: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  transcriptionModal: {
+    flex: 1,
+  },
+  transcriptionModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+  },
+  modalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  transcriptionModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  transcriptionModalContent: {
+    flex: 1,
+    padding: 20,
+  },
+  transcriptionMetaCard: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 20,
+    gap: 12,
+  },
+  transcriptionMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  transcriptionMetaLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  transcriptionMetaValue: {
+    fontSize: 14,
+    flex: 1,
+  },
+  transcriptionTextContainer: {
+    marginBottom: 20,
+  },
+  transcriptionFullText: {
+    fontSize: 16,
+    lineHeight: 26,
+  },
 });
+

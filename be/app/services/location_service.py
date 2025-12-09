@@ -233,7 +233,8 @@ class LocationService:
                         metadata=loc_db.metadata,
                         type=loc_db.type,
                         created_at=loc_db.created_at,
-                        updated_at=loc_db.updated_at
+                        updated_at=loc_db.updated_at,
+                        transcriptions=[]
                     )))
             else:
                 # no nearby filter, just include
@@ -246,7 +247,8 @@ class LocationService:
                     metadata=loc_db.metadata,
                     type=loc_db.type,
                     created_at=loc_db.created_at,
-                    updated_at=loc_db.updated_at
+                    updated_at=loc_db.updated_at,
+                    transcriptions=[]
                 )))
 
         # sort by distance (if nearby), otherwise by created order as in original (we have 0.0 for all)
@@ -314,6 +316,9 @@ class LocationService:
         result = await self.collection.insert_one(location_dict)
         created_location = await self.get_by_id(str(result.inserted_id))
         
+        # Fetch transcriptions for the newly created location
+        transcriptions = await self.get_transcriptions_for_location(str(result.inserted_id))
+        
         return Location(
             id=str(created_location.id),
             name=created_location.name,
@@ -323,7 +328,8 @@ class LocationService:
             metadata=created_location.metadata,
             type=created_location.type,
             created_at=created_location.created_at,
-            updated_at=created_location.updated_at
+            updated_at=created_location.updated_at,
+            transcriptions=transcriptions
         )
     
     async def update(self, location_id: str, location_update: LocationUpdate) -> Location:
@@ -350,6 +356,9 @@ class LocationService:
         
         updated_location = await self.get_by_id(location_id)
         
+        # Fetch transcriptions for the updated location
+        transcriptions = await self.get_transcriptions_for_location(location_id)
+        
         return Location(
             id=str(updated_location.id),
             name=updated_location.name,
@@ -359,7 +368,8 @@ class LocationService:
             metadata=updated_location.metadata,
             type=updated_location.type,
             created_at=updated_location.created_at,
-            updated_at=updated_location.updated_at
+            updated_at=updated_location.updated_at,
+            transcriptions=transcriptions
         )
     
     async def delete(self, location_id: str) -> bool:
