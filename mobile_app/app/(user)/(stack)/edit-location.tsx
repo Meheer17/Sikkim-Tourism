@@ -254,7 +254,7 @@ export default function EditLocationScreen() {
                         )}
                     </TouchableOpacity>
 
-                    {user?.role === 'admin' && (
+                    {user?.role === 'government' && (
                         <TouchableOpacity
                             style={[styles.button, styles.deleteButton, { backgroundColor: '#ef4444' }]}
                             onPress={handleDelete}

@@ -23,7 +23,7 @@ class UserService {
   }
 
   async approve(userId: string): Promise<ApiResponse<{ approved: boolean }>> {
-    // Admin-only: PUT /users/{user_id}/approve
+    // Government-only: PUT /users/{user_id}/approve
     return apiClient.put<{ approved: boolean }>(`/users/${userId}/approve`);
   }
 

@@ -132,7 +132,8 @@ export interface AdminUser {
 }
 
 export enum UserRole {
-    ADMIN = 'admin',
+    GOVERNMENT = 'government',
+    MONASTERY = 'monastery',
     USER = 'user',
     BUSINESS = 'business',
 }

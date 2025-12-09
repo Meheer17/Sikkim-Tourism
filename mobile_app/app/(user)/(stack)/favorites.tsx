@@ -72,6 +72,7 @@ export default function FavoritesScreen() {
                     panorama360Url: buildImageUrl(loc.metadata?.panorama_360) || '',
                     latitude: loc.position?.y,
                     longitude: loc.position?.x,
+                    transcriptions: loc.transcriptions || [],
                 };
             });
 
@@ -101,6 +102,7 @@ export default function FavoritesScreen() {
                 panorama360Url: place.panorama360Url || '',
                 latitude: place.latitude?.toString() || '',
                 longitude: place.longitude?.toString() || '',
+                transcriptions: JSON.stringify(place.transcriptions || []),
             },
         });
     };

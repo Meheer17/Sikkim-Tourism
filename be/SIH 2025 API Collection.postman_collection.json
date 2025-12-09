@@ -235,7 +235,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"email\": \"admin@sikkim-tourism.com\",\n  \"password\": \"Admin@123456\"\n}"
+									"raw": "{\n  \"email\": \"government@sikkim-tourism.com\",\n  \"password\": \"Government@123456\"\n}"
 								},
 								"url": {
 									"raw": "{{baseUrl}}/api/v1/auth/signin",
@@ -317,7 +317,7 @@
 							},
 							{
 								"key": "Authorization",
-								"value": "Bearer YOUR_ADMIN_JWT_TOKEN"
+								"value": "Bearer YOUR_GOVERNMENT_JWT_TOKEN"
 							}
 						],
 						"url": {
@@ -2409,7 +2409,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{admin_auth}}",
+								"value": "Bearer {{government_auth}}",
 								"type": "text"
 							}
 						],
@@ -2441,7 +2441,7 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "Bearer {{admin_auth}}",
+										"value": "Bearer {{government_auth}}",
 										"type": "text"
 									}
 								],
@@ -3870,7 +3870,7 @@
 			"value": ""
 		},
 		{
-			"key": "admin_auth",
+			"key": "government_auth",
 			"value": "",
 			"type": "default"
 		}

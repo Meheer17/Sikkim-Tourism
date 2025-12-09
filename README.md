@@ -29,7 +29,7 @@
 - ✅ Complete 6-language translation system
 - ✅ Real-time location sharing & group planning
 - ✅ Business portal for monasteries
-- ✅ Admin panel for content moderation
+- ✅ Government panel for content moderation
 - ✅ Media compression for optimized delivery
 - ✅ Location-based audio guides (GPS)
 - ✅ Tourism analytics dashboard
@@ -56,7 +56,7 @@
 - 🏪 **Business Integration** - Seamless booking and service discovery
 - 👥 **Social Features** - Real-time location sharing, group planning, and community chat
 - 📱 **Cross-Platform** - Native mobile experience with React Native & Expo
-- 🎯 **Role-Based Access** - User, Business, and Admin portals
+- 🎯 **Role-Based Access** - User, Business, Monastery, and Government portals
 
 ---
 
@@ -78,7 +78,7 @@
 - **Booking System**: Integrated reservation management
 - **Profile Management**: Showcase business with rich media
 
-### For Administrators
+### For Government Officials
 - **User Management**: Approve and manage users, businesses, and content
 - **Content Moderation**: Review and approve listings
 - **Analytics Dashboard**: Platform-wide statistics and insights
@@ -334,7 +334,7 @@ Powered by Google Gemini AI, provides:
 
 - **JWT Authentication**: Secure token-based auth (7-day expiry)
 - **Password Hashing**: Bcrypt with salt rounds
-- **Role-Based Access Control**: User, Business, Admin roles
+- **Role-Based Access Control**: User, Business, Monastery, Government roles
 - **Input Validation**: Pydantic schemas for all inputs
 - **Rate Limiting**: API rate limiting for abuse prevention
 - **Secure Storage**: SecureStore for sensitive data on mobile

@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, status, Query, HTTPException
 
-from app.core.security import get_current_user_id, get_current_admin_user
+from app.core.security import get_current_user_id, get_current_government_user
 from app.services.business_service import business_service
 from app.services.business_type_service import business_type_service
 from app.models.business import business, businessCreate, businessUpdate, businessType, BusinessWithServices
@@ -136,9 +136,9 @@ async def delete_business(
 @router.put("/{b_id}/approve", response_model=MessageResponse)
 async def approve_business(
     b_id: str,
-    current_admin_id: str = Depends(get_current_admin_user)
+    current_government_id: str = Depends(get_current_government_user)
 ):
-    """Approve a business (Admin only)"""
+    """Approve a business (Government only)"""
     # Check if business exists
     business = await business_service.get_by_id(b_id)
     if not business:

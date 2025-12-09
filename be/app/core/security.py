@@ -63,24 +63,44 @@ async def get_current_user_id(
     return user_id
 
 
-async def get_current_admin_user(
+async def get_current_user_id_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
+) -> Optional[str]:
+    """Optional authentication - returns None if no credentials provided"""
+    if not credentials:
+        return None
+    
+    try:
+        token = credentials.credentials
+        payload = decode_access_token(token)
+        user_id: str = payload.get("sub")
+        if user_id:
+            print(f"[DEBUG] Authenticated user_id (optional): {user_id}")
+            return user_id
+    except Exception as e:
+        print(f"[DEBUG] Optional auth failed: {str(e)}")
+    
+    return None
+
+
+async def get_current_government_user(
     current_user_id: str = Depends(get_current_user_id)
 ) -> str:
-    """Check if current user is admin and return user_id"""
+    """Check if current user is government and return user_id"""
     from app.services.user_service import user_service
     
     user = await user_service.get_by_id(current_user_id)
     # Debug: print role for troubleshooting
     try:
-        print(f"[DEBUG] Admin check for user_id={current_user_id}, role={getattr(user, 'role', None)}")
+        print(f"[DEBUG] Government check for user_id={current_user_id}, role={getattr(user, 'role', None)}")
     except Exception:
         pass
 
     role = (getattr(user, "role", None) or "").strip().lower()
-    if not user or role not in {"admin", "superadmin"}:
+    if not user or role != "government":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
+            detail="Government access required"
         )
     return current_user_id
 
@@ -101,7 +121,7 @@ async def get_current_approved_user_id(
     if not user.approved:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Your account is pending approval. Please wait for an administrator to approve your account."
+            detail="Your account is pending approval. Please wait for a government official to approve your account."
         )
     
     return current_user_id

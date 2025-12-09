@@ -40,12 +40,16 @@ export interface RegisterRequest {
 export interface AuthResponse {
     access_token: string;
     token_type: string;
+    is_monastery?: boolean;
+    business_id?: string;
 }
 
 export interface UserAuthResponse {
     user: User;
     token: string;
     token_type: string;
+    is_monastery?: boolean;
+    business_id?: string;
 }
 
 export interface User {
@@ -62,7 +66,8 @@ export interface User {
 }
 
 export enum UserRole {
-    ADMIN = 'admin',
+    GOVERNMENT = 'government',
+    MONASTERY = 'monastery',
     USER = 'user',
     BUSINESS = 'business',
 }

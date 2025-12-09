@@ -37,6 +37,8 @@ export default function BusinessServices() {
         setLoading(true);
         try {
             const resp = await businessService.mine({ skip: 0, limit: 50 });
+            console.log('[Services] API Response:', resp);
+            console.log('[Services] Businesses count:', resp.data?.length);
             if (resp.success && resp.data) {
                 setBusinesses(resp.data);
             }

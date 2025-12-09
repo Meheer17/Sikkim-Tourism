@@ -192,6 +192,15 @@ export default function RegisterScreen() {
                                 {t.haveAccount || 'Already have an account?'} <Text style={[styles.linkBold, { color: tint }]}>{t.signIn || 'Sign In'}</Text>
                             </Text>
                         </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.monasteryLink, { borderColor: tint }]}
+                            onPress={() => router.push('/(auth)/monastery-register' as any)}
+                            disabled={isLoading}>
+                            <Text style={[styles.monasteryLinkText, { color: tint }]}>
+                                {t.registerMonastery || 'Registering a Monastery?'} <Text style={{ fontWeight: '600' }}>Sign Up Here</Text>
+                            </Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>
@@ -269,5 +278,14 @@ const styles = StyleSheet.create({
     },
     linkBold: {
         fontWeight: '600',
+    },
+    monasteryLink: {
+        borderTopWidth: 1,
+        paddingTop: 20,
+        marginTop: 20,
+        alignItems: 'center',
+    },
+    monasteryLinkText: {
+        fontSize: 14,
     },
 });

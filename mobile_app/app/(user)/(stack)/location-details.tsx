@@ -64,7 +64,7 @@ export default function LocationDetailsScreen() {
     const tint = useThemeColor('tint');
     const border = useThemeColor('border');
 
-    const canEdit = user && (user.role === 'admin' || user.role === 'business');
+    const canEdit = user && (user.role === 'government' || user.role === 'business');
 
     useEffect(() => {
         loadLocationDetails();
@@ -303,7 +303,7 @@ export default function LocationDetailsScreen() {
                 {/* Action Buttons */}
                 <View style={styles.actionsContainer}>
                     {location.metadata?.panorama_360 && (
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: '#10b981' }]}
                             onPress={handleOpen360View}
                         >
