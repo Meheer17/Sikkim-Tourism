@@ -347,16 +347,15 @@ const styles = StyleSheet.create({
     categoryScroll: {
         paddingHorizontal: 16,
         paddingBottom: 12,
-        gap: 8,
     },
     categoryTag: {
-        paddingHorizontal: 14,
+        paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
-        marginRight: 4,
+        marginRight: 8,
     },
     categoryTagText: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: '600',
     },
     gridContent: {

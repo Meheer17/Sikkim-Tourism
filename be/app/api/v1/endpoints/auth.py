@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status
 
-from app.schemas.auth import Token, LoginRequest, SignupRequest, ForgetPasswordRequest, MessageResponse
+from app.schemas.auth import Token, LoginRequest, SignupRequest, ForgetPasswordRequest, MessageResponse, RefreshTokenRequest
 from app.services.auth_service import auth_service
 
 router = APIRouter()
@@ -17,6 +17,13 @@ async def signup(signup_data: SignupRequest):
 async def signin(login_data: LoginRequest):
     """Sign in; returns JWT (7 days)"""
     token = await auth_service.signin(login_data)
+    return token
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh_token(refresh_data: RefreshTokenRequest):
+    """Refresh access token using refresh token"""
+    token = await auth_service.refresh_access_token(refresh_data.refresh_token)
     return token
 
 

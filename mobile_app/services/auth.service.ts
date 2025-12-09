@@ -31,10 +31,13 @@ export class AuthService {
                 };
             }
 
-            const { access_token, token_type, is_monastery, business_id } = loginResponse.data;
+            const { access_token, token_type, is_monastery, business_id, refresh_token } = loginResponse.data;
 
-            // Step 2: Save token
-            await TokenManager.saveToken(access_token);
+            // Step 2: Save token and wait for it to persist
+            await TokenManager.saveToken(access_token, refresh_token);
+            
+            // Small delay to ensure storage is ready for next request
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             // Step 3: Fetch user profile
             const profileResponse = await apiClient.get<User>(config.routes.auth.profile);
@@ -108,10 +111,10 @@ export class AuthService {
                 };
             }
 
-            const { access_token, token_type } = registerResponse.data;
+            const { access_token, token_type, refresh_token } = registerResponse.data;
 
             // Step 2: Save token
-            await TokenManager.saveToken(access_token);
+            await TokenManager.saveToken(access_token, refresh_token);
 
             // Step 3: Fetch user profile
             const profileResponse = await apiClient.get<User>(config.routes.auth.profile);

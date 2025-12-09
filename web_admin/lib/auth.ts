@@ -8,6 +8,7 @@ export interface SigninData {
 
 export interface AuthResponse {
   access_token: string;
+  refresh_token: string;
   token_type: string;
 }
 
@@ -30,8 +31,26 @@ export const authService = {
     return response.data;
   },
 
+  async refreshToken(): Promise<AuthResponse | null> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) return null;
+    
+    try {
+      const response = await axiosInstance.post<AuthResponse>('/api/v1/auth/refresh', {
+        refresh_token: refreshToken,
+      });
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
+
   setToken(token: string): void {
     Cookies.set('admin_token', token, { expires: 7 }); // 7 days
+  },
+
+  setRefreshToken(token: string): void {
+    Cookies.set('admin_refresh_token', token, { expires: 7 }); // 7 days
   },
 
   setUser(user: UserData): void {
@@ -42,6 +61,10 @@ export const authService = {
     return Cookies.get('admin_token');
   },
 
+  getRefreshToken(): string | undefined {
+    return Cookies.get('admin_refresh_token');
+  },
+
   getUser(): UserData | null {
     const user = Cookies.get('admin_user');
     return user ? JSON.parse(user) : null;
@@ -49,6 +72,7 @@ export const authService = {
 
   logout(): void {
     Cookies.remove('admin_token');
+    Cookies.remove('admin_refresh_token');
     Cookies.remove('admin_user');
   },
 

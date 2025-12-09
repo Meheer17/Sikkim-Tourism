@@ -7,6 +7,8 @@ import { networkService } from './network.service';
 
 class ApiClient {
     private client: AxiosInstance;
+    private isRefreshing = false;
+    private failedQueue: Array<{ resolve: (token: string) => void; reject: (error: any) => void }> = [];
 
     constructor() {
         this.client = axios.create({
@@ -19,6 +21,17 @@ class ApiClient {
         });
 
         this.setupInterceptors();
+    }
+
+    private processQueue(error: any, token: string | null = null): void {
+        this.failedQueue.forEach((prom) => {
+            if (error) {
+                prom.reject(error);
+            } else {
+                prom.resolve(token!);
+            }
+        });
+        this.failedQueue = [];
     }
 
     private setupInterceptors(): void {
@@ -78,16 +91,65 @@ class ApiClient {
             async (error: AxiosError) => {
                 const originalRequest: any = error.config;
 
-                // Handle 401 errors - for now just clear auth and redirect
-                // TODO: Implement refresh token logic when backend supports it
+                // Handle 401 errors - try to refresh token
                 if (error.response?.status === 401 && !originalRequest._retry) {
+                    // If already refreshing, queue this request
+                    if (this.isRefreshing) {
+                        return new Promise((resolve, reject) => {
+                            this.failedQueue.push({ resolve, reject });
+                        }).then((token) => {
+                            originalRequest.headers.Authorization = `Bearer ${token}`;
+                            return this.client(originalRequest);
+                        }).catch((err) => {
+                            return Promise.reject(err);
+                        });
+                    }
+
                     originalRequest._retry = true;
+                    this.isRefreshing = true;
 
-                    // Clear auth data and logout
-                    await AuthUtils.clearAuthData();
-                    this.handleLogout();
+                    try {
+                        // Get refresh token
+                        const { TokenManager } = await import('../utils/storage');
+                        const refreshToken = await TokenManager.getRefreshToken();
 
-                    return Promise.reject(error);
+                        if (!refreshToken) {
+                            // No refresh token, logout
+                            await AuthUtils.clearAuthData();
+                            this.handleLogout();
+                            this.isRefreshing = false;
+                            return Promise.reject(error);
+                        }
+
+                        // Call refresh endpoint
+                        const response = await axios.post(`${appConfig.api.baseURL}/api/v1/auth/refresh`, {
+                            refresh_token: refreshToken,
+                        });
+
+                        const { access_token, refresh_token: newRefreshToken } = response.data;
+
+                        // Save new tokens
+                        await TokenManager.saveToken(access_token, newRefreshToken);
+
+                        if (__DEV__ && appConfig.api.enableLogs) {
+                            console.log('🔄 Token refreshed successfully');
+                        }
+
+                        // Process queued requests
+                        this.processQueue(null, access_token);
+                        this.isRefreshing = false;
+
+                        // Retry original request with new token
+                        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+                        return this.client(originalRequest);
+                    } catch (refreshError) {
+                        // Refresh failed, logout
+                        this.processQueue(refreshError, null);
+                        this.isRefreshing = false;
+                        await AuthUtils.clearAuthData();
+                        this.handleLogout();
+                        return Promise.reject(refreshError);
+                    }
                 }
 
                 // Handle other errors

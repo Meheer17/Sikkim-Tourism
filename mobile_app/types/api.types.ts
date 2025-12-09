@@ -39,6 +39,7 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
     access_token: string;
+    refresh_token: string;
     token_type: string;
     is_monastery?: boolean;
     business_id?: string;

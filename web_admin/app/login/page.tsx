@@ -24,6 +24,7 @@ export default function LoginPage() {
       // Sign in
       const authResponse = await authService.signin(formData);
       authService.setToken(authResponse.access_token);
+      authService.setRefreshToken(authResponse.refresh_token);
 
       // Get user data
       const userData = await authService.getMe();

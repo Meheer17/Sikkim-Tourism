@@ -6,7 +6,7 @@ import { config } from '../config/api.config';
 // Secure storage for sensitive data (tokens, credentials)
 export class SecureStorage {
     private static isWeb = Platform.OS === 'web';
-    private static useSecureStore = true; // Track if SecureStore is available
+    private static useSecureStore = false; // Disabled due to keystore issues - use AsyncStorage instead
 
     static async setItem(key: string, value: string): Promise<void> {
         try {
@@ -14,18 +14,7 @@ export class SecureStorage {
                 // Fallback to localStorage for web
                 localStorage.setItem(key, value);
             } else {
-                // Try SecureStore first if not previously failed
-                if (this.useSecureStore) {
-                    try {
-                        await SecureStore.setItemAsync(key, value);
-                        return;
-                    } catch (secureError) {
-                        // Permanently switch to AsyncStorage for this session
-                        console.warn('SecureStore unavailable, switching to AsyncStorage:', secureError);
-                        this.useSecureStore = false;
-                    }
-                }
-                // Use AsyncStorage as fallback
+                // Use AsyncStorage directly (SecureStore has keystore issues on some devices)
                 await AsyncStorage.setItem(key, value);
             }
         } catch (error) {
@@ -39,17 +28,7 @@ export class SecureStorage {
             if (this.isWeb) {
                 return localStorage.getItem(key);
             } else {
-                // Try SecureStore first if not previously failed
-                if (this.useSecureStore) {
-                    try {
-                        return await SecureStore.getItemAsync(key);
-                    } catch (secureError) {
-                        // Permanently switch to AsyncStorage for this session
-                        console.warn('SecureStore unavailable, switching to AsyncStorage:', secureError);
-                        this.useSecureStore = false;
-                    }
-                }
-                // Use AsyncStorage as fallback
+                // Use AsyncStorage directly
                 return await AsyncStorage.getItem(key);
             }
         } catch (error) {
@@ -63,18 +42,7 @@ export class SecureStorage {
             if (this.isWeb) {
                 localStorage.removeItem(key);
             } else {
-                // Try SecureStore first if not previously failed
-                if (this.useSecureStore) {
-                    try {
-                        await SecureStore.deleteItemAsync(key);
-                        return;
-                    } catch (secureError) {
-                        // Permanently switch to AsyncStorage for this session
-                        console.warn('SecureStore unavailable, switching to AsyncStorage:', secureError);
-                        this.useSecureStore = false;
-                    }
-                }
-                // Use AsyncStorage as fallback
+                // Use AsyncStorage directly
                 await AsyncStorage.removeItem(key);
             }
         } catch (error) {
@@ -96,14 +64,27 @@ export class SecureStorage {
 // Token Manager for handling JWT tokens
 export class TokenManager {
     private static readonly ACCESS_TOKEN_KEY = 'access_token';
+    private static readonly REFRESH_TOKEN_KEY = 'refresh_token';
 
-    static async saveToken(accessToken: string): Promise<void> {
+    static async saveToken(accessToken: string, refreshToken?: string): Promise<void> {
         try {
             await SecureStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
             
-            // Verify token was saved (with a small delay for AsyncStorage)
-            await new Promise(resolve => setTimeout(resolve, 100));
-            const savedToken = await SecureStorage.getItem(this.ACCESS_TOKEN_KEY);
+            if (refreshToken) {
+                await SecureStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+            }
+            
+            // Wait for AsyncStorage to persist (important for immediate reads)
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // Verify token was saved
+            let savedToken = await SecureStorage.getItem(this.ACCESS_TOKEN_KEY);
+            
+            // Retry if not found (AsyncStorage can be slow)
+            if (!savedToken) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                savedToken = await SecureStorage.getItem(this.ACCESS_TOKEN_KEY);
+            }
             
             if (__DEV__) {
                 if (savedToken === accessToken) {
@@ -122,7 +103,14 @@ export class TokenManager {
 
     static async getAccessToken(): Promise<string | null> {
         try {
-            const token = await SecureStorage.getItem(this.ACCESS_TOKEN_KEY);
+            let token = await SecureStorage.getItem(this.ACCESS_TOKEN_KEY);
+            
+            // Retry once if token not found (AsyncStorage can be slow)
+            if (!token) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                token = await SecureStorage.getItem(this.ACCESS_TOKEN_KEY);
+            }
+            
             if (__DEV__ && !token) {
                 console.warn('⚠️ No token found in storage');
             }
@@ -133,9 +121,19 @@ export class TokenManager {
         }
     }
 
+    static async getRefreshToken(): Promise<string | null> {
+        try {
+            return await SecureStorage.getItem(this.REFRESH_TOKEN_KEY);
+        } catch (error) {
+            console.error('❌ TokenManager getRefreshToken error:', error);
+            return null;
+        }
+    }
+
     static async removeToken(): Promise<void> {
         try {
             await SecureStorage.removeItem(this.ACCESS_TOKEN_KEY);
+            await SecureStorage.removeItem(this.REFRESH_TOKEN_KEY);
         } catch (error) {
             console.error('TokenManager removeToken error:', error);
             throw error;
@@ -156,7 +154,7 @@ export class TokenManager {
     }
 }
 
-// Regular storage for non-sensitive data (using localStorage for persistence)
+// Regular storage for non-sensitive data (using AsyncStorage for persistence)
 export class AppStorage {
     private static isWeb = Platform.OS === 'web';
 
@@ -167,7 +165,8 @@ export class AppStorage {
                 // Use localStorage instead of sessionStorage for persistence across sessions
                 localStorage.setItem(key, serializedValue);
             } else {
-                await SecureStore.setItemAsync(key, serializedValue);
+                // Use AsyncStorage for non-sensitive data (avoids SecureStore encryption issues)
+                await AsyncStorage.setItem(key, serializedValue);
             }
         } catch (error) {
             console.error('AppStorage setItem error:', error);
@@ -182,7 +181,8 @@ export class AppStorage {
                 // Use localStorage instead of sessionStorage for persistence across sessions
                 value = localStorage.getItem(key);
             } else {
-                value = await SecureStore.getItemAsync(key);
+                // Use AsyncStorage for non-sensitive data
+                value = await AsyncStorage.getItem(key);
             }
 
             if (value === null || value === undefined) {
@@ -207,7 +207,8 @@ export class AppStorage {
                 // Use localStorage instead of sessionStorage for persistence across sessions
                 localStorage.removeItem(key);
             } else {
-                await SecureStore.deleteItemAsync(key);
+                // Use AsyncStorage for non-sensitive data
+                await AsyncStorage.removeItem(key);
             }
         } catch (error) {
             console.error('AppStorage removeItem error:', error);
@@ -221,8 +222,8 @@ export class AppStorage {
                 // Use localStorage instead of sessionStorage for persistence across sessions
                 localStorage.clear();
             } else {
-                // For mobile, we need to track keys separately or clear specific known keys
-                console.warn('Clear all not supported on native. Clear specific keys instead.');
+                // Clear all AsyncStorage
+                await AsyncStorage.clear();
             }
         } catch (error) {
             console.error('AppStorage clear error:', error);
@@ -236,9 +237,8 @@ export class AppStorage {
                 // Use localStorage instead of sessionStorage for persistence across sessions
                 return Object.keys(localStorage);
             } else {
-                // SecureStore doesn't provide a way to list all keys
-                console.warn('getAllKeys not supported on native SecureStore');
-                return [];
+                // Get all keys from AsyncStorage
+                return await AsyncStorage.getAllKeys() as string[];
             }
         } catch (error) {
             console.error('AppStorage getAllKeys error:', error);

@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 import secrets
 from bson import ObjectId
 
-from app.core.security import create_access_token
+from app.core.security import create_access_token, create_refresh_token, decode_refresh_token
 from app.core.config import settings
 from app.core.database import get_database
 from app.services.user_service import user_service
@@ -33,7 +33,14 @@ class AuthService:
             expires_delta=access_token_expires
         )
         
-        return Token(access_token=access_token, token_type="bearer")
+        # Create refresh token (7 days)
+        refresh_token_expires = timedelta(days=7)
+        refresh_token = create_refresh_token(
+            data={"sub": str(user.id)},
+            expires_delta=refresh_token_expires
+        )
+        
+        return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
     
     async def signin(self, login_data: LoginRequest) -> Token:
         """Login user and return access token (7 days)"""
@@ -84,8 +91,16 @@ class AuthService:
             expires_delta=access_token_expires
         )
         
+        # Create refresh token (7 days)
+        refresh_token_expires = timedelta(days=7)
+        refresh_token = create_refresh_token(
+            data={"sub": str(user.id)},
+            expires_delta=refresh_token_expires
+        )
+        
         return Token(
             access_token=access_token,
+            refresh_token=refresh_token,
             token_type="bearer",
             is_monastery=is_monastery,
             business_id=business_id
@@ -109,6 +124,48 @@ class AuthService:
         # In a real application, you would send this token via email
         # For now, we just return success message
         return MessageResponse(message="If the email exists, a reset token has been sent")
+    
+    async def refresh_access_token(self, refresh_token: str) -> Token:
+        """Refresh access token using refresh token"""
+        # Validate refresh token
+        payload = decode_refresh_token(refresh_token)
+        user_id = payload.get("sub")
+        
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Verify user still exists
+        user = await user_service.get_by_id(user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Create new access token
+        access_token_expires = timedelta(hours=3)
+        new_access_token = create_access_token(
+            data={"sub": user_id},
+            expires_delta=access_token_expires
+        )
+        
+        # Create new refresh token
+        refresh_token_expires = timedelta(days=7)
+        new_refresh_token = create_refresh_token(
+            data={"sub": user_id},
+            expires_delta=refresh_token_expires
+        )
+        
+        return Token(
+            access_token=new_access_token,
+            refresh_token=new_refresh_token,
+            token_type="bearer"
+        )
 
 
 auth_service = AuthService()
