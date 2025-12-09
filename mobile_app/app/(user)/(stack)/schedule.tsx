@@ -248,7 +248,7 @@ export default function ScheduleScreen() {
     return (
         <View style={[styles.container, { backgroundColor: background }]}>
             {/* Header */}
-            <View style={[styles.header, { paddingHorizontal: 20 }]}>
+            <View style={[styles.header, { paddingHorizontal: 20, paddingTop: Math.max(insets.top, 12) }]}>
                 <View style={styles.headerTop}>
                     <View style={[styles.headerIcon, { backgroundColor: `${tint}20` }]}>
                         <IconSymbol name="calendar" size={18} color={tint} />

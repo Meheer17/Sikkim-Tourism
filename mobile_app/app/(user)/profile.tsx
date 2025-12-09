@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        paddingBottom: 100,
+        paddingBottom: 20,
     },
     profileHeader: {
         paddingTop: 60,
@@ -461,6 +461,7 @@ const styles = StyleSheet.create({
     versionText: {
         fontSize: 12,
         textAlign: 'center',
-        marginTop: 24,
+        marginTop: 8,
+        marginBottom: 5,
     },
 });
