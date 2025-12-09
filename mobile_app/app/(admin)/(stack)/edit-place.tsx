@@ -254,119 +254,167 @@ export default function EditPlaceScreen() {
         }
     };
 
-    const handleStitchPanorama = async () => {
+    const handleCaptureForStitching = async () => {
         Alert.alert(
-            'Create 360° Panorama',
-            'Choose how to create your panorama:',
+            'Capture Panorama Photos',
+            'Stand in one spot and rotate to take 6-12 overlapping photos.\n\n' +
+            '📸 Tips:\n' +
+            '• Keep camera level\n' +
+            '• 30-40% overlap between shots\n' +
+            '• Rotate smoothly in one direction\n' +
+            '• Use consistent exposure',
             [
+                { text: 'Cancel', style: 'cancel' },
                 {
-                    text: 'Stitch Multiple Photos',
+                    text: 'Start Capture',
                     onPress: async () => {
-                        try {
-                            // Pick 2-20 images
-                            const images = await FilePicker.pickImageWithSource({ 
-                                allowsMultipleSelection: true,
-                                allowsEditing: false 
-                            });
-                            
-                            if (images.length === 0) return;
-                            
-                            if (images.length < 2) {
-                                Alert.alert('Not Enough Images', 'Please select at least 2 images to stitch together.');
-                                return;
-                            }
-                            
-                            if (images.length > 20) {
-                                Alert.alert('Too Many Images', 'Maximum 20 images allowed. Please select fewer images.');
-                                return;
-                            }
-                            
-                            // Show instructions
-                            Alert.alert(
-                                'Stitching ' + images.length + ' Images',
-                                'Make sure your images:\n\n' +
-                                '• Are ordered left-to-right\n' +
-                                '• Have 30-40% overlap\n' +
-                                '• Were taken from the same spot\n' +
-                                '• Have similar lighting\n\n' +
-                                'Processing may take 10-60 seconds...',
-                                [
-                                    { text: 'Cancel', style: 'cancel' },
-                                    { 
-                                        text: 'Stitch Now',
-                                        onPress: async () => {
-                                            setUploadingImage(true);
-                                            
-                                            try {
-                                                // Create FormData with multiple images
-                                                const formData = new FormData();
-                                                images.forEach((image, index) => {
-                                                    formData.append('files', {
-                                                        uri: image.uri,
-                                                        type: image.type,
-                                                        name: image.name,
-                                                    } as any);
-                                                });
-                                                formData.append('mode', 'auto');
-                                                
-                                                // Call stitching API
-                                                const resp = await fileService.stitchPanorama({
-                                                    files: images.map(img => ({
-                                                        uri: img.uri,
-                                                        type: img.type,
-                                                        name: img.name,
-                                                    } as any)),
-                                                    mode: 'auto',
-                                                });
-                                                
-                                                if (resp.success && resp.data) {
-                                                    const panoramaUrl = (resp.data as any).cdn_url || 
-                                                                       (resp.data as any).url || 
-                                                                       (resp.data as any).cdn_response?.cdnUrl;
-                                                    
-                                                    if (panoramaUrl) {
-                                                        setFormData(prev => ({
-                                                            ...prev,
-                                                            metadata: {
-                                                                ...prev.metadata,
-                                                                panorama_360: panoramaUrl,
-                                                            },
-                                                        }));
-                                                        
-                                                        const dimensions = (resp.data as any).dimensions || {};
-                                                        Alert.alert(
-                                                            'Success!', 
-                                                            `Stitched ${images.length} images into 360° panorama!\n\n` +
-                                                            `Dimensions: ${dimensions.width}x${dimensions.height}\n` +
-                                                            `Aspect Ratio: ${(resp.data as any).aspect_ratio || 'N/A'}\n\n` +
-                                                            'Remember to click Save to update the location!',
-                                                            [{ text: 'OK' }]
-                                                        );
+                        const capturedImages = [];
+                        let continueCapturing = true;
+                        
+                        while (continueCapturing && capturedImages.length < 20) {
+                            try {
+                                const photo = await FilePicker.takePhoto({ 
+                                    allowsEditing: false,
+                                    quality: 0.9 
+                                });
+                                
+                                if (photo) {
+                                    capturedImages.push(photo);
+                                    
+                                    if (capturedImages.length >= 2) {
+                                        await new Promise<void>((resolve) => {
+                                            Alert.alert(
+                                                `${capturedImages.length} Photos Captured`,
+                                                'Take another photo or finish stitching?',
+                                                [
+                                                    {
+                                                        text: 'Take Another',
+                                                        onPress: () => resolve()
+                                                    },
+                                                    {
+                                                        text: 'Finish & Stitch',
+                                                        onPress: () => {
+                                                            continueCapturing = false;
+                                                            resolve();
+                                                        }
+                                                    },
+                                                    {
+                                                        text: 'Cancel',
+                                                        style: 'cancel',
+                                                        onPress: () => {
+                                                            capturedImages.length = 0;
+                                                            continueCapturing = false;
+                                                            resolve();
+                                                        }
                                                     }
-                                                } else {
-                                                    Alert.alert('Stitching Failed', resp.message || 'Could not stitch images. Ensure they have 30-40% overlap.');
-                                                }
-                                            } catch (error: any) {
-                                                Alert.alert('Error', error.message || 'Failed to stitch panorama');
-                                            } finally {
-                                                setUploadingImage(false);
-                                            }
-                                        }
+                                                ]
+                                            );
+                                        });
                                     }
-                                ]
-                            );
-                        } catch (error: any) {
-                            Alert.alert('Error', error.message || 'Failed to select images');
+                                } else {
+                                    continueCapturing = false;
+                                }
+                            } catch (error) {
+                                console.error('Failed to capture photo:', error);
+                                continueCapturing = false;
+                            }
+                        }
+                        
+                        if (capturedImages.length >= 2) {
+                            await stitchImages(capturedImages);
+                        } else if (capturedImages.length === 1) {
+                            Alert.alert('Not Enough Photos', 'Need at least 2 photos to create a panorama.');
                         }
                     }
-                },
-                {
-                    text: 'Upload Single 360° Photo',
-                    onPress: () => handleUploadSingle360Image()
-                },
-                {
-                    text: 'Cancel',
-                    style: 'cancel'
+                }
+            ]
+        );
+    };
+
+    const handleStitchFromGallery = async () => {
+        try {
+            const images = await FilePicker.pickImageWithSource({ 
+                allowsMultipleSelection: true,
+                allowsEditing: false 
+            });
+            
+            if (images.length === 0) return;
+            
+            if (images.length < 2) {
+                Alert.alert('Not Enough Images', 'Please select at least 2 images to stitch together.');
+                return;
+            }
+            
+            if (images.length > 20) {
+                Alert.alert('Too Many Images', 'Maximum 20 images allowed. Please select fewer images.');
+                return;
+            }
+            
+            await stitchImages(images);
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to select images');
+        }
+    };
+
+    const stitchImages = async (images: any[]) => {
+        Alert.alert(
+            'Stitching ' + images.length + ' Images',
+            'Make sure your images:\n\n' +
+            '• Are ordered left-to-right\n' +
+            '• Have 30-40% overlap\n' +
+            '• Were taken from the same spot\n' +
+            '• Have similar lighting\n\n' +
+            'Processing may take 10-60 seconds...',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                    text: 'Stitch Now',
+                    onPress: async () => {
+                        setUploadingImage(true);
+                        
+                        try {
+                            const resp = await fileService.stitchPanorama({
+                                files: images.map(img => ({
+                                    uri: img.uri,
+                                    type: img.type || 'image/jpeg',
+                                    name: img.name || `image_${Date.now()}.jpg`,
+                                } as any)),
+                                mode: 'auto',
+                            });
+                            
+                            if (resp.success && resp.data) {
+                                const panoramaUrl = (resp.data as any).cdn_url || 
+                                                   (resp.data as any).url || 
+                                                   (resp.data as any).cdn_response?.cdnUrl;
+                                
+                                if (panoramaUrl) {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        metadata: {
+                                            ...prev.metadata,
+                                            panorama_360: panoramaUrl,
+                                        },
+                                    }));
+                                    
+                                    const dimensions = (resp.data as any).dimensions || {};
+                                    Alert.alert(
+                                        'Success!', 
+                                        `Stitched ${images.length} images into 360° panorama!\n\n` +
+                                        `Dimensions: ${dimensions.width}x${dimensions.height}\n` +
+                                        `Aspect Ratio: ${(resp.data as any).aspect_ratio || 'N/A'}\n\n` +
+                                        'Remember to click Save to update the location!',
+                                        [{ text: 'OK' }]
+                                    );
+                                }
+                            } else {
+                                Alert.alert('Stitching Failed', resp.message || 'Could not stitch images. Ensure they have 30-40% overlap.');
+                            }
+                        } catch (error: any) {
+                            Alert.alert('Error', error.message || 'Failed to stitch panorama');
+                        } finally {
+                            setUploadingImage(false);
+                        }
+                    }
                 }
             ]
         );
@@ -649,22 +697,44 @@ export default function EditPlaceScreen() {
 
                     {/* 360° Panorama Upload */}
                     <View style={styles.field}>
-                        <View style={styles.sectionHeader}>
-                            <View>
-                                <Text style={styles.label}>360° Panorama</Text>
-                                <Text style={styles.fieldHint}>Upload single 360° photo or stitch multiple images</Text>
-                            </View>
+                        <Text style={styles.label}>360° Panorama</Text>
+                        <Text style={styles.fieldHint}>Stitch multiple photos or upload a single 360° image</Text>
+                        
+                        <View style={styles.panoramaButtonsRow}>
                             <TouchableOpacity
-                                style={[styles.uploadButton, uploadingImage && styles.uploadButtonDisabled]}
-                                onPress={handleStitchPanorama}
+                                style={[styles.panoramaButton, uploadingImage && styles.uploadButtonDisabled]}
+                                onPress={handleCaptureForStitching}
                                 disabled={uploadingImage}
                             >
-                                <IconSymbol name="rotate.3d" size={16} color="#fff" />
-                                <Text style={styles.uploadButtonText}>
-                                    {uploadingImage ? 'Processing...' : 'Add 360°'}
-                                </Text>
+                                <IconSymbol name="camera.fill" size={18} color="#0a7ea4" />
+                                <Text style={styles.panoramaButtonText}>Capture Photos</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity
+                                style={[styles.panoramaButton, uploadingImage && styles.uploadButtonDisabled]}
+                                onPress={handleStitchFromGallery}
+                                disabled={uploadingImage}
+                            >
+                                <IconSymbol name="photo.stack" size={18} color="#0a7ea4" />
+                                <Text style={styles.panoramaButtonText}>Select Photos</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity
+                                style={[styles.panoramaButton, uploadingImage && styles.uploadButtonDisabled]}
+                                onPress={handleUploadSingle360Image}
+                                disabled={uploadingImage}
+                            >
+                                <IconSymbol name="rotate.3d" size={18} color="#0a7ea4" />
+                                <Text style={styles.panoramaButtonText}>Upload 360°</Text>
                             </TouchableOpacity>
                         </View>
+                        
+                        {uploadingImage && (
+                            <View style={styles.processingIndicator}>
+                                <ActivityIndicator size="small" color="#0a7ea4" />
+                                <Text style={styles.processingText}>Processing...</Text>
+                            </View>
+                        )}
                         {formData.metadata?.panorama_360 ? (
                             <View style={styles.panoramaPreviewContainer}>
                                 <Image
@@ -1136,6 +1206,9 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginBottom: 12,
     },
+    sectionHeaderColumn: {
+        marginBottom: 12,
+    },
     fieldHint: {
         fontSize: 12,
         color: '#687076',
@@ -1243,5 +1316,44 @@ const styles = StyleSheet.create({
         color: '#9ca3af',
         marginTop: 4,
         textAlign: 'center',
+    },
+    panoramaButtonsRow: {
+        flexDirection: 'row',
+        gap: 8,
+        marginTop: 12,
+    },
+    panoramaButton: {
+        flex: 1,
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        paddingVertical: 12,
+        paddingHorizontal: 8,
+        borderRadius: 8,
+        backgroundColor: '#e8f4f8',
+        borderWidth: 1,
+        borderColor: '#0a7ea4',
+    },
+    panoramaButtonText: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#0a7ea4',
+        textAlign: 'center',
+    },
+    processingIndicator: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 12,
+        marginTop: 8,
+        backgroundColor: '#f3f4f6',
+        borderRadius: 8,
+    },
+    processingText: {
+        fontSize: 13,
+        color: '#687076',
+        fontWeight: '500',
     },
 });

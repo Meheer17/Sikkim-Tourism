@@ -7,6 +7,7 @@ import secrets
 from app.core.database import get_database
 from app.core.security import get_password_hash, verify_password
 from app.models.user import UserCreate, UserUpdate, UserInDB, User
+from app.utils.encryption import encrypt_text, decrypt_text
 from pydantic import ValidationError
 
 

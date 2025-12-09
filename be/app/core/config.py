@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 # Load from root .env file
-ROOT_DIR = Path(__file__).resolve().parents[2]   # points to /be
+ROOT_DIR = Path(__file__).resolve().parents[3]   # points to project root (one level up from /be)
 ENV_FILE = ROOT_DIR / ".env"
 
 
