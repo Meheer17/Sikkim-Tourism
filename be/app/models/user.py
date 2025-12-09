@@ -16,9 +16,9 @@ PyObjectId = Annotated[ObjectId, BeforeValidator(validate_object_id)]
 
 class UserRole(str, Enum):
     user = "user"
-    organiser = "organiser"
+    monastery = "monastery"
     business = "business"
-    admin = "admin"
+    government = "government"
 
 
 class LastSyncedAt(BaseModel):

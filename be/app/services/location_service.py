@@ -120,11 +120,69 @@ class LocationService:
         # 2. We need to calculate precise haversine distances
         # 3. We need to filter by actual radius and sort by distance
         # 4. Only then can we apply skip/limit correctly
-        # For non-nearby searches, we can apply skip/limit at the database level
-        if use_nearby:
-            cursor = self.collection.find(query)
-        else:
-            cursor = self.collection.find(query).skip(skip).limit(limit)
+        # For non-nearby searches we can perform a single aggregation that
+        # looks up transcriptions server-side which avoids Python-side loops.
+        if not use_nearby:
+            # Build aggregation pipeline: match -> sort -> skip -> limit -> lookup transcriptions
+            pipeline = []
+            if query:
+                pipeline.append({"$match": query})
+            # maintain DB ordering; change sort as needed
+            pipeline.extend([
+                {"$sort": {"created_at": -1}},
+                {"$skip": skip},
+                {"$limit": limit},
+                {"$lookup": {
+                    "from": "transcriptions",
+                    "let": {"loc_id": "$_id"},
+                    "pipeline": [
+                        {"$match": {"$expr": {"$eq": ["$l_id", "$$loc_id"]}}},
+                        {"$sort": {"created_at": -1}},
+                        {"$project": {"_id": 1, "text": 1, "avg_confidence": 1, "file_name": 1, "created_at": 1, "l_id": 1}}
+                    ],
+                    "as": "transcriptions"
+                }},
+            ])
+
+            locations_list: List[Location] = []
+            agg_cursor = self.collection.aggregate(pipeline)
+            async for doc in agg_cursor:
+                try:
+                    loc_db = LocationInDB(**doc)
+                except Exception:
+                    # If doc isn't shaped like LocationInDB, try to construct from fields
+                    loc_db = None
+                # build base Location
+                loc = Location(
+                    id=str(doc.get('_id') if loc_db is None else loc_db.id),
+                    name=doc.get('name') if loc_db is None else loc_db.name,
+                    description=doc.get('description') if loc_db is None else loc_db.description,
+                    short_description=doc.get('short_description') if loc_db is None else loc_db.short_description,
+                    position=doc.get('position') if loc_db is None else loc_db.position,
+                    metadata=doc.get('metadata') if loc_db is None else loc_db.metadata,
+                    type=doc.get('type') if loc_db is None else loc_db.type,
+                    created_at=doc.get('created_at') if doc.get('created_at') else (loc_db.created_at if loc_db else datetime.utcnow()),
+                    updated_at=doc.get('updated_at') if doc.get('updated_at') else (loc_db.updated_at if loc_db else datetime.utcnow()),
+                    transcriptions=[]
+                )
+                # attach transcriptions returned by $lookup
+                trans_list = doc.get('transcriptions') or []
+                summaries: List[TranscriptionSummary] = []
+                for t in trans_list:
+                    summaries.append(TranscriptionSummary(
+                        id=str(t.get('_id')),
+                        text=t.get('text', ''),
+                        avg_confidence=t.get('avg_confidence'),
+                        file_name=t.get('file_name'),
+                        created_at=t.get('created_at') or datetime.utcnow()
+                    ))
+                loc.transcriptions = summaries
+                locations_list.append(loc)
+
+            return locations_list
+
+        # nearby case falls back to scanning candidates and computing haversine distances
+        cursor = self.collection.find(query) if use_nearby else self.collection.find(query)
 
         candidates = []
         async for location in cursor:
@@ -175,7 +233,8 @@ class LocationService:
                         metadata=loc_db.metadata,
                         type=loc_db.type,
                         created_at=loc_db.created_at,
-                        updated_at=loc_db.updated_at
+                        updated_at=loc_db.updated_at,
+                        transcriptions=[]
                     )))
             else:
                 # no nearby filter, just include
@@ -188,7 +247,8 @@ class LocationService:
                     metadata=loc_db.metadata,
                     type=loc_db.type,
                     created_at=loc_db.created_at,
-                    updated_at=loc_db.updated_at
+                    updated_at=loc_db.updated_at,
+                    transcriptions=[]
                 )))
 
         # sort by distance (if nearby), otherwise by created order as in original (we have 0.0 for all)
@@ -200,16 +260,75 @@ class LocationService:
         else:
             sliced = results
 
-        return [item[1] for item in sliced]
+        # Build list of Location objects
+        locations_list = [item[1] for item in sliced]
+
+        # Attach transcriptions for all returned locations in a single batched query
+        try:
+            loc_obj_ids = []
+            for item in sliced:
+                # original candidate dict may be inside the LocationInDB conversion; try to extract id
+                try:
+                    # item[1] is a Location Pydantic model; its id is string
+                    loc_obj_ids.append(ObjectId(item[1].id))
+                except Exception:
+                    # fallback: if we have raw dict in candidates, try to read _id
+                    try:
+                        loc_obj_ids.append(ObjectId(item[1].get('id')))
+                    except Exception:
+                        pass
+
+            if loc_obj_ids:
+                trans_cursor = self.db.transcriptions.find(
+                    {"l_id": {"$in": loc_obj_ids}},
+                    {"_id": 1, "text": 1, "avg_confidence": 1, "file_name": 1, "created_at": 1, "l_id": 1}
+                )
+                trans_by_loc = {}
+                async for t in trans_cursor:
+                    lid = t.get('l_id')
+                    if isinstance(lid, ObjectId):
+                        key = str(lid)
+                    else:
+                        key = str(lid)
+                    trans_by_loc.setdefault(key, []).append(TranscriptionSummary(
+                        id=str(t.get('_id')),
+                        text=t.get('text', ''),
+                        avg_confidence=t.get('avg_confidence'),
+                        file_name=t.get('file_name'),
+                        created_at=t.get('created_at') or datetime.utcnow()
+                    ))
+
+                # attach to corresponding Location objects
+                for loc in locations_list:
+                    loc.transcriptions = trans_by_loc.get(loc.id, [])
+        except Exception:
+            # if transcription fetch fails, continue without transcriptions
+            pass
+
+        return locations_list
     
     async def create(self, location_create: LocationCreate) -> Location:
         """Create a new location"""
         location_dict = location_create.model_dump()
+        
+        # Convert Position object to dict if needed
+        if "position" in location_dict:
+            pos = location_dict["position"]
+            if hasattr(pos, "dict"):
+                location_dict["position"] = pos.dict()
+            elif isinstance(pos, dict):
+                location_dict["position"] = pos
+            else:
+                location_dict["position"] = {"x": pos.x, "y": pos.y}
+        
         location_dict["created_at"] = datetime.utcnow()
         location_dict["updated_at"] = datetime.utcnow()
         
         result = await self.collection.insert_one(location_dict)
         created_location = await self.get_by_id(str(result.inserted_id))
+        
+        # Fetch transcriptions for the newly created location
+        transcriptions = await self.get_transcriptions_for_location(str(result.inserted_id))
         
         return Location(
             id=str(created_location.id),
@@ -220,7 +339,8 @@ class LocationService:
             metadata=created_location.metadata,
             type=created_location.type,
             created_at=created_location.created_at,
-            updated_at=created_location.updated_at
+            updated_at=created_location.updated_at,
+            transcriptions=transcriptions
         )
     
     async def update(self, location_id: str, location_update: LocationUpdate) -> Location:
@@ -247,6 +367,9 @@ class LocationService:
         
         updated_location = await self.get_by_id(location_id)
         
+        # Fetch transcriptions for the updated location
+        transcriptions = await self.get_transcriptions_for_location(location_id)
+        
         return Location(
             id=str(updated_location.id),
             name=updated_location.name,
@@ -256,7 +379,8 @@ class LocationService:
             metadata=updated_location.metadata,
             type=updated_location.type,
             created_at=updated_location.created_at,
-            updated_at=updated_location.updated_at
+            updated_at=updated_location.updated_at,
+            transcriptions=transcriptions
         )
     
     async def delete(self, location_id: str) -> bool:

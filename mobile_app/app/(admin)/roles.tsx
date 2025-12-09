@@ -38,6 +38,14 @@ const ROLE_OPTIONS: RoleOption[] = [
         bgColor: '#d1fae5',
     },
     {
+        role: UserRole.MONASTERY,
+        title: 'Monastery',
+        description: 'Can manage monastery services, events, and visitor information',
+        icon: 'building.columns.fill',
+        color: '#f59e0b',
+        bgColor: '#fef3c7',
+    },
+    {
         role: UserRole.BUSINESS,
         title: 'Business',
         description: 'Can create and manage business services, view bookings and revenue',
@@ -46,8 +54,8 @@ const ROLE_OPTIONS: RoleOption[] = [
         bgColor: '#ede9fe',
     },
     {
-        role: UserRole.ADMIN,
-        title: 'Admin',
+        role: UserRole.GOVERNMENT,
+        title: 'Government',
         description: 'Full system access including user management and platform settings',
         icon: 'shield.fill',
         color: '#ef4444',
@@ -158,7 +166,7 @@ export default function AdminRolesScreen() {
                             setLoading(true);
                             console.log('Updating role for user:', selectedUser.id, 'to:', selectedRole);
                             await userService.updateRole(selectedUser.id, selectedRole);
-                            
+
                             // Update local state only after successful API call
                             setUsers(prev =>
                                 prev.map(u =>
@@ -315,117 +323,117 @@ export default function AdminRolesScreen() {
                         </View>
 
                         <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={true}>
-                        {selectedUser && (
-                            <>
-                                {/* User Info */}
-                                <View style={[styles.modalUserInfo, { backgroundColor: background }]}>
-                                    <View style={styles.modalUserAvatar}>
-                                        <Text style={styles.modalAvatarText}>
-                                            {selectedUser.firstName.charAt(0)}{selectedUser.lastName.charAt(0)}
-                                        </Text>
+                            {selectedUser && (
+                                <>
+                                    {/* User Info */}
+                                    <View style={[styles.modalUserInfo, { backgroundColor: background }]}>
+                                        <View style={styles.modalUserAvatar}>
+                                            <Text style={styles.modalAvatarText}>
+                                                {selectedUser.firstName.charAt(0)}{selectedUser.lastName.charAt(0)}
+                                            </Text>
+                                        </View>
+                                        <View>
+                                            <Text style={[styles.modalUserName, { color: text }]}>
+                                                {selectedUser.firstName} {selectedUser.lastName}
+                                            </Text>
+                                            <Text style={[styles.modalUserEmail, { color: muted }]}>{selectedUser.email}</Text>
+                                        </View>
                                     </View>
-                                    <View>
-                                        <Text style={[styles.modalUserName, { color: text }]}>
-                                            {selectedUser.firstName} {selectedUser.lastName}
-                                        </Text>
-                                        <Text style={[styles.modalUserEmail, { color: muted }]}>{selectedUser.email}</Text>
-                                    </View>
-                                </View>
 
-                                {/* Current Role */}
-                                <View style={styles.currentRoleSection}>
-                                    <Text style={[styles.sectionLabel, { color: muted }]}>Current Role</Text>
-                                    <View
-                                        style={[
-                                            styles.currentRoleBadge,
-                                            { backgroundColor: getRoleBgColor(selectedUser.role) },
-                                        ]}
-                                    >
-                                        <Text style={[styles.currentRoleText, { color: getRoleColor(selectedUser.role) }]}>
-                                            {selectedUser.role.charAt(0).toUpperCase() + selectedUser.role.slice(1)}
-                                        </Text>
+                                    {/* Current Role */}
+                                    <View style={styles.currentRoleSection}>
+                                        <Text style={[styles.sectionLabel, { color: muted }]}>Current Role</Text>
+                                        <View
+                                            style={[
+                                                styles.currentRoleBadge,
+                                                { backgroundColor: getRoleBgColor(selectedUser.role) },
+                                            ]}
+                                        >
+                                            <Text style={[styles.currentRoleText, { color: getRoleColor(selectedUser.role) }]}>
+                                                {selectedUser.role.charAt(0).toUpperCase() + selectedUser.role.slice(1)}
+                                            </Text>
+                                        </View>
                                     </View>
-                                </View>
 
-                                {/* Role Options */}
-                                <View style={styles.roleOptionsSection}>
-                                    <Text style={[styles.sectionLabel, { color: muted }]}>Select New Role</Text>
-                                    <View style={styles.roleOptions}>
-                                        {ROLE_OPTIONS.map((option) => (
-                                            <TouchableOpacity
-                                                key={option.role}
-                                                style={[
-                                                    styles.roleOption,
-                                                    { backgroundColor: card },
-                                                    selectedRole === option.role && styles.roleOptionSelected,
-                                                    {
-                                                        borderColor: selectedRole === option.role ? option.color : muted + '40',
-                                                    },
-                                                ]}
-                                                onPress={() => setSelectedRole(option.role)}
-                                            >
-                                                <View
+                                    {/* Role Options */}
+                                    <View style={styles.roleOptionsSection}>
+                                        <Text style={[styles.sectionLabel, { color: muted }]}>Select New Role</Text>
+                                        <View style={styles.roleOptions}>
+                                            {ROLE_OPTIONS.map((option) => (
+                                                <TouchableOpacity
+                                                    key={option.role}
                                                     style={[
-                                                        styles.roleIcon,
-                                                        { backgroundColor: option.bgColor },
+                                                        styles.roleOption,
+                                                        { backgroundColor: card },
+                                                        selectedRole === option.role && styles.roleOptionSelected,
+                                                        {
+                                                            borderColor: selectedRole === option.role ? option.color : muted + '40',
+                                                        },
                                                     ]}
+                                                    onPress={() => setSelectedRole(option.role)}
                                                 >
-                                                    <IconSymbol
-                                                        name={option.icon as any}
-                                                        size={24}
-                                                        color={option.color}
-                                                    />
-                                                </View>
-                                                <View style={styles.roleOptionInfo}>
-                                                    <Text style={[styles.roleOptionTitle, { color: text }]}>{option.title}</Text>
-                                                    <Text style={[styles.roleOptionDescription, { color: muted }]}>
-                                                        {option.description}
-                                                    </Text>
-                                                </View>
-                                                {selectedRole === option.role && (
-                                                    <IconSymbol name="checkmark.circle.fill" size={24} color={option.color} />
-                                                )}
-                                            </TouchableOpacity>
-                                        ))}
+                                                    <View
+                                                        style={[
+                                                            styles.roleIcon,
+                                                            { backgroundColor: option.bgColor },
+                                                        ]}
+                                                    >
+                                                        <IconSymbol
+                                                            name={option.icon as any}
+                                                            size={24}
+                                                            color={option.color}
+                                                        />
+                                                    </View>
+                                                    <View style={styles.roleOptionInfo}>
+                                                        <Text style={[styles.roleOptionTitle, { color: text }]}>{option.title}</Text>
+                                                        <Text style={[styles.roleOptionDescription, { color: muted }]}>
+                                                            {option.description}
+                                                        </Text>
+                                                    </View>
+                                                    {selectedRole === option.role && (
+                                                        <IconSymbol name="checkmark.circle.fill" size={24} color={option.color} />
+                                                    )}
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
                                     </View>
-                                </View>
 
-                                {/* Reason Input */}
-                                <View style={styles.reasonSection}>
-                                    <Text style={[styles.sectionLabel, { color: muted }]}>Reason (Optional)</Text>
-                                    <TextInput
-                                        style={[styles.reasonInput, { backgroundColor: background, color: text, borderColor: muted + '40' }]}
-                                        placeholder="Why are you changing this user's role?"
-                                        placeholderTextColor={muted}
-                                        value={reason}
-                                        onChangeText={setReason}
-                                        multiline
-                                        numberOfLines={3}
-                                        textAlignVertical="top"
-                                    />
-                                </View>
+                                    {/* Reason Input */}
+                                    <View style={styles.reasonSection}>
+                                        <Text style={[styles.sectionLabel, { color: muted }]}>Reason (Optional)</Text>
+                                        <TextInput
+                                            style={[styles.reasonInput, { backgroundColor: background, color: text, borderColor: muted + '40' }]}
+                                            placeholder="Why are you changing this user's role?"
+                                            placeholderTextColor={muted}
+                                            value={reason}
+                                            onChangeText={setReason}
+                                            multiline
+                                            numberOfLines={3}
+                                            textAlignVertical="top"
+                                        />
+                                    </View>
 
-                                {/* Action Buttons */}
-                                <View style={[styles.modalActions, { backgroundColor: card }]}>
-                                    <TouchableOpacity
-                                        style={[styles.cancelButton, { backgroundColor: background }]}
-                                        onPress={() => setShowRoleModal(false)}
-                                    >
-                                        <Text style={[styles.cancelButtonText, { color: muted }]}>Cancel</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.confirmButton,
-                                            selectedRole === selectedUser.role && styles.confirmButtonDisabled,
-                                        ]}
-                                        onPress={handleRoleChange}
-                                        disabled={selectedRole === selectedUser.role}
-                                    >
-                                        <Text style={styles.confirmButtonText}>Update Role</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </>
-                        )}
+                                    {/* Action Buttons */}
+                                    <View style={[styles.modalActions, { backgroundColor: card }]}>
+                                        <TouchableOpacity
+                                            style={[styles.cancelButton, { backgroundColor: background }]}
+                                            onPress={() => setShowRoleModal(false)}
+                                        >
+                                            <Text style={[styles.cancelButtonText, { color: muted }]}>Cancel</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.confirmButton,
+                                                selectedRole === selectedUser.role && styles.confirmButtonDisabled,
+                                            ]}
+                                            onPress={handleRoleChange}
+                                            disabled={selectedRole === selectedUser.role}
+                                        >
+                                            <Text style={styles.confirmButtonText}>Update Role</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </>
+                            )}
                         </ScrollView>
                     </View>
                 </View>

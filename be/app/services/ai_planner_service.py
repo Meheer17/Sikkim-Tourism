@@ -383,15 +383,15 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
         try:
             print(f"🔔 Trigger received from user={user_id}: type={trigger.type}, time={trigger.time}, position={trigger.position}")
 
-            # Admin check: skip AI suggestions for admin users
+            # Government check: skip AI suggestions for government users
             try:
                 from app.services.user_service import user_service
                 usr = await user_service.get_by_id(user_id)
-                if usr and getattr(usr, 'role', None) == 'admin':
-                    print(f"[AIPlannerService] Admin user {user_id} - skipping AI suggestions")
+                if usr and getattr(usr, 'role', None) == 'government':
+                    print(f"[AIPlannerService] Government user {user_id} - skipping AI suggestions")
                     return TriggerResponse(
                         status="ok",
-                        message="AI suggestions disabled for admin accounts",
+                        message="AI suggestions disabled for government accounts",
                         data={"type": trigger.type, "position": {"x": trigger.position.x, "y": trigger.position.y}},
                         gemini={"type": "no_action", "no_popup": True}
                     )
@@ -998,7 +998,7 @@ RESPOND IN THIS EXACT JSON FORMAT:
         if not self.model or not settings.GEMINI_API_KEY:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Gemini API is not configured. Please contact administrator to set up GEMINI_API_KEY."
+                detail="Gemini API is not configured. Please contact government official to set up GEMINI_API_KEY."
             )
         
         # Parse user preferences

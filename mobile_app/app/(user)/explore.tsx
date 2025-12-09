@@ -190,7 +190,7 @@ export default function ExploreScreen() {
         setPage(0);
       }
       const currentPage = loadMore ? page + 1 : 0;
-      const params: any = { skip: currentPage * 20, limit: 20 };
+      const params: any = { skip: currentPage * 10, limit: 10 };
       const radiusMeters = getRadiusMeters(selectedDistance);
       if (radiusMeters !== undefined && userLocation) {
         params.position_lat = userLocation.coords.latitude;
@@ -236,6 +236,7 @@ export default function ExploreScreen() {
           panorama360Url: buildImageUrl(loc.metadata?.panorama_360) || undefined,
           latitude: loc.position?.y || 27.3389,
           longitude: loc.position?.x || 88.6065,
+          transcriptions: loc.transcriptions || [],
         };
       });
 
@@ -260,16 +261,22 @@ export default function ExploreScreen() {
       });
 
       if (loadMore) {
-        setAllPlaces(prev => [...prev, ...updatedPlaces]);
+        // Append new places to existing ones
+        const newAllPlaces = [...allPlaces, ...updatedPlaces];
+        setAllPlaces(newAllPlaces);
         setPage(currentPage);
-        setHasMore(updatedPlaces.length === 20);
+        setHasMore(updatedPlaces.length === 10);
+        
+        // Apply filters to the updated full list
+        applyFiltersToPlaces(newAllPlaces);
       } else {
+        // Replace all places with new fetch
         setAllPlaces(updatedPlaces);
-        setHasMore(updatedPlaces.length === 20);
+        setHasMore(updatedPlaces.length === 10);
+        
+        // Apply filters to the new list
+        applyFiltersToPlaces(updatedPlaces);
       }
-
-      // Apply client-side filters (category & distance) after fetch
-      applyFilters();
 
     } catch (error) {
       console.error('Failed to load locations:', error);
@@ -282,11 +289,45 @@ export default function ExploreScreen() {
     }
   };
 
+  // Helper function to apply filters to a given list of places
+  const applyFiltersToPlaces = (placesToFilter: Place[]) => {
+    let filtered = [...placesToFilter];
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(place => place.category === selectedCategory);
+    }
+
+    // Filter by distance (if user location available)
+    if (selectedDistance !== 'all' && userLocation) {
+      const maxDistance = parseFloat(selectedDistance);
+      filtered = filtered.filter(place => {
+        const distanceStr = place.distance.replace(' km', '');
+        const distance = parseFloat(distanceStr);
+        return !isNaN(distance) && distance <= maxDistance;
+      });
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(place =>
+        place.name.toLowerCase().includes(query) ||
+        place.description.toLowerCase().includes(query) ||
+        place.category.toLowerCase().includes(query)
+      );
+    }
+
+    setNearbyPlaces(filtered);
+  };
+
   // Apply filters to places
   const applyFilters = async () => {
     setIsFiltering(true);
 
-    // If there's a search query, fetch matching places from backend
+    let filtered = [...allPlaces];
+
+    // Filter by search query
     if (searchQuery.trim()) {
       try {
         const query = searchQuery.toLowerCase();
@@ -320,6 +361,7 @@ export default function ExploreScreen() {
               panorama360Url: buildImageUrl(loc.metadata?.panorama_360) || undefined,
               latitude: loc.position?.y || 27.3389,
               longitude: loc.position?.x || 88.6065,
+              transcriptions: loc.transcriptions || [],
             };
           });
         
@@ -362,33 +404,11 @@ export default function ExploreScreen() {
       } catch (error) {
         console.error('Search failed:', error);
         // Fallback to filtering loaded places
-        let filtered = [...allPlaces].filter(place =>
-          place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          place.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          place.category.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        setNearbyPlaces(filtered);
+        applyFiltersToPlaces(allPlaces);
       }
     } else {
       // No search query - filter from loaded places
-      let filtered = [...allPlaces];
-
-      // Filter by category
-      if (selectedCategory !== 'all') {
-        filtered = filtered.filter(place => place.category === selectedCategory);
-      }
-
-      // Filter by distance (if user location available)
-      if (selectedDistance !== 'all' && userLocation) {
-        const maxDistance = parseFloat(selectedDistance);
-        filtered = filtered.filter(place => {
-          const distanceStr = place.distance.replace(' km', '');
-          const distance = parseFloat(distanceStr);
-          return !isNaN(distance) && distance <= maxDistance;
-        });
-      }
-
-      setNearbyPlaces(filtered);
+      applyFiltersToPlaces(allPlaces);
     }
 
     setIsFiltering(false);
@@ -506,6 +526,7 @@ export default function ExploreScreen() {
         panorama360Url: place.panorama360Url || '',
         latitude: place.latitude?.toString() || '',
         longitude: place.longitude?.toString() || '',
+        transcriptions: JSON.stringify(place.transcriptions || []),
       },
     });
   };

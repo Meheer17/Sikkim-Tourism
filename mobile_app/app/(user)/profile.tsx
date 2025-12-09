@@ -172,7 +172,7 @@ export default function ProfileScreen() {
         { id: 'about', label: t.about || 'About', icon: 'info.circle.fill', route: '/(user)/(stack)/about' },
     ];
 
-    // Theme colors
+    // Themes
     const screenBg = useThemeColor('background');
     const cardBg = useThemeColor('card');
     const text = useThemeColor('text');

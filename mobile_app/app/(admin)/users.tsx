@@ -11,7 +11,7 @@ import { getLanguageTranslations } from '@/constants/translations';
 
 // Removed static mock users. Data now sourced only from backend.
 
-const ROLES = ['All', 'User', 'Business', 'Admin'];
+const ROLES = ['All', 'User', 'Monastery', 'Business', 'Government'];
 const STATUSES = ['All', 'Active', 'Suspended'];
 
 export default function AdminUsersScreen() {
@@ -135,8 +135,10 @@ export default function AdminUsersScreen() {
 
     const getRoleColor = (role: UserRole) => {
         switch (role) {
-            case UserRole.ADMIN:
+            case UserRole.GOVERNMENT:
                 return '#ef4444';
+            case UserRole.MONASTERY:
+                return '#f59e0b';
             case UserRole.BUSINESS:
                 return '#8b5cf6';
             case UserRole.USER:
@@ -148,8 +150,10 @@ export default function AdminUsersScreen() {
 
     const getRoleBgColor = (role: UserRole) => {
         switch (role) {
-            case UserRole.ADMIN:
+            case UserRole.GOVERNMENT:
                 return '#fee2e2';
+            case UserRole.MONASTERY:
+                return '#fef3c7';
             case UserRole.BUSINESS:
                 return '#ede9fe';
             case UserRole.USER:
@@ -293,121 +297,121 @@ export default function AdminUsersScreen() {
                         {filteredUsers.map((user) => (
                             <TouchableOpacity
                                 key={user.id}
-                            style={[styles.userCard, { backgroundColor: card, borderColor: muted + '20' }]}
-                            onPress={() => handleUserPress(user)}
-                            activeOpacity={0.7}
-                        >
-                            <View style={styles.userHeader}>
-                                <View style={styles.userAvatar}>
-                                    <Text style={styles.avatarText}>
-                                        {user.firstName.charAt(0)}{user.lastName.charAt(0)}
-                                    </Text>
+                                style={[styles.userCard, { backgroundColor: card, borderColor: muted + '20' }]}
+                                onPress={() => handleUserPress(user)}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.userHeader}>
+                                    <View style={styles.userAvatar}>
+                                        <Text style={styles.avatarText}>
+                                            {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.userInfo}>
+                                        <Text style={[styles.userName, { color: text }]}>
+                                            {user.firstName} {user.lastName}
+                                        </Text>
+                                        <Text style={[styles.userEmail, { color: muted }]}>{user.email}</Text>
+                                    </View>
+                                    <View style={styles.badges}>
+                                        <View
+                                            style={[
+                                                styles.roleBadge,
+                                                { backgroundColor: getRoleBgColor(user.role) },
+                                            ]}
+                                        >
+                                            <Text style={[styles.roleText, { color: getRoleColor(user.role) }]}>
+                                                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                                            </Text>
+                                        </View>
+                                    </View>
                                 </View>
-                                <View style={styles.userInfo}>
-                                    <Text style={[styles.userName, { color: text }]}>
-                                        {user.firstName} {user.lastName}
-                                    </Text>
-                                    <Text style={[styles.userEmail, { color: muted }]}>{user.email}</Text>
-                                </View>
-                                <View style={styles.badges}>
-                                    <View
-                                        style={[
-                                            styles.roleBadge,
-                                            { backgroundColor: getRoleBgColor(user.role) },
-                                        ]}
-                                    >
-                                        <Text style={[styles.roleText, { color: getRoleColor(user.role) }]}>
-                                            {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+
+                                <View style={styles.userMeta}>
+                                    <View style={styles.metaItem}>
+                                        <IconSymbol
+                                            name="circle.fill"
+                                            size={8}
+                                            color={getStatusColor(user.status)}
+                                        />
+                                        <Text style={[styles.metaText, { color: muted }]}>
+                                            {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.metaItem}>
+                                        <IconSymbol name="calendar" size={14} color={muted} />
+                                        <Text style={[styles.metaText, { color: muted }]}>
+                                            Joined {formatDate(user.joinedDate)}
                                         </Text>
                                     </View>
                                 </View>
-                            </View>
 
-                            <View style={styles.userMeta}>
-                                <View style={styles.metaItem}>
-                                    <IconSymbol
-                                        name="circle.fill"
-                                        size={8}
-                                        color={getStatusColor(user.status)}
-                                    />
-                                    <Text style={[styles.metaText, { color: muted }]}>
-                                        {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                                    </Text>
+                                <View style={[styles.userStats, { borderColor: muted + '20' }]}>
+                                    <View style={styles.statItem}>
+                                        <IconSymbol name="ticket.fill" size={16} color={muted} />
+                                        <Text style={[styles.statValue, { color: text }]}>{user.totalBookings}</Text>
+                                        <Text style={[styles.statLabel, { color: muted }]}>Bookings</Text>
+                                    </View>
+                                    <View style={styles.statItem}>
+                                        <IconSymbol name="indianrupeesign.circle.fill" size={16} color={muted} />
+                                        <Text style={[styles.statValue, { color: text }]}>₹{(user.totalSpent || 1000 / 1000).toFixed(1)}k</Text>
+                                        <Text style={[styles.statLabel, { color: muted }]}>Spent</Text>
+                                    </View>
+                                    <View style={styles.statItem}>
+                                        <IconSymbol
+                                            name={user.isEmailVerified ? 'checkmark.circle.fill' : 'xmark.circle.fill'}
+                                            size={16}
+                                            color={user.isEmailVerified ? '#10b981' : '#ef4444'}
+                                        />
+                                        <Text style={styles.statLabel}>Email</Text>
+                                    </View>
+                                    <View style={styles.statItem}>
+                                        <IconSymbol
+                                            name={user.isPhoneVerified ? 'checkmark.circle.fill' : 'xmark.circle.fill'}
+                                            size={16}
+                                            color={user.isPhoneVerified ? '#10b981' : '#ef4444'}
+                                        />
+                                        <Text style={styles.statLabel}>Phone</Text>
+                                    </View>
                                 </View>
-                                <View style={styles.metaItem}>
-                                    <IconSymbol name="calendar" size={14} color={muted} />
-                                    <Text style={[styles.metaText, { color: muted }]}>
-                                        Joined {formatDate(user.joinedDate)}
-                                    </Text>
-                                </View>
-                            </View>
 
-                            <View style={[styles.userStats, { borderColor: muted + '20' }]}>
-                                <View style={styles.statItem}>
-                                    <IconSymbol name="ticket.fill" size={16} color={muted} />
-                                    <Text style={[styles.statValue, { color: text }]}>{user.totalBookings}</Text>
-                                    <Text style={[styles.statLabel, { color: muted }]}>Bookings</Text>
-                                </View>
-                                <View style={styles.statItem}>
-                                    <IconSymbol name="indianrupeesign.circle.fill" size={16} color={muted} />
-                                    <Text style={[styles.statValue, { color: text }]}>₹{(user.totalSpent || 1000 / 1000).toFixed(1)}k</Text>
-                                    <Text style={[styles.statLabel, { color: muted }]}>Spent</Text>
-                                </View>
-                                <View style={styles.statItem}>
-                                    <IconSymbol
-                                        name={user.isEmailVerified ? 'checkmark.circle.fill' : 'xmark.circle.fill'}
-                                        size={16}
-                                        color={user.isEmailVerified ? '#10b981' : '#ef4444'}
-                                    />
-                                    <Text style={styles.statLabel}>Email</Text>
-                                </View>
-                                <View style={styles.statItem}>
-                                    <IconSymbol
-                                        name={user.isPhoneVerified ? 'checkmark.circle.fill' : 'xmark.circle.fill'}
-                                        size={16}
-                                        color={user.isPhoneVerified ? '#10b981' : '#ef4444'}
-                                    />
-                                    <Text style={styles.statLabel}>Phone</Text>
-                                </View>
-                            </View>
-
-                            <View style={styles.userActions}>
-                                {user.status === 'active' && user.role !== UserRole.ADMIN && (
+                                <View style={styles.userActions}>
+                                    {user.status === 'active' && user.role !== UserRole.GOVERNMENT && (
+                                        <TouchableOpacity
+                                            style={[styles.actionButton, styles.suspendButton]}
+                                            onPress={() => handleSuspendUser(user.id)}
+                                        >
+                                            <IconSymbol name="hand.raised.fill" size={14} color="#fff" />
+                                            <Text style={styles.actionButtonText}>Suspend</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                    {user.status === 'suspended' && (
+                                        <TouchableOpacity
+                                            style={[styles.actionButton, styles.activateButton]}
+                                            onPress={() => handleActivateUser(user.id)}
+                                        >
+                                            <IconSymbol name="checkmark.circle.fill" size={14} color="#fff" />
+                                            <Text style={styles.actionButtonText}>Activate</Text>
+                                        </TouchableOpacity>
+                                    )}
                                     <TouchableOpacity
-                                        style={[styles.actionButton, styles.suspendButton]}
-                                        onPress={() => handleSuspendUser(user.id)}
+                                        style={[styles.actionButton, styles.roleButton]}
+                                        onPress={() => router.push(`/(admin)/roles?userId=${user.id}` as any)}
                                     >
-                                        <IconSymbol name="hand.raised.fill" size={14} color="#fff" />
-                                        <Text style={styles.actionButtonText}>Suspend</Text>
+                                        <IconSymbol name="person.badge.key.fill" size={14} color="#fff" />
+                                        <Text style={styles.actionButtonText}>Change Role</Text>
                                     </TouchableOpacity>
-                                )}
-                                {user.status === 'suspended' && (
-                                    <TouchableOpacity
-                                        style={[styles.actionButton, styles.activateButton]}
-                                        onPress={() => handleActivateUser(user.id)}
-                                    >
-                                        <IconSymbol name="checkmark.circle.fill" size={14} color="#fff" />
-                                        <Text style={styles.actionButtonText}>Activate</Text>
-                                    </TouchableOpacity>
-                                )}
-                                <TouchableOpacity
-                                    style={[styles.actionButton, styles.roleButton]}
-                                    onPress={() => router.push(`/(admin)/roles?userId=${user.id}` as any)}
-                                >
-                                    <IconSymbol name="person.badge.key.fill" size={14} color="#fff" />
-                                    <Text style={styles.actionButtonText}>Change Role</Text>
-                                </TouchableOpacity>
-                                {user.role !== UserRole.ADMIN && (
-                                    <TouchableOpacity
-                                        style={[styles.actionButton, styles.deleteButton]}
-                                        onPress={() => handleDeleteUser(user.id)}
-                                    >
-                                        <IconSymbol name="trash.fill" size={14} color="#fff" />
-                                    </TouchableOpacity>
-                                )}
-                            </View>
-                        </TouchableOpacity>
-                    ))}
+                                    {user.role !== UserRole.GOVERNMENT && (
+                                        <TouchableOpacity
+                                            style={[styles.actionButton, styles.deleteButton]}
+                                            onPress={() => handleDeleteUser(user.id)}
+                                        >
+                                            <IconSymbol name="trash.fill" size={14} color="#fff" />
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                            </TouchableOpacity>
+                        ))}
                     </>
                 ) : (!loading && (
                     <View style={styles.emptyState}>

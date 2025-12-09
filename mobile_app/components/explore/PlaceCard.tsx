@@ -3,6 +3,14 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, Platform, Ale
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
+export interface Transcription {
+    id: string;
+    text: string;
+    avg_confidence?: number;
+    file_name?: string;
+    created_at: string;
+}
+
 export interface Place {
     id: string;
     name: string;
@@ -17,6 +25,7 @@ export interface Place {
     panorama360Url?: string; // URL to 360° panorama image
     latitude?: number;
     longitude?: number;
+    transcriptions?: Transcription[]; // OCR extracted text from uploaded images
 }
 
 interface PlaceCardProps {
