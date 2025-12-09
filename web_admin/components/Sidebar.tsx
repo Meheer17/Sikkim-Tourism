@@ -1,13 +1,14 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartLine, faGauge, faRightFromBracket, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faChartLine, faGauge, faRightFromBracket, faUser, faCheckCircle, faBuilding, faUsersCog, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
 import { authService } from '@/lib/auth';
 import { useEffect, useState } from 'react';
 
 export default function Sidebar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [userName, setUserName] = useState('Admin');
 
   useEffect(() => {
@@ -22,6 +23,14 @@ export default function Sidebar() {
     router.push('/login');
   };
 
+  const navItems = [
+    { label: 'Dashboard', icon: faChartLine, path: '/' },
+    { label: 'Approvals', icon: faCheckCircle, path: '/approvals' },
+    { label: 'Businesses', icon: faBuilding, path: '/businesses' },
+    { label: 'Places', icon: faMapMarkerAlt, path: '/places' },
+    { label: 'Users & Roles', icon: faUsersCog, path: '/users' },
+  ];
+
   return (
     <div className="w-64 h-screen bg-gray-900 fixed left-0 top-0 p-6 flex flex-col">
       <div className="mb-8">
@@ -31,11 +40,19 @@ export default function Sidebar() {
         </h1>
       </div>
       
-      <nav className="flex-1">
-        <button className="w-full text-left px-4 py-3 text-white bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-3">
-          <FontAwesomeIcon icon={faChartLine} />
-          Dashboard
-        </button>
+      <nav className="flex-1 space-y-2">
+        {navItems.map((item) => (
+          <button
+            key={item.path}
+            onClick={() => router.push(item.path)}
+            className={`w-full text-left px-4 py-3 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-3 ${
+              pathname === item.path ? 'bg-gray-800' : ''
+            }`}
+          >
+            <FontAwesomeIcon icon={item.icon} />
+            {item.label}
+          </button>
+        ))}
       </nav>
 
       <div className="border-t border-gray-700 pt-4">
