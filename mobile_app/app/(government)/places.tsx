@@ -105,32 +105,32 @@ export default function AdminPlacesScreen() {
                 if (resp.success && resp.data) {
                     const mapped: Place[] = resp.data.map((loc: any) => {
                         return {
-                        id: loc.id,
-                        name: loc.name,
-                        description: loc.description,
-                        category: loc.type === 'tourism' ? 'Natural Beauty' : loc.type,
-                        location: {
-                            latitude: loc.position?.y ?? 0,  // position.y is latitude
-                            longitude: loc.position?.x ?? 0, // position.x is longitude
-                            address: '',
-                            city: '',
-                            state: '',
-                            country: '',
-                        },
-                        address: loc.short_description,
-                        rating: undefined as any,
-                        reviewCount: undefined as any,
-                        visitCount: undefined as any,
-                        entryFee: undefined as any,
-                        openingHours: '',
-                        bestTimeToVisit: '',
-                        highlights: [],
-                        facilities: [],
-                        status: 'active',
-                        createdBy: '',
-                        createdAt: loc.created_at || '',
-                        updatedAt: loc.updated_at || '',
-                    };
+                            id: loc.id,
+                            name: loc.name,
+                            description: loc.description,
+                            category: loc.type === 'tourism' ? 'Natural Beauty' : loc.type,
+                            location: {
+                                latitude: loc.position?.y ?? 0,  // position.y is latitude
+                                longitude: loc.position?.x ?? 0, // position.x is longitude
+                                address: '',
+                                city: '',
+                                state: '',
+                                country: '',
+                            },
+                            address: loc.short_description,
+                            rating: undefined as any,
+                            reviewCount: undefined as any,
+                            visitCount: undefined as any,
+                            entryFee: undefined as any,
+                            openingHours: '',
+                            bestTimeToVisit: '',
+                            highlights: [],
+                            facilities: [],
+                            status: 'active',
+                            createdBy: '',
+                            createdAt: loc.created_at || '',
+                            updatedAt: loc.updated_at || '',
+                        };
                     });
                     if (loadMore) {
                         setPlaces(prev => [...prev, ...mapped]);
@@ -153,7 +153,7 @@ export default function AdminPlacesScreen() {
             }
         };
         loadLocations();
-        
+
         // Expose loadLocations function for pagination
         (window as any).loadMorePlaces = () => loadLocations(true);
     }, [page]);
@@ -170,7 +170,7 @@ export default function AdminPlacesScreen() {
             }, 1000);
         }
         // Navigate to place details
-        router.push(`/(admin)/(stack)/place-details?id=${place.id}` as any);
+        router.push(`/(government)/(stack)/place-details?id=${place.id}` as any);
     };
 
     const handleEditPlace = (place: Place) => {
@@ -180,7 +180,7 @@ export default function AdminPlacesScreen() {
             return;
         }
         console.log('Editing place with ID:', place.id);
-        router.push(`/(admin)/(stack)/edit-place?id=${place.id}` as any);
+        router.push(`/(government)/(stack)/edit-place?id=${place.id}` as any);
     };
 
     const handleDeletePlace = (placeId: string) => {
@@ -304,7 +304,7 @@ export default function AdminPlacesScreen() {
                 </View>
                 <TouchableOpacity
                     style={styles.addButton}
-                    onPress={() => router.push('/(admin)/(stack)/add-place' as any)}
+                    onPress={() => router.push('/(government)/(stack)/add-place' as any)}
                 >
                     <IconSymbol name="plus" size={24} color={card} />
                 </TouchableOpacity>
@@ -325,7 +325,7 @@ export default function AdminPlacesScreen() {
                 >
                     {filteredPlaces.map((place, index) => {
                         if (!place.location.latitude || !place.location.longitude) return null;
-                        
+
                         return (
                             <Marker
                                 key={`marker-${place.id}-${index}`}
@@ -378,7 +378,7 @@ export default function AdminPlacesScreen() {
             </View>
 
             {/* Search Bar */}
-            <View 
+            <View
                 style={[styles.searchBarContainer, { backgroundColor: card, borderBottomColor: muted + '40' }]}
                 pointerEvents="auto"
             >
@@ -557,94 +557,94 @@ export default function AdminPlacesScreen() {
                         )}
                         {!loading && filteredPlaces.length > 0 ? (
                             filteredPlaces.map((place, index) => (
-                            <TouchableOpacity
-                                key={`place-${place.id || 'unknown'}-${index}`}
-                            style={[
-                                styles.placeCard,
-                                { backgroundColor: card, borderColor: muted + '30' },
-                                selectedPlace?.id === place.id && [styles.placeCardSelected, { borderColor: tint }],
-                            ]}
-                            onPress={() => handlePlacePress(place)}
-                            activeOpacity={0.7}
-                        >
-                            <View style={styles.placeHeader}>
-                                <View style={styles.placeInfo}>
-                                    <Text style={[styles.placeName, { color: text }]} numberOfLines={1}>
-                                        {place.name}
-                                    </Text>
-                                    <Text style={[styles.placeCategory, { color: muted }]}>{place.category}</Text>
-                                </View>
-                                <View
+                                <TouchableOpacity
+                                    key={`place-${place.id || 'unknown'}-${index}`}
                                     style={[
-                                        styles.statusBadge,
-                                        { backgroundColor: getStatusBgColor(place.status) },
+                                        styles.placeCard,
+                                        { backgroundColor: card, borderColor: muted + '30' },
+                                        selectedPlace?.id === place.id && [styles.placeCardSelected, { borderColor: tint }],
                                     ]}
+                                    onPress={() => handlePlacePress(place)}
+                                    activeOpacity={0.7}
                                 >
-                                    <Text style={[styles.statusText, { color: getStatusColor(place.status) }]}>
-                                        {place.status.charAt(0).toUpperCase() + place.status.slice(1)}
-                                    </Text>
-                                </View>
-                            </View>
-
-                            <Text style={[styles.placeDescription, { color: muted }]} numberOfLines={2}>
-                                {place.description}
-                            </Text>
-
-                            <View style={styles.placeMeta}>
-                                <View style={styles.metaItem}>
-                                    <IconSymbol name="location.fill" size={14} color={muted} />
-                                    <Text style={[styles.metaText, { color: muted }]} numberOfLines={1}>
-                                        {place.location.city}
-                                    </Text>
-                                </View>
-                                <View style={styles.metaItem}>
-                                    <IconSymbol name="star.fill" size={14} color="#fbbf24" />
-                                    <Text style={[styles.metaText, { color: muted }]}>
-                                        {place.rating?.toFixed(1)} ({place.reviewCount})
-                                    </Text>
-                                </View>
-                                <View style={styles.metaItem}>
-                                    <IconSymbol name="eye.fill" size={14} color={muted} />
-                                    <Text style={[styles.metaText, { color: muted }]}>{place.visitCount}</Text>
-                                </View>
-                            </View>
-
-                            <View style={[styles.placeFooter, { borderTopColor: muted + '20' }]}>
-                                <Text style={[styles.placeFee, { color: tint }]}>
-                                    {place.entryFee ? `₹${place.entryFee}` : 'Free'}
-                                </Text>
-                                <View style={styles.placeActions}>
-                                    <TouchableOpacity
-                                        style={[styles.actionButton, styles.editButton]}
-                                        onPress={() => handleEditPlace(place)}
-                                    >
-                                        <IconSymbol name="pencil" size={16} color="#fff" />
-                                    </TouchableOpacity>
-                                    {place.status === 'draft' && (
-                                        <TouchableOpacity
-                                            style={[styles.actionButton, styles.publishButton]}
-                                            onPress={() => handleStatusChange(place.id, 'active')}
+                                    <View style={styles.placeHeader}>
+                                        <View style={styles.placeInfo}>
+                                            <Text style={[styles.placeName, { color: text }]} numberOfLines={1}>
+                                                {place.name}
+                                            </Text>
+                                            <Text style={[styles.placeCategory, { color: muted }]}>{place.category}</Text>
+                                        </View>
+                                        <View
+                                            style={[
+                                                styles.statusBadge,
+                                                { backgroundColor: getStatusBgColor(place.status) },
+                                            ]}
                                         >
-                                            <IconSymbol name="checkmark" size={16} color="#fff" />
-                                        </TouchableOpacity>
-                                    )}
-                                    {place.status === 'active' && (
-                                        <TouchableOpacity
-                                            style={[styles.actionButton, styles.archiveButton]}
-                                            onPress={() => handleStatusChange(place.id, 'archived')}
-                                        >
-                                            <IconSymbol name="archivebox.fill" size={16} color="#fff" />
-                                        </TouchableOpacity>
-                                    )}
-                                    <TouchableOpacity
-                                        style={[styles.actionButton, styles.deleteButton]}
-                                        onPress={() => handleDeletePlace(place.id)}
-                                    >
-                                        <IconSymbol name="trash.fill" size={16} color="#fff" />
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </TouchableOpacity>
+                                            <Text style={[styles.statusText, { color: getStatusColor(place.status) }]}>
+                                                {place.status.charAt(0).toUpperCase() + place.status.slice(1)}
+                                            </Text>
+                                        </View>
+                                    </View>
+
+                                    <Text style={[styles.placeDescription, { color: muted }]} numberOfLines={2}>
+                                        {place.description}
+                                    </Text>
+
+                                    <View style={styles.placeMeta}>
+                                        <View style={styles.metaItem}>
+                                            <IconSymbol name="location.fill" size={14} color={muted} />
+                                            <Text style={[styles.metaText, { color: muted }]} numberOfLines={1}>
+                                                {place.location.city}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.metaItem}>
+                                            <IconSymbol name="star.fill" size={14} color="#fbbf24" />
+                                            <Text style={[styles.metaText, { color: muted }]}>
+                                                {place.rating?.toFixed(1)} ({place.reviewCount})
+                                            </Text>
+                                        </View>
+                                        <View style={styles.metaItem}>
+                                            <IconSymbol name="eye.fill" size={14} color={muted} />
+                                            <Text style={[styles.metaText, { color: muted }]}>{place.visitCount}</Text>
+                                        </View>
+                                    </View>
+
+                                    <View style={[styles.placeFooter, { borderTopColor: muted + '20' }]}>
+                                        <Text style={[styles.placeFee, { color: tint }]}>
+                                            {place.entryFee ? `₹${place.entryFee}` : 'Free'}
+                                        </Text>
+                                        <View style={styles.placeActions}>
+                                            <TouchableOpacity
+                                                style={[styles.actionButton, styles.editButton]}
+                                                onPress={() => handleEditPlace(place)}
+                                            >
+                                                <IconSymbol name="pencil" size={16} color="#fff" />
+                                            </TouchableOpacity>
+                                            {place.status === 'draft' && (
+                                                <TouchableOpacity
+                                                    style={[styles.actionButton, styles.publishButton]}
+                                                    onPress={() => handleStatusChange(place.id, 'active')}
+                                                >
+                                                    <IconSymbol name="checkmark" size={16} color="#fff" />
+                                                </TouchableOpacity>
+                                            )}
+                                            {place.status === 'active' && (
+                                                <TouchableOpacity
+                                                    style={[styles.actionButton, styles.archiveButton]}
+                                                    onPress={() => handleStatusChange(place.id, 'archived')}
+                                                >
+                                                    <IconSymbol name="archivebox.fill" size={16} color="#fff" />
+                                                </TouchableOpacity>
+                                            )}
+                                            <TouchableOpacity
+                                                style={[styles.actionButton, styles.deleteButton]}
+                                                onPress={() => handleDeletePlace(place.id)}
+                                            >
+                                                <IconSymbol name="trash.fill" size={16} color="#fff" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                </TouchableOpacity>
                             ))
                         ) : (!loading && (
                             <View style={styles.emptyState}>

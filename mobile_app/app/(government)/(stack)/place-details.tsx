@@ -99,7 +99,7 @@ export default function AdminPlaceDetailsScreen() {
 
     const handleEditPlace = () => {
         router.push({
-            pathname: '/(admin)/(stack)/edit-place' as any,
+            pathname: '/(government)/(stack)/edit-place' as any,
             params: { id },
         });
     };

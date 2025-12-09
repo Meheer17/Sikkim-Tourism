@@ -325,7 +325,9 @@ export default function ExploreScreen() {
   const applyFilters = async () => {
     setIsFiltering(true);
 
-    // If there's a search query, fetch matching places from backend
+    let filtered = [...allPlaces];
+
+    // Filter by search query
     if (searchQuery.trim()) {
       try {
         const query = searchQuery.toLowerCase();

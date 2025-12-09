@@ -188,7 +188,7 @@ export default function EditProfileScreen() {
                         <IconSymbol name="shield.fill" size={24} color="#ef4444" />
                     </View>
                     <View style={styles.roleInfo}>
-                        <Text style={[styles.roleTitle, { color: text }]}>Administrator Role</Text>
+                        <Text style={[styles.roleTitle, { color: text }]}>Government Official Role</Text>
                         <Text style={[styles.roleText, { color: muted }]}>
                             You have full access to manage users, businesses, and system settings
                         </Text>

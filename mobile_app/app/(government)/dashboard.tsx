@@ -49,14 +49,15 @@ export default function AdminDashboardScreen() {
         try {
             // Load stats (endpoint may not exist yet)
             try {
-                const raw: any = await getStats('/admin/stats');
+                const raw: any = await getStats('/government/stats');
+                console.log(raw.revenue)
                 if (raw) {
                     const mapped: DashboardStats = {
                         totalUsers: raw.total_users || 0,
                         totalBusinesses: raw.total_businesses || 0,
                         totalPlaces: raw.total_locations || 0,
-                        totalBookings: 0,
-                        revenue: 0,
+                        totalBookings: raw.total_bookings || 0,
+                        revenue: raw.revenue || 0,
                         activeUsers: raw.active_users || 0,
                         pendingApprovals: raw.pending_approvals || 0,
                     };
@@ -74,7 +75,7 @@ export default function AdminDashboardScreen() {
         try {
             // Load activities (endpoint may not exist yet)
             try {
-                const activitiesData = await getActivities('/admin/activities');
+                const activitiesData = await getActivities('/government/activities');
                 if (activitiesData) {
                     setActivities(activitiesData);
                 }
@@ -137,7 +138,7 @@ export default function AdminDashboardScreen() {
         },
         {
             title: t.revenue || 'Revenue',
-            value: `₹${(stats.revenue / 100000).toFixed(1)}L`,
+            value: `₹${(stats.revenue / 1000).toFixed(1)}T`,
             icon: 'indianrupeesign.circle.fill',
             color: '#ef4444',
             bgColor: '#fee2e2',
@@ -199,7 +200,7 @@ export default function AdminDashboardScreen() {
                 </View>
                 <TouchableOpacity
                     style={styles.profileButton}
-                    onPress={() => router.push('/(admin)/profile' as any)}
+                    onPress={() => router.push('/(government)/profile' as any)}
                 >
                     <IconSymbol name="person.circle.fill" size={32} color={tint} />
                 </TouchableOpacity>
@@ -217,7 +218,7 @@ export default function AdminDashboardScreen() {
                 {!loadingStats && stats.pendingApprovals > 0 && (
                     <TouchableOpacity
                         style={[styles.alertCard, { backgroundColor: card }]}
-                        onPress={() => router.push('/(admin)/approvals' as any)}
+                        onPress={() => router.push('/(government)/approvals' as any)}
                     >
                         <View style={styles.alertIcon}>
                             <IconSymbol name="exclamationmark.triangle.fill" size={24} color="#f59e0b" />
@@ -268,7 +269,7 @@ export default function AdminDashboardScreen() {
                     <View style={styles.quickActions}>
                         <TouchableOpacity
                             style={[styles.actionCard, { backgroundColor: card }]}
-                            onPress={() => router.push('/(admin)/approvals' as any)}
+                            onPress={() => router.push('/(government)/approvals' as any)}
                         >
                             <IconSymbol name="checkmark.seal.fill" size={32} color="#f59e0b" />
                             <Text style={[styles.actionText, { color: text }]}>Approvals</Text>
@@ -276,7 +277,7 @@ export default function AdminDashboardScreen() {
 
                         <TouchableOpacity
                             style={[styles.actionCard, { backgroundColor: card }]}
-                            onPress={() => router.push('/(admin)/businesses' as any)}
+                            onPress={() => router.push('/(government)/businesses' as any)}
                         >
                             <IconSymbol name="plus.circle.fill" size={32} color={tint} />
                             <Text style={[styles.actionText, { color: text }]}>Add Business</Text>
@@ -284,7 +285,7 @@ export default function AdminDashboardScreen() {
 
                         <TouchableOpacity
                             style={[styles.actionCard, { backgroundColor: card }]}
-                            onPress={() => router.push('/(admin)/places' as any)}
+                            onPress={() => router.push('/(government)/places' as any)}
                         >
                             <IconSymbol name="plus.circle.fill" size={32} color="#10b981" />
                             <Text style={[styles.actionText, { color: text }]}>Add Place</Text>
@@ -292,7 +293,7 @@ export default function AdminDashboardScreen() {
 
                         <TouchableOpacity
                             style={[styles.actionCard, { backgroundColor: card }]}
-                            onPress={() => router.push('/(admin)/users' as any)}
+                            onPress={() => router.push('/(government)/users' as any)}
                         >
                             <IconSymbol name="person.badge.plus.fill" size={32} color="#8b5cf6" />
                             <Text style={[styles.actionText, { color: text }]}>Manage Users</Text>
@@ -300,7 +301,7 @@ export default function AdminDashboardScreen() {
 
                         <TouchableOpacity
                             style={[styles.actionCard, { backgroundColor: card }]}
-                            onPress={() => router.push('/(admin)/roles' as any)}
+                            onPress={() => router.push('/(government)/roles' as any)}
                         >
                             <IconSymbol name="person.badge.key.fill" size={32} color="#f59e0b" />
                             <Text style={[styles.actionText, { color: text }]}>Assign Roles</Text>
@@ -308,7 +309,7 @@ export default function AdminDashboardScreen() {
 
                         <TouchableOpacity
                             style={[styles.actionCard, { backgroundColor: card }]}
-                            onPress={() => router.push('/(admin)/(stack)/chat-moderation' as any)}
+                            onPress={() => router.push('/(government)/(stack)/chat-moderation' as any)}
                         >
                             <IconSymbol name="bubble.left.and.exclamationmark.bubble.right" size={32} color="#ef4444" />
                             <Text style={[styles.actionText, { color: text }]}>{t.chatModeration || 'Chat Moderation'}</Text>

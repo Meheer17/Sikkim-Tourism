@@ -31,17 +31,17 @@ export default function AdminProfileScreen() {
                 {
                     label: t.systemSettings || 'System Settings',
                     icon: 'gearshape.fill',
-                    route: '/(admin)/(stack)/settings',
+                    route: '/(government)/(stack)/settings',
                 },
                 {
                     label: t.analytics || 'Analytics',
                     icon: 'chart.bar.fill',
-                    route: '/(admin)/(stack)/analytics',
+                    route: '/(government)/(stack)/analytics',
                 },
                 {
                     label: t.reports || 'Reports',
                     icon: 'doc.text.fill',
-                    route: '/(admin)/(stack)/reports',
+                    route: '/(government)/(stack)/reports',
                 },
             ],
         },
@@ -51,12 +51,12 @@ export default function AdminProfileScreen() {
                 {
                     label: t.editProfile || 'Edit Profile',
                     icon: 'person.crop.circle.fill',
-                    route: '/(admin)/(stack)/edit-profile',
+                    route: '/(government)/(stack)/edit-profile',
                 },
                 {
                     label: t.security || 'Security',
                     icon: 'lock.shield.fill',
-                    route: '/(admin)/(stack)/security',
+                    route: '/(government)/(stack)/security',
                 },
             ],
         },
@@ -82,7 +82,7 @@ export default function AdminProfileScreen() {
                         </View>
                     </View>
                     <Text style={[styles.userName, { color: text }]}>{user?.name}</Text>
-                    <Text style={styles.userRole}>{t.administrator || 'Administrator'}</Text>
+                    <Text style={styles.userRole}>{t.governmentOfficial || 'Government Official'}</Text>
                     <Text style={[styles.userEmail, { color: muted }]}>{user?.email}</Text>
                 </View>
 

@@ -9,6 +9,8 @@ interface AuthState {
     isLoading: boolean;
     isAuthenticated: boolean;
     error: string | null;
+    isMonastery?: boolean;
+    businessId?: string;
 }
 
 interface AuthActions {
@@ -79,19 +81,21 @@ export const useAuth = (): AuthState & AuthActions => {
         }
     }, []);
 
-    const login = useCallback(async (credentials: LoginRequest): Promise<boolean> => {
+    const login = useCallback(async (credentials: LoginRequest): Promise<boolean | { success: boolean; isMonastery?: boolean; businessId?: string }> => {
         try {
             setState(prev => ({ ...prev, isLoading: true, error: null }));
 
             const response = await authService.login(credentials);
 
             if (response.success && response.data) {
-                const { user } = response.data;
+                const { user, is_monastery, business_id } = response.data;
                 setState({
                     user,
                     isLoading: false,
                     isAuthenticated: true,
                     error: null,
+                    isMonastery: is_monastery,
+                    businessId: business_id,
                 });
 
                 Toast.show({
@@ -100,7 +104,7 @@ export const useAuth = (): AuthState & AuthActions => {
                     text2: `Hello ${user.name}, you're now logged in.`,
                 });
 
-                return true;
+                return { success: true, isMonastery: is_monastery, businessId: business_id };
             } else {
                 setState(prev => ({
                     ...prev,

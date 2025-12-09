@@ -28,7 +28,7 @@ Implemented Google Photo Sphere-like image stitching that combines multiple phot
 - Automatic upload to CDN after stitching
 
 ### Frontend (React Native + Expo)
-✅ **Multi-Image Picker** ([edit-place.tsx](mobile_app/app/(admin)/(stack)/edit-place.tsx))
+✅ **Multi-Image Picker** ([edit-place.tsx](mobile_app/app/(government)/(stack)/edit-place.tsx))
 - Two-mode selection:
   1. **Stitch Multiple Photos**: Pick 2-20 images to stitch
   2. **Upload Single 360° Photo**: Direct upload of pre-made panorama
@@ -86,7 +86,7 @@ Implemented Google Photo Sphere-like image stitching that combines multiple phot
 ### User Workflow
 
 ```
-Mobile App (Admin)
+Mobile App (Government)
        ↓
 [Tap "Add 360°" button]
        ↓
@@ -294,7 +294,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 # 2. Get JWT token
 curl -X POST http://localhost:8000/api/v1/auth/signin \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"password"}'
+  -d '{"email":"government@example.com","password":"password"}'
 
 # 3. Stitch images
 curl -X POST http://localhost:8000/api/v1/upload/stitch-panorama \
@@ -306,7 +306,7 @@ curl -X POST http://localhost:8000/api/v1/upload/stitch-panorama \
 ```
 
 ### Mobile App Testing
-1. Open admin panel in mobile app
+1. Open government panel in mobile app
 2. Navigate to any location's edit page
 3. Scroll to "360° Panorama" section
 4. Tap "Add 360°" button
@@ -394,7 +394,7 @@ For issues or questions:
 
 - **Backend Service**: `be/app/services/panorama_service.py`
 - **API Endpoint**: `be/app/api/v1/endpoints/upload.py` (line 219+)
-- **Mobile UI**: `mobile_app/app/(admin)/(stack)/edit-place.tsx`
+- **Mobile UI**: `mobile_app/app/(government)/(stack)/edit-place.tsx`
 - **File Service**: `mobile_app/services/file.service.ts`
 - **Dependencies**: `be/requirements.txt`
 
