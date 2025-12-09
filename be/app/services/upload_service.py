@@ -812,10 +812,29 @@ class UploadService:
             category: Document category for organization
             user_id: User who uploaded the document
             business_id: Optional business ID to associate with document
+            location_id: Optional location ID to associate with document (auto-fetched from business if null)
             
         Returns:
             Upload details with CDN URL
         """
+        # Debug: Log received parameters
+        print(f"[DEBUG] upload_document called with:")
+        print(f"  - category: {category}")
+        print(f"  - business_id: {business_id}")
+        print(f"  - location_id: {location_id}")
+        print(f"  - user_id: {user_id}")
+        
+        # If business_id is provided but location_id is null, fetch the location ID from the business
+        if business_id and not location_id and ObjectId.is_valid(business_id):
+            try:
+                db = get_database()
+                business = await db.business.find_one({"_id": ObjectId(business_id)})
+                if business and business.get("l_id"):
+                    location_id = str(business["l_id"])
+                    print(f"[DEBUG] Auto-fetched location_id from business: {location_id}")
+            except Exception as e:
+                print(f"[DEBUG] Could not fetch location from business: {str(e)}")
+        
         # Validate file type
         allowed_types = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
         if not file.content_type or file.content_type not in allowed_types:
@@ -827,7 +846,7 @@ class UploadService:
         # Read file content
         file_content = await file.read()
         
-        # Compress if it's an image
+        # Skip compression for PDFs - they're already compressed
         compressed_content = file_content
         if file.content_type.startswith('image/'):
             # Higher quality for documents (90 vs 85)
@@ -839,23 +858,42 @@ class UploadService:
         # Upload to CDN
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
+                # The CDN expects: file (binary) and type (form field)
                 files = {
                     'file': (file.filename, compressed_content, file.content_type)
                 }
                 
-                headers = {
-                    'Authorization': f'Bearer {self.cdn_api_key}'
-                } if self.cdn_api_key else {}
+                # Determine CDN type based on MIME type
+                if file.content_type.startswith('image/'):
+                    cdn_type = 'image'
+                elif file.content_type == 'application/pdf':
+                    cdn_type = 'document'
+                else:
+                    cdn_type = 'document'
+                
+                data = {
+                    'type': cdn_type
+                }
+                
+                # Build headers - try with X-API-Key
+                headers = {}
+                if self.cdn_api_key:
+                    headers['X-API-Key'] = self.cdn_api_key
                 
                 # CDN_URL already includes the /upload path
                 endpoint = self.cdn_url
                 
                 print(f"[DEBUG] Uploading document to CDN: {endpoint}")
-                print(f"[DEBUG] File: {file.filename}, Type: {file.content_type}, Size: {len(compressed_content)} bytes")
+                print(f"[DEBUG] File: {file.filename}, Type: {file.content_type}, CDN Type: {cdn_type}, Size: {len(compressed_content)} bytes")
+                print(f"[DEBUG] CDN Headers: {headers}")
+                print(f"[DEBUG] CDN Data: {data}")
+                print(f"[DEBUG] File object details: filename={file.filename}, content_type={file.content_type}")
                 
+                # Upload with files and data parameters
                 upload_response = await client.post(
                     endpoint,
                     files=files,
+                    data=data,
                     headers=headers
                 )
                 
@@ -956,13 +994,18 @@ class UploadService:
         
         print(f"[DEBUG] Found {len(documents)} documents")
         
-        # Convert ObjectId to string
+        # Convert ObjectId to string for JSON serialization
         for doc in documents:
             doc["_id"] = str(doc["_id"])
             if "uploaded_by" in doc and doc["uploaded_by"]:
                 doc["uploaded_by"] = str(doc["uploaded_by"])
             if "business_id" in doc and doc["business_id"]:
                 doc["business_id"] = str(doc["business_id"])
+            # Convert b_id and l_id (new fields)
+            if "b_id" in doc and doc["b_id"]:
+                doc["b_id"] = str(doc["b_id"])
+            if "l_id" in doc and doc["l_id"]:
+                doc["l_id"] = str(doc["l_id"])
         
         return documents
     
