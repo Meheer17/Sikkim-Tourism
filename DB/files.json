@@ -1,0 +1,76 @@
+[
+  {
+    "_id": "6937758f0b5ba3de0cb86021",
+    "b_id": "69366ae12293dfe899b6ca63",
+    "category": "heritage_manuscript",
+    "cdn_response": {
+      "cdnUrl": "http://localhost:3000/images/919A5D96-663A-401E-8CC3-3B964CDE4366.jpg",
+      "fileUrl": "/images/919A5D96-663A-401E-8CC3-3B964CDE4366.jpg",
+      "filename": "919A5D96-663A-401E-8CC3-3B964CDE4366.jpg",
+      "message": "Image uploaded successfully",
+      "size": 391022,
+      "success": true,
+      "type": "image",
+      "viewUrl": "http://localhost:3000/media/view/919A5D96-663A-401E-8CC3-3B964CDE4366.jpg"
+    },
+    "compressed_size": 391022,
+    "created_at": "2025-12-09T01:04:15.555Z",
+    "file_name": "919A5D96-663A-401E-8CC3-3B964CDE4366.jpg",
+    "file_path": "http://10.233.208.103:8000/api/v1/cdn/images/919A5D96-663A-401E-8CC3-3B964CDE4366.jpg",
+    "file_type": "document",
+    "l_id": "69366ae12293dfe899b6ca61",
+    "mime_type": "image/jpeg",
+    "original_size": 1774121,
+    "transcribed": true,
+    "transcription_id": "6937cfae12caae47ab1dbeed",
+    "uploaded_by": "69301508daaa1e45434ac7a1"
+  },
+  {
+    "_id": "693806cc619f539683ab9fad",
+    "b_id": "6937dedac3587eeaae2f690d",
+    "category": "heritage_artifact",
+    "cdn_response": {
+      "cdnUrl": "http://localhost:3000/images/IMG_20251207_212249.jpg",
+      "fileUrl": "/images/IMG_20251207_212249.jpg",
+      "filename": "IMG_20251207_212249.jpg",
+      "message": "Image uploaded successfully",
+      "size": 583083,
+      "success": true,
+      "type": "image",
+      "viewUrl": "http://localhost:3000/media/view/IMG_20251207_212249.jpg"
+    },
+    "compressed_size": 583083,
+    "created_at": "2025-12-09T11:23:56.66Z",
+    "file_name": "IMG_20251207_212249.jpg",
+    "file_path": "http://10.111.185.66:8000/api/v1/cdn/images/IMG_20251207_212249.jpg",
+    "file_type": "document",
+    "l_id": "6937ded9c3587eeaae2f690c",
+    "mime_type": "image/jpeg",
+    "original_size": 2996978,
+    "uploaded_by": "6937ded9c3587eeaae2f690b"
+  },
+  {
+    "_id": "6938157fd6bb27c48cb82e6c",
+    "b_id": "6937dedac3587eeaae2f690d",
+    "category": "heritage_image",
+    "cdn_response": {
+      "cdnUrl": "http://localhost:3000/images/David_Scott_Trail.jpg",
+      "fileUrl": "/images/David_Scott_Trail.jpg",
+      "filename": "David_Scott_Trail.jpg",
+      "message": "Image uploaded successfully",
+      "size": 594042,
+      "success": true,
+      "type": "image",
+      "viewUrl": "http://localhost:3000/media/view/David_Scott_Trail.jpg"
+    },
+    "compressed_size": 594042,
+    "created_at": "2025-12-09T12:26:39.777Z",
+    "file_name": "David_Scott_Trail.jpg",
+    "file_path": "http://10.233.208.162:8000/api/v1/cdn/images/David_Scott_Trail.jpg",
+    "file_type": "document",
+    "l_id": "6937ded9c3587eeaae2f690c",
+    "mime_type": "image/jpeg",
+    "original_size": 1331277,
+    "uploaded_by": "6937ded9c3587eeaae2f690b"
+  }
+]

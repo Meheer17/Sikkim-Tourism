@@ -1,0 +1,40 @@
+[
+  {
+    "_id": "69381580d6bb27c48cb82e6e",
+    "category": "image",
+    "created_at": "2025-12-09T12:26:40.012Z",
+    "description": "3d",
+    "file_id": "6938157fd6bb27c48cb82e6c",
+    "file_url": "http://10.233.208.162:8000/api/v1/cdn/images/David_Scott_Trail.jpg",
+    "metadata": {
+      "age": "5",
+      "dimensions": "30",
+      "historical_period": "med",
+      "material": "any",
+      "upload_info": {
+        "cdn_response": {
+          "cdnUrl": "http://localhost:3000/images/David_Scott_Trail.jpg",
+          "fileUrl": "/images/David_Scott_Trail.jpg",
+          "filename": "David_Scott_Trail.jpg",
+          "message": "Image uploaded successfully",
+          "size": 594042,
+          "success": true,
+          "type": "image",
+          "viewUrl": "http://localhost:3000/media/view/David_Scott_Trail.jpg"
+        },
+        "compression_ratio": "55.4%",
+        "file_size": 594042,
+        "mime_type": "image/jpeg",
+        "original_filename": "David_Scott_Trail.jpg",
+        "upload_timestamp": "2025-12-09T12:26:40.009948"
+      }
+    },
+    "monastery_id": "6937dedac3587eeaae2f690d",
+    "name": "David_Scott_Trail",
+    "tags": [
+      "rel"
+    ],
+    "thumbnail_url": null,
+    "updated_at": "2025-12-09T12:26:40.012Z"
+  }
+]

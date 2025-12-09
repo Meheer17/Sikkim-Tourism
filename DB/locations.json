@@ -1,0 +1,2877 @@
+[
+  {
+    "_id": "69315f3f8efe79cfa3174e2d",
+    "created_at": "2025-12-04T10:15:27.182Z",
+    "description": "A scenic man-made reservoir 15 km north of Shillong created by damming the Umiam River. Offers water sports, boating, and panoramic views surrounded by lush green hills.",
+    "metadata": {
+      "coordinates_original": "25.6698° N, 91.9010° E",
+      "image_count": 8,
+      "images": [
+        "umiam-lake-0_1.jpg",
+        "umiam-lake-1_1.jpg",
+        "umiam-lake-2_1.jpg",
+        "umiam-lake-3_1.jpg",
+        "umiam-lake-4_1.jpg",
+        "umiam-lake-5_1.jpg",
+        "umiam-lake-6_1.jpg",
+        "umiam-lake-7_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:15:27.182655",
+      "panorama_360": "http://10.243.232.26:8000/api/v1/cdn/images/1000033270.jpg"
+    },
+    "name": "Umiam Lake",
+    "position": {
+      "x": 91.901,
+      "y": 25.6698
+    },
+    "short_description": "A scenic man-made reservoir 15 km north of Shillong created by damming the Umiam River.",
+    "type": "tourism",
+    "updated_at": "2025-12-08T12:39:45.025Z"
+  },
+  {
+    "_id": "69315f498efe79cfa3174e2e",
+    "created_at": "2025-12-04T10:15:37.286Z",
+    "description": "A 3-tier waterfall located 12 km from Shillong. Named after elephant-shaped rock formation at its base. Features breathtaking cascading views accessible from different vantage points.",
+    "metadata": {
+      "coordinates_original": "25°32′16″N 91°49′19″E",
+      "image_count": 5,
+      "images": [
+        "elephant-falls-0_1.jpg",
+        "elephant-falls-1_1.jpg",
+        "elephant-falls-2_1.jpg",
+        "elephant-falls-3_1.jpg",
+        "elephant-falls-4_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:15:37.286198",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c-G5LpmEnno_brFeiGApCH9KjX13ogEVJrWsnT4lHAij06KwgiW5EcdpwCbzzVSPsgX7x6ZIPvOAwSJnqATsOBXPK_KOI4qZwo-vgr9miBeXNp4oYkIhprtCsOZEr5ayEr-SnQE=w3200-h1600-k-no"
+    },
+    "name": "Elephant Falls",
+    "position": {
+      "x": 91.821944,
+      "y": 25.542222
+    },
+    "short_description": "A 3-tier waterfall located 12 km from Shillong.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:15:37.286Z"
+  },
+  {
+    "_id": "69315f538efe79cfa3174e2f",
+    "created_at": "2025-12-04T10:15:47.906Z",
+    "description": "A sacred peak at 6,449 feet offering 360-degree views of Shillong city, waterfalls, and Himalayan range. Features a viewing tower with telescope. Access restricted by Indian Air Force.",
+    "metadata": {
+      "coordinates_original": "25°34'8.11\" N 91°52'59.27\" E",
+      "image_count": 6,
+      "images": [
+        "shillong-peak-0_1.jpg",
+        "shillong-peak-1_1.jpg",
+        "shillong-peak-2_1.jpg",
+        "shillong-peak-3_1.jpg",
+        "shillong-peak-4_1.jpg",
+        "shillong-peak-5_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:15:47.906366",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c_HPKaxeP1kEUwf17NzSF8MKVvt1eWMHfpDBzSx9neQddAVWz4XaVWZk4vVLP5wRKcyEnDMNU8LKmCbyDoLiRYXZfdwOyo0p6quu1Ta8FRwGeIWngZtrHi6V2KZ-oX4ne76Xp7vwW8pNO8U=w3200-h1600-k-no"
+    },
+    "name": "Shillong Peak",
+    "position": {
+      "x": 91.883131,
+      "y": 25.568919
+    },
+    "short_description": "A sacred peak at 6,449 feet offering 360-degree views of Shillong city, waterfalls, and Himalayan range.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:15:47.906Z"
+  },
+  {
+    "_id": "69315f628efe79cfa3174e30",
+    "created_at": "2025-12-04T10:16:02.232Z",
+    "description": "An artificial lake in central Shillong surrounded by lush gardens, flower beds, and cobblestone pathways. Features a wooden bridge and boating facilities. Popular picnic spot for locals and tourists.",
+    "metadata": {
+      "coordinates_original": "25°39′12″N 91°53′03″E",
+      "image_count": 7,
+      "images": [
+        "ward_s-lake-0_1.jpg",
+        "ward_s-lake-1_1.jpg",
+        "ward_s-lake-2_1.jpg",
+        "ward_s-lake-3_1.jpg",
+        "ward_s-lake-4_1.jpg",
+        "ward_s-lake-5_1.jpg",
+        "ward_s-lake-6_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:16:02.232678",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c9T-dFpegh2JsLCuKXlENbW4IbbohWT7z_a4qsuteu-mNhuELe45O1afpoy59Lb7HlmctOBzVvsvxA3tPLhPrpyWDvYb8g6iZBA0gdeu_GcHjbZ-6UAe8-L96rHro1_uPu85yI=w3200-h1600-k-no"
+    },
+    "name": "Ward's Lake",
+    "position": {
+      "x": 91.884167,
+      "y": 25.653333
+    },
+    "short_description": "An artificial lake in central Shillong surrounded by lush gardens, flower beds, and cobblestone pathways.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:16:02.232Z"
+  },
+  {
+    "_id": "69315f6e8efe79cfa3174e31",
+    "created_at": "2025-12-04T10:16:14.672Z",
+    "description": "Asia's largest museum of indigenous cultures with 7 stories and 17 galleries. Showcases artifacts, paintings, sculptures, and traditional arts of Northeast Indian tribes and heritage.",
+    "metadata": {
+      "coordinates_original": "25.5839° N 91.7922° E",
+      "image_count": 7,
+      "images": [
+        "don-bosco-museum-0_1.jpg",
+        "don-bosco-museum-1_1.jpg",
+        "don-bosco-museum-2_1.jpg",
+        "don-bosco-museum-3_1.jpg",
+        "don-bosco-museum-4_1.jpg",
+        "don-bosco-museum-5_1.jpg",
+        "don-bosco-museum-6_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:16:14.672437",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c_c04Ok8kbhIZijlUiVZP-B0whYt37zB5PjTft_C9QvTwA8XkpMnzsHVqHJViZ2_hoWpljeFIKywbyaWgOhSjWn9s7jU1YeAbXemJkuXzDrv8Q46Hc2_n3OebdBB83U2ToCyRZ8=w3200-h1600-k-no"
+    },
+    "name": "Don Bosco Museum",
+    "position": {
+      "x": 91.7922,
+      "y": 25.5839
+    },
+    "short_description": "Asia's largest museum of indigenous cultures with 7 stories and 17 galleries.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:16:14.672Z"
+  },
+  {
+    "_id": "69315f7b8efe79cfa3174e32",
+    "created_at": "2025-12-04T10:16:27.576Z",
+    "description": "A scenic canyon 45 minutes from Shillong featuring rolling hills, bamboo farms, and orchid beds. Known as 'The end of the slopes'. Offers stunning elevated views ideal for trekking and photography.",
+    "metadata": {
+      "coordinates_original": "25° 27′ N, 91° 55′ E",
+      "image_count": 8,
+      "images": [
+        "laitlum-canyons-0_1.jpg",
+        "laitlum-canyons-1_1.jpg",
+        "laitlum-canyons-2_1.jpg",
+        "laitlum-canyons-3_1.jpg",
+        "laitlum-canyons-4_1.jpg",
+        "laitlum-canyons-5_1.jpg",
+        "laitlum-canyons-6_1.jpg",
+        "laitlum-canyons-7_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:16:27.576757",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c_OpH9Iz_XEo_o1STwBRq3t6iSsw3ER_yOGp8zu1-SFDYA3BtDTrdi-IwKcO_k0hYejkLOr7g6K9bLP3FXeiS9IwBTNmj8RKHyPeLZS5gPBDPdchLPkjGTZs2gsBbKXDbn5Wlhofjm6Y4QD=w3200-h1600-k-no"
+    },
+    "name": "Laitlum Canyons",
+    "position": {
+      "x": 91.916667,
+      "y": 25.45
+    },
+    "short_description": "A scenic canyon 45 minutes from Shillong featuring rolling hills, bamboo farms, and orchid beds.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:16:27.576Z"
+  },
+  {
+    "_id": "69315f858efe79cfa3174e33",
+    "created_at": "2025-12-04T10:16:37.297Z",
+    "description": "A 96-meter high waterfall located 5 km from Happy Valley. Often described as 'most beautiful yet most dangerous' with milky-white streams and powerful force unsuitable for bathing.",
+    "metadata": {
+      "coordinates_original": "25.53° N 91.82° E",
+      "image_count": 5,
+      "images": [
+        "sweet-falls-0_1.jpg",
+        "sweet-falls-1_1.jpg",
+        "sweet-falls-2_1.jpg",
+        "sweet-falls-3_1.jpg",
+        "sweet-falls-4_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:16:37.297429",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c8u55uESgO-g-fVE13fUdUtnxHuHV5yoPF57IHvGTf53tyEOvywCTJPmXgiihEWYebcupyFS8LVSKtYHiEvmJ5iwrsdwZvPnENSwburQCTwp5mqK3jsH6vHwnOgoEjN4bku4AWK=w3200-h1600-k-no"
+    },
+    "name": "Sweet Falls",
+    "position": {
+      "x": 91.82,
+      "y": 25.53
+    },
+    "short_description": "A 96-meter high waterfall located 5 km from Happy Valley.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:16:37.297Z"
+  },
+  {
+    "_id": "69315f8e8efe79cfa3174e34",
+    "created_at": "2025-12-04T10:16:46.224Z",
+    "description": "A viewpoint 30 km from Shillong on the Shillong-Cherrapunji route offering dramatic vistas of a V-shaped valley with verdant greenery. Features bridge and zipline adventures.",
+    "metadata": {
+      "coordinates_original": "25° 25′ 17.44″ N 91° 47′ 27.59″ E",
+      "image_count": 5,
+      "images": [
+        "mawdok-valley-viewpoint-0_1.jpg",
+        "mawdok-valley-viewpoint-1_1.jpg",
+        "mawdok-valley-viewpoint-2_1.jpg",
+        "mawdok-valley-viewpoint-3_1.jpg",
+        "mawdok-valley-viewpoint-4_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:16:46.224803",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c9FtYeahRZ0-4JBpwoS_okbIZlaacsR4RPTSaI5emOV7KAKlmARWe1eURv74-Ipu4XDU1r0qcu-Lo3HJHew1I_Ly4vNu5UGOS-bHQ9DF7Tffc1_3RJQcCqTU0rnLB8Jx1YZeKtc=w3200-h1600-k-no"
+    },
+    "name": "Mawdok Valley Viewpoint",
+    "position": {
+      "x": 91.790997,
+      "y": 25.421511
+    },
+    "short_description": "A viewpoint 30 km from Shillong on the Shillong-Cherrapunji route offering dramatic vistas of a V-shaped valley with verdant greenery.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:16:46.224Z"
+  },
+  {
+    "_id": "69315f978efe79cfa3174e35",
+    "created_at": "2025-12-04T10:16:55.467Z",
+    "description": "A massive red granite dome-shaped rock at 5,400 feet altitude in West Khasi Hills, 78 km from Shillong. Surrounded by ancient red rhododendrons. Believed to have magnetic properties.",
+    "metadata": {
+      "coordinates_original": "25.888° N, 91.618° E",
+      "image_count": 6,
+      "images": [
+        "kyllang-rock-0_1.jpg",
+        "kyllang-rock-1_1.jpg",
+        "kyllang-rock-2_1.jpg",
+        "kyllang-rock-3_1.jpg",
+        "kyllang-rock-4_1.jpg",
+        "kyllang-rock-5_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:16:55.467901",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c9ZXnGm3eO-lK0I8WSlBiai1H5nFuob-pzF-iHGkTQX4cz3o735SxI1R3qsBL1uKCAMd627doQgJVM5CHPwb27F2uVYS2x1asM8g9a8l3nAahnNYquXKs3jmpaKI1nB6MUdOR3X=w3200-h1600-k-no"
+    },
+    "name": "Kyllang Rock",
+    "position": {
+      "x": 91.618,
+      "y": 25.888
+    },
+    "short_description": "A massive red granite dome-shaped rock at 5,400 feet altitude in West Khasi Hills, 78 km from Shillong.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:16:55.467Z"
+  },
+  {
+    "_id": "69315f9d8efe79cfa3174e36",
+    "created_at": "2025-12-04T10:17:01.868Z",
+    "description": "A historic sacred forest 25 km from Shillong covering 192 acres with over 450 species of trees and plants over 800 years old. Protected by Lyngdoh clan, considered sacred by Khasi tribe.",
+    "metadata": {
+      "coordinates_original": "25°26.707′ N, 91°44.906′ E",
+      "image_count": 4,
+      "images": [
+        "mawphlang-sacred-forest-0_1.jpg",
+        "mawphlang-sacred-forest-1_1.jpg",
+        "mawphlang-sacred-forest-2_1.jpg",
+        "mawphlang-sacred-forest-3_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:17:01.868295",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c_2RTbbkNqr3o8b6Wm5LSgVzz62NloSPiEYdErVzw7PFC9AE7ZxWowhuXdWzsFZfOT4wJr6PqfrNnjWZEkJ3m8zEaOzlCXvMtmdSL7_BiSEy5xrJysHNGgJGz00niIaJhxA2Ze_nQ=w3200-h1600-k-no"
+    },
+    "name": "Mawphlang Sacred Forest",
+    "position": {
+      "x": 91.748433,
+      "y": 25.445117
+    },
+    "short_description": "A historic sacred forest 25 km from Shillong covering 192 acres with over 450 species of trees and plants over 800 years old.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:17:01.868Z"
+  },
+  {
+    "_id": "69315fa78efe79cfa3174e37",
+    "created_at": "2025-12-04T10:17:11.419Z",
+    "description": "A waterfall near Cherrapunji 7.5 km away that plunges from steep rockface dropping 170-190 meters. Accessible from Shillong-Cherrapunji road. Best viewed during rainy season when water levels are high.",
+    "metadata": {
+      "coordinates_original": "25°18′41″N 91°43′58″E",
+      "image_count": 5,
+      "images": [
+        "wah-kaba-falls-0_1.jpg",
+        "wah-kaba-falls-1_1.jpg",
+        "wah-kaba-falls-2_1.jpg",
+        "wah-kaba-falls-3_1.jpg",
+        "wah-kaba-falls-4_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:17:11.419763",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c-AljDt7dpMy2QWgRCeFV2Aq1AG7K6G6vtqvIZGo7NN7pA-VIBDtL0dKxapM6Lg2rIpdCbNnuVV0vtmyoVlfNapST4SZtpq_Upw_PycT1Dcy4R4g3Kb4hqLipjcIZ5KWux34LzF=w3200-h1600-k-no"
+    },
+    "name": "Wah-Kaba Falls",
+    "position": {
+      "x": 91.732778,
+      "y": 25.311389
+    },
+    "short_description": "A waterfall near Cherrapunji 7.5 km away that plunges from steep rockface dropping 170-190 meters.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:17:11.419Z"
+  },
+  {
+    "_id": "69315fae8efe79cfa3174e38",
+    "created_at": "2025-12-04T10:17:18.218Z",
+    "description": "A water sports facility at Umiam Lake offering activities like jet skiing, water cycling, and banana boat rides. Popular destination for adventure enthusiasts.",
+    "metadata": {
+      "coordinates_original": "25.6698° N, 91.9010° E",
+      "image_count": 3,
+      "images": [
+        "umiam-water-sports-0_1.jpeg",
+        "umiam-water-sports-1_1.jpeg",
+        "umiam-water-sports-2_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:17:18.218350",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c-3rjjbgAp7BMG0e9NGuRPzzqL0x4VqCaNTjqv_n9ym4Dg3hBF7FT64w0bqK5uQn6dXS--C_2ZNrdKh8kjmGLo5tCTmHDPNQPEju462mSd_CQ4rapYQe0MbS1rjwu01YMI9rAJeug=w3200-h1600-k-no"
+    },
+    "name": "Umiam Water Sports",
+    "position": {
+      "x": 91.901,
+      "y": 25.6698
+    },
+    "short_description": "A water sports facility at Umiam Lake offering activities like jet skiing, water cycling, and banana boat rides.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:17:18.218Z"
+  },
+  {
+    "_id": "69315fb58efe79cfa3174e39",
+    "created_at": "2025-12-04T10:17:25.347Z",
+    "description": "Adventure activity sites offering zip-lining experiences with stunning views of the surrounding landscapes and valleys. Thrilling experience for adventure seekers.",
+    "metadata": {
+      "coordinates_original": "27°19′30″N 88°37′00″E",
+      "image_count": 4,
+      "images": [
+        "ziplining-spots-0_1.jpeg",
+        "ziplining-spots-1_1.jpeg",
+        "ziplining-spots-2_1.jpeg",
+        "ziplining-spots-3_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:17:25.347820"
+    },
+    "name": "Ziplining Spots",
+    "position": {
+      "x": 88.616667,
+      "y": 27.325
+    },
+    "short_description": "Adventure activity sites offering zip-lining experiences with stunning views of the surrounding landscapes and valleys.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:17:25.347Z"
+  },
+  {
+    "_id": "69315fbb8efe79cfa3174e3a",
+    "created_at": "2025-12-04T10:17:31.63Z",
+    "description": "Parks offering various adventure activities and recreational facilities including slides, swings, and outdoor games for families and groups.",
+    "metadata": {
+      "coordinates_original": "27°19′30″N 88°37′00″E",
+      "image_count": 4,
+      "images": [
+        "adventure-parks-0_1.jpeg",
+        "adventure-parks-1_1.jpeg",
+        "adventure-parks-2_1.jpeg",
+        "adventure-parks-3_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:17:31.630828"
+    },
+    "name": "Adventure Parks",
+    "position": {
+      "x": 88.616667,
+      "y": 27.325
+    },
+    "short_description": "Parks offering various adventure activities and recreational facilities including slides, swings, and outdoor games for families and groups.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:17:31.63Z"
+  },
+  {
+    "_id": "69315fc38efe79cfa3174e3b",
+    "created_at": "2025-12-04T10:17:39.619Z",
+    "description": "A popular cafe in Shillong with panoramic views, serving local and international cuisine. Known for its cozy ambiance and refreshments.",
+    "metadata": {
+      "coordinates_original": "25° 34' 34.3042\" N, 91° 53' 1.9640\" E",
+      "image_count": 5,
+      "images": [
+        "cafe-shillong-0_1.jpeg",
+        "cafe-shillong-1_1.jpeg",
+        "cafe-shillong-2_1.jpeg",
+        "cafe-shillong-3_1.jpeg",
+        "cafe-shillong-4_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:17:39.619725"
+    },
+    "name": "Cafe Shillong",
+    "position": {
+      "x": 91.883879,
+      "y": 25.576196
+    },
+    "short_description": "A popular cafe in Shillong with panoramic views, serving local and international cuisine.",
+    "type": "business",
+    "updated_at": "2025-12-04T10:17:39.619Z"
+  },
+  {
+    "_id": "69315fca8efe79cfa3174e3c",
+    "created_at": "2025-12-04T10:17:46.288Z",
+    "description": "A scenic viewpoint in Shillong offering beautiful views of the city and surrounding areas. Popular spot for sunset watching and photography.",
+    "metadata": {
+      "coordinates_original": "25° 27′ N, 91° 87′ E",
+      "image_count": 4,
+      "images": [
+        "la-shillong-viewpoints-0_1.jpeg",
+        "la-shillong-viewpoints-1_1.jpeg",
+        "la-shillong-viewpoints-2_1.jpeg",
+        "la-shillong-viewpoints-3_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:17:46.288610",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c8wgIou09MPfUJVW2OaPm6mY2FjFdxTrs84YNZYsAGrrwUvTotWxxl5yefLNdOrKEwLTEQWNWKsYMXahGqeYC4GZ6QeSSwnZxTAXYvcpJ-qh2Jo8pZkC8De517EtwEj5POHTh3WJa9-caQ=w3200-h1600-k-no"
+    },
+    "name": "La Shillong Viewpoints",
+    "position": {
+      "x": 92.45,
+      "y": 25.45
+    },
+    "short_description": "A scenic viewpoint in Shillong offering beautiful views of the city and surrounding areas.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:17:46.288Z"
+  },
+  {
+    "_id": "69315fd28efe79cfa3174e3d",
+    "created_at": "2025-12-04T10:17:54.789Z",
+    "description": "A charming traditional Khasi village offering cultural experiences and interactions with local communities. Showcases traditional lifestyle and customs.",
+    "metadata": {
+      "coordinates_original": "25° 5833′ N, 91° 7833′ E",
+      "image_count": 5,
+      "images": [
+        "smit-village-0_1.jpeg",
+        "smit-village-1_1.jpeg",
+        "smit-village-2_1.jpeg",
+        "smit-village-3_1.jpeg",
+        "smit-village-4_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:17:54.789184"
+    },
+    "name": "Smit Village",
+    "position": {
+      "x": 199.583889,
+      "y": 122.716111
+    },
+    "short_description": "A charming traditional Khasi village offering cultural experiences and interactions with local communities.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:17:54.789Z"
+  },
+  {
+    "_id": "69315fd88efe79cfa3174e3e",
+    "created_at": "2025-12-04T10:18:00.226Z",
+    "description": "An organic village tourism initiative promoting sustainable farming and traditional agricultural practices. Offers farm stays and organic product experiences.",
+    "metadata": {
+      "coordinates_original": "25.5197° N, 91.8900° E",
+      "image_count": 3,
+      "images": [
+        "laitkor-organic-village-0_1.jpeg",
+        "laitkor-organic-village-1_1.jpeg",
+        "laitkor-organic-village-2_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:18:00.226507"
+    },
+    "name": "Laitkor Organic Village",
+    "position": {
+      "x": 91.89,
+      "y": 25.5197
+    },
+    "short_description": "An organic village tourism initiative promoting sustainable farming and traditional agricultural practices.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:18:00.226Z"
+  },
+  {
+    "_id": "69315fe38efe79cfa3174e3f",
+    "created_at": "2025-12-04T10:18:11.848Z",
+    "description": "A historic trekking trail named after David Scott, a British administrator. Offers scenic views and historical significance during the trek.",
+    "metadata": {
+      "coordinates_original": "25.41714° N, 91.75023° E",
+      "image_count": 7,
+      "images": [
+        "david-scott-trail-0_1.jpg",
+        "david-scott-trail-1_1.jpg",
+        "david-scott-trail-2_1.jpg",
+        "david-scott-trail-3_1.jpg",
+        "david-scott-trail-4_1.jpg",
+        "david-scott-trail-5_1.jpg",
+        "david-scott-trail-6_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:18:11.848052",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c8XIqy1_-fKzPGPfUB7KmlKwUTIvyMpMD9IXLvPIiuCVzN2dd4ToJiNSKA9AWlUmyOSercJjefli2joCYJFoz4xVDgVFIo0lcBv9W06cBTpdzxbx3opBfemLJUBBOT1Q69J5vbr=w3200-h1600-k-no"
+    },
+    "name": "David Scott Trail",
+    "position": {
+      "x": 91.75023,
+      "y": 25.41714
+    },
+    "short_description": "A historic trekking trail named after David Scott, a British administrator.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:18:11.848Z"
+  },
+  {
+    "_id": "69315fea8efe79cfa3174e40",
+    "created_at": "2025-12-04T10:18:18.528Z",
+    "description": "A high-altitude peak offering panoramic views of the surrounding landscape. Popular trekking destination with scenic vistas.",
+    "metadata": {
+      "coordinates_original": "25.1° N 92.52 E",
+      "image_count": 4,
+      "images": [
+        "sohpetbneng-peak-0_1.jpeg",
+        "sohpetbneng-peak-1_1.jpeg",
+        "sohpetbneng-peak-2_1.jpeg",
+        "sohpetbneng-peak-3_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:18:18.527979"
+    },
+    "name": "Sohpetbneng Peak",
+    "position": {
+      "x": 92.52,
+      "y": 25.1
+    },
+    "short_description": "A high-altitude peak offering panoramic views of the surrounding landscape.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:18:18.528Z"
+  },
+  {
+    "_id": "69315ff88efe79cfa3174e41",
+    "created_at": "2025-12-04T10:18:32.096Z",
+    "description": "A limestone cave system showcasing natural rock formations and underground passages. Offers adventure and exploration experiences for visitors.",
+    "metadata": {
+      "coordinates_original": "25.304753° N, 91.585039° E",
+      "image_count": 9,
+      "images": [
+        "mawjymbuin-cave-0_1.jpg",
+        "mawjymbuin-cave-1_1.jpg",
+        "mawjymbuin-cave-2_1.jpg",
+        "mawjymbuin-cave-3_1.jpg",
+        "mawjymbuin-cave-4_1.jpg",
+        "mawjymbuin-cave-5_1.jpg",
+        "mawjymbuin-cave-6_1.jpg",
+        "mawjymbuin-cave-7_1.jpg",
+        "mawjymbuin-cave-8_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:18:32.096368"
+    },
+    "name": "Mawjymbuin Cave",
+    "position": {
+      "x": 91.585039,
+      "y": 25.304753
+    },
+    "short_description": "A limestone cave system showcasing natural rock formations and underground passages.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:18:32.096Z"
+  },
+  {
+    "_id": "693160018efe79cfa3174e42",
+    "created_at": "2025-12-04T10:18:41.616Z",
+    "description": "An underground cave system near Cherrapunji with intricate limestone formations. Popular trekking and caving destination.",
+    "metadata": {
+      "coordinates_original": "25.2572° N, 91.7150° E",
+      "image_count": 6,
+      "images": [
+        "arwah-cave-0_1.jpg",
+        "arwah-cave-1_1.jpg",
+        "arwah-cave-2_1.jpg",
+        "arwah-cave-3_1.jpg",
+        "arwah-cave-4_1.jpg",
+        "arwah-cave-5_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:18:41.616096",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c8KzGsghMozdso3FZ21TPBocay_1-hkfcP6EQ6equYrLprM76EmFFG7t3_83CwLSynAI-A7FvXOPgXmanDUOYsmkPNMSBlFbltpJzvbOEykCUu6fOGBBxwDY4zwHeyVLbIaqjrdtg=w3200-h1600-k-no"
+    },
+    "name": "Arwah Cave",
+    "position": {
+      "x": 91.715,
+      "y": 25.2572
+    },
+    "short_description": "An underground cave system near Cherrapunji with intricate limestone formations.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:18:41.616Z"
+  },
+  {
+    "_id": "6931600a8efe79cfa3174e43",
+    "created_at": "2025-12-04T10:18:50.843Z",
+    "description": "A scenic mountain peak offering panoramic views of the surrounding hills and valleys. A trekking destination known for its natural beauty.",
+    "metadata": {
+      "coordinates_original": "25°34′12″ N 91°52′48″ E",
+      "image_count": 6,
+      "images": [
+        "diengiei-peak-0_1.jpeg",
+        "diengiei-peak-1_1.jpeg",
+        "diengiei-peak-2_1.jpeg",
+        "diengiei-peak-3_1.jpeg",
+        "diengiei-peak-4_1.jpeg",
+        "diengiei-peak-5_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:18:50.843553"
+    },
+    "name": "Diengiei Peak",
+    "position": {
+      "x": 91.88,
+      "y": 25.57
+    },
+    "short_description": "A scenic mountain peak offering panoramic views of the surrounding hills and valleys.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:18:50.843Z"
+  },
+  {
+    "_id": "693160118efe79cfa3174e44",
+    "created_at": "2025-12-04T10:18:57.278Z",
+    "description": "A bustling shopping and commercial hub in Shillong offering local goods, handicrafts, and merchandise. Popular shopping destination.",
+    "metadata": {
+      "coordinates_original": "25°34'36.1\"N 91°53'16.6\"E",
+      "image_count": 4,
+      "images": [
+        "police-bazaar-0_1.jpeg",
+        "police-bazaar-1_1.jpeg",
+        "police-bazaar-2_1.jpeg",
+        "police-bazaar-3_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:18:57.278818",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c8bZBl6UP0_YitDWpxxBh6nsQs9HOVfD1tylWSWv2wXBj6M1ujqiHMCkrbgT6rMeimSC72Yhrps-on9hYCYnlFyq2pmMbzGlR_M19MvZZ3l8DAFsEwLzq88elVB1QwWdvwvOWZCHw=w3200-h1600-k-no"
+    },
+    "name": "Police Bazaar",
+    "position": {
+      "x": 91.887944,
+      "y": 25.576694
+    },
+    "short_description": "A bustling shopping and commercial hub in Shillong offering local goods, handicrafts, and merchandise.",
+    "type": "business",
+    "updated_at": "2025-12-04T10:18:57.278Z"
+  },
+  {
+    "_id": "6931601c8efe79cfa3174e45",
+    "created_at": "2025-12-04T10:19:08.126Z",
+    "description": "A traditional market area offering local products, textiles, and ethnic goods. A vibrant shopping area reflecting local culture.",
+    "metadata": {
+      "coordinates_original": "22°33′36.00″ N 88°25′12.00″ E",
+      "image_count": 5,
+      "images": [
+        "bara-bazaar-0_1.jpeg",
+        "bara-bazaar-1_1.jpeg",
+        "bara-bazaar-2_1.jpeg",
+        "bara-bazaar-3_1.jpeg",
+        "bara-bazaar-4_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:19:08.126720",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c97EmlrJ9tmZdgJVqVHLu4lCVwtWUzxdUcntDXPZXaQkWICrLHzUGZJ12UPwDXoQBIXdeeDEf_MWSVQqiEmdUKUjJAocCVjdu8PQelPdzwZys-vlRiGPpWk5bfAGiT3qeqQXe4zIw=w3200-h1600-k-no"
+    },
+    "name": "Bara Bazaar",
+    "position": {
+      "x": 91.874547,
+      "y": 25.572012
+    },
+    "short_description": "A traditional market area offering local products, textiles, and ethnic goods.",
+    "type": "business",
+    "updated_at": "2025-12-08T10:54:27.878Z"
+  },
+  {
+    "_id": "693160258efe79cfa3174e46",
+    "created_at": "2025-12-04T10:19:17.637Z",
+    "description": "A cozy cafe offering refreshments and local cuisine. Popular spot for locals and tourists to relax and enjoy food.",
+    "metadata": {
+      "coordinates_original": "25° 33′ 58.1983″ N 91° 53′ 40.2792″ E",
+      "image_count": 5,
+      "images": [
+        "dylan_s-cafe-0_1.jpeg",
+        "dylan_s-cafe-1_1.jpeg",
+        "dylan_s-cafe-2_1.jpeg",
+        "dylan_s-cafe-3_1.jpeg",
+        "dylan_s-cafe-4_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:19:17.637556"
+    },
+    "name": "Dylan's Cafe",
+    "position": {
+      "x": 91.894522,
+      "y": 25.566166
+    },
+    "short_description": "A cozy cafe offering refreshments and local cuisine.",
+    "type": "business",
+    "updated_at": "2025-12-04T10:19:17.637Z"
+  },
+  {
+    "_id": "6931602d8efe79cfa3174e47",
+    "created_at": "2025-12-04T10:19:25.662Z",
+    "description": "A scenic waterfall near Cherrapunji cascading from high altitude. Beautiful natural feature accessible during monsoon season.",
+    "metadata": {
+      "coordinates_original": "25°39′11.5″N, 91°53′3.5″E",
+      "image_count": 5,
+      "images": [
+        "ri-kynjai-falls-0_1.jpeg",
+        "ri-kynjai-falls-1_1.jpeg",
+        "ri-kynjai-falls-2_1.jpeg",
+        "ri-kynjai-falls-3_1.jpeg",
+        "ri-kynjai-falls-4_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:19:25.662951",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c_PtLaf6BnKGt_tEjmAVdmNiP3cnk56xgITy8UGUyz3x7CohK1DUuLGiQjZrS4ni663b8wM4i5VYsiKxN8kQv_tMBSA3bZFm_7uBBsoSdFp20Zd-tTmWvU5jpaHkfbRxXAvUa3p=w3200-h1600-k-no"
+    },
+    "name": "Ri Kynjai Falls",
+    "position": {
+      "x": 91.884306,
+      "y": 25.653194
+    },
+    "short_description": "A scenic waterfall near Cherrapunji cascading from high altitude.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:19:25.662Z"
+  },
+  {
+    "_id": "6931603d8efe79cfa3174e48",
+    "created_at": "2025-12-04T10:19:41.446Z",
+    "description": "One of the wettest places on Earth with the world's highest rainfall. Features stunning waterfalls including Nohkalikai Falls and scenic beauty.",
+    "metadata": {
+      "coordinates_original": "25°16′32″N 91°41′13″E",
+      "image_count": 9,
+      "images": [
+        "nohkalikai-falls-0_1.jpg",
+        "nohkalikai-falls-1_1.jpg",
+        "nohkalikai-falls-2_1.jpg",
+        "nohkalikai-falls-3_1.jpg",
+        "nohkalikai-falls-4_1.jpg",
+        "nohkalikai-falls-5_1.jpg",
+        "nohkalikai-falls-6_1.jpg",
+        "nohkalikai-falls-7_1.jpg",
+        "nohkalikai-falls-8_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:19:41.446427",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c8u55uESgO-g-fVE13fUdUtnxHuHV5yoPF57IHvGTf53tyEOvywCTJPmXgiihEWYebcupyFS8LVSKtYHiEvmJ5iwrsdwZvPnENSwburQCTwp5mqK3jsH6vHwnOgoEjN4bku4AWK=w3200-h1600-k-no"
+    },
+    "name": "Nohkalikai Falls",
+    "position": {
+      "x": 91.686944,
+      "y": 25.275556
+    },
+    "short_description": "One of the wettest places on Earth with the world's highest rainfall.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:19:41.446Z"
+  },
+  {
+    "_id": "6931604e8efe79cfa3174e49",
+    "created_at": "2025-12-04T10:19:58.491Z",
+    "description": "Known as 'The Abode of Clouds', a scenic town famous for its emerald hills and stunning landscapes. Popular trekking and tourism destination.",
+    "metadata": {
+      "coordinates_original": "25.284°N, 91.721°E",
+      "image_count": 11,
+      "images": [
+        "cherra-punji-0_1.jpg",
+        "cherra-punji-1_1.jpg",
+        "cherra-punji-2_1.jpg",
+        "cherra-punji-3_1.jpg",
+        "cherra-punji-4_1.jpg",
+        "cherra-punji-5_1.jpg",
+        "cherra-punji-6_1.jpg",
+        "cherra-punji-7_1.jpg",
+        "cherra-punji-8_1.jpg",
+        "cherra-punji-9_1.jpg",
+        "cherra-punji-10_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:19:58.491259",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c8wf6wwisKtlsZWE0ovlV5KKBc2mk4mun7KpZpKWxrN0N4gMZc4a-FAJrCNHULvPycK3Mw-91kUD2RJk5DMTl4fjy1yxkQ5Gi6d4zo7KgyVpwZhoHcmF7FYffn007NxGKPy8Dio=w3200-h1600-k-no"
+    },
+    "name": "Cherra Punji",
+    "position": {
+      "x": 91.721,
+      "y": 25.284
+    },
+    "short_description": "Known as 'The Abode of Clouds', a scenic town famous for its emerald hills and stunning landscapes.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:19:58.491Z"
+  },
+  {
+    "_id": "693160558efe79cfa3174e4a",
+    "created_at": "2025-12-04T10:20:05.21Z",
+    "description": "A limestone cave system near Cherrapunji with natural formations and archaeological significance. Popular for caving and exploration.",
+    "metadata": {
+      "coordinates_original": "25° 13′ 12″ N 91° 43′ 12″ E",
+      "image_count": 4,
+      "images": [
+        "thangkharang-cave-0_1.jpeg",
+        "thangkharang-cave-1_1.jpeg",
+        "thangkharang-cave-2_1.jpeg",
+        "thangkharang-cave-3_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:20:05.210653"
+    },
+    "name": "Thangkharang Cave",
+    "position": {
+      "x": 91.72,
+      "y": 25.22
+    },
+    "short_description": "A limestone cave system near Cherrapunji with natural formations and archaeological significance.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:20:05.21Z"
+  },
+  {
+    "_id": "6931605d8efe79cfa3174e4b",
+    "created_at": "2025-12-04T10:20:13.539Z",
+    "description": "Ancient monolithic stone structures of the Khasi people. Historic and culturally significant archaeological sites.",
+    "metadata": {
+      "coordinates_original": "25.567° N 92.209° E",
+      "image_count": 5,
+      "images": [
+        "khasi-stone-monoliths-0_1.jpeg",
+        "khasi-stone-monoliths-1_1.jpeg",
+        "khasi-stone-monoliths-2_1.jpeg",
+        "khasi-stone-monoliths-3_1.jpeg",
+        "khasi-stone-monoliths-4_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:20:13.539641"
+    },
+    "name": "Khasi Stone Monoliths",
+    "position": {
+      "x": 92.209,
+      "y": 25.567
+    },
+    "short_description": "Ancient monolithic stone structures of the Khasi people.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:20:13.539Z"
+  },
+  {
+    "_id": "693160638efe79cfa3174e4c",
+    "created_at": "2025-12-04T10:20:19.644Z",
+    "description": "A cultural center showcasing the heritage and lifestyle of the Jaintia tribal people. Educational and cultural venue.",
+    "metadata": {
+      "coordinates_original": "25°40′0″ N 92°30′0″ E",
+      "image_count": 4,
+      "images": [
+        "jaintia-tribal-culture-centre-0_1.jpeg",
+        "jaintia-tribal-culture-centre-1_1.jpeg",
+        "jaintia-tribal-culture-centre-2_1.jpeg",
+        "jaintia-tribal-culture-centre-3_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:20:19.644672"
+    },
+    "name": "Jaintia Tribal Culture Centre",
+    "position": {
+      "x": 92.5,
+      "y": 25.666667
+    },
+    "short_description": "A cultural center showcasing the heritage and lifestyle of the Jaintia tribal people.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:20:19.644Z"
+  },
+  {
+    "_id": "6931606c8efe79cfa3174e4d",
+    "created_at": "2025-12-04T10:20:28.217Z",
+    "description": "A scenic tea garden offering views of rolling hills. Visitors can learn about tea cultivation and enjoy tea tasting experiences.",
+    "metadata": {
+      "coordinates_original": "27.2367°N 88.4222°E",
+      "image_count": 5,
+      "images": [
+        "masticadori-tea-garden-0_1.jpeg",
+        "masticadori-tea-garden-1_1.jpeg",
+        "masticadori-tea-garden-2_1.jpeg",
+        "masticadori-tea-garden-3_1.jpeg",
+        "masticadori-tea-garden-4_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:20:28.217941"
+    },
+    "name": "Masticadori Tea Garden",
+    "position": {
+      "x": 88.4222,
+      "y": 27.2367
+    },
+    "short_description": "A scenic tea garden offering views of rolling hills.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:20:28.217Z"
+  },
+  {
+    "_id": "693160788efe79cfa3174e4e",
+    "created_at": "2025-12-04T10:20:40.557Z",
+    "description": "A farm offering fresh strawberry picking experiences during season. Educational agritourism destination for families.",
+    "metadata": {
+      "coordinates_original": "27°30'N, 88°35'E",
+      "image_count": 6,
+      "images": [
+        "strawberry-farm-0_1.jpeg",
+        "strawberry-farm-1_1.jpeg",
+        "strawberry-farm-2_1.jpeg",
+        "strawberry-farm-3_1.jpeg",
+        "strawberry-farm-4_1.jpeg",
+        "strawberry-farm-5_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:20:40.557906"
+    },
+    "name": "Strawberry Farm",
+    "position": {
+      "x": 88.583333,
+      "y": 27.5
+    },
+    "short_description": "A farm offering fresh strawberry picking experiences during season.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:20:40.557Z"
+  },
+  {
+    "_id": "693160818efe79cfa3174e4f",
+    "created_at": "2025-12-04T10:20:49.304Z",
+    "description": "A tourism initiative promoting organic farming and sustainable agriculture practices. Offers farm experiences and organic produce.",
+    "metadata": {
+      "coordinates_original": "28°07′48″ N 88°55′25″ E",
+      "image_count": 5,
+      "images": [
+        "organic-village-tourism-0_1.jpeg",
+        "organic-village-tourism-1_1.jpeg",
+        "organic-village-tourism-2_1.jpeg",
+        "organic-village-tourism-3_1.jpeg",
+        "organic-village-tourism-4_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:20:49.304032"
+    },
+    "name": "Organic Village Tourism",
+    "position": {
+      "x": 88.572256,
+      "y": 27.391026
+    },
+    "short_description": "A tourism initiative promoting organic farming and sustainable agriculture practices.",
+    "type": "tourism",
+    "updated_at": "2025-12-08T10:56:29.04Z"
+  },
+  {
+    "_id": "693160868efe79cfa3174e50",
+    "created_at": "2025-12-04T10:20:54.344Z",
+    "description": "A trekking destination through limestone cave systems and underground passages. Adventurous experience for cave explorers.",
+    "metadata": {
+      "coordinates_original": "27°11'26.5\" N, 88°22'21.3\" E",
+      "image_count": 3,
+      "images": [
+        "limestone-caves-trek-0_1.jpeg",
+        "limestone-caves-trek-1_1.jpeg",
+        "limestone-caves-trek-2_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:20:54.343991",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c_ncb_zkcYIQ7ytbppYM7MLcz7Jh7_e9DWIosj5UDAlQ1Zk-S70jDt14q6b-JtrjgAAScSK7SjOrPwWu1uKRPsca0WMyf4tTm_BwlM0K_OjUQfbdxy4mWam_kc5NnNiVypzwGb3=w3200-h1600-k-no"
+    },
+    "name": "Limestone Caves Trek",
+    "position": {
+      "x": 88.372583,
+      "y": 27.190694
+    },
+    "short_description": "A trekking destination through limestone cave systems and underground passages.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:20:54.344Z"
+  },
+  {
+    "_id": "6931608e8efe79cfa3174e51",
+    "created_at": "2025-12-04T10:21:02.128Z",
+    "description": "A scenic lake offering peaceful surroundings and boating opportunities. Popular spot for relaxation and nature lovers.",
+    "metadata": {
+      "coordinates_original": "27°10′19″ N 88°46′59″ E",
+      "image_count": 4,
+      "images": [
+        "bandhan-lake-0_1.jpeg",
+        "bandhan-lake-1_1.jpeg",
+        "bandhan-lake-2_1.jpeg",
+        "bandhan-lake-3_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:21:02.128383"
+    },
+    "name": "Bandhan Lake",
+    "position": {
+      "x": 88.783056,
+      "y": 27.171944
+    },
+    "short_description": "A scenic lake offering peaceful surroundings and boating opportunities.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:21:02.128Z"
+  },
+  {
+    "_id": "693160988efe79cfa3174e52",
+    "created_at": "2025-12-04T10:21:12.885Z",
+    "description": "A limestone cave system near Cherrapunji featuring natural formations and underground streams. Popular trekking and caving destination.",
+    "metadata": {
+      "coordinates_original": "25°13′27.7″ N 91°43′28.6″ E",
+      "image_count": 6,
+      "images": [
+        "mawsmai-cave-0_1.jpeg",
+        "mawsmai-cave-1_1.jpeg",
+        "mawsmai-cave-2_1.jpeg",
+        "mawsmai-cave-3_1.jpeg",
+        "mawsmai-cave-4_1.jpeg",
+        "mawsmai-cave-5_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:21:12.885753",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c8xqe1PVhcYozbsjKDSt5cFxXNy4OgICQRWUdVoYXrYS1nxiOIEEDUlQ_IVsGuK-htbOGRvGiRis_onx6_UmHP4trxEtML8PCj-wPG5OK9r0oVJ3b0IvMa6e236jc8kWRkukkg=w3200-h1600-k-no"
+    },
+    "name": "Mawsmai Cave",
+    "position": {
+      "x": 91.724611,
+      "y": 25.224361
+    },
+    "short_description": "A limestone cave system near Cherrapunji featuring natural formations and underground streams.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:21:12.885Z"
+  },
+  {
+    "_id": "693160a18efe79cfa3174e53",
+    "created_at": "2025-12-04T10:21:21.635Z",
+    "description": "A scenic waterfall near Cherrapunji cascading down limestone cliffs. Beautiful natural attraction accessible during monsoon season.",
+    "metadata": {
+      "coordinates_original": "25°13'03\" N, 91°39'11\" E",
+      "image_count": 4,
+      "images": [
+        "laitkhynsew-falls-0_1.jpeg",
+        "laitkhynsew-falls-1_1.jpeg",
+        "laitkhynsew-falls-2_1.jpeg",
+        "laitkhynsew-falls-3_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:21:21.635593"
+    },
+    "name": "Laitkhynsew Falls",
+    "position": {
+      "x": 91.653056,
+      "y": 25.2175
+    },
+    "short_description": "A scenic waterfall near Cherrapunji cascading down limestone cliffs.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:21:21.635Z"
+  },
+  {
+    "_id": "693160a78efe79cfa3174e54",
+    "created_at": "2025-12-04T10:21:27.305Z",
+    "description": "A heritage tourism destination offering glimpses into traditional village life and cultural practices of the region.",
+    "metadata": {
+      "coordinates_original": "25.1788625° N 92.3739579° E",
+      "image_count": 4,
+      "images": [
+        "lumshilong-memory-village-0_1.jpeg",
+        "lumshilong-memory-village-1_1.jpeg",
+        "lumshilong-memory-village-2_1.jpeg",
+        "lumshilong-memory-village-3_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:21:27.305827"
+    },
+    "name": "Lumshilong Memory Village",
+    "position": {
+      "x": 92.373958,
+      "y": 25.178862
+    },
+    "short_description": "A heritage tourism destination offering glimpses into traditional village life and cultural practices of the region.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:21:27.305Z"
+  },
+  {
+    "_id": "693160b48efe79cfa3174e55",
+    "created_at": "2025-12-04T10:21:40.667Z",
+    "description": "An eco-tourism initiative promoting sustainable tourism and environmental conservation in the region.",
+    "metadata": {
+      "coordinates_original": "25.1750° N 91.9000° E",
+      "image_count": 5,
+      "images": [
+        "shnongpdeng-eco-tourism-0_1.jpeg",
+        "shnongpdeng-eco-tourism-1_1.jpeg",
+        "shnongpdeng-eco-tourism-2_1.jpeg",
+        "shnongpdeng-eco-tourism-3_1.jpeg",
+        "shnongpdeng-eco-tourism-4_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:21:40.667071",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c9IMNAAWh8tYP0APIXiur8jU2GFg445cIYFWJRYd-i5XpJornj0p5dbN4D669K0ZtL5MV9ko0TpUdUXXbTauNrSxy469Ybhs-jROlR8uvI0H4G_pH2-QdVumJKHa_01N1Vc_XiG=w3200-h1600-k-no"
+    },
+    "name": "Shnongpdeng Eco-Tourism",
+    "position": {
+      "x": 91.9,
+      "y": 25.175
+    },
+    "short_description": "An eco-tourism initiative promoting sustainable tourism and environmental conservation in the region.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:21:40.667Z"
+  },
+  {
+    "_id": "693160bc8efe79cfa3174e56",
+    "created_at": "2025-12-04T10:21:48.867Z",
+    "description": "An adventure destination offering various outdoor activities and thrilling experiences for adventure enthusiasts.",
+    "metadata": {
+      "coordinates_original": "25°34′56″N 91°53′40″E",
+      "image_count": 4,
+      "images": [
+        "soo-shillong-adventure-0_1.jpeg",
+        "soo-shillong-adventure-1_1.jpeg",
+        "soo-shillong-adventure-2_1.jpeg",
+        "soo-shillong-adventure-3_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:21:48.867683"
+    },
+    "name": "Soo-Shillong Adventure",
+    "position": {
+      "x": 91.894444,
+      "y": 25.582222
+    },
+    "short_description": "An adventure destination offering various outdoor activities and thrilling experiences for adventure enthusiasts.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:21:48.867Z"
+  },
+  {
+    "_id": "693160bd8efe79cfa3174e57",
+    "created_at": "2025-12-04T10:21:49.427Z",
+    "description": "An agricultural tourism destination offering guided garden tours and beekeeping experiences.",
+    "metadata": {
+      "coordinates_original": "32°12′29.5″ N 77°31′39.5″ E",
+      "image_count": 0,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-04T10:21:49.427681"
+    },
+    "name": "Bee Garden Tours",
+    "position": {
+      "x": 91.890492,
+      "y": 25.537584
+    },
+    "short_description": "An agricultural tourism destination offering guided garden tours and beekeeping experiences.",
+    "type": "tourism",
+    "updated_at": "2025-12-08T10:55:48.118Z"
+  },
+  {
+    "_id": "693160cc8efe79cfa3174e58",
+    "created_at": "2025-12-04T10:22:04.597Z",
+    "description": "A scenic high-altitude destination offering panoramic mountain views and trekking opportunities.",
+    "metadata": {
+      "coordinates_original": "32° 10′ 32.0″ N, 77° 32′ 45.0″ E",
+      "image_count": 6,
+      "images": [
+        "kheerganga-0_1.jpeg",
+        "kheerganga-1_1.jpeg",
+        "kheerganga-2_1.jpeg",
+        "kheerganga-3_1.jpeg",
+        "kheerganga-4_1.jpeg",
+        "kheerganga-5_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:22:04.597098",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c9QcXsbpc5MaNeUcBq9qU6nyb_SwTVUOEV8-PcZMhiP8dUG5hqmemnWAPoKjdrmcsImPxOsXuCpRQOPaw82L8iNmRcU_MRxGtc2CUvfKduAEeWCzOGYkg2hSkRL6uE8ezZ-ET2dQA=w3200-h1600-k-no"
+    },
+    "name": "Kheerganga",
+    "position": {
+      "x": 88.49375,
+      "y": 27.282574
+    },
+    "short_description": "A scenic high-altitude destination offering panoramic mountain views and trekking opportunities.",
+    "type": "tourism",
+    "updated_at": "2025-12-08T10:56:54.522Z"
+  },
+  {
+    "_id": "693160da8efe79cfa3174e59",
+    "created_at": "2025-12-04T10:22:18.251Z",
+    "description": "An adventure walk featuring a suspended bridge over a scenic valley. Thrilling experience for adventure seekers.",
+    "metadata": {
+      "coordinates_original": "27.26154° N, 88.11167° E",
+      "image_count": 6,
+      "images": [
+        "hanging-bridge-walk-0_1.jpeg",
+        "hanging-bridge-walk-1_1.jpeg",
+        "hanging-bridge-walk-2_1.jpeg",
+        "hanging-bridge-walk-3_1.jpeg",
+        "hanging-bridge-walk-4_1.jpeg",
+        "hanging-bridge-walk-5_1.jpeg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:22:18.251410",
+      "panorama_360": "https://lh3.googleusercontent.com/gpms-cs-s/APRy3c9RD-Q8jDF7kUReyMHWnQRgCdJv8Pc9Rd22AB11nHdevUnDE0MDIcqLmU_mSkcfCZ78c3qkmCGk6D7-nQQzRkZvpr-UuEd4O-D9wDjV9lIG0pz0Eko3PaMvKK0AMgpdpT9pMZBhUA=w3200-h1600-k-no"
+    },
+    "name": "Hanging Bridge Walk",
+    "position": {
+      "x": 88.11167,
+      "y": 27.262
+    },
+    "short_description": "An adventure walk featuring a suspended bridge over a scenic valley.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:22:18.251Z"
+  },
+  {
+    "_id": "693160da8efe79cfa3174e5a",
+    "created_at": "2025-12-04T10:22:18.8Z",
+    "description": "A traditional village tourism destination offering cultural experiences and interactions with local communities.",
+    "metadata": {
+      "coordinates_original": "27° 5′ 24″ N, 88° 27′ 36″ E",
+      "image_count": 0,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-04T10:22:18.800578"
+    },
+    "name": "Labarbotay",
+    "position": {
+      "x": 88.46,
+      "y": 27.09
+    },
+    "short_description": "A traditional village tourism destination offering cultural experiences and interactions with local communities.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:22:18.8Z"
+  },
+  {
+    "_id": "693160ea8efe79cfa3174e5b",
+    "created_at": "2025-12-04T10:22:34.241Z",
+    "description": "A butterfly park featuring various species of butterflies in their natural habitat. Educational and nature tourism destination.",
+    "metadata": {
+      "coordinates_original": "27° 11′ 59.2″ N 88° 21′ 12.5″ E",
+      "image_count": 6,
+      "images": [
+        "namchi-butterfly-park-0_1.jpeg",
+        "namchi-butterfly-park-1_1.jpeg",
+        "namchi-butterfly-park-2_1.jpeg",
+        "namchi-butterfly-park-3_1.jpeg",
+        "namchi-butterfly-park-4_1.jpeg",
+        "namchi-butterfly-park-5_1.png"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-04T10:22:34.241639"
+    },
+    "name": "Namchi Butterfly Park",
+    "position": {
+      "x": 88.353472,
+      "y": 27.199778
+    },
+    "short_description": "A butterfly park featuring various species of butterflies in their natural habitat.",
+    "type": "tourism",
+    "updated_at": "2025-12-04T10:22:34.241Z"
+  },
+  {
+    "_id": "693175a8b504c9bf1c0ef77a",
+    "created_at": "2025-12-04T11:51:04.945Z",
+    "description": "Good bad vcba dkds dos seos sme sksnd fjd djdie e ewnjd fdnfn f fnd dne e d dkd s s ekene e",
+    "metadata": {},
+    "name": "Yoyo cabs",
+    "position": {
+      "x": 25.582636,
+      "y": 91.894601
+    },
+    "short_description": "Cabs only",
+    "type": "business",
+    "updated_at": "2025-12-04T11:51:04.945Z"
+  },
+  {
+    "_id": "69318afc9d66c48373d4e6f6",
+    "created_at": "2025-12-04T13:22:04.255Z",
+    "description": "Cab",
+    "metadata": {},
+    "name": "MJ Cab",
+    "position": {
+      "x": 37.421998,
+      "y": -122.084
+    },
+    "short_description": "Cab",
+    "type": "business",
+    "updated_at": "2025-12-04T13:22:04.255Z"
+  },
+  {
+    "_id": "6932ecb2d27b6d8c29a49e22",
+    "created_at": "2025-12-05T07:15:37.546Z",
+    "description": "Buddhist monastery in Sikkim — one of the large monasteries of the Nyingma sect in northern Sikkim.",
+    "metadata": {
+      "images": [
+        "http://10.233.208.162:8000/api/v1/cdn/images/PHENSANG_20MONASTERY.png"
+      ],
+      "models": [
+        "phensong.glb"
+      ]
+    },
+    "name": "Phensong Monastery",
+    "position": {
+      "x": 96,
+      "y": 66
+    },
+    "short_description": "Phensong",
+    "type": "monastery",
+    "updated_at": "2025-12-08T06:00:43.625Z"
+  },
+  {
+    "_id": "6932ecb2d27b6d8c29a49e23",
+    "created_at": "2025-12-05T07:15:37.546Z",
+    "description": "Historical ruins of the former capital of Sikkim, located near Pemayangtse Monastery.",
+    "metadata": {
+      "images": [],
+      "models": [
+        "rabdentseruins.glb"
+      ]
+    },
+    "name": "Rabdentse Ruins",
+    "position": {
+      "x": 66,
+      "y": 96
+    },
+    "short_description": "Rabdentse Ruins",
+    "type": "monastery",
+    "updated_at": "2025-12-05T07:15:38.616Z"
+  },
+  {
+    "_id": "6932ecb2d27b6d8c29a49e24",
+    "created_at": "2025-12-05T07:15:37.546Z",
+    "description": "Large Buddhist monastery near Gangtok, Sikkim, India — one of the most important centers of the Karma Kagyu lineage.",
+    "metadata": {
+      "images": [
+        "http://10.233.208.162:8000/api/v1/cdn/images/RUMTEK_20DHARMA_20CHAKRA_20CENTRE.png"
+      ],
+      "models": [
+        "rumtek.glb"
+      ]
+    },
+    "name": "Rumtek Monastery",
+    "position": {
+      "x": 96,
+      "y": 66
+    },
+    "short_description": "Rumtek",
+    "type": "monastery",
+    "updated_at": "2025-12-08T06:01:14.366Z"
+  },
+  {
+    "_id": "6932ecb7d27b6d8c29a49e27",
+    "created_at": "2025-12-05T07:15:37.546Z",
+    "description": "Buddhist monastery near Yuksom, Sikkim, India — considered the oldest monastery in Sikkim, built in 1701.",
+    "metadata": {
+      "images": [
+        "http://10.233.208.162:8000/api/v1/cdn/images/DUBDE_20MONASTERY.png"
+      ],
+      "models": [
+        "dubdi.glb"
+      ]
+    },
+    "name": "Dubdi Monastery",
+    "position": {
+      "x": 96,
+      "y": 66
+    },
+    "short_description": "Dubdi",
+    "type": "monastery",
+    "updated_at": "2025-12-08T06:01:58.581Z"
+  },
+  {
+    "_id": "6932ecb7d27b6d8c29a49e28",
+    "created_at": "2025-12-05T07:15:37.546Z",
+    "description": "Buddhist monastery near Gangtok, Sikkim, India — Nyingma sect; a key monastery in the Gangtok region.",
+    "metadata": {
+      "images": [
+        "http://10.233.208.162:8000/api/v1/cdn/images/ENCHEY_20MONASTERY.png"
+      ],
+      "models": [
+        "enchey.glb"
+      ]
+    },
+    "name": "Enchey Monastery",
+    "position": {
+      "x": 96,
+      "y": 66
+    },
+    "short_description": "Enchey",
+    "type": "monastery",
+    "updated_at": "2025-12-08T06:02:58.932Z"
+  },
+  {
+    "_id": "6932ecb7d27b6d8c29a49e29",
+    "created_at": "2025-12-05T07:15:37.546Z",
+    "description": "Buddhist monastery in Pemayangtse near Pelling, Sikkim, India — one of the oldest and most revered Nyingma monasteries.",
+    "metadata": {
+      "images": [
+        "http://10.233.208.162:8000/api/v1/cdn/images/PEMAYANGISE_20MONASTERY.png"
+      ],
+      "models": [
+        "pemayantse.glb"
+      ]
+    },
+    "name": "Pemayangtse Monastery",
+    "position": {
+      "x": 88.421554,
+      "y": 27.401288
+    },
+    "short_description": "Pemayangtse",
+    "type": "monastery",
+    "updated_at": "2025-12-08T06:05:50.519Z"
+  },
+  {
+    "_id": "6932ecb7d27b6d8c29a49e2d",
+    "created_at": "2025-12-05T07:15:37.546Z",
+    "description": "Buddhist monastery located on Samdruptse Hill near Namchi, Sikkim — known for its panoramic hilltop location.",
+    "metadata": {
+      "images": [
+        "http://10.233.208.162:8000/api/v1/cdn/images/SERDUP_20CHOLING_20MONASTERY.png"
+      ],
+      "models": [
+        "samdruptsehill.glb"
+      ]
+    },
+    "name": "Samdruptse Monastery",
+    "position": {
+      "x": 88.421554,
+      "y": 27.401288
+    },
+    "short_description": "Samdruptse",
+    "type": "monastery",
+    "updated_at": "2025-12-08T10:59:45.88Z"
+  },
+  {
+    "_id": "6932ecb7d27b6d8c29a49e2e",
+    "created_at": "2025-12-05T07:15:37.546Z",
+    "description": "Buddhist monastery in Tashiding, West Sikkim — regarded as one of the holiest monasteries in the state.",
+    "metadata": {
+      "images": [
+        "http://10.233.208.162:8000/api/v1/cdn/images/TASHIDING_20MONASTERY.png"
+      ],
+      "models": [
+        "tashiding.glb"
+      ]
+    },
+    "name": "Tashiding Monastery",
+    "position": {
+      "x": 88.515495,
+      "y": 27.176548
+    },
+    "short_description": "Tashiding",
+    "type": "monastery",
+    "updated_at": "2025-12-08T10:57:28.701Z"
+  },
+  {
+    "_id": "6933f4db79f1da0f38a5f8bd",
+    "created_at": "2025-12-06T09:18:19.982Z",
+    "description": "Luxury hotel with premium amenities",
+    "metadata": {},
+    "name": "EVENT Hotel",
+    "position": {
+      "x": 343434,
+      "y": 3434.4343
+    },
+    "short_description": "5-star luxury hotel",
+    "type": "business",
+    "updated_at": "2025-12-06T09:18:19.982Z"
+  },
+  {
+    "_id": "6933f6f398cade204f63d82b",
+    "description": "A major government multi-speciality hospital (also known as Sir Thutob Namgyal Memorial Hospital) in Sochaygang / Sungava, Gangtok, Sikkim — India’s second largest government hospital with around 1002 beds, advanced facilities including ICUs, operation theatres, diagnostics, 24x7 emergency and multispeciality care. :contentReference[oaicite:1]{index=1}",
+    "metadata": {
+      "coordinates_original": "27.346° N, 88.603° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "New STNM Multispeciality Hospital",
+    "position": {
+      "x": 88.603,
+      "y": 27.346
+    },
+    "short_description": "Government multi-speciality hospital in Gangtok, Sikkim with 1002 beds and 24/7 services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d82c",
+    "description": "Central Referral Hospital (CRH) is a major multi-speciality teaching hospital located in Tadong, Gangtok, Sikkim. It serves as the primary clinical facility for Sikkim Manipal Institute of Medical Sciences (SMIMS). The hospital provides advanced emergency care, diagnostics, surgery, ICU support, and a wide range of medical specialties.",
+    "metadata": {
+      "coordinates_original": "27.316° N, 88.597° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Central Referral Hospital",
+    "position": {
+      "x": 88.597,
+      "y": 27.316
+    },
+    "short_description": "A major multi-speciality teaching hospital in Tadong, Gangtok, associated with Sikkim Manipal University.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d82d",
+    "description": "Mangan District Hospital is the primary government healthcare facility serving the people of Mangan and the North Sikkim region. It provides essential medical services including emergency care, outpatient and inpatient treatment, maternity care, diagnostics, and stabilization support for remote high-altitude areas.",
+    "metadata": {
+      "coordinates_original": "27.490° N, 88.531° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Mangan District Hospital",
+    "position": {
+      "x": 88.531,
+      "y": 27.49
+    },
+    "short_description": "The main government hospital serving Mangan and North Sikkim with essential medical and emergency services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d82e",
+    "description": "Samdong Primary Health Centre (PHC) is a key rural healthcare facility providing essential medical services to the Samdong region of East Sikkim. It offers outpatient care, basic emergency services, maternal and child health support, immunization, and primary treatments for common illnesses.",
+    "metadata": {
+      "coordinates_original": "27.354° N, 88.496° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Samdong PHC",
+    "position": {
+      "x": 88.496,
+      "y": 27.354
+    },
+    "short_description": "A rural Primary Health Centre in Samdong providing essential medical and emergency services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d82f",
+    "description": "Chungthang Primary Health Centre (PHC) is a crucial healthcare facility serving the high-altitude regions of Chungthang in North Sikkim. It provides essential medical services including outpatient care, basic emergency treatment, maternal and child healthcare, first aid, and stabilization for patients who may need referral to larger hospitals.",
+    "metadata": {
+      "coordinates_original": "27.607° N, 88.647° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Chungthang Primary Health Centre",
+    "position": {
+      "x": 88.647,
+      "y": 27.607
+    },
+    "short_description": "A key Primary Health Centre in Chungthang offering essential medical and emergency services for North Sikkim.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d830",
+    "description": "ESIC Dispensary Gangtok is a government-run healthcare facility under the Employees' State Insurance Corporation, providing outpatient services, preventive care, basic emergency treatment, pharmacy support, and primary healthcare for insured workers and their families in Gangtok.",
+    "metadata": {
+      "coordinates_original": "27.320° N, 88.598° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "ESIC Dispensary Gangtok",
+    "position": {
+      "x": 88.598,
+      "y": 27.32
+    },
+    "short_description": "Government ESIC dispensary in Gangtok offering primary healthcare and outpatient services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d831",
+    "description": "Military Hospital Gangtok is an Indian Army medical facility providing advanced healthcare services to military personnel, their families, and occasionally civilians in emergency situations. The hospital offers outpatient care, emergency treatment, diagnostics, surgical support, and specialized military medical services.",
+    "metadata": {
+      "coordinates_original": "27.302° N, 88.597° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Military Hospital Gangtok",
+    "position": {
+      "x": 88.597,
+      "y": 27.302
+    },
+    "short_description": "Indian Army medical facility in Gangtok offering emergency and specialized healthcare services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d832",
+    "description": "Reme Cure Private Clinic is a local healthcare facility providing outpatient consultations, basic diagnostics, first aid, and primary medical services to residents of South Sikkim. The clinic offers general medicine support, minor emergency treatment, and routine check-ups.",
+    "metadata": {
+      "coordinates_original": "27.232° N, 88.496° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Reme Cure Private Clinic",
+    "position": {
+      "x": 88.496,
+      "y": 27.232
+    },
+    "short_description": "A private clinic in South Sikkim providing outpatient and primary medical services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d833",
+    "description": "District Hospital Singtam is a key government healthcare facility serving the Singtam region and surrounding areas of East Sikkim. It provides a wide range of medical services including emergency care, inpatient and outpatient treatment, maternity services, diagnostics, and referral support for more advanced care.",
+    "metadata": {
+      "coordinates_original": "27.229° N, 88.494° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "District Hospital Singtam",
+    "position": {
+      "x": 88.494,
+      "y": 27.229
+    },
+    "short_description": "A major government hospital in Singtam offering emergency and general medical services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d834",
+    "description": "Rabongla Health \u0026 Wellness Centre is a primary healthcare facility serving the Rabongla region in South Sikkim. It provides essential medical services including outpatient consultations, basic emergency care, maternal and child health services, immunization, and first-level treatment for common illnesses.",
+    "metadata": {
+      "coordinates_original": "27.308° N, 88.364° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Rabongla Health \u0026 Wellness Centre",
+    "position": {
+      "x": 88.364,
+      "y": 27.308
+    },
+    "short_description": "A primary healthcare and wellness centre in Rabongla, South Sikkim offering essential medical services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d835",
+    "description": "District Hospital Gyalshing is the main government healthcare facility serving the Gyalshing district and nearby regions of West Sikkim. It provides essential medical services including 24×7 emergency care, outpatient and inpatient treatment, maternal and child healthcare, diagnostics, and specialist consultations.",
+    "metadata": {
+      "coordinates_original": "27.291° N, 88.256° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "District Hospital Gyalshing",
+    "position": {
+      "x": 88.256,
+      "y": 27.291
+    },
+    "short_description": "The primary government hospital in Gyalshing offering emergency and general medical services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d836",
+    "description": "A local police station serving the community in West Sikkim. It provides law enforcement, public safety services, emergency response, and support for crime prevention and investigation in the area.",
+    "metadata": {
+      "coordinates_original": "27.369° N, 88.223° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Police Station",
+    "position": {
+      "x": 88.223,
+      "y": 27.369
+    },
+    "short_description": "A local police station in West Sikkim providing public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d837",
+    "description": "Hingdam Police Station is a local law enforcement facility in West Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for the Hingdam area.",
+    "metadata": {
+      "coordinates_original": "27.284° N, 88.287° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Hingdam Police Station",
+    "position": {
+      "x": 88.287,
+      "y": 27.284
+    },
+    "short_description": "A police station in Hingdam, West Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d838",
+    "description": "Police Station Ravangla is a local law enforcement facility in South Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Ravangla and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.304° N, 88.365° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Police Station Ravangla",
+    "position": {
+      "x": 88.365,
+      "y": 27.304
+    },
+    "short_description": "A police station in Ravangla, South Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d839",
+    "description": "Namchi Police Station is a local law enforcement facility in South Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Namchi and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.164° N, 88.360° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Namchi Police Station",
+    "position": {
+      "x": 88.36,
+      "y": 27.164
+    },
+    "short_description": "A police station in Namchi, South Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d83a",
+    "description": "Singtam Police Station is a local law enforcement facility in East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Singtam and nearby areas.",
+    "metadata": {
+      "coordinates_original": "27.231° N, 88.496° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Singtam Police Station",
+    "position": {
+      "x": 88.496,
+      "y": 27.231
+    },
+    "short_description": "A police station in Singtam, East Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d83c",
+    "description": "Rhenock Police Station is a local law enforcement facility in East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Rhenock and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.174° N, 88.645° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Rhenock Police Station",
+    "position": {
+      "x": 88.645,
+      "y": 27.174
+    },
+    "short_description": "A police station in Rhenock, East Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d83d",
+    "description": "Rogli Police Station is a local law enforcement facility in East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Rogli and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.204° N, 88.699° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Rogli Police Station",
+    "position": {
+      "x": 88.699,
+      "y": 27.204
+    },
+    "short_description": "A police station in Rogli, East Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d83e",
+    "description": "Pakyong Police Station is a local law enforcement facility in East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Pakyong and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.243° N, 88.598° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Pakyong Police Station",
+    "position": {
+      "x": 88.598,
+      "y": 27.243
+    },
+    "short_description": "A police station in Pakyong, East Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d83f",
+    "description": "Ranipool Police Station is a local law enforcement facility in East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Ranipool and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.293° N, 88.590° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Ranipool Police Station",
+    "position": {
+      "x": 88.59,
+      "y": 27.293
+    },
+    "short_description": "A police station in Ranipool, East Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d840",
+    "description": "Tadong Police Station is a local law enforcement facility in East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Tadong and nearby areas.",
+    "metadata": {
+      "coordinates_original": "27.314° N, 88.601° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Tadong Police Station",
+    "position": {
+      "x": 88.601,
+      "y": 27.314
+    },
+    "short_description": "A police station in Tadong, East Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d841",
+    "description": "Sikkim Police Headquarters in Gangtok is the central administrative and operational hub for law enforcement across the state. It oversees public safety, emergency response, crime prevention, coordination among district police stations, and specialized policing units.",
+    "metadata": {
+      "coordinates_original": "27.330° N, 88.611° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Sikkim Police Headquarters",
+    "position": {
+      "x": 88.611,
+      "y": 27.33
+    },
+    "short_description": "The central administrative and operational hub for Sikkim Police in Gangtok, providing law enforcement and emergency services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d842",
+    "description": "Sadar Police Station is a local law enforcement facility in Gangtok, East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Sadar and nearby areas.",
+    "metadata": {
+      "coordinates_original": "27.333° N, 88.614° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Sadar Police Station",
+    "position": {
+      "x": 88.614,
+      "y": 27.333
+    },
+    "short_description": "A police station in Sadar, Gangtok offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d843",
+    "description": "Sikkim Armed Police is a specialized unit of the Sikkim Police providing armed law enforcement, rapid response to high-risk situations, internal security, and support for civil authorities during emergencies and public events.",
+    "metadata": {
+      "coordinates_original": "27.370° N, 88.602° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Sikkim Armed Police",
+    "position": {
+      "x": 88.602,
+      "y": 27.37
+    },
+    "short_description": "A specialized armed unit of the Sikkim Police providing security, emergency response, and support in high-risk situations.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d844",
+    "description": "Phodong Police Station is a local law enforcement facility in North Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Phodong and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.409° N, 88.571° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Phodong Police Station",
+    "position": {
+      "x": 88.571,
+      "y": 27.409
+    },
+    "short_description": "A police station in Phodong, North Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d845",
+    "description": "Mangan Police Station is a local law enforcement facility in North Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Mangan and nearby areas.",
+    "metadata": {
+      "coordinates_original": "27.502° N, 88.535° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Mangan Police Station",
+    "position": {
+      "x": 88.535,
+      "y": 27.502
+    },
+    "short_description": "A police station in Mangan, North Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f398cade204f63d846",
+    "description": "Chungthang Police Station is a local law enforcement facility in North Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Chungthang and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.602° N, 88.646° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Chungthang Police Station",
+    "position": {
+      "x": 88.646,
+      "y": 27.602
+    },
+    "short_description": "A police station in Chungthang, North Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d847",
+    "description": "A major government multi-speciality hospital (also known as Sir Thutob Namgyal Memorial Hospital) in Sochaygang / Sungava, Gangtok, Sikkim — India’s second largest government hospital with around 1002 beds, advanced facilities including ICUs, operation theatres, diagnostics, 24x7 emergency and multispeciality care. :contentReference[oaicite:1]{index=1}",
+    "metadata": {
+      "coordinates_original": "27.346° N, 88.603° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "New STNM Multispeciality Hospital",
+    "position": {
+      "x": 88.603,
+      "y": 27.346
+    },
+    "short_description": "Government multi-speciality hospital in Gangtok, Sikkim with 1002 beds and 24/7 services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d848",
+    "description": "Central Referral Hospital (CRH) is a major multi-speciality teaching hospital located in Tadong, Gangtok, Sikkim. It serves as the primary clinical facility for Sikkim Manipal Institute of Medical Sciences (SMIMS). The hospital provides advanced emergency care, diagnostics, surgery, ICU support, and a wide range of medical specialties.",
+    "metadata": {
+      "coordinates_original": "27.316° N, 88.597° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Central Referral Hospital",
+    "position": {
+      "x": 88.597,
+      "y": 27.316
+    },
+    "short_description": "A major multi-speciality teaching hospital in Tadong, Gangtok, associated with Sikkim Manipal University.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d849",
+    "description": "Mangan District Hospital is the primary government healthcare facility serving the people of Mangan and the North Sikkim region. It provides essential medical services including emergency care, outpatient and inpatient treatment, maternity care, diagnostics, and stabilization support for remote high-altitude areas.",
+    "metadata": {
+      "coordinates_original": "27.490° N, 88.531° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Mangan District Hospital",
+    "position": {
+      "x": 88.531,
+      "y": 27.49
+    },
+    "short_description": "The main government hospital serving Mangan and North Sikkim with essential medical and emergency services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d84a",
+    "description": "Samdong Primary Health Centre (PHC) is a key rural healthcare facility providing essential medical services to the Samdong region of East Sikkim. It offers outpatient care, basic emergency services, maternal and child health support, immunization, and primary treatments for common illnesses.",
+    "metadata": {
+      "coordinates_original": "27.354° N, 88.496° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Samdong PHC",
+    "position": {
+      "x": 88.496,
+      "y": 27.354
+    },
+    "short_description": "A rural Primary Health Centre in Samdong providing essential medical and emergency services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d84b",
+    "description": "Chungthang Primary Health Centre (PHC) is a crucial healthcare facility serving the high-altitude regions of Chungthang in North Sikkim. It provides essential medical services including outpatient care, basic emergency treatment, maternal and child healthcare, first aid, and stabilization for patients who may need referral to larger hospitals.",
+    "metadata": {
+      "coordinates_original": "27.607° N, 88.647° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Chungthang Primary Health Centre",
+    "position": {
+      "x": 88.647,
+      "y": 27.607
+    },
+    "short_description": "A key Primary Health Centre in Chungthang offering essential medical and emergency services for North Sikkim.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d84c",
+    "description": "ESIC Dispensary Gangtok is a government-run healthcare facility under the Employees' State Insurance Corporation, providing outpatient services, preventive care, basic emergency treatment, pharmacy support, and primary healthcare for insured workers and their families in Gangtok.",
+    "metadata": {
+      "coordinates_original": "27.320° N, 88.598° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "ESIC Dispensary Gangtok",
+    "position": {
+      "x": 88.598,
+      "y": 27.32
+    },
+    "short_description": "Government ESIC dispensary in Gangtok offering primary healthcare and outpatient services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d84d",
+    "description": "Military Hospital Gangtok is an Indian Army medical facility providing advanced healthcare services to military personnel, their families, and occasionally civilians in emergency situations. The hospital offers outpatient care, emergency treatment, diagnostics, surgical support, and specialized military medical services.",
+    "metadata": {
+      "coordinates_original": "27.302° N, 88.597° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Military Hospital Gangtok",
+    "position": {
+      "x": 88.597,
+      "y": 27.302
+    },
+    "short_description": "Indian Army medical facility in Gangtok offering emergency and specialized healthcare services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d84e",
+    "description": "Reme Cure Private Clinic is a local healthcare facility providing outpatient consultations, basic diagnostics, first aid, and primary medical services to residents of South Sikkim. The clinic offers general medicine support, minor emergency treatment, and routine check-ups.",
+    "metadata": {
+      "coordinates_original": "27.232° N, 88.496° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Reme Cure Private Clinic",
+    "position": {
+      "x": 88.496,
+      "y": 27.232
+    },
+    "short_description": "A private clinic in South Sikkim providing outpatient and primary medical services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d84f",
+    "description": "District Hospital Singtam is a key government healthcare facility serving the Singtam region and surrounding areas of East Sikkim. It provides a wide range of medical services including emergency care, inpatient and outpatient treatment, maternity services, diagnostics, and referral support for more advanced care.",
+    "metadata": {
+      "coordinates_original": "27.229° N, 88.494° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "District Hospital Singtam",
+    "position": {
+      "x": 88.494,
+      "y": 27.229
+    },
+    "short_description": "A major government hospital in Singtam offering emergency and general medical services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d850",
+    "description": "Rabongla Health \u0026 Wellness Centre is a primary healthcare facility serving the Rabongla region in South Sikkim. It provides essential medical services including outpatient consultations, basic emergency care, maternal and child health services, immunization, and first-level treatment for common illnesses.",
+    "metadata": {
+      "coordinates_original": "27.308° N, 88.364° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Rabongla Health \u0026 Wellness Centre",
+    "position": {
+      "x": 88.364,
+      "y": 27.308
+    },
+    "short_description": "A primary healthcare and wellness centre in Rabongla, South Sikkim offering essential medical services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d851",
+    "description": "District Hospital Gyalshing is the main government healthcare facility serving the Gyalshing district and nearby regions of West Sikkim. It provides essential medical services including 24×7 emergency care, outpatient and inpatient treatment, maternal and child healthcare, diagnostics, and specialist consultations.",
+    "metadata": {
+      "coordinates_original": "27.291° N, 88.256° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "District Hospital Gyalshing",
+    "position": {
+      "x": 88.256,
+      "y": 27.291
+    },
+    "short_description": "The primary government hospital in Gyalshing offering emergency and general medical services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d852",
+    "description": "A local police station serving the community in West Sikkim. It provides law enforcement, public safety services, emergency response, and support for crime prevention and investigation in the area.",
+    "metadata": {
+      "coordinates_original": "27.369° N, 88.223° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Police Station",
+    "position": {
+      "x": 88.223,
+      "y": 27.369
+    },
+    "short_description": "A local police station in West Sikkim providing public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d853",
+    "description": "Hingdam Police Station is a local law enforcement facility in West Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for the Hingdam area.",
+    "metadata": {
+      "coordinates_original": "27.284° N, 88.287° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Hingdam Police Station",
+    "position": {
+      "x": 88.287,
+      "y": 27.284
+    },
+    "short_description": "A police station in Hingdam, West Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d854",
+    "description": "Police Station Ravangla is a local law enforcement facility in South Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Ravangla and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.304° N, 88.365° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Police Station Ravangla",
+    "position": {
+      "x": 88.365,
+      "y": 27.304
+    },
+    "short_description": "A police station in Ravangla, South Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d855",
+    "description": "Namchi Police Station is a local law enforcement facility in South Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Namchi and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.164° N, 88.360° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Namchi Police Station",
+    "position": {
+      "x": 88.36,
+      "y": 27.164
+    },
+    "short_description": "A police station in Namchi, South Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d856",
+    "description": "Singtam Police Station is a local law enforcement facility in East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Singtam and nearby areas.",
+    "metadata": {
+      "coordinates_original": "27.231° N, 88.496° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Singtam Police Station",
+    "position": {
+      "x": 88.496,
+      "y": 27.231
+    },
+    "short_description": "A police station in Singtam, East Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d857",
+    "description": "Rangpo Police Station is a local law enforcement facility in East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Rangpo and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.174° N, 88.531° E",
+      "image_count": 8,
+      "images": [
+        "rangpo-police-station-0_1.jpg",
+        "rangpo-police-station-1_1.jpg",
+        "rangpo-police-station-2_1.jpg",
+        "rangpo-police-station-3_1.jpg",
+        "rangpo-police-station-4_1.jpg",
+        "rangpo-police-station-5_1.jpg",
+        "rangpo-police-station-6_1.jpg",
+        "rangpo-police-station-7_1.jpg"
+      ],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Rangpo Police Station",
+    "position": {
+      "x": 88.531,
+      "y": 27.174
+    },
+    "short_description": "A police station in Rangpo, East Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d858",
+    "description": "Rhenock Police Station is a local law enforcement facility in East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Rhenock and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.174° N, 88.645° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Rhenock Police Station",
+    "position": {
+      "x": 88.645,
+      "y": 27.174
+    },
+    "short_description": "A police station in Rhenock, East Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d859",
+    "description": "Rogli Police Station is a local law enforcement facility in East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Rogli and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.204° N, 88.699° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Rogli Police Station",
+    "position": {
+      "x": 88.699,
+      "y": 27.204
+    },
+    "short_description": "A police station in Rogli, East Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d85a",
+    "description": "Pakyong Police Station is a local law enforcement facility in East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Pakyong and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.243° N, 88.598° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Pakyong Police Station",
+    "position": {
+      "x": 88.598,
+      "y": 27.243
+    },
+    "short_description": "A police station in Pakyong, East Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d85b",
+    "description": "Ranipool Police Station is a local law enforcement facility in East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Ranipool and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.293° N, 88.590° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Ranipool Police Station",
+    "position": {
+      "x": 88.59,
+      "y": 27.293
+    },
+    "short_description": "A police station in Ranipool, East Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d85c",
+    "description": "Tadong Police Station is a local law enforcement facility in East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Tadong and nearby areas.",
+    "metadata": {
+      "coordinates_original": "27.314° N, 88.601° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Tadong Police Station",
+    "position": {
+      "x": 88.601,
+      "y": 27.314
+    },
+    "short_description": "A police station in Tadong, East Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d85d",
+    "description": "Sikkim Police Headquarters in Gangtok is the central administrative and operational hub for law enforcement across the state. It oversees public safety, emergency response, crime prevention, coordination among district police stations, and specialized policing units.",
+    "metadata": {
+      "coordinates_original": "27.330° N, 88.611° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Sikkim Police Headquarters",
+    "position": {
+      "x": 88.611,
+      "y": 27.33
+    },
+    "short_description": "The central administrative and operational hub for Sikkim Police in Gangtok, providing law enforcement and emergency services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d85e",
+    "description": "Sadar Police Station is a local law enforcement facility in Gangtok, East Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Sadar and nearby areas.",
+    "metadata": {
+      "coordinates_original": "27.333° N, 88.614° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Sadar Police Station",
+    "position": {
+      "x": 88.614,
+      "y": 27.333
+    },
+    "short_description": "A police station in Sadar, Gangtok offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d85f",
+    "description": "Sikkim Armed Police is a specialized unit of the Sikkim Police providing armed law enforcement, rapid response to high-risk situations, internal security, and support for civil authorities during emergencies and public events.",
+    "metadata": {
+      "coordinates_original": "27.370° N, 88.602° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Sikkim Armed Police",
+    "position": {
+      "x": 88.602,
+      "y": 27.37
+    },
+    "short_description": "A specialized armed unit of the Sikkim Police providing security, emergency response, and support in high-risk situations.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d860",
+    "description": "Phodong Police Station is a local law enforcement facility in North Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Phodong and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.409° N, 88.571° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Phodong Police Station",
+    "position": {
+      "x": 88.571,
+      "y": 27.409
+    },
+    "short_description": "A police station in Phodong, North Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d861",
+    "description": "Mangan Police Station is a local law enforcement facility in North Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Mangan and nearby areas.",
+    "metadata": {
+      "coordinates_original": "27.502° N, 88.535° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Mangan Police Station",
+    "position": {
+      "x": 88.535,
+      "y": 27.502
+    },
+    "short_description": "A police station in Mangan, North Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6933f6f598cade204f63d862",
+    "description": "Chungthang Police Station is a local law enforcement facility in North Sikkim. It provides public safety, emergency response, crime prevention, and community policing services for Chungthang and surrounding areas.",
+    "metadata": {
+      "coordinates_original": "27.602° N, 88.646° E",
+      "image_count": 8,
+      "images": [],
+      "imported": true,
+      "imported_at": "2025-12-05T00:00:00.000000",
+      "panorama_360": null
+    },
+    "name": "Chungthang Police Station",
+    "position": {
+      "x": 88.646,
+      "y": 27.602
+    },
+    "short_description": "A police station in Chungthang, North Sikkim offering public safety and emergency response services.",
+    "type": "emergency"
+  },
+  {
+    "_id": "6935a2b09fcd885c81cab6b4",
+    "created_at": "2025-12-07T15:52:16.174Z",
+    "description": "This is a restaurant",
+    "metadata": {
+      "images": [
+        "1000103121.jpg"
+      ]
+    },
+    "name": "Breeze",
+    "position": {
+      "x": 25.615726,
+      "y": 91.874097
+    },
+    "short_description": "A restaurant",
+    "type": "business",
+    "updated_at": "2025-12-07T15:52:24.267Z"
+  },
+  {
+    "_id": "6936500956539ad75c3f273e",
+    "created_at": "2025-12-08T04:11:53.622Z",
+    "description": "Luxury hotel with premium amenities",
+    "metadata": {},
+    "name": "Grandd Hotel",
+    "position": {
+      "x": 343434,
+      "y": 3434.4343
+    },
+    "short_description": "5-star luxury hotel",
+    "type": "business",
+    "updated_at": "2025-12-08T04:11:53.622Z"
+  },
+  {
+    "_id": "6936509def3a65e86830062f",
+    "created_at": "2025-12-08T04:14:21.992Z",
+    "description": "Welcome To The Barfung Retreat\nBestowing excellent hospitality to all guests, the Barfung Retreat reflects the rustic culture and ethos of its off beat location. With the perfect fusion of contemporary décor blending perfectly with the architecture and interiors of the room, the property has set the bar high for an indulgent stay at the nature resort .",
+    "metadata": {
+      "images": [
+        "1000186181.jpg"
+      ]
+    },
+    "name": "The Barfungre Treat",
+    "position": {
+      "x": 27.2918,
+      "y": 88.3464
+    },
+    "short_description": "We serve the best quality rooms and service.",
+    "type": "business",
+    "updated_at": "2025-12-08T04:14:22.888Z"
+  },
+  {
+    "_id": "69365794e6d5cad8d4945f6b",
+    "created_at": "2025-12-08T04:44:04.362Z",
+    "description": "I will feed you",
+    "metadata": {},
+    "name": "Birthday",
+    "position": {
+      "x": 27.3333,
+      "y": 88.6167
+    },
+    "short_description": "My Birthday",
+    "type": "business",
+    "updated_at": "2025-12-08T04:44:04.362Z"
+  },
+  {
+    "_id": "69365cc40fbf14fa139893b8",
+    "created_at": "2025-12-08T05:06:12.927Z",
+    "description": "Sample Menu Items\nThe menu includes items like Sizzlers, various Ramen dishes, and Chicken Manchurian. \nWings On Fire Combo: Noodles + Veggies + Chicken Wings + Flavoured with Dark Rum (₹450)\nVeg Sizzler: Cutlet + Veg Saute + Rice/Noodles (₹450)\nNon-Veg Sizzler: Rice/Noodles + Veggies + Chicken (₹510)\nGrilled Pork Ramen: Savory pork slices in rich ramen broth (₹350) \nYou can view the full menu or order online via Zomato.",
+    "metadata": {
+      "images": [
+        "1000186198.jpg"
+      ]
+    },
+    "name": "Valhalla - The Rooftop Restaurant",
+    "position": {
+      "x": 27.414,
+      "y": 88.323
+    },
+    "short_description": "Best rooftop restaurant you can find out there",
+    "type": "business",
+    "updated_at": "2025-12-08T05:06:14.889Z"
+  },
+  {
+    "_id": "693662ef0fbf14fa139893f7",
+    "created_at": "2025-12-08T05:32:31.875Z",
+    "description": "Sikkim Peak Tours \u0026 Travels offers thrilling trekking and travel experiences across Sikkim’s majestic mountains, serene valleys, and rich cultural landscapes. From beginner-friendly nature trails to high-altitude expeditions, they provide safe, well–guided, and memorable adventures for every traveler.",
+    "metadata": {
+      "images": [
+        "1000186220.jpg"
+      ]
+    },
+    "name": "Sikkim Peak Tours and Travels/Sikkim Trekking",
+    "position": {
+      "x": 27.33,
+      "y": 88.61
+    },
+    "short_description": "You can find your best guides to enjoy your touring experience.",
+    "type": "business",
+    "updated_at": "2025-12-08T05:32:33.074Z"
+  },
+  {
+    "_id": "693664f50fbf14fa13989409",
+    "created_at": "2025-12-08T05:41:09.025Z",
+    "description": "Ban Jhakri Falls Park is a popular tourist spot in Gangtok, featuring a powerful natural waterfall surrounded by beautifully landscaped gardens. The park showcases Sikkim’s traditional shamanic culture through statues, sculptures, and themed exhibits, making it a perfect blend of nature and heritage.",
+    "metadata": {
+      "images": [
+        "1000186222.jpg"
+      ]
+    },
+    "name": "Ban Jhakri Falls Park",
+    "position": {
+      "x": 88.662,
+      "y": 27.224
+    },
+    "short_description": "Enjoy your tourism with us",
+    "type": "business",
+    "updated_at": "2025-12-08T05:41:10.004Z"
+  },
+  {
+    "_id": "693666370fbf14fa13989419",
+    "created_at": "2025-12-08T05:46:31.54Z",
+    "description": "Chintan Bhavan is a prominent conference and cultural center in Gangtok, known for hosting government events, seminars, exhibitions, and public programs. With its modern auditorium and scenic surroundings, it serves as an important hub for official and cultural gatherings in Sikkim.",
+    "metadata": {
+      "images": [
+        "1000186232.jpg"
+      ]
+    },
+    "name": "Chintan Bhavan",
+    "position": {
+      "x": 88.627,
+      "y": 27.267
+    },
+    "short_description": "Governmental venue featuring an auditorium for events and culturals",
+    "type": "business",
+    "updated_at": "2025-12-08T05:46:32.65Z"
+  },
+  {
+    "_id": "693668742293dfe899b6ca3d",
+    "created_at": "2025-12-08T05:56:04.505Z",
+    "description": "Discover the beauty of Sikkim, Darjeeling, Pelling, Nathula, Lachen, and Lachung with Sikkim Cab Rental. Our comprehensive cab booking service offers seamless travel solutions across these stunning destinations. Whether you’re planning a city tour or a scenic drive, our reliable and comfortable cabs are just a click away. Enjoy real-time GPS tracking, dynamic fare estimation, and a user-friendly booking process. Book your ride now and make your journey unforgettable!",
+    "metadata": {
+      "images": [
+        "1000186239.jpg"
+      ]
+    },
+    "name": "cab rental sikkim - #1 sikkim cab rental services",
+    "position": {
+      "x": 88.652,
+      "y": 27.224
+    },
+    "short_description": "Explore Sikkim, Darjeeling \u0026 Beyond with Our Cab Booking Service",
+    "type": "business",
+    "updated_at": "2025-12-08T05:56:06.718Z"
+  },
+  {
+    "_id": "69366ac62293dfe899b6ca5a",
+    "created_at": "2025-12-08T06:05:58.241Z",
+    "description": "Luxury hotel with premium amenities",
+    "metadata": {},
+    "name": "EVENT Hotel",
+    "position": {
+      "x": 343434,
+      "y": 3434.4343
+    },
+    "short_description": "5-star luxury hotel",
+    "type": "business",
+    "updated_at": "2025-12-08T06:05:58.241Z"
+  },
+  {
+    "_id": "69366ae12293dfe899b6ca61",
+    "created_at": "2025-12-08T06:06:25.574Z",
+    "description": "Footprint Holidays is a travel and tour operator offering curated holiday packages, sightseeing tours, and adventure experiences across Sikkim and the Northeast. They provide reliable services including hotel bookings, transportation, customized itineraries, and guided trips for families, couples, and groups",
+    "metadata": {
+      "images": [
+        "1000186246.jpg"
+      ]
+    },
+    "name": "Footprint Holidays",
+    "position": {
+      "x": 88.664,
+      "y": 27.334
+    },
+    "short_description": "Find your best guides and mentors from here to explore deeply",
+    "type": "business",
+    "updated_at": "2025-12-08T06:06:28.116Z"
+  },
+  {
+    "_id": "69366b183a5338872fc0f7a4",
+    "created_at": "2025-12-08T06:07:20.911Z",
+    "description": "Marriage",
+    "metadata": {},
+    "name": "Bachelor's Party",
+    "position": {
+      "x": 27.3333,
+      "y": 88.6167
+    },
+    "short_description": "I am getting married",
+    "type": "business",
+    "updated_at": "2025-12-08T06:07:20.911Z"
+  },
+  {
+    "_id": "69366bb22293dfe899b6ca6b",
+    "created_at": "2025-12-08T06:09:54.88Z",
+    "description": "Sana Restaurant is a cozy dining spot known for its tasty food, friendly service, and comfortable atmosphere. It offers a mix of local, Indian, and popular multi-cuisine dishes, making it a nice place for families, friends, and travelers to enjoy a good meal",
+    "metadata": {
+      "images": [
+        "1000186198.jpg"
+      ]
+    },
+    "name": "Sana restaurant",
+    "position": {
+      "x": 88.648,
+      "y": 27.556
+    },
+    "short_description": "Enjoy the food with arabic spices",
+    "type": "business",
+    "updated_at": "2025-12-08T06:09:56.28Z"
+  },
+  {
+    "_id": "69366c512293dfe899b6ca75",
+    "created_at": "2025-12-08T06:12:33.815Z",
+    "description": "Sana Restaurant is a cozy dining spot known for its tasty food, friendly service, and comfortable atmosphere. It offers a mix of local, Indian, and popular multi-cuisine dishes, making it a nice place for families, friends, and travelers to enjoy a good meal",
+    "metadata": {
+      "images": [
+        "1000186181.jpg"
+      ]
+    },
+    "name": "Darbar restaurant",
+    "position": {
+      "x": 88.69756,
+      "y": 22.608499
+    },
+    "short_description": "Enjoy the Food with family.",
+    "type": "business",
+    "updated_at": "2025-12-08T06:12:34.793Z"
+  },
+  {
+    "_id": "69366cf12293dfe899b6ca7d",
+    "created_at": "2025-12-08T06:15:13.853Z",
+    "description": "Irani Restaurant is a cozy dining spot known for its tasty food, friendly service, and comfortable atmosphere. It offers a mix of local, Indian, and popular multi-cuisine dishes, making it a nice place for families, friends, and travelers to enjoy a good meal",
+    "metadata": {
+      "images": [
+        "1000186267.jpg"
+      ]
+    },
+    "name": "Irani resturant",
+    "position": {
+      "x": 88.649,
+      "y": 27.258
+    },
+    "short_description": "Have tastier food in our restaurant",
+    "type": "business",
+    "updated_at": "2025-12-08T06:15:15.017Z"
+  },
+  {
+    "_id": "69366daa2293dfe899b6ca85",
+    "created_at": "2025-12-08T06:18:18.323Z",
+    "description": "jjjjjjj",
+    "metadata": {},
+    "name": "hjjjj",
+    "position": {
+      "x": 88.6167,
+      "y": 27.3333
+    },
+    "short_description": "jjjjjj",
+    "type": "business",
+    "updated_at": "2025-12-08T06:18:18.323Z"
+  },
+  {
+    "_id": "693689a2dbef033c7cc911bc",
+    "created_at": "2025-12-08T08:17:38.228Z",
+    "description": "Lets go eat",
+    "metadata": {},
+    "name": "Lunch",
+    "position": {
+      "x": 27.3333,
+      "y": 88.6167
+    },
+    "short_description": "Lunch at this SIH",
+    "type": "business",
+    "updated_at": "2025-12-08T08:17:38.228Z"
+  },
+  {
+    "_id": "6936d443ce3e27c7f280a115",
+    "created_at": "2025-12-08T13:36:03.952Z",
+    "description": "Demo",
+    "metadata": {
+      "panorama_360": "http://10.233.208.162:8000/api/v1/cdn/images/1000033304.jpg"
+    },
+    "name": "SIH Venue",
+    "position": {
+      "x": 91.897649,
+      "y": 25.608375
+    },
+    "short_description": "Demo",
+    "type": "other",
+    "updated_at": "2025-12-08T13:36:03.952Z"
+  },
+  {
+    "_id": "6936d5face3e27c7f280a129",
+    "created_at": "2025-12-08T13:43:22.922Z",
+    "description": "Demo",
+    "metadata": {
+      "panorama_360": "http://10.233.208.162:8000/api/v1/cdn/images/1000033307.jpg"
+    },
+    "name": "SIH Venue 2",
+    "position": {
+      "x": 91.897709,
+      "y": 25.608334
+    },
+    "short_description": "Demo",
+    "type": "other",
+    "updated_at": "2025-12-08T13:43:22.922Z"
+  },
+  {
+    "_id": "6936d72ace3e27c7f280a13e",
+    "created_at": "2025-12-08T13:48:26.732Z",
+    "description": "demo",
+    "metadata": {
+      "panorama_360": "http://10.233.208.162:8000/api/v1/cdn/images/1000033307_2.jpg"
+    },
+    "name": "sih demo",
+    "position": {
+      "x": 88.696537,
+      "y": 27.188781
+    },
+    "short_description": "demo",
+    "type": "business",
+    "updated_at": "2025-12-08T13:48:26.732Z"
+  },
+  {
+    "_id": "6937ded9c3587eeaae2f690c",
+    "created_at": "2025-12-09T08:33:29.938Z",
+    "description": "Mon",
+    "metadata": {
+      "monastery_type": "cultural_heritage",
+      "verified": true
+    },
+    "name": "Ancient Monuments ",
+    "position": {
+      "x": 88.546922,
+      "y": 27.691856
+    },
+    "short_description": "Mon",
+    "type": "monastery",
+    "updated_at": "2025-12-09T08:33:29.938Z"
+  },
+  {
+    "_id": "69381550d6bb27c48cb82e66",
+    "created_at": "2025-12-09T12:25:52.837Z",
+    "description": "Event description it is",
+    "metadata": {},
+    "name": "This is an Event",
+    "position": {
+      "x": 88.6167,
+      "y": 27.3333
+    },
+    "short_description": "Event 1",
+    "type": "business",
+    "updated_at": "2025-12-09T12:25:52.837Z"
+  }
+]

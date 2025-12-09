@@ -1,0 +1,82 @@
+[
+  {
+    "_id": "6936cdd99ccdedd5ea826bbb",
+    "amount": 200,
+    "business_id": "69366c522293dfe899b6ca77",
+    "created_at": "2025-12-08T13:08:41.925Z",
+    "metadata": {
+      "from_time": "2025-12-08T13:08:37.874Z",
+      "quantity": 1,
+      "to_time": "2025-12-08T14:08:37.874Z"
+    },
+    "order_status": "created",
+    "payment_status": "pending",
+    "service_id": "6936c5f49ccdedd5ea826bac",
+    "updated_at": "2025-12-08T13:08:41.925Z",
+    "user_id": "6936651d0fbf14fa1398940f"
+  },
+  {
+    "_id": "6936cdedd2435cff6f4fcdc0",
+    "amount": 800,
+    "business_id": "69366cf22293dfe899b6ca7f",
+    "created_at": "2025-12-08T13:09:01.794Z",
+    "metadata": {
+      "from_time": "2025-12-08T13:08:56.040Z",
+      "quantity": 1,
+      "to_time": "2025-12-08T14:08:56.040Z"
+    },
+    "order_status": "created",
+    "payment_status": "pending",
+    "service_id": "6936c55c9ccdedd5ea826ba9",
+    "updated_at": "2025-12-08T13:09:01.794Z",
+    "user_id": "6936651d0fbf14fa1398940f"
+  },
+  {
+    "_id": "6937cda86a109fba1f76d654",
+    "amount": 200,
+    "business_id": "69366c522293dfe899b6ca77",
+    "created_at": "2025-12-09T07:20:08.633Z",
+    "metadata": {
+      "from_time": "2025-12-09T07:18:06.027Z",
+      "quantity": 1,
+      "to_time": "2025-12-09T08:18:06.027Z"
+    },
+    "order_status": "created",
+    "payment_status": "pending",
+    "service_id": "6936c5f49ccdedd5ea826bac",
+    "updated_at": "2025-12-09T07:20:08.633Z",
+    "user_id": "6933f2abd3ee7642adb2d9da"
+  },
+  {
+    "_id": "6937f2c5178f0e1e971118a3",
+    "amount": 2500,
+    "business_id": "693668752293dfe899b6ca3f",
+    "created_at": "2025-12-09T09:58:29.084Z",
+    "metadata": {
+      "from_time": "2025-12-09T09:58:23.561Z",
+      "quantity": 1,
+      "to_time": "2025-12-09T10:58:23.561Z"
+    },
+    "order_status": "created",
+    "payment_status": "pending",
+    "service_id": "6936c48c9ccdedd5ea826ba4",
+    "updated_at": "2025-12-09T09:58:29.084Z",
+    "user_id": "6932852a9d66c48373d4e70f"
+  },
+  {
+    "_id": "6938195f6e10f81c366f8e8b",
+    "amount": 800,
+    "business_id": "69366cf22293dfe899b6ca7f",
+    "created_at": "2025-12-09T12:43:11.574Z",
+    "metadata": {
+      "from_time": "2025-12-09T12:43:01.414Z",
+      "quantity": 1,
+      "to_time": "2025-12-09T13:43:01.414Z"
+    },
+    "order_status": "created",
+    "payment_status": "pending",
+    "service_id": "6936c55c9ccdedd5ea826ba9",
+    "updated_at": "2025-12-09T12:43:11.574Z",
+    "user_id": "693154281f15f175dee33e7a"
+  }
+]

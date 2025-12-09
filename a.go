@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -12,84 +15,104 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 3 {
-		fmt.Println("Usage: go run a.go <fromMongoURI> <toMongoURI>")
+	if len(os.Args) != 2 {
+		fmt.Println("Usage: go run a.go <mongoURI>")
+		fmt.Println("Example: go run a.go mongodb://localhost:27017/mona360")
 		return
 	}
-	fromURI := os.Args[1]
-	toURI := os.Args[2]
+	mongoURI := os.Args[1]
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	// Connect to source MongoDB
-	fromClient, err := mongo.Connect(ctx, options.Client().ApplyURI(fromURI))
+	// Connect to MongoDB
+	fmt.Println("Connecting to MongoDB...")
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))
 	if err != nil {
-		log.Fatal("Failed to connect to source:", err)
+		log.Fatal("Failed to connect to MongoDB:", err)
 	}
-	defer fromClient.Disconnect(ctx)
+	defer client.Disconnect(context.Background())
 
-	// Connect to destination MongoDB
-	toClient, err := mongo.Connect(ctx, options.Client().ApplyURI(toURI))
-	if err != nil {
-		log.Fatal("Failed to connect to destination:", err)
+	// Ping to verify connection
+	if err := client.Ping(ctx, nil); err != nil {
+		log.Fatal("Failed to ping MongoDB:", err)
 	}
-	defer toClient.Disconnect(ctx)
+	fmt.Println("✓ Connected successfully")
 
-	// List collections in source DB
+	// Create dB directory if it doesn't exist
+	dbDir := "dB"
+	if err := os.MkdirAll(dbDir, 0755); err != nil {
+		log.Fatal("Failed to create dB directory:", err)
+	}
+
+	// Extract database name from URI or use default
 	dbName := "mona360"
-	fromDB := fromClient.Database(dbName)
-	toDB := toClient.Database(dbName)
+	db := client.Database(dbName)
 
-	collections, err := fromDB.ListCollectionNames(ctx, bson.D{})
+	// List all collections
+	collections, err := db.ListCollectionNames(context.Background(), bson.D{})
 	if err != nil {
 		log.Fatal("Failed to list collections:", err)
 	}
 	if len(collections) == 0 {
-		log.Fatal("No collections found in source DB")
+		log.Fatal("No collections found in database")
 	}
 
-	fmt.Printf("Found %d collections to export\n", len(collections))
+	fmt.Printf("\nFound %d collections in database '%s'\n", len(collections), dbName)
 
 	totalExported := 0
+	successCount := 0
 
-	// Export all collections
-	for _, collectionName := range collections {
-		fmt.Printf("\n--- Exporting collection: %s ---\n", collectionName)
+	// Export each collection to JSON
+	for i, collectionName := range collections {
+		fmt.Printf("\n[%d/%d] Exporting: %s\n", i+1, len(collections), collectionName)
 
-		fromColl := fromDB.Collection(collectionName)
-		toColl := toDB.Collection(collectionName)
+		coll := db.Collection(collectionName)
 
-		cursor, err := fromColl.Find(ctx, bson.D{})
+		cursor, err := coll.Find(context.Background(), bson.D{})
 		if err != nil {
-			log.Printf("Failed to read documents from %s: %v\n", collectionName, err)
-			continue
-		}
-		defer cursor.Close(ctx)
-
-		var docs []interface{}
-		if err = cursor.All(ctx, &docs); err != nil {
-			log.Printf("Failed to decode documents from %s: %v\n", collectionName, err)
+			log.Printf("✗ Failed to read documents: %v\n", err)
 			continue
 		}
 
-		if len(docs) > 0 {
-			// Use ordered: false to skip duplicates and continue inserting other documents
-			opts := options.InsertMany().SetOrdered(false)
-			result, err := toColl.InsertMany(ctx, docs, opts)
-			if err != nil {
-				// Log the error but continue
-				fmt.Printf("Warning: Some documents failed to insert in %s: %v\n", collectionName, err)
-				fmt.Printf("Successfully inserted %d documents\n", len(result.InsertedIDs))
-				totalExported += len(result.InsertedIDs)
-			} else {
-				fmt.Printf("✓ Exported %d documents from %s\n", len(docs), collectionName)
-				totalExported += len(docs)
-			}
-		} else {
-			fmt.Printf("No documents found in %s\n", collectionName)
+		var docs []bson.M
+		if err = cursor.All(context.Background(), &docs); err != nil {
+			log.Printf("✗ Failed to decode documents: %v\n", err)
+			cursor.Close(context.Background())
+			continue
 		}
+		cursor.Close(context.Background())
+
+		if len(docs) == 0 {
+			fmt.Printf("  ⚠ Collection is empty\n")
+			continue
+		}
+
+		// Write to JSON file
+		filename := filepath.Join(dbDir, fmt.Sprintf("%s.json", collectionName))
+		file, err := os.Create(filename)
+		if err != nil {
+			log.Printf("✗ Failed to create file: %v\n", err)
+			continue
+		}
+
+		encoder := json.NewEncoder(file)
+		encoder.SetIndent("", "  ")
+		if err := encoder.Encode(docs); err != nil {
+			log.Printf("✗ Failed to write JSON: %v\n", err)
+			file.Close()
+			continue
+		}
+		file.Close()
+
+		fmt.Printf("  ✓ Exported %d documents → %s\n", len(docs), filename)
+		totalExported += len(docs)
+		successCount++
 	}
 
-	fmt.Printf("\n=== Export Complete ===\n")
-	fmt.Printf("Total documents exported: %d\n", totalExported)
+	// Summary
+	fmt.Printf("Export Complete!\n")
+	fmt.Printf("Collections exported: %d/%d\n", successCount, len(collections))
+	fmt.Printf("Total documents: %d\n", totalExported)
+	fmt.Printf("Output directory: %s/\n", dbDir)
 }

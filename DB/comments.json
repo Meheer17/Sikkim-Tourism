@@ -1,0 +1,100 @@
+[
+  {
+    "_id": "6936cd1b0c295b5267e0fc83",
+    "created_at": "2024-02-14T10:22:31Z",
+    "service_id": "69317800b504c9bf1c0ef77f",
+    "text": "The new update feels faster overall, but the menu still lags sometimes.",
+    "user_id": "6935b4fe94e8dd8adda6d794"
+  },
+  {
+    "_id": "6936cd1b0c295b5267e0fc84",
+    "created_at": "2024-01-28T16:45:12Z",
+    "service_id": "69317800b504c9bf1c0ef77f",
+    "text": "Really liked the cleaner layout — it's more intuitive than before.",
+    "user_id": "6935b4fe94e8dd8adda6d794"
+  },
+  {
+    "_id": "6936cd1b0c295b5267e0fc85",
+    "created_at": "2024-03-02T08:57:49Z",
+    "service_id": "69317800b504c9bf1c0ef77f",
+    "text": "Sometimes it freezes on startup, but once it's running it works fine.",
+    "user_id": "6935b4fe94e8dd8adda6d794"
+  },
+  {
+    "_id": "6936cd1b0c295b5267e0fc86",
+    "created_at": "2024-04-11T21:14:03Z",
+    "service_id": "69317800b504c9bf1c0ef77f",
+    "text": "Notifications felt too aggressive this week — might be a bug.",
+    "user_id": "6935b4fe94e8dd8adda6d794"
+  },
+  {
+    "_id": "6936cd1b0c295b5267e0fc87",
+    "created_at": "2024-03-18T12:03:56Z",
+    "service_id": "69317800b504c9bf1c0ef77f",
+    "text": "Search results are definitely more accurate now. Good improvement.",
+    "user_id": "6935b4fe94e8dd8adda6d794"
+  },
+  {
+    "_id": "6937fe5e01be7ce3b485c2c3",
+    "created_at": "2025-12-09T10:47:58.886Z",
+    "rating": null,
+    "service_id": "6936c48c9ccdedd5ea826ba4",
+    "text": "Good",
+    "updated_at": "2025-12-09T10:47:58.886Z",
+    "user_id": "693154281f15f175dee33e7a"
+  },
+  {
+    "_id": "6937feb301be7ce3b485c2c4",
+    "created_at": "2025-12-09T10:49:23.939Z",
+    "rating": null,
+    "service_id": "6936c5f49ccdedd5ea826bac",
+    "text": "Bad product",
+    "updated_at": "2025-12-09T10:49:23.939Z",
+    "user_id": "693154281f15f175dee33e7a"
+  },
+  {
+    "_id": "6937feb701be7ce3b485c2c5",
+    "created_at": "2025-12-09T10:49:27.874Z",
+    "rating": null,
+    "service_id": "6936c5f49ccdedd5ea826bac",
+    "text": "Very good",
+    "updated_at": "2025-12-09T10:49:27.874Z",
+    "user_id": "693154281f15f175dee33e7a"
+  },
+  {
+    "_id": "6937febb01be7ce3b485c2c6",
+    "created_at": "2025-12-09T10:49:31.288Z",
+    "rating": null,
+    "service_id": "6936c5f49ccdedd5ea826bac",
+    "text": "Awesome",
+    "updated_at": "2025-12-09T10:49:31.288Z",
+    "user_id": "693154281f15f175dee33e7a"
+  },
+  {
+    "_id": "6937fec001be7ce3b485c2c7",
+    "created_at": "2025-12-09T10:49:36.307Z",
+    "rating": null,
+    "service_id": "6936c5f49ccdedd5ea826bac",
+    "text": "Aweossseeomeee",
+    "updated_at": "2025-12-09T10:49:36.307Z",
+    "user_id": "693154281f15f175dee33e7a"
+  },
+  {
+    "_id": "6937ff6301be7ce3b485c2c8",
+    "created_at": "2025-12-09T10:52:19.582Z",
+    "rating": null,
+    "service_id": "6936c55c9ccdedd5ea826ba9",
+    "text": "Bad",
+    "updated_at": "2025-12-09T10:52:19.582Z",
+    "user_id": "693154281f15f175dee33e7a"
+  },
+  {
+    "_id": "6938157cd6bb27c48cb82e6b",
+    "created_at": "2025-12-09T12:26:36.705Z",
+    "rating": null,
+    "service_id": "6936c48c9ccdedd5ea826ba4",
+    "text": "Good",
+    "updated_at": "2025-12-09T12:26:36.705Z",
+    "user_id": "693154281f15f175dee33e7a"
+  }
+]

@@ -1,0 +1,114 @@
+[
+  {
+    "_id": "6937f4f77b8d25bcc2500818",
+    "actual_data": 4,
+    "month_number": 1,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 0,
+    "year": 2025
+  },
+  {
+    "_id": "6937f4f77b8d25bcc2500819",
+    "actual_data": 4,
+    "month_number": 2,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 0,
+    "year": 2025
+  },
+  {
+    "_id": "6937f4f77b8d25bcc250081a",
+    "actual_data": 4,
+    "month_number": 3,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 0,
+    "year": 2025
+  },
+  {
+    "_id": "6937f4f77b8d25bcc250081b",
+    "actual_data": 4,
+    "month_number": 4,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 0,
+    "year": 2025
+  },
+  {
+    "_id": "6937f4f77b8d25bcc250081c",
+    "actual_data": 4,
+    "month_number": 5,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 0,
+    "year": 2025
+  },
+  {
+    "_id": "6937f4f77b8d25bcc250081d",
+    "actual_data": 4,
+    "month_number": 6,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 0,
+    "year": 2025
+  },
+  {
+    "_id": "6937f4f77b8d25bcc250081e",
+    "actual_data": 4,
+    "month_number": 7,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 0,
+    "year": 2025
+  },
+  {
+    "_id": "6937f4f77b8d25bcc250081f",
+    "actual_data": 4,
+    "month_number": 8,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 0,
+    "year": 2025
+  },
+  {
+    "_id": "6937f4f77b8d25bcc2500820",
+    "actual_data": 4,
+    "month_number": 9,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 0,
+    "year": 2025
+  },
+  {
+    "_id": "6937f4f77b8d25bcc2500821",
+    "actual_data": 4,
+    "month_number": 10,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 0,
+    "year": 2025
+  },
+  {
+    "_id": "6937f4f77b8d25bcc2500822",
+    "actual_data": 1,
+    "month_number": 11,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 0,
+    "year": 2025
+  },
+  {
+    "_id": "6937f4f77b8d25bcc2500823",
+    "actual_data": 29,
+    "month_number": 12,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 0,
+    "year": 2025
+  },
+  {
+    "_id": "6937f4f77b8d25bcc2500824",
+    "actual_data": null,
+    "month_number": 1,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 12,
+    "year": 2026
+  },
+  {
+    "_id": "6937f4f77b8d25bcc2500825",
+    "actual_data": null,
+    "month_number": 2,
+    "predicted_at": "2025-12-09T10:07:51.86Z",
+    "predicted_data": 13,
+    "year": 2026
+  }
+]

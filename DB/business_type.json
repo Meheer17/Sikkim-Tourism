@@ -1,0 +1,37 @@
+[
+  {
+    "_id": "6927dd74c83ad21b4792693d",
+    "category": "buy",
+    "type": "hotel"
+  },
+  {
+    "_id": "6927dd74c83ad21b4792693e",
+    "category": "buy",
+    "type": "restaurant"
+  },
+  {
+    "_id": "6927dd74c83ad21b4792693f",
+    "category": "buy",
+    "type": "cab"
+  },
+  {
+    "_id": "6927dd74c83ad21b47926940",
+    "category": "book",
+    "type": "guide"
+  },
+  {
+    "_id": "6927dd74c83ad21b47926941",
+    "category": "event",
+    "type": "event"
+  },
+  {
+    "_id": "69330a6098cade204f63d80f",
+    "category": "tourist_entry",
+    "type": "tourist_entry"
+  },
+  {
+    "_id": "69367fbfbde0a7ba5f19846f",
+    "category": "monastery",
+    "type": "monastery"
+  }
+]
