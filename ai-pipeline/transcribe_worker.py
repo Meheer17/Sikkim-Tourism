@@ -289,6 +289,13 @@ def process_today_files():
 
 			# prepare doc for $set (without created_at to avoid conflict)
 			logging.info(f'Processing file: {file_id}, l_id: {f.get("l_id")}, b_id: {f.get("b_id")}')
+			print("\n" + "="*80)
+			print(f"EXTRACTED TEXT FOR FILE: {file_id}")
+			print(f"File Name: {f.get('file_name')}")
+			print(f"Average Confidence: {avg_conf}")
+			print("-"*80)
+			print(paragraph)
+			print("="*80 + "\n")
 			doc_set = {
 				'file_id': file_id,
 				'file_name': f.get('file_name') if isinstance(f, dict) else None,
