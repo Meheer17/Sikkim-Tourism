@@ -14,6 +14,14 @@ import { PageTurnPdfViewer } from '@/components/common/PageTurnPdfViewer';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
+interface TranscriptionSummary {
+    id: string;
+    text: string;
+    avg_confidence?: number;
+    file_name?: string;
+    created_at: string;
+}
+
 interface LocationDetails {
     id: string;
     name: string;
@@ -24,6 +32,7 @@ interface LocationDetails {
     type: string;
     created_at?: string;
     updated_at?: string;
+    transcriptions?: TranscriptionSummary[];
 }
 
 interface HeritageDocument {
@@ -53,6 +62,7 @@ export default function LocationDetailsScreen() {
     const text = useThemeColor('text');
     const muted = useThemeColor('mutedText');
     const tint = useThemeColor('tint');
+    const border = useThemeColor('border');
 
     const canEdit = user && (user.role === 'admin' || user.role === 'business');
 
@@ -78,14 +88,21 @@ export default function LocationDetailsScreen() {
 
     const loadLocationDetails = async () => {
         if (!id) return;
+        console.log(`[LocationDetails] Loading location details for id: ${id}`);
         setLoading(true);
         try {
             const resp = await locationService.get(id);
+            console.log(`[LocationDetails] API Response:`, resp);
             if (resp.success && resp.data) {
+                console.log(`[LocationDetails] Location data:`, resp.data);
+                console.log(`[LocationDetails] Transcriptions:`, resp.data.transcriptions);
+                console.log(`[LocationDetails] Transcriptions count:`, resp.data.transcriptions?.length || 0);
                 setLocation(resp.data);
+            } else {
+                console.warn(`[LocationDetails] API call failed or no data:`, resp);
             }
         } catch (error) {
-            console.error('Failed to load location:', error);
+            console.error('[LocationDetails] Failed to load location:', error);
         } finally {
             setLoading(false);
         }
@@ -249,6 +266,36 @@ export default function LocationDetailsScreen() {
                                         </Text>
                                     </View>
                                 ))}
+                        </View>
+                    )}
+
+                    {/* Manuscript Transcriptions */}
+                    {location.transcriptions && location.transcriptions.length > 0 && (
+                        <View style={styles.section}>
+                            <Text style={[styles.sectionTitle, { color: text }]}>Manuscript Transcriptions</Text>
+                            <Text style={[styles.sectionSubtitle, { color: muted }]}>
+                                Ancient texts digitized from historical manuscripts
+                            </Text>
+                            {location.transcriptions.map((transcription, index) => (
+                                <View key={transcription.id} style={[styles.transcriptionCard, { backgroundColor: card, borderColor: border }]}>
+                                    <View style={styles.transcriptionHeader}>
+                                        <Text style={[styles.transcriptionFileName, { color: text }]}>
+                                            {transcription.file_name || `Manuscript ${index + 1}`}
+                                        </Text>
+                                        {transcription.avg_confidence && (
+                                            <Text style={[styles.confidenceText, { color: muted }]}>
+                                                {Math.round(transcription.avg_confidence * 100)}% accuracy
+                                            </Text>
+                                        )}
+                                    </View>
+                                    <Text style={[styles.transcriptionText, { color: text }]}>
+                                        {transcription.text}
+                                    </Text>
+                                    <Text style={[styles.transcriptionDate, { color: muted }]}>
+                                        Transcribed: {new Date(transcription.created_at).toLocaleDateString()}
+                                    </Text>
+                                </View>
+                            ))}
                         </View>
                     )}
                 </View>
@@ -420,8 +467,13 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 18,
-        fontWeight: '700',
-        marginBottom: 12,
+        fontWeight: '600',
+        marginBottom: 8,
+    },
+    sectionSubtitle: {
+        fontSize: 14,
+        marginBottom: 16,
+        fontStyle: 'italic',
     },
     description: {
         fontSize: 15,
@@ -440,6 +492,38 @@ const styles = StyleSheet.create({
     metadataValue: {
         fontSize: 14,
         flex: 1,
+    },
+    transcriptionCard: {
+        marginBottom: 16,
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+    },
+    transcriptionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+        flexWrap: 'wrap',
+    },
+    transcriptionFileName: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginLeft: 8,
+        flex: 1,
+    },
+    confidenceText: {
+        fontSize: 12,
+        fontStyle: 'italic',
+        marginLeft: 8,
+    },
+    transcriptionText: {
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 8,
+    },
+    transcriptionDate: {
+        fontSize: 12,
+        fontStyle: 'italic',
     },
     actionsContainer: {
         flexDirection: 'row',

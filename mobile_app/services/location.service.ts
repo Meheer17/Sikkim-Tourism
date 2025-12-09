@@ -4,6 +4,14 @@ import { apiClient } from './api.client';
 export interface LocationPosition { x: number; y: number }
 export type LocationType = 'emergency' | 'localhelp' | 'business' | 'event' | 'tourism' | 'other';
 
+export interface TranscriptionSummary {
+    id: string;
+    text: string;
+    avg_confidence?: number;
+    file_name?: string;
+    created_at: string;
+}
+
 export interface LocationModel {
     id: string;
     name: string;
@@ -14,6 +22,7 @@ export interface LocationModel {
     type: LocationType;
     created_at?: string;
     updated_at?: string;
+    transcriptions?: TranscriptionSummary[];
 }
 
 export interface LocationListResponse {
