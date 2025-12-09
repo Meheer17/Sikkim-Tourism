@@ -212,6 +212,14 @@ export default function EventsListScreen() {
                         </Text>
                     )}
                 </View>
+                <View style={{ flex: 1 }}>
+                    <Text style={[styles.headerTitle, { color: text }]}>Events</Text>
+                    {isOfflineData && (
+                        <Text style={[styles.headerSubtitle, { color: '#ff6b6b' }]}>
+                            Offline • {cacheTimestamp?.toLocaleString()}
+                        </Text>
+                    )}
+                </View>
                 <TouchableOpacity onPress={loadEvents}>
                     <IconSymbol name="arrow.clockwise" size={24} color={tint} />
                 </TouchableOpacity>
@@ -252,6 +260,7 @@ const styles = StyleSheet.create({
         paddingBottom: 16,
         borderBottomWidth: 1,
         gap: 12,
+        borderBottomColor: '#e5e7eb',
     },
     backButton: {
         width: 40,

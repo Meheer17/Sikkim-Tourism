@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { config } from '../config/api.config';
 
@@ -12,7 +13,13 @@ export class SecureStorage {
                 // Fallback to localStorage for web
                 localStorage.setItem(key, value);
             } else {
-                await SecureStore.setItemAsync(key, value);
+                try {
+                    await SecureStore.setItemAsync(key, value);
+                } catch (secureError) {
+                    // Fallback to AsyncStorage if SecureStore fails
+                    console.warn('SecureStore failed, using AsyncStorage fallback:', secureError);
+                    await AsyncStorage.setItem(key, value);
+                }
             }
         } catch (error) {
             console.error('SecureStorage setItem error:', error);
@@ -25,7 +32,13 @@ export class SecureStorage {
             if (this.isWeb) {
                 return localStorage.getItem(key);
             } else {
-                return await SecureStore.getItemAsync(key);
+                try {
+                    return await SecureStore.getItemAsync(key);
+                } catch (secureError) {
+                    // Fallback to AsyncStorage if SecureStore fails
+                    console.warn('SecureStore failed, using AsyncStorage fallback:', secureError);
+                    return await AsyncStorage.getItem(key);
+                }
             }
         } catch (error) {
             console.error('SecureStorage getItem error:', error);
@@ -38,7 +51,13 @@ export class SecureStorage {
             if (this.isWeb) {
                 localStorage.removeItem(key);
             } else {
-                await SecureStore.deleteItemAsync(key);
+                try {
+                    await SecureStore.deleteItemAsync(key);
+                } catch (secureError) {
+                    // Fallback to AsyncStorage if SecureStore fails
+                    console.warn('SecureStore failed, using AsyncStorage fallback:', secureError);
+                    await AsyncStorage.removeItem(key);
+                }
             }
         } catch (error) {
             console.error('SecureStorage removeItem error:', error);
