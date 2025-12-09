@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 import math
 
 from app.core.database import get_database
-from app.models.location import LocationCreate, LocationUpdate, LocationInDB, Location
+from app.models.location import LocationCreate, LocationUpdate, LocationInDB, Location, TranscriptionSummary
 
 DEFAULT_RADIUS_M = 1000  # meters
 
@@ -30,6 +30,45 @@ class LocationService:
         if location:
             return LocationInDB(**location)
         return None
+    
+    async def get_transcriptions_for_location(self, location_id: str) -> List[TranscriptionSummary]:
+        """Get transcriptions for files associated with this location"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"Fetching transcriptions for location_id: {location_id}")
+        
+        if not ObjectId.is_valid(location_id):
+            logger.warning(f"Invalid ObjectId for location: {location_id}")
+            return []
+        
+        location_obj_id = ObjectId(location_id)
+        logger.info(f"Converted to ObjectId: {location_obj_id}")
+        
+        # Find all transcriptions where l_id matches this location
+        query = {"l_id": location_obj_id}
+        logger.info(f"Querying transcriptions collection with: {query}")
+        
+        transcriptions_cursor = self.db.transcriptions.find(
+            query,
+            {"_id": 1, "text": 1, "avg_confidence": 1, "file_name": 1, "created_at": 1, "l_id": 1}
+        ).sort("created_at", -1)  # Most recent first
+        
+        transcriptions = []
+        count = 0
+        async for trans in transcriptions_cursor:
+            count += 1
+            logger.info(f"Found transcription {count}: _id={trans['_id']}, l_id={trans.get('l_id')}, file_name={trans.get('file_name')}, text_length={len(trans.get('text', ''))}")
+            transcriptions.append(TranscriptionSummary(
+                id=str(trans["_id"]),
+                text=trans.get("text", ""),
+                avg_confidence=trans.get("avg_confidence"),
+                file_name=trans.get("file_name"),
+                created_at=trans.get("created_at", datetime.utcnow())
+            ))
+        
+        logger.info(f"Total transcriptions found for location {location_id}: {len(transcriptions)}")
+        return transcriptions
     
     async def get_all(
         self,
