@@ -56,7 +56,34 @@ async def upload_artifact(
     tags: Optional[str] = Form(None),
     current_user_id: str = Depends(get_current_user_id)
 ):
-    """Upload an artifact for the monastery"""
+    """
+    Upload an artifact for the monastery to cloud storage.
+    
+    This endpoint uploads files to CDN cloud storage and stores metadata in MongoDB.
+    Supports automatic compression for images and proper categorization for heritage artifacts.
+    
+    **Categories:**
+    - `manuscript`: Ancient manuscripts and texts
+    - `scripture`: Religious scriptures and texts
+    - `artifact`: Cultural artifacts and relics
+    - `document`: Historical documents
+    - `image`: Heritage images and photographs
+    - `painting`: Traditional paintings and artwork
+    - `sculpture`: Sculptures and carved items
+    - `textile`: Traditional textiles and fabrics
+    - `other`: Other heritage items
+    
+    **Supported file types:**
+    - Images: jpg, png, gif, webp (auto-compressed)
+    - Documents: pdf
+    - Files are uploaded to CDN and accessible via returned URLs
+    
+    **Returns:**
+    - `file_id`: Unique identifier for the uploaded file
+    - `file_url`: CDN URL for accessing the file
+    - `cdn_response`: Full CDN upload response with metadata
+    - Artifact metadata including upload information
+    """
     return await monastery_artifact_service.upload_artifact(
         current_user_id,
         file,
@@ -133,11 +160,42 @@ async def bulk_upload_artifacts(
     categories: Optional[List[str]] = Form(None),
     current_user_id: str = Depends(get_current_user_id)
 ):
-    """Bulk upload artifacts"""
+    """Bulk upload artifacts with detailed results"""
     return await monastery_artifact_service.bulk_upload_artifacts(
         current_user_id,
         files,
         categories
     )
+
+
+@router.get("/artifacts/files")
+async def get_artifact_files(
+    category: Optional[str] = Query(None, description="Filter by artifact category"),
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """Get uploaded artifact files from CDN storage"""
+    files = await monastery_artifact_service.get_artifact_files(
+        current_user_id,
+        category
+    )
+    return {
+        "files": files,
+        "total": len(files)
+    }
+
+
+@router.delete("/artifacts/files/{file_id}", status_code=status.HTTP_200_OK)
+async def delete_artifact_file(
+    file_id: str,
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """Delete an artifact file from CDN storage"""
+    # Import upload service singleton for file deletion
+    from app.services.upload_service import upload_service
+    
+    # Delete the file from upload service
+    await upload_service.delete_document(file_id, current_user_id)
+    
+    return {"message": "Artifact file deleted successfully"}
 
 

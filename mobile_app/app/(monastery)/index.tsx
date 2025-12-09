@@ -54,6 +54,7 @@ export default function MonasteryDashboard() {
             }
 
             if (statsRes.success && statsRes.data) {
+                console.log('Artifact Stats:', statsRes.data);
                 setStats(statsRes.data);
             }
         } catch (error) {
@@ -126,7 +127,7 @@ export default function MonasteryDashboard() {
 
                     <StatCard
                         title="Total Artifacts"
-                        value={stats?.total || 0}
+                        value={monasteryData?.artifacts_count || 0}
                         icon="photo.fill"
                         color="#3b82f6"
                         bg={card}
