@@ -149,7 +149,7 @@ Endpoints (endpoint — short overview — params)
     - uid — path — string — required — user _id
 
 - Endpoint: PUT /users/{user_id}/approve
-  - Short overview: Approve a user (Admin only)
+  - Short overview: Approve a user (Government only)
   - Params:
     - user_id — path — string — required — user _id to approve
 
@@ -252,7 +252,7 @@ Collections (fields & concise validations)
   - address — string — required
   - gender — string — optional
   - last_synced_at — object {x: string, y: string} — optional
-  - role — enum('user','organiser','business','admin') — optional
+  - role — enum('user','monastery','business','government') — optional
   - email — string — required — unique, valid email
   - password — string — required — min 8 (hashed)
   - secret — object {token: string, expiry: date} — optional

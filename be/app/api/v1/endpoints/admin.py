@@ -9,13 +9,13 @@ router = APIRouter()
 
 
 @router.get("/stats", status_code=status.HTTP_200_OK)
-async def get_admin_stats(
-    current_admin_id: str = Depends(get_current_admin_user)
+async def get_government_stats(
+    current_user_id: str = Depends(get_current_user_id)
 ) -> Dict[str, Any]:
     """
-    Get admin dashboard statistics
-
-    Returns counts for users, businesses, places, bookings, revenue and active users
+    Get government dashboard statistics
+    
+    Returns counts for users, businesses, locations, and other metrics
     """
     db = get_database()
 
@@ -55,7 +55,7 @@ async def get_admin_stats(
             "total_active_users": total_active_users,
         }
     except Exception as e:
-        print(f"Error fetching admin stats: {e}")
+        print(f"Error fetching government stats: {e}")
         return {
             "total_users": 0,
             "total_businesses": 0,
@@ -72,7 +72,7 @@ async def get_recent_activities(
     limit: int = 5
 ) -> List[Dict[str, Any]]:
     """
-    Get recent activities for admin dashboard
+    Get recent activities for government dashboard
     
     Returns recent user registrations, business creations, etc.
     """

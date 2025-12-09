@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, status, Query, HTTPException
 
-from app.core.security import get_current_user_id, get_current_admin_user
+from app.core.security import get_current_user_id, get_current_government_user
 from app.services.message_service import message_service
 from app.models.message import Message, MessageCreate, MessageWithUser
 
@@ -59,7 +59,7 @@ async def flag_message(
     message_id: str,
     current_user_id: str = Depends(get_current_user_id),
 ):
-    """Flag a message for admin review"""
+    """Flag a message for government review"""
     message = await message_service.flag_message(message_id, current_user_id)
     return message
 
@@ -68,9 +68,9 @@ async def flag_message(
 async def get_flagged_messages(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1),
-    admin_user_id: str = Depends(get_current_admin_user),
+    government_user_id: str = Depends(get_current_government_user),
 ):
-    """Get all flagged messages for admin review (admin only)"""
+    """Get all flagged messages for government review (government only)"""
     messages = await message_service.get_flagged_messages(skip, limit)
     return messages
 
@@ -79,10 +79,10 @@ async def get_flagged_messages(
 async def moderate_message(
     message_id: str,
     action: str = Query(..., description="Action: hide, restore, or delete"),
-    admin_user_id: str = Depends(get_current_admin_user),
+    government_user_id: str = Depends(get_current_government_user),
 ):
-    """Admin moderation: hide, restore, or delete a message"""
-    message = await message_service.moderate_message(message_id, admin_user_id, action)
+    """Government moderation: hide, restore, or delete a message"""
+    message = await message_service.moderate_message(message_id, government_user_id, action)
     return message
 
 

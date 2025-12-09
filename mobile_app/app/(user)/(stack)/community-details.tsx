@@ -3,30 +3,14 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { communityService } from '@/services/community.service';
-import { messageService } from '@/services/message.service';
-
-interface Community {
-    _id: string;
-    name: string;
-    decription: string; // backend typo kept
-    created_at?: string;
-    updated_at?: string;
-}
-
-interface Message {
-    _id: string;
-    uid: string;
-    cid: string;
-    text: string;
-    created_at?: string;
-}
+import { communityService, CommunityModel } from '@/services/community.service';
+import { messageService, MessageModel } from '@/services/message.service';
 
 export default function CommunityDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
-    const [community, setCommunity] = useState<Community | null>(null);
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [community, setCommunity] = useState<CommunityModel | null>(null);
+    const [messages, setMessages] = useState<MessageModel[]>([]);
     const [loading, setLoading] = useState(true);
 
     const background = useThemeColor('background');
@@ -117,7 +101,7 @@ export default function CommunityDetailsScreen() {
                     <Text style={[styles.sectionTitle, { color: text }]}>Recent Messages</Text>
                     {messages.length > 0 ? (
                         messages.map((msg) => (
-                            <View key={msg._id} style={[styles.messageCard, { backgroundColor: card }]}>
+                            <View key={msg.id} style={[styles.messageCard, { backgroundColor: card }]}>
                                 <Text style={[styles.messageText, { color: text }]}>{msg.text}</Text>
                                 <Text style={[styles.messageDate, { color: muted }]}>{msg.created_at ? new Date(msg.created_at).toLocaleString() : ''}</Text>
                             </View>

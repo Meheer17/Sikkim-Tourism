@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
 from fastapi import HTTPException, status
 import secrets
+from bson import ObjectId
 
 from app.core.security import create_access_token
 from app.core.config import settings
+from app.core.database import get_database
 from app.services.user_service import user_service
 from app.models.user import UserCreate, User
 from app.schemas.auth import Token, LoginRequest, SignupRequest, ForgetPasswordRequest, MessageResponse
@@ -54,6 +56,27 @@ class AuthService:
                 headers={"WWW-Authenticate": "Bearer"},
             )
         
+        # Check if user is a monastery business owner
+        is_monastery = False
+        business_id = None
+        
+        if user.role == "business":
+            db = get_database()
+            if db is not None:
+                # Find user_business connection
+                user_business = await db.user_business.find_one({"uid": ObjectId(user.id)})
+                
+                if user_business:
+                    # Get the business details
+                    business = await db.business.find_one({"_id": user_business["bid"]})
+                    
+                    if business:
+                        # Check if business type_id is monastery
+                        # Monastery type ID: "69367fbfbde0a7ba5f19846f"
+                        if business.get("type_id") == "69367fbfbde0a7ba5f19846f":
+                            is_monastery = True
+                            business_id = str(business["_id"])
+        
         # 3 hours expiry
         access_token_expires = timedelta(hours=12)
         access_token = create_access_token(
@@ -61,7 +84,12 @@ class AuthService:
             expires_delta=access_token_expires
         )
         
-        return Token(access_token=access_token, token_type="bearer")
+        return Token(
+            access_token=access_token,
+            token_type="bearer",
+            is_monastery=is_monastery,
+            business_id=business_id
+        )
     
     async def forget_password(self, forget_password_data: ForgetPasswordRequest) -> MessageResponse:
         """Request password reset token (expires in 15 minutes)"""

@@ -31,7 +31,7 @@ export class AuthService {
                 };
             }
 
-            const { access_token, token_type } = loginResponse.data;
+            const { access_token, token_type, is_monastery, business_id } = loginResponse.data;
 
             // Step 2: Save token
             await TokenManager.saveToken(access_token);
@@ -48,16 +48,20 @@ export class AuthService {
                 };
             }
 
+            const user = profileResponse.data;
+
             // Step 4: Save user data
-            await AuthUtils.saveUser(profileResponse.data);
+            await AuthUtils.saveUser(user);
 
             return {
                 success: true,
                 message: 'Login successful',
                 data: {
-                    user: profileResponse.data,
+                    user,
                     token: access_token,
                     token_type,
+                    is_monastery,
+                    business_id,
                 },
             };
         } catch (error) {

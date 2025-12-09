@@ -16,6 +16,8 @@ export { eventService, EventService } from './event.service';
 export { ordersService } from './orders.service';
 export { bookingsService } from './bookings.service';
 export { FriendsAPI } from './friends.service';
+export { monasteryService } from './monastery.service';
+export { commentsService } from './comments.service';
 
 export type { Event, EventOpenHours, EventListParams, EventCreateData } from './event.service';
 

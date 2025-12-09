@@ -3,19 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { communityService } from '@/services/community.service';
-
-interface Community {
-    _id: string;
-    name: string;
-    decription: string; // backend typo kept
-    created_at?: string;
-    updated_at?: string;
-}
+import { communityService, CommunityModel } from '@/services/community.service';
 
 export default function CommunitiesListScreen() {
     const router = useRouter();
-    const [communities, setCommunities] = useState<Community[]>([]);
+    const [communities, setCommunities] = useState<CommunityModel[]>([]);
     const [loading, setLoading] = useState(true);
 
     const background = useThemeColor('background');
@@ -42,10 +34,10 @@ export default function CommunitiesListScreen() {
         }
     };
 
-    const renderCommunityCard = ({ item }: { item: Community }) => (
+    const renderCommunityCard = ({ item }: { item: CommunityModel }) => (
         <TouchableOpacity
             style={[styles.card, { backgroundColor: card }]}
-            onPress={() => router.push(`/(user)/(stack)/community-details?id=${item._id}` as any)}
+            onPress={() => router.push(`/(user)/(stack)/community-details?id=${item._id || item.id}` as any)}
         >
             <View style={styles.iconContainer}>
                 <IconSymbol name="person.3.fill" size={32} color={tint} />
@@ -87,7 +79,7 @@ export default function CommunitiesListScreen() {
             <FlatList
                 data={communities}
                 renderItem={renderCommunityCard}
-                keyExtractor={(item) => item._id}
+                keyExtractor={(item) => item._id || item.id || ''}
                 contentContainerStyle={styles.listContent}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>

@@ -86,78 +86,6 @@ def extract_texts_from_result(result):
 	return texts
 
 
-def _is_clean_text(s: str) -> bool:
-	"""Return True if string looks like a valid OCR token (not binary/header junk)."""
-	if not s or not isinstance(s, str):
-		return False
-	low = s.lower()
-	# obvious rejects: binary escapes, image markers, filenames, urls, headers
-	reject_tokens = ('\\x', 'xff', 'jfif', 'filename=', 'content-', 'accept-', 'accept:', 'http://', 'https://', 'cdn', 'user_id', 'authorization', 'bearer', 'cookie', 'set-cookie')
-	for tok in reject_tokens:
-		if tok in low or tok in s:
-			return False
-	# reject jwt/base64-like tokens (long strings with dots and no spaces)
-	if '.' in s and ' ' not in s and len(s) > 30:
-		# many JWTs or encoded blobs look like this
-		return False
-	# drop strings with too many non-printable characters
-	import string
-	printable = set(string.printable)
-	count_print = sum(1 for ch in s if ch in printable)
-	if len(s) > 0 and (count_print / len(s)) < 0.75:
-		return False
-	# require a reasonable proportion of alphabetic characters (allow spaces and basic punctuation)
-	alpha_count = sum(1 for ch in s if ch.isalpha())
-	if len(s) > 0 and (alpha_count / len(s)) < 0.4:
-		return False
-	# avoid very short tokens
-	if len(s.strip()) < 2:
-		return False
-	# avoid tokens that look like long hex or numerical IDs
-	import re
-	if re.fullmatch(r'[0-9a-fA-F\-]{8,}', s.strip()):
-		return False
-	return True
-
-
-def _is_ocr_word(s: str) -> bool:
-	"""Stricter check: is this token likely to be readable OCR text (word/phrase)?
-
-	Heuristics:
-	- reject tokens containing slashes, urls, emails, header-like chars (=, :)
-	- require at least 2 alphabetic characters
-	- require a minimum vowel proportion to avoid random hex/base64
-	- reject uppercase-only HTTP verbs or header lines
-	"""
-	if not s or not isinstance(s, str):
-		return False
-	low = s.lower()
-	# reject obvious non-words
-	rejects = ('http://', 'https://', '/', '@', '=', 'application/json', 'content-type', 'content-length', 'accept-', 'user-agent', 'authorization', 'cookie', 'set-cookie', 'cdn', 'api/')
-	for r in rejects:
-		if r in low:
-			return False
-	# reject typical HTTP lines (GET /api/... HTTP/1.1)
-	if any(method in s for method in ('GET ', 'POST ', 'DELETE ', 'PUT ', 'PATCH ', 'OPTIONS ', 'HTTP/1.')):
-		return False
-	# letters requirement
-	alpha = sum(1 for ch in s if ch.isalpha())
-	if alpha < 2:
-		return False
-	# vowel proportion
-	vowels = sum(1 for ch in s.lower() if ch in 'aeiou')
-	if (vowels / max(1, len(s))) < 0.12:
-		return False
-	# avoid long dot-separated tokens (likely JWT/base64)
-	if '.' in s and len(s) > 30:
-		return False
-	# avoid long numeric/hex sequences
-	import re
-	if re.fullmatch(r'[0-9a-fA-F\-]{8,}', s.strip()):
-		return False
-	return True
-
-
 def ocr_image(image_path: str) -> dict:
 	"""Run PaddleOCR on the image and return a small dict with paragraph and raw result (serialized).
 
@@ -170,23 +98,7 @@ def ocr_image(image_path: str) -> dict:
 		raw = ocr.ocr(image_path)
 
 	texts = extract_texts_from_result(raw)
-	# first pass: remove obvious binary/header junk
-	clean_texts = [t for t in texts if _is_clean_text(t)]
-	# second pass: stricter word-level filter to drop header fragments, urls, jwt, etc.
-	final_texts = []
-	dropped = []
-	for t in clean_texts:
-		if _is_ocr_word(t):
-			final_texts.append(t)
-		else:
-			dropped.append(t)
-	paragraph = ' '.join(final_texts).strip()
-	# log a few dropped tokens for tuning
-	if dropped:
-		try:
-			logging.info('Dropped %d noisy tokens (examples): %s', len(dropped), ', '.join(dropped[:6]))
-		except Exception:
-			pass
+	paragraph = ' '.join(texts).strip()
 	if paragraph and paragraph[-1] not in '.!?':
 		paragraph += '.'
 
@@ -251,18 +163,6 @@ def ocr_image(image_path: str) -> dict:
 	small = make_small(raw)
 	# run serializer to ensure JSON safe types
 	small_json_safe = make_serializable(small)
-	# avoid storing extremely large raw_small blobs
-	try:
-		ser = json.dumps(small_json_safe)
-		if len(ser) > 10_000:
-			# store a marker instead of the full blob
-			small_json_safe = {"_truncated": True, "size": len(ser)}
-	except Exception:
-		# if serialization fails, drop raw
-		small_json_safe = None
-	# cap paragraph length to avoid huge text fields
-	if paragraph and len(paragraph) > 5000:
-		paragraph = paragraph[:5000] + '...'
 	return {"paragraph": paragraph, "raw_small": small_json_safe}
 
 
@@ -389,15 +289,13 @@ def process_today_files():
 
 			# prepare doc for $set (without created_at to avoid conflict)
 			logging.info(f'Processing file: {file_id}, l_id: {f.get("l_id")}, b_id: {f.get("b_id")}')
-			# Print/log the extracted OCR paragraph before inserting/updating the DB
-			try:
-				_display_text = paragraph or ''
-				# log a truncated preview and the full (bounded) text to stdout for debugging
-				logging.info("Extracted paragraph for file %s (len=%d)", file_id, len(_display_text))
-				# print a bounded amount to stdout to avoid flooding
-				print(f"EXTRACTED_TEXT file_id={file_id} len={len(_display_text)}:\n" + (_display_text[:2000] + ('...' if len(_display_text) > 2000 else '')))
-			except Exception:
-				logging.exception('Failed to print extracted text for file %s', file_id)
+			print("\n" + "="*80)
+			print(f"EXTRACTED TEXT FOR FILE: {file_id}")
+			print(f"File Name: {f.get('file_name')}")
+			print(f"Average Confidence: {avg_conf}")
+			print("-"*80)
+			print(paragraph)
+			print("="*80 + "\n")
 			doc_set = {
 				'file_id': file_id,
 				'file_name': f.get('file_name') if isinstance(f, dict) else None,

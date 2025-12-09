@@ -1,0 +1,642 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { AdminUser, UserRole } from '@/types/admin.types';
+import { useApi } from '@/hooks/useApi';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { userService } from '@/services/user.service';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLanguageTranslations } from '@/constants/translations';
+
+// Removed static mock users. Data now sourced only from backend.
+
+const ROLES = ['All', 'User', 'Monastery', 'Business', 'Government'];
+const STATUSES = ['All', 'Active', 'Suspended'];
+
+export default function AdminUsersScreen() {
+    const router = useRouter();
+    const { language } = useLanguage();
+    const t = getLanguageTranslations(language);
+    const [users, setUsers] = useState<AdminUser[]>([]);
+    const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedRole, setSelectedRole] = useState('All');
+    const [selectedStatus, setSelectedStatus] = useState('All');
+    const [showFilters, setShowFilters] = useState(false);
+    const { put: updateUser, delete: deleteUserApi } = useApi();
+    const background = useThemeColor('background');
+    const card = useThemeColor('card');
+    const text = useThemeColor('text');
+    const muted = useThemeColor('mutedText');
+    const tint = useThemeColor('tint');
+
+    const filterUsers = useCallback(() => {
+        let filtered = users;
+
+        // Filter by role
+        if (selectedRole !== 'All') {
+            filtered = filtered.filter(u => u.role === selectedRole.toLowerCase());
+        }
+
+        // Filter by status
+        if (selectedStatus !== 'All') {
+            filtered = filtered.filter(u => u.status === selectedStatus.toLowerCase());
+        }
+
+        // Filter by search query
+        if (searchQuery.trim()) {
+            filtered = filtered.filter(u =>
+                u.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                u.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                u.email.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+
+        setFilteredUsers(filtered);
+    }, [users, selectedRole, selectedStatus, searchQuery]);
+
+    useEffect(() => {
+        filterUsers();
+    }, [filterUsers]);
+
+    // Load users list via admin endpoint
+    useEffect(() => {
+        const loadUsers = async () => {
+            setLoading(true);
+            try {
+                const resp = await userService.list({ skip: 0, limit: 100 });
+                if (resp.success && resp.data) {
+                    const mapped = resp.data.map((u: any) => {
+                        const parts = (u.name || '').split(' ');
+                        const first = parts[0] || u.name || '';
+                        const last = parts.slice(1).join(' ');
+                        const roleMapped = u.role as UserRole;
+                        const adminUser: AdminUser = {
+                            id: u.id,
+                            email: u.email,
+                            firstName: first,
+                            lastName: last,
+                            phone: '',
+                            role: roleMapped,
+                            status: u.approved ? 'active' : 'pending',
+                            isEmailVerified: true,
+                            isPhoneVerified: false,
+                            totalBookings: 0,
+                            totalSpent: 0,
+                            joinedDate: u.created_at,
+                            lastLoginDate: u.updated_at,
+                        };
+                        return adminUser;
+                    });
+                    setUsers(mapped);
+                    setFilteredUsers(mapped);
+                }
+            } catch (e) {
+                console.warn('Failed to load users list:', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadUsers();
+    }, []);
+
+    const handleUserPress = (user: AdminUser) => {
+        router.push(`/(government)/(stack)/user-details?id=${user.id}` as any);
+    };
+
+    const handleSuspendUser = async (userId: string) => {
+        const result = await updateUser(`/government/users/${userId}`, { status: 'suspended' });
+        if (result) {
+            setUsers(prev =>
+                prev.map(u => (u.id === userId ? { ...u, status: 'suspended' } : u))
+            );
+        }
+    };
+
+    const handleActivateUser = async (userId: string) => {
+        try {
+            await userService.approve(userId);
+            setUsers(prev =>
+                prev.map(u => (u.id === userId ? { ...u, status: 'active' } : u))
+            );
+        } catch (e) {
+            Alert.alert('Error', 'Failed to activate user');
+        }
+    };
+
+    const handleDeleteUser = async (userId: string) => {
+        const result = await deleteUserApi(`/government/users/${userId}`);
+        if (result) {
+            setUsers(prev => prev.filter(u => u.id !== userId));
+        }
+    };
+
+    const getRoleColor = (role: UserRole) => {
+        switch (role) {
+            case UserRole.GOVERNMENT:
+                return '#ef4444';
+            case UserRole.MONASTERY:
+                return '#f59e0b';
+            case UserRole.BUSINESS:
+                return '#8b5cf6';
+            case UserRole.USER:
+                return '#10b981';
+            default:
+                return '#687076';
+        }
+    };
+
+    const getRoleBgColor = (role: UserRole) => {
+        switch (role) {
+            case UserRole.GOVERNMENT:
+                return '#fee2e2';
+            case UserRole.MONASTERY:
+                return '#fef3c7';
+            case UserRole.BUSINESS:
+                return '#ede9fe';
+            case UserRole.USER:
+                return '#d1fae5';
+            default:
+                return '#f3f4f6';
+        }
+    };
+
+    const getStatusColor = (status: AdminUser['status']) => {
+        switch (status) {
+            case 'active':
+                return '#10b981';
+            case 'suspended':
+                return '#ef4444';
+            default:
+                return '#687076';
+        }
+    };
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    return (
+        <View style={[styles.container, { backgroundColor: background }]}>
+            {/* Header */}
+            <View style={[styles.header, { backgroundColor: card }]}>
+                <View>
+                    <Text style={[styles.headerTitle, { color: text }]}>Users</Text>
+                    <Text style={[styles.headerSubtitle, { color: muted }]}>
+                        {filteredUsers.length} users found
+                    </Text>
+                </View>
+            </View>
+
+            {/* Search and Filter */}
+            <View style={[styles.searchContainer, { backgroundColor: card }]}>
+                <View style={[styles.searchBar, { backgroundColor: background, borderColor: muted + '40' }]}>
+                    <IconSymbol name="magnifyingglass" size={20} color={muted} />
+                    <TextInput
+                        style={[styles.searchInput, { color: text }]}
+                        placeholder="Search users..."
+                        placeholderTextColor={muted}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                    />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearchQuery('')}>
+                            <IconSymbol name="xmark.circle.fill" size={20} color={muted} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+                <TouchableOpacity
+                    style={[styles.filterButton, { backgroundColor: tint + '15' }]}
+                    onPress={() => setShowFilters(!showFilters)}
+                >
+                    <IconSymbol name="slider.horizontal.3" size={20} color={tint} />
+                </TouchableOpacity>
+            </View>
+
+            {/* Filters */}
+            {showFilters && (
+                <View style={[styles.filtersContainer, { backgroundColor: card, borderBottomColor: muted + '40' }]}>
+                    {/* Role Filter */}
+                    <View style={styles.filterSection}>
+                        <Text style={[styles.filterLabel, { color: text }]}>Role</Text>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.filterChips}
+                        >
+                            {ROLES.map((role) => (
+                                <TouchableOpacity
+                                    key={role}
+                                    style={[
+                                        styles.filterChip,
+                                        { backgroundColor: selectedRole === role ? tint : background, borderColor: selectedRole === role ? tint : muted + '40' },
+                                    ]}
+                                    onPress={() => setSelectedRole(role)}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.filterChipText,
+                                            { color: selectedRole === role ? '#fff' : muted },
+                                        ]}
+                                    >
+                                        {role}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+
+                    {/* Status Filter */}
+                    <View style={styles.filterSection}>
+                        <Text style={[styles.filterLabel, { color: text }]}>Status</Text>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.filterChips}
+                        >
+                            {STATUSES.map((status) => (
+                                <TouchableOpacity
+                                    key={status}
+                                    style={[
+                                        styles.filterChip,
+                                        { backgroundColor: selectedStatus === status ? tint : background, borderColor: selectedStatus === status ? tint : muted + '40' },
+                                    ]}
+                                    onPress={() => setSelectedStatus(status)}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.filterChipText,
+                                            { color: selectedStatus === status ? '#fff' : muted },
+                                        ]}
+                                    >
+                                        {status}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </View>
+            )}
+
+            {/* User List */}
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                {loading && (
+                    <View style={styles.emptyState}>
+                        <Text style={[styles.emptySubtitle, { color: muted }]}>Loading users...</Text>
+                    </View>
+                )}
+                {!loading && filteredUsers.length > 0 ? (
+                    <>
+                        {filteredUsers.map((user) => (
+                            <TouchableOpacity
+                                key={user.id}
+                                style={[styles.userCard, { backgroundColor: card, borderColor: muted + '20' }]}
+                                onPress={() => handleUserPress(user)}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.userHeader}>
+                                    <View style={styles.userAvatar}>
+                                        <Text style={styles.avatarText}>
+                                            {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.userInfo}>
+                                        <Text style={[styles.userName, { color: text }]}>
+                                            {user.firstName} {user.lastName}
+                                        </Text>
+                                        <Text style={[styles.userEmail, { color: muted }]}>{user.email}</Text>
+                                    </View>
+                                    <View style={styles.badges}>
+                                        <View
+                                            style={[
+                                                styles.roleBadge,
+                                                { backgroundColor: getRoleBgColor(user.role) },
+                                            ]}
+                                        >
+                                            <Text style={[styles.roleText, { color: getRoleColor(user.role) }]}>
+                                                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                </View>
+
+                                <View style={styles.userMeta}>
+                                    <View style={styles.metaItem}>
+                                        <IconSymbol
+                                            name="circle.fill"
+                                            size={8}
+                                            color={getStatusColor(user.status)}
+                                        />
+                                        <Text style={[styles.metaText, { color: muted }]}>
+                                            {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.metaItem}>
+                                        <IconSymbol name="calendar" size={14} color={muted} />
+                                        <Text style={[styles.metaText, { color: muted }]}>
+                                            Joined {formatDate(user.joinedDate)}
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                <View style={[styles.userStats, { borderColor: muted + '20' }]}>
+                                    <View style={styles.statItem}>
+                                        <IconSymbol name="ticket.fill" size={16} color={muted} />
+                                        <Text style={[styles.statValue, { color: text }]}>{user.totalBookings}</Text>
+                                        <Text style={[styles.statLabel, { color: muted }]}>Bookings</Text>
+                                    </View>
+                                    <View style={styles.statItem}>
+                                        <IconSymbol name="indianrupeesign.circle.fill" size={16} color={muted} />
+                                        <Text style={[styles.statValue, { color: text }]}>₹{(user.totalSpent || 1000 / 1000).toFixed(1)}k</Text>
+                                        <Text style={[styles.statLabel, { color: muted }]}>Spent</Text>
+                                    </View>
+                                    <View style={styles.statItem}>
+                                        <IconSymbol
+                                            name={user.isEmailVerified ? 'checkmark.circle.fill' : 'xmark.circle.fill'}
+                                            size={16}
+                                            color={user.isEmailVerified ? '#10b981' : '#ef4444'}
+                                        />
+                                        <Text style={styles.statLabel}>Email</Text>
+                                    </View>
+                                    <View style={styles.statItem}>
+                                        <IconSymbol
+                                            name={user.isPhoneVerified ? 'checkmark.circle.fill' : 'xmark.circle.fill'}
+                                            size={16}
+                                            color={user.isPhoneVerified ? '#10b981' : '#ef4444'}
+                                        />
+                                        <Text style={styles.statLabel}>Phone</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.userActions}>
+                                    {user.status === 'active' && user.role !== UserRole.GOVERNMENT && (
+                                        <TouchableOpacity
+                                            style={[styles.actionButton, styles.suspendButton]}
+                                            onPress={() => handleSuspendUser(user.id)}
+                                        >
+                                            <IconSymbol name="hand.raised.fill" size={14} color="#fff" />
+                                            <Text style={styles.actionButtonText}>Suspend</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                    {user.status === 'suspended' && (
+                                        <TouchableOpacity
+                                            style={[styles.actionButton, styles.activateButton]}
+                                            onPress={() => handleActivateUser(user.id)}
+                                        >
+                                            <IconSymbol name="checkmark.circle.fill" size={14} color="#fff" />
+                                            <Text style={styles.actionButtonText}>Activate</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                    <TouchableOpacity
+                                        style={[styles.actionButton, styles.roleButton]}
+                                        onPress={() => router.push(`/(government)/roles?userId=${user.id}` as any)}
+                                    >
+                                        <IconSymbol name="person.badge.key.fill" size={14} color="#fff" />
+                                        <Text style={styles.actionButtonText}>Change Role</Text>
+                                    </TouchableOpacity>
+                                    {user.role !== UserRole.GOVERNMENT && (
+                                        <TouchableOpacity
+                                            style={[styles.actionButton, styles.deleteButton]}
+                                            onPress={() => handleDeleteUser(user.id)}
+                                        >
+                                            <IconSymbol name="trash.fill" size={14} color="#fff" />
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                            </TouchableOpacity>
+                        ))}
+                    </>
+                ) : (!loading && (
+                    <View style={styles.emptyState}>
+                        <IconSymbol name="person.2.fill" size={64} color={muted} />
+                        <Text style={[styles.emptyTitle, { color: text }]}>No users found</Text>
+                        <Text style={[styles.emptySubtitle, { color: muted }]}>
+                            Try adjusting your search or filters
+                        </Text>
+                    </View>
+                ))}
+            </ScrollView>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 20,
+        paddingTop: 20,
+        borderBottomWidth: 1,
+    },
+    headerTitle: {
+        fontSize: 28,
+        fontWeight: '700',
+        marginBottom: 4,
+    },
+    headerSubtitle: {
+        fontSize: 14,
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        padding: 16,
+        gap: 12,
+    },
+    searchBar: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 12,
+        borderWidth: 1,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        gap: 8,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: 16,
+    },
+    filterButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    filtersContainer: {
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+        borderBottomWidth: 1,
+    },
+    filterSection: {
+        marginBottom: 12,
+    },
+    filterLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 8,
+    },
+    filterChips: {
+        gap: 8,
+    },
+    filterChip: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        borderWidth: 1,
+    },
+    filterChipText: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        padding: 16,
+        paddingBottom: 100,
+    },
+    userCard: {
+        borderRadius: 16,
+        borderWidth: 1,
+        padding: 16,
+        marginBottom: 12,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+    },
+    userHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    userAvatar: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#0a7ea4',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    avatarText: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#fff',
+    },
+    userInfo: {
+        flex: 1,
+    },
+    userName: {
+        fontSize: 16,
+        fontWeight: '700',
+        marginBottom: 2,
+    },
+    userEmail: {
+        fontSize: 13,
+    },
+    badges: {
+        gap: 4,
+    },
+    roleBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    roleText: {
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    userMeta: {
+        flexDirection: 'row',
+        gap: 16,
+        marginBottom: 12,
+    },
+    metaItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    metaText: {
+        fontSize: 13,
+    },
+    userStats: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingVertical: 12,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        marginBottom: 12,
+    },
+    statItem: {
+        alignItems: 'center',
+        gap: 4,
+    },
+    statValue: {
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    statLabel: {
+        fontSize: 11,
+    },
+    userActions: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    actionButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+    },
+    actionButtonText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#fff',
+    },
+    suspendButton: {
+        backgroundColor: '#f59e0b',
+    },
+    activateButton: {
+        backgroundColor: '#10b981',
+    },
+    roleButton: {
+        backgroundColor: '#8b5cf6',
+    },
+    deleteButton: {
+        backgroundColor: '#ef4444',
+        flex: 0,
+        paddingHorizontal: 12,
+    },
+    emptyState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 60,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        marginTop: 16,
+        marginBottom: 8,
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        textAlign: 'center',
+    },
+});

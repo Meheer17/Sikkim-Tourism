@@ -47,8 +47,14 @@ export default function LoginScreen() {
 
         setIsLoading(true);
         try {
-            const success = await login({ email, password });
-            if (success) {
+            const result = await login({ email, password });
+
+            // Check if result contains monastery information
+            if (typeof result === 'object') {
+                // Navigate to regular user home
+                router.replace('/' as any);
+            } else if (result === true) {
+                // Fallback for boolean return (backward compatibility)
                 router.replace('/' as any);
             }
         } catch (error: any) {

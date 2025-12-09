@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import bookingsService from '@/services/bookings.service';
+import businessService from '@/services/business.service';
 
 interface BookingStats {
     total?: number;
@@ -30,6 +31,7 @@ export default function BusinessDashboard() {
     const [stats, setStats] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [bookingStats, setBookingStats] = useState<BookingStats>({});
+    const [businessCount, setBusinessCount] = useState(0);
 
     useEffect(() => {
         fetchDashboardStats();
@@ -42,6 +44,12 @@ export default function BusinessDashboard() {
             const todayBookingsRes = await bookingsService.getTodaysBookingsCount();
             if (todayBookingsRes.success) {
                 setBookingStats(todayBookingsRes.data as BookingStats);
+            }
+            
+            // Fetch business count
+            const businessRes = await businessService.mine({ skip: 0, limit: 100 });
+            if (businessRes.success && businessRes.data) {
+                setBusinessCount(businessRes.data.length);
             }
         } catch (error) {
             console.error('Error fetching dashboard stats:', error);
@@ -70,7 +78,7 @@ export default function BusinessDashboard() {
         },
         {
             title: t.activeServices || 'Active Services',
-            value: '5',
+            value: String(businessCount),
             icon: 'square.grid.2x2.fill',
             color: '#3b82f6',
             bg: '#dbeafe'
@@ -86,7 +94,7 @@ export default function BusinessDashboard() {
 
     useEffect(() => {
         setStats(defaultStats);
-    }, [bookingStats]);
+    }, [bookingStats, businessCount]);
 
     return (
         <View style={styles.container}>
