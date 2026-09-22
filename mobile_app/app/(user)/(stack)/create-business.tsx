@@ -506,7 +506,7 @@ export default function CreateBusinessScreen() {
                             style={[styles.mapToggleButton, { backgroundColor: background, borderColor: tint }]}
                             onPress={handlePickImages}
                         >
-                            <IconSymbol name="image" size={18} color={tint} />
+                            <IconSymbol name="photo.fill" size={18} color={tint} />
                             <Text style={[styles.mapToggleText, { color: tint }]}>Pick Images</Text>
                         </TouchableOpacity>
 

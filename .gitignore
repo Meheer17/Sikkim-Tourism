@@ -371,3 +371,6 @@ vite.config.ts.timestamp-*
 # vscode
 .vscode/
 mobile_app/.env
+
+# Generated audio
+be/static/audio/*.wav

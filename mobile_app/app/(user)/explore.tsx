@@ -233,7 +233,7 @@ export default function ExploreScreen() {
           distance: '0 km',
           imageUrl: firstImage || undefined,
           images: images,
-          modelPath: loc.metadata?.models || undefined,
+          modelPath: Array.isArray(loc.metadata?.models) ? (loc.metadata?.models[0] || undefined) : (loc.metadata?.models || loc.metadata?.model_url || undefined),
           has360Images: !!loc.metadata?.panorama_360,
           panorama360Url: buildImageUrl(loc.metadata?.panorama_360) || undefined,
           latitude: loc.position?.y || 27.3389,
@@ -358,7 +358,7 @@ export default function ExploreScreen() {
               distance: '0 km',
               imageUrl: firstImage || undefined,
               images: images,
-              modelPath: loc.metadata?.models || undefined,
+              modelPath: Array.isArray(loc.metadata?.models) ? (loc.metadata?.models[0] || undefined) : (loc.metadata?.models || loc.metadata?.model_url || undefined),
               has360Images: !!loc.metadata?.panorama_360,
               panorama360Url: buildImageUrl(loc.metadata?.panorama_360) || undefined,
               latitude: loc.position?.y || 27.3389,
@@ -478,57 +478,93 @@ export default function ExploreScreen() {
   const handleGetUserLocation = async () => {
     setIsLoadingLocation(true);
     try {
-      const location = await getCurrentLocation();
-      if (location) {
-        // Store user location
-        const locationObject = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
+      // 1. Check if device location services (GPS) are enabled
+      const isServicesEnabled = await Location.hasServicesEnabledAsync();
+      if (!isServicesEnabled) {
+        Alert.alert(
+          'Location Services Disabled',
+          'Please turn on GPS / Location services on your device.'
+        );
+        setIsLoadingLocation(false);
+        return;
+      }
+
+      // 2. Check and request permissions
+      let { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        const req = await Location.requestForegroundPermissionsAsync();
+        status = req.status;
+      }
+
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'Location permission is required to detect your location.'
+        );
+        setIsLoadingLocation(false);
+        return;
+      }
+
+      // 3. Fetch position safely
+      const locationObject = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      if (locationObject && locationObject.coords) {
         setUserLocation(locationObject);
 
-        // Check if user location is within Sikkim boundaries
+        const lat = locationObject.coords.latitude;
+        const lon = locationObject.coords.longitude;
+
         const isWithinBounds =
-          location.latitude >= MAP_BOUNDARIES.minLatitude &&
-          location.latitude <= MAP_BOUNDARIES.maxLatitude &&
-          location.longitude >= MAP_BOUNDARIES.minLongitude &&
-          location.longitude <= MAP_BOUNDARIES.maxLongitude;
+          lat >= MAP_BOUNDARIES.minLatitude &&
+          lat <= MAP_BOUNDARIES.maxLatitude &&
+          lon >= MAP_BOUNDARIES.minLongitude &&
+          lon <= MAP_BOUNDARIES.maxLongitude;
 
         setIsUserInRegion(isWithinBounds);
 
         if (isWithinBounds) {
-          const clampedLocation = clampRegion(location);
+          const clampedLocation = clampRegion({
+            latitude: lat,
+            longitude: lon,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          });
           setRegion(clampedLocation);
           mapRef.current?.animateToRegion(clampedLocation, 1000);
         } else {
-          alert('You are currently outside the mapped region. Showing distances from Gangtok, Sikkim.');
+          Alert.alert(
+            'Outside Sikkim',
+            'You are currently outside the mapped region. Showing distances from Gangtok, Sikkim.'
+          );
           mapRef.current?.animateToRegion(SIKKIM_REGION, 1000);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting location:', error);
+      Alert.alert(
+        'Location Error',
+        error?.message || 'Could not retrieve your location. Please check your GPS settings.'
+      );
     } finally {
       setIsLoadingLocation(false);
     }
   };
 
   const handlePlacePress = (place: Place) => {
+    if (!place) return;
     router.push({
       pathname: '/(user)/(stack)/place-details',
       params: {
-        id: place.id,
-        name: place.name,
-        description: place.description,
-        distance: place.distance,
-        rating: place.rating?.toString() || '',
-        category: place.category,
+        id: place.id || '',
+        name: place.name || '',
+        distance: place.distance || '',
+        rating: place.rating !== undefined && !isNaN(place.rating) ? place.rating.toString() : '',
+        category: place.category || '',
         imageUrl: place.imageUrl || '',
-        images: JSON.stringify(place.images || []),
-        modelPath: place.modelPath || '',
-        has360Images: (place.has360Images || false).toString(),
-        panorama360Url: place.panorama360Url || '',
-        latitude: place.latitude?.toString() || '',
-        longitude: place.longitude?.toString() || '',
-        transcriptions: JSON.stringify(place.transcriptions || []),
+        latitude: (place.latitude !== undefined && !isNaN(place.latitude)) ? place.latitude.toString() : '',
+        longitude: (place.longitude !== undefined && !isNaN(place.longitude)) ? place.longitude.toString() : '',
       },
     });
   };

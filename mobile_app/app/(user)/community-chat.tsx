@@ -95,11 +95,15 @@ export default function CommunityChatScreen() {
         }
     }, [communityId, t]);
 
-    // Use ref to store communityId for polling to avoid stale closures
+    // Use ref to store communityId and messages for polling to avoid stale closures and infinite re-renders
     const communityIdRef = useRef<string | null>(null);
+    const messagesRef = useRef<MessageWithUser[]>([]);
     useEffect(() => {
         communityIdRef.current = communityId;
     }, [communityId]);
+    useEffect(() => {
+        messagesRef.current = messages;
+    }, [messages]);
 
     // Load messages - use ref for communityId to avoid stale closure in interval
     const loadMessages = useCallback(async (showLoader = true, loadEarlier = false) => {
@@ -115,8 +119,8 @@ export default function CommunityChatScreen() {
         try {
             // Get oldest message ID if loading earlier
             const params: any = { limit: 50 };
-            if (loadEarlier && messages.length > 0) {
-                params.before = messages[0].id; // Load messages before the oldest one
+            if (loadEarlier && messagesRef.current.length > 0) {
+                params.before = messagesRef.current[0].id; // Load messages before the oldest one
             }
             
             const response = await messageService.getChatMessages(cid, params);
@@ -155,7 +159,7 @@ export default function CommunityChatScreen() {
             setRefreshing(false);
             setLoadingEarlier(false);
         }
-    }, [messages]); // Dependencies include messages for accessing oldest message
+    }, []); // Empty dependencies - uses refs to avoid re-triggering polling loop
 
     // Load online count
     const loadOnlineCount = useCallback(async () => {
@@ -255,7 +259,7 @@ export default function CommunityChatScreen() {
             if (pollInterval) clearInterval(pollInterval);
             if (onlineInterval) clearInterval(onlineInterval);
         };
-    }, [communityId, loadMessages, loadOnlineCount]);
+    }, [communityId]);
 
     // Blinking cursor timer when input is empty
     useEffect(() => {

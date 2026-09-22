@@ -14,11 +14,6 @@ try:
 except Exception:  # pragma: no cover
 	AudioSegment = None  # type: ignore
 
-try:
-	import moviepy.editor as mp  # type: ignore
-except Exception:  # pragma: no cover
-	mp = None  # type: ignore
-
 router = APIRouter()
 
 def _process_image(data: bytes, quality: int, target_format: Optional[str]) -> tuple[BytesIO, str]:

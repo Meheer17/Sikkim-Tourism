@@ -2,7 +2,8 @@ import { Stack } from 'expo-router';
 
 export default function AdminStackLayout() {
     return (
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack screenOptions={{ headerShown: false, presentation: 'card' }}>
+            <Stack.Screen name="place-details" />
             <Stack.Screen name="business-details" />
             <Stack.Screen name="add-business" />
             <Stack.Screen name="add-place" />
@@ -13,6 +14,9 @@ export default function AdminStackLayout() {
             <Stack.Screen name="reports" />
             <Stack.Screen name="edit-profile" />
             <Stack.Screen name="security" />
+            <Stack.Screen name="upload-heritage" />
+            <Stack.Screen name="chat-moderation" />
+            <Stack.Screen name="verify-documents" />
         </Stack>
     );
 }

@@ -11,7 +11,7 @@ export default function StackLayout() {
           backgroundColor: '#fff',
         },
         headerShadowVisible: true,
-        presentation: 'modal',
+        presentation: 'card',
       }}
     >
       <Stack.Screen
@@ -106,6 +106,13 @@ export default function StackLayout() {
         name="place-details"
         options={{ 
           title: 'Place Details',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="location-details"
+        options={{ 
+          title: 'Location Details',
           headerShown: false,
         }}
       />

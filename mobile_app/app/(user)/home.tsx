@@ -201,35 +201,14 @@ export default function HomeScreen() {
             } else if (item.type === 'business') {
                 router.push(`${item.route}?id=${item.id}` as any);
             } else if (item.type === 'location') {
-                // Fetch full location/place details so we can navigate with the
-                // same params Explore uses (ensures identical screen/state).
-                const resp = await locationService.get(item.id);
-                const loc = resp?.data;
-
-                // Build params similar to Explore's handlePlacePress
-                // Map fields the same way `explore.tsx` maps backend locations to Place
-                const rawImages: string[] = loc?.metadata?.images || [];
-                const images = rawImages.map((f: string) => buildImageUrl(f)).filter(Boolean) as string[];
-                const imageUrl = images[0] || '';
-                const params: Record<string, string> = {
-                    id: loc?.id || item.id,
-                    name: (loc?.name as string) || item.title || '',
-                    description: (loc?.description as string) || (loc?.short_description as string) || item.subtitle || '',
-                    distance: '',
-                    rating: '',
-                    category: (loc?.type as string) || '',
-                    imageUrl: imageUrl,
-                    images: JSON.stringify(images || []),
-                    modelPath: (loc?.metadata?.model_url as string) || '',
-                    has360Images: (!!loc?.metadata?.panorama_360).toString(),
-                    panorama360Url: buildImageUrl(loc?.metadata?.panorama_360) || '',
-                    latitude: loc?.position?.y ? String(loc.position.y) : '',
-                    longitude: loc?.position?.x ? String(loc.position.x) : '',
-                    shortDescription: (loc?.short_description as string) || '',
-                    transcriptions: JSON.stringify(loc?.transcriptions || []),
-                };
-
-                router.push({ pathname: '/(user)/(stack)/place-details', params } as any);
+                router.push({
+                    pathname: '/(user)/(stack)/place-details',
+                    params: {
+                        id: item.id || '',
+                        name: String(item.title || ''),
+                        category: 'Place',
+                    },
+                } as any);
             } else {
                 // Fallback: go to home
                 router.push('/(user)/home' as any);

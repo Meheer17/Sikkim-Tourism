@@ -95,10 +95,10 @@ export default function UserLayout() {
                 <Stack.Screen
                     name="(stack)"
                     options={{
-                        presentation: 'modal',
+                        presentation: 'card',
                         headerShown: false,
                         gestureEnabled: true,
-                        animation: 'slide_from_bottom'
+                        animation: 'slide_from_right'
                     }}
                 />
             </Stack>

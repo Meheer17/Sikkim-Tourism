@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Gyroscope } from 'expo-sensors';
+import { buildImageUrl } from '@/utils/image-url';
 
 interface PanoramaViewerProps {
     imageSource: any;
@@ -16,6 +17,7 @@ export default function PanoramaViewer({
 }: PanoramaViewerProps) {
     const webViewRef = useRef<WebView>(null);
     const [imageUri, setImageUri] = useState<string>('');
+    const fallbackUrl = buildImageUrl('rumtek_panorama_360.jpg') || 'http://192.168.29.140:8000/static/images/rumtek_panorama_360.jpg';
 
     useEffect(() => {
         console.log('PanoramaViewer imageSource:', imageSource, 'type:', typeof imageSource);
@@ -84,9 +86,10 @@ export default function PanoramaViewer({
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        const IMAGE_URL = '${imageUri}';
+        const IMAGE_URL = '${imageUri || fallbackUrl}';
+        const FALLBACK_URL = '${fallbackUrl}';
         
-        console.log('PanoramaViewer WebView - IMAGE_URL:', IMAGE_URL);
+        console.log('PanoramaViewer WebView - IMAGE_URL:', IMAGE_URL, 'FALLBACK_URL:', FALLBACK_URL);
         
         let camera, scene, renderer, sphere;
         let isUserInteracting = false;
@@ -108,54 +111,69 @@ export default function PanoramaViewer({
             
             const loader = new THREE.TextureLoader();
             loader.crossOrigin = 'anonymous';
-            
-            if (IMAGE_URL && IMAGE_URL.length > 0 && IMAGE_URL !== 'undefined' && IMAGE_URL !== 'null') {
-                console.log('Loading texture from URL:', IMAGE_URL);
+
+            function applyTexture(texture) {
+                document.getElementById('loading').style.display = 'none';
+                texture.minFilter = THREE.LinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+                const material = new THREE.MeshBasicMaterial({ map: texture });
+                if (sphere) {
+                    scene.remove(sphere);
+                }
+                sphere = new THREE.Mesh(geometry, material);
+                scene.add(sphere);
+                animate();
+
+                if (window.ReactNativeWebView) {
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'imageLoaded',
+                        success: true
+                    }));
+                }
+            }
+
+            function loadTextureWithFallback(url) {
+                if (!url || url === 'undefined' || url === 'null') {
+                    if (FALLBACK_URL && FALLBACK_URL !== url) {
+                        loadTextureWithFallback(FALLBACK_URL);
+                    } else {
+                        createFallbackSphere(geometry);
+                    }
+                    return;
+                }
+
                 loader.load(
-                    IMAGE_URL,
+                    url,
                     function(texture) {
-                        console.log('Texture loaded successfully');
-                        document.getElementById('loading').style.display = 'none';
-                        texture.minFilter = THREE.LinearFilter;
-                        texture.magFilter = THREE.LinearFilter;
-                        const material = new THREE.MeshBasicMaterial({ map: texture });
-                        sphere = new THREE.Mesh(geometry, material);
-                        scene.add(sphere);
-                        animate();
-                        
-                        // Notify React Native that image loaded
-                        if (window.ReactNativeWebView) {
-                            window.ReactNativeWebView.postMessage(JSON.stringify({
-                                type: 'imageLoaded',
-                                success: true
-                            }));
-                        }
+                        applyTexture(texture);
                     },
                     function(progress) {
-                        console.log('Loading progress:', (progress.loaded / progress.total * 100).toFixed(2) + '%');
+                        if (progress.total > 0) {
+                            console.log('Loading progress:', (progress.loaded / progress.total * 100).toFixed(2) + '%');
+                        }
                     },
                     function(err) {
-                        console.error('Texture load error:', err);
-                        document.getElementById('loading').innerHTML = '<div class=\"spinner\"></div>Failed to load image<br><small>' + IMAGE_URL + '</small>';
-                        
-                        // Notify React Native of error
+                        console.warn('Texture load failed for:', url, err);
                         if (window.ReactNativeWebView) {
                             window.ReactNativeWebView.postMessage(JSON.stringify({
                                 type: 'imageLoadError',
-                                error: err.message || 'Unknown error',
-                                url: IMAGE_URL
+                                error: (err && err.message) ? err.message : 'Failed to load remote texture',
+                                url: url
                             }));
                         }
-                        
-                        // Create fallback gradient after a delay
-                        setTimeout(() => createFallbackSphere(geometry), 2000);
+
+                        // If primary URL failed and it is not already fallback, load the local 360 panorama
+                        if (url !== FALLBACK_URL && FALLBACK_URL) {
+                            console.log('Loading local fallback 360 panorama:', FALLBACK_URL);
+                            loadTextureWithFallback(FALLBACK_URL);
+                        } else {
+                            createFallbackSphere(geometry);
+                        }
                     }
                 );
-            } else {
-                console.warn('No valid IMAGE_URL provided:', IMAGE_URL);
-                document.getElementById('loading').innerHTML = 'No panorama image URL provided';
-                setTimeout(() => createFallbackSphere(geometry), 1000);
             }
+
+            loadTextureWithFallback(IMAGE_URL);
             
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setPixelRatio(window.devicePixelRatio);
@@ -311,7 +329,7 @@ export default function PanoramaViewer({
             } else if (data.type === 'imageLoaded') {
                 console.log('✅ Panorama image loaded successfully');
             } else if (data.type === 'imageLoadError') {
-                console.error('❌ Panorama image load error:', data.error, 'URL:', data.url);
+                console.warn('⚠️ Panorama remote image load failed, loaded fallback:', data.error, 'URL:', data.url);
             }
         } catch (e) {
             console.warn('Error parsing WebView message:', e);

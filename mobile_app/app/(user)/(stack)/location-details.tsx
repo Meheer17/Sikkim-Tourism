@@ -127,6 +127,22 @@ export default function LocationDetailsScreen() {
         } as any);
     };
 
+    const handleOpen3DModel = () => {
+        const rawModel = location?.metadata?.models || location?.metadata?.model_url;
+        let modelName = Array.isArray(rawModel) ? rawModel[0] : rawModel;
+        if (!modelName) return;
+
+        const match = String(modelName).match(/(?:models|viewer)\/([^/?#]+)/i);
+        if (match && match[1]) {
+            modelName = match[1];
+        }
+
+        router.push({
+            pathname: '/(user)/3d',
+            params: { modelPath: modelName, name: location?.name || '' }
+        } as any);
+    };
+
     if (loading) {
         return (
             <View style={[styles.container, styles.centered, { backgroundColor: background }]}>
@@ -187,17 +203,19 @@ export default function LocationDetailsScreen() {
                             }}
                             scrollEventThrottle={16}
                         >
-                            {location.metadata.images.map((raw: string, index: number) => {
-                                const imageUrl = buildImageUrl(raw);
-                                return (
-                                    <Image
-                                        key={index}
-                                        source={{ uri: imageUrl }}
-                                        style={styles.heroImage}
-                                        resizeMode="cover"
-                                    />
-                                );
-                            })}
+                            {location.metadata.images
+                                .map((raw: string) => buildImageUrl(raw))
+                                .filter(Boolean)
+                                .map((imageUrl: string, index: number) => {
+                                    return (
+                                        <Image
+                                            key={index}
+                                            source={{ uri: imageUrl }}
+                                            style={styles.heroImage}
+                                            resizeMode="cover"
+                                        />
+                                    );
+                                })}
                         </ScrollView>
                         {/* Image Indicators */}
                         {location.metadata.images.length > 1 && (
@@ -309,6 +327,16 @@ export default function LocationDetailsScreen() {
                         >
                             <IconSymbol name="view.3d" size={20} color="#fff" />
                             <Text style={styles.actionButtonText}>360° View</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    {(location.metadata?.models || location.metadata?.model_url) && (
+                        <TouchableOpacity
+                            style={[styles.actionButton, { backgroundColor: '#8b5cf6' }]}
+                            onPress={handleOpen3DModel}
+                        >
+                            <IconSymbol name="cube.fill" size={20} color="#fff" />
+                            <Text style={styles.actionButtonText}>3D Model</Text>
                         </TouchableOpacity>
                     )}
 

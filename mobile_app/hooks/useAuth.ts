@@ -14,7 +14,7 @@ interface AuthState {
 }
 
 interface AuthActions {
-    login: (credentials: LoginRequest) => Promise<boolean>;
+    login: (credentials: LoginRequest) => Promise<boolean | { success: boolean; isMonastery?: boolean; businessId?: string; }>;
     register: (userData: RegisterRequest) => Promise<boolean>;
     logout: () => Promise<void>;
     refreshProfile: () => Promise<void>;

@@ -61,7 +61,7 @@ export default function BusinessLayout() {
                 <Stack.Screen name="bookings" options={{ gestureEnabled: false }} />
                 <Stack.Screen name="requests" options={{ gestureEnabled: false }} />
                 <Stack.Screen name="profile" options={{ gestureEnabled: false }} />
-                <Stack.Screen name="(stack)" options={{ presentation: 'modal', headerShown: false, gestureEnabled: true, animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="(stack)" options={{ presentation: 'card', headerShown: false, gestureEnabled: true }} />
             </Stack>
 
             {shouldShowTabBar && (

@@ -86,23 +86,18 @@ export default function FavoritesScreen() {
     };
 
     const handlePlacePress = (place: Place) => {
+        if (!place) return;
         router.push({
             pathname: '/(user)/(stack)/place-details',
             params: {
-                id: place.id,
-                name: place.name,
-                description: place.description,
-                distance: place.distance,
-                rating: place.rating?.toString() || '',
-                category: place.category,
+                id: place.id || '',
+                name: place.name || '',
+                distance: place.distance || '',
+                rating: place.rating !== undefined && !isNaN(place.rating) ? place.rating.toString() : '',
+                category: place.category || '',
                 imageUrl: place.imageUrl || '',
-                images: JSON.stringify(place.images || []),
-                modelPath: place.modelPath || '',
-                has360Images: (place.has360Images || false).toString(),
-                panorama360Url: place.panorama360Url || '',
-                latitude: place.latitude?.toString() || '',
-                longitude: place.longitude?.toString() || '',
-                transcriptions: JSON.stringify(place.transcriptions || []),
+                latitude: (place.latitude !== undefined && !isNaN(place.latitude)) ? place.latitude.toString() : '',
+                longitude: (place.longitude !== undefined && !isNaN(place.longitude)) ? place.longitude.toString() : '',
             },
         });
     };

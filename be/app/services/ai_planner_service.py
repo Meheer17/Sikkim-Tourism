@@ -1,3 +1,9 @@
+import sys
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 from bson import ObjectId
 import google.generativeai as genai
 from typing import List, Dict, Any, Optional
@@ -130,8 +136,8 @@ class AIPlannerService:
                 "is_ready": ai_response.get("is_ready", False),
                 "created_at": datetime.now()
             }
-            print(f"✅ Created chat session: {session_id}, is_ready: {ai_response.get('is_ready', False)}")
-            print(f"📊 Total active sessions: {len(chat_sessions)}")
+            print(f"[AI Planner] Created chat session: {session_id}, is_ready: {ai_response.get('is_ready', False)}")
+            print(f"[AI Planner] Total active sessions: {len(chat_sessions)}")
             
             return ChatResponse(
                 session_id=session_id,
@@ -196,8 +202,8 @@ class AIPlannerService:
     
     async def generate_plans_from_chat(self, session_id: str) -> TravelPlanResponse:
         """Generate travel plans from a completed chat session"""
-        print(f"🔍 Looking for session: {session_id}")
-        print(f"📊 Available sessions: {list(chat_sessions.keys())}")
+        print(f"[AI Planner] Looking for session: {session_id}")
+        print(f"[AI Planner] Available sessions: {list(chat_sessions.keys())}")
         
         session = chat_sessions.get(session_id)
         if not session:
@@ -297,7 +303,7 @@ Only set is_ready to true when you have at least: duration, budget, and traveler
             
             # Check if response was blocked by safety filters
             if not response.candidates or not response.candidates[0].content.parts:
-                print(f"⚠️ Gemini response blocked or empty. Finish reason: {response.candidates[0].finish_reason if response.candidates else 'No candidates'}")
+                print(f"[AI Planner] Gemini response blocked or empty. Finish reason: {response.candidates[0].finish_reason if response.candidates else 'No candidates'}")
                 
                 # Return a fallback response asking user to clarify
                 return {
@@ -321,7 +327,7 @@ Only set is_ready to true when you have at least: duration, budget, and traveler
         except ValueError as e:
             # Handle safety filter blocking
             if "finish_reason" in str(e):
-                print(f"⚠️ Gemini safety filter triggered: {e}")
+                print(f"[AI Planner] Gemini safety filter triggered: {e}")
                 return {
                     "message": "I'd be happy to help you plan a trip to Sikkim! To get started, could you tell me:\n1. Your budget range (budget-friendly, moderate, or luxury)\n2. What type of experience you're looking for (adventure, relaxation, culture, nature)\n3. Any specific interests or activities?\n\nNote: I specialize in Sikkim tourism specifically.",
                     "preferences": {
@@ -381,7 +387,7 @@ IMPORTANT: ONLY GIVE CONSISE INFO"""
         Later this should construct a Gemini prompt and invoke the model.
         """
         try:
-            print(f"🔔 Trigger received from user={user_id}: type={trigger.type}, time={trigger.time}, position={trigger.position}")
+            print(f"[AI Planner] Trigger received from user={user_id}: type={trigger.type}, time={trigger.time}, position={trigger.position}")
 
             # Government check: skip AI suggestions for government users
             try:
@@ -554,7 +560,7 @@ Remember
                     print(f"Error enforcing cooldowns: {e}")
             except Exception as e:
                 # Fallback: rule-based suggestion
-                print(f"⚠️ Gemini trigger suggestion failed, falling back to rule-based: {e}")
+                print(f"[AI Planner] Gemini trigger suggestion failed, falling back to rule-based: {e}")
 
                 suggested_type = "restaurant"
                 agent_message = "Would you like me to find nearby places to eat?"
@@ -684,40 +690,40 @@ Remember
     ) -> List[TravelPlan]:
         """Generate travel plans from extracted preferences (similar to existing method)"""
         
-        print(f"🎯 Generating plans with preferences: {preferences}")
-        print(f"📍 Available locations: {len(locations)}")
+        print(f"[AI Planner] Generating plans with preferences: {preferences}")
+        print(f"[AI Planner] Available locations: {len(locations)}")
         
         prompt = self._create_planning_prompt(preferences, locations)
-        print(f"📝 Prompt created, length: {len(prompt)}")
+        print(f"[AI Planner] Prompt created, length: {len(prompt)}")
         
         try:
-            print("🤖 Calling Gemini API for plan generation...")
+            print("[AI Planner] Calling Gemini API for plan generation...")
             response = self.model.generate_content(prompt)
             
             # Check if response was blocked by safety filters
             if not response.candidates or not response.candidates[0].content.parts:
-                print(f"⚠️ Gemini plan generation blocked. Finish reason: {response.candidates[0].finish_reason if response.candidates else 'No candidates'}")
+                print(f"[AI Planner] Gemini plan generation blocked. Finish reason: {response.candidates[0].finish_reason if response.candidates else 'No candidates'}")
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="AI safety filters blocked the response. This may be due to content concerns. Please try adjusting your preferences or try again."
                 )
             
-            print(f"✅ Gemini response received, length: {len(response.text)}")
+            print(f"[AI Planner] Gemini response received, length: {len(response.text)}")
             
             plans_data = self._parse_json_response(response.text)
-            print(f"📊 Parsed plans data: {type(plans_data)}")
+            print(f"[AI Planner] Parsed plans data: {type(plans_data)}")
             
             # Validate and parse plans
             if not isinstance(plans_data, list):
                 plans_data = plans_data.get("plans", [])
             
-            print(f"🔢 Number of plans: {len(plans_data)}")
+            print(f"[AI Planner] Number of plans: {len(plans_data)}")
             plans = [TravelPlan(**plan) for plan in plans_data]
             
             # Validate plans use only database locations
             self._validate_plans_use_db_data(plans, locations, None)
             
-            print(f"✅ Successfully generated {len(plans)} travel plans")
+            print(f"[AI Planner] Successfully generated {len(plans)} travel plans")
             return plans
             
         except HTTPException:
@@ -726,7 +732,7 @@ Remember
         except ValueError as e:
             # Handle safety filter blocking
             if "finish_reason" in str(e):
-                print(f"⚠️ Gemini safety filter triggered during plan generation: {e}")
+                print(f"[AI Planner] Gemini safety filter triggered during plan generation: {e}")
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="AI safety filters blocked the response. Please try generating plans again or adjust your preferences."
@@ -736,7 +742,7 @@ Remember
                 detail=f"Failed to parse AI response: {str(e)}"
             )
         except Exception as e:
-            print(f"❌ Error generating plans: {e}")
+            print(f"[AI Planner] Error generating plans: {e}")
             import traceback
             traceback.print_exc()
             raise HTTPException(

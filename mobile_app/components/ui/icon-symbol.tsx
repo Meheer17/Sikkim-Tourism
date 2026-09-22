@@ -5,7 +5,7 @@ import { SymbolView, SymbolViewProps, SymbolWeight } from 'expo-symbols';
 import { ComponentProps } from 'react';
 import { OpaqueColorValue, Platform, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
-type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
+type IconMapping = Partial<Record<string, ComponentProps<typeof MaterialIcons>['name']>>;
 type IconSymbolName = keyof typeof MAPPING;
 
 /**
@@ -99,6 +99,8 @@ const MAPPING = {
   'doc.text.fill': 'description',
   'folder.fill': 'folder',
   'photo.fill': 'photo',
+  'photo': 'photo',
+  'image': 'photo',
   'photo.badge.plus': 'add-photo-alternate',
   'photo.stack': 'collections',
   'camera.fill': 'camera-alt',
@@ -164,6 +166,13 @@ const MAPPING = {
 
   // Additional icons for admin screens
   'person.3.fill': 'groups',
+
+  // 3D & Spatial
+  'cube.fill': 'view-in-ar',
+  'cube': 'view-in-ar',
+  'view.3d': '3d-rotation',
+  'stop.fill': 'stop',
+  'exclamationmark.triangle': 'warning',
 } as IconMapping;
 
 /**
@@ -191,7 +200,7 @@ export function IconSymbol({
         weight={weight}
         tintColor={color}
         resizeMode="scaleAspectFit"
-        name={name}
+        name={name as any}
         style={[
           {
             width: size,
@@ -203,6 +212,7 @@ export function IconSymbol({
     );
   }
 
-  // Use Material Icons on Android and web
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style as StyleProp<TextStyle>} />;
+  // Use Material Icons on Android and web with a safe fallback
+  const mappedName = (MAPPING[name] || 'help-outline') as ComponentProps<typeof MaterialIcons>['name'];
+  return <MaterialIcons color={color} size={size} name={mappedName} style={style as StyleProp<TextStyle>} />;
 }

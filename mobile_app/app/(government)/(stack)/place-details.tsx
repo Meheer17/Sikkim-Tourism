@@ -214,7 +214,7 @@ export default function AdminPlaceDetailsScreen() {
                         <View style={styles.metaItem}>
                             <IconSymbol name="location.fill" size={16} color={tint} />
                             <Text style={[styles.metaText, { color: muted }]}>
-                                Lat: {location.position.y.toFixed(6)}, Lon: {location.position.x.toFixed(6)}
+                                Lat: {location.position?.y !== undefined ? Number(location.position.y).toFixed(4) : 'N/A'}, Lon: {location.position?.x !== undefined ? Number(location.position.x).toFixed(4) : 'N/A'}
                             </Text>
                         </View>
                     </View>

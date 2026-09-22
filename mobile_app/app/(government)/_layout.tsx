@@ -69,10 +69,9 @@ export default function AdminLayout() {
                 <Stack.Screen
                     name="(stack)"
                     options={{
-                        presentation: 'modal',
+                        presentation: 'card',
                         headerShown: false,
                         gestureEnabled: true,
-                        animation: 'slide_from_bottom',
                     }}
                 />
             </Stack>

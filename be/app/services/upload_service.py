@@ -5,9 +5,12 @@ import httpx
 from typing import Optional
 from PIL import Image
 import io
-import tempfile
 import os
-from moviepy.editor import VideoFileClip
+import tempfile
+try:
+    from moviepy.video.io.VideoFileClip import VideoFileClip
+except Exception:
+    VideoFileClip = None
 
 from app.core.database import get_database
 from app.models.file import FileInDB
@@ -114,6 +117,9 @@ class UploadService:
             with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_out:
                 temp_output = temp_out.name
             
+            if VideoFileClip is None:
+                return file_content
+
             # Load video
             video = VideoFileClip(temp_input)
             
@@ -999,20 +1005,17 @@ class UploadService:
         
         print(f"[DEBUG] Found {len(documents)} documents")
         
-        # Convert ObjectId to string for JSON serialization
-        for doc in documents:
-            doc["_id"] = str(doc["_id"])
-            if "uploaded_by" in doc and doc["uploaded_by"]:
-                doc["uploaded_by"] = str(doc["uploaded_by"])
-            if "business_id" in doc and doc["business_id"]:
-                doc["business_id"] = str(doc["business_id"])
-            # Convert b_id and l_id (new fields)
-            if "b_id" in doc and doc["b_id"]:
-                doc["b_id"] = str(doc["b_id"])
-            if "l_id" in doc and doc["l_id"]:
-                doc["l_id"] = str(doc["l_id"])
-        
-        return documents
+        # Convert all ObjectIds recursively to string for JSON serialization
+        def clean_object_ids(obj):
+            if isinstance(obj, ObjectId):
+                return str(obj)
+            elif isinstance(obj, dict):
+                return {k: clean_object_ids(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_object_ids(item) for item in obj]
+            return obj
+
+        return [clean_object_ids(doc) for doc in documents]
     
     async def delete_document(self, file_id: str, user_id: str):
         """

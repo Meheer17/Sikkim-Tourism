@@ -43,8 +43,6 @@ export type {
   ResponseConfig,
 } from '../types/api.types';
 
-export type { EventCreateData } from './event.service';
-
 // Import BaseService class to use in factory
 import { BaseService as BaseServiceClass } from './base.service';
 

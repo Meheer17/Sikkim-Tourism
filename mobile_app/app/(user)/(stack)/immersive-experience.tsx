@@ -12,12 +12,14 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import PanoramaViewer from '@/components/immersive/PanoramaViewer';
 import AudioNarration from '@/components/immersive/AudioNarration';
 import { ttsService } from '@/services/tts.service';
+import { buildImageUrl } from '@/utils/image-url';
 
 export default function ImmersiveExperienceScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const placeId = params.placeId as string;
-    const panorama360Url = params.panorama360Url as string;
+    const rawPanorama360Url = params.panorama360Url as string;
+    const panorama360Url = buildImageUrl(rawPanorama360Url) || buildImageUrl('rumtek_panorama_360.jpg') || rawPanorama360Url;
     const placeName = params.placeName as string;
     const placeDescription = params.placeDescription as string;
     const shortDescription = params.shortDescription as string;

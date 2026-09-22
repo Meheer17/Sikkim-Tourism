@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import { Colors } from '@/constants/theme';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
@@ -11,6 +12,7 @@ import OfflineSavedRoutesModal from '@/components/OfflineSavedRoutesModal';
 import { networkService } from '@/services/network.service';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Toast from 'react-native-toast-message';
 
 function RootNavigator() {
@@ -80,7 +82,6 @@ export default function RootLayout() {
     const unsub = networkService.subscribe((offline) => {
       setIsOffline(offline);
       if (offline && !isLoading && isAuthenticated && !offlineModalIgnored) {
-        router.push('/(user)/explore' as any);
         setShowOfflineModal(true);
       } else if (!offline) {
         setShowOfflineModal(false);
@@ -97,7 +98,6 @@ export default function RootLayout() {
   React.useEffect(() => {
     const unsubOpen = networkService.subscribeOpenSavedRoutes(() => {
       if (!isLoading && isAuthenticated) {
-        router.push('/(user)/explore' as any);
         setShowOfflineModal(true);
       }
     });
@@ -108,20 +108,20 @@ export default function RootLayout() {
 
   React.useEffect(() => {
     if (!isLoading && isAuthenticated && isOffline && !offlineModalIgnored) {
-      // route to explore and show saved routes modal
-      router.push('/(user)/explore' as any);
       setShowOfflineModal(true);
     }
   }, [isLoading, isAuthenticated, isOffline]);
 
   return (
-    <LanguageProvider>
-      <ThemeProvider>
-        <MovementTrackerMount />
-        <RootNavigator />
-        <OfflineSavedRoutesModal visible={showOfflineModal} onClose={() => { setShowOfflineModal(false); setOfflineModalIgnored(true); }} />
-        <GeminiPopup />
-      </ThemeProvider>
-    </LanguageProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <LanguageProvider>
+        <ThemeProvider>
+          <MovementTrackerMount />
+          <RootNavigator />
+          <OfflineSavedRoutesModal visible={showOfflineModal} onClose={() => { setShowOfflineModal(false); setOfflineModalIgnored(true); }} />
+          <GeminiPopup />
+        </ThemeProvider>
+      </LanguageProvider>
+    </GestureHandlerRootView>
   );
 }
